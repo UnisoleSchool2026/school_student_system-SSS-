@@ -9845,7 +9845,7 @@ function renderQbCurrentPage() {
               </button>
             </div>
           </div>
-          <iframe id="wbIframe_${qId}" class="qb-whiteboard-iframe" src="/whiteboard.html?v=${Date.now()}" allow="clipboard-read; clipboard-write"></iframe>
+          <iframe id="wbIframe_${qId}" class="qb-whiteboard-iframe" src="/whiteboard?v=${Date.now()}" allow="clipboard-read; clipboard-write"></iframe>
         </div>
 
         <!-- QUESTION STATEMENT -->
