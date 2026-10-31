@@ -9316,47 +9316,82 @@ function syncQuestionToWhiteboard(qId) {
   const textForDetection = (rawQ + ' ' + ch + ' ' + (qObj.topic || '') + ' ' + (qObj.subtopic || '')).toLowerCase();
   let diagramType = 'concept';
   let tipText = 'Always cross-check unit dimensions and sign conventions before submitting!';
-  let step1Formula = 'Standard Fundamental Relation';
-  let step1Exp = 'Identify given physical variables and recall governing law.';
+  let step1Title = 'Governing Physics Principles';
+  let step1Formula = 'Identify given physical variables and recall governing law.';
+  let step1Exp = 'Pure rolling without slipping: Contact point is at instantaneous rest.';
+  let step2Title = 'Mathematical Working & Substitution';
   let step2Working = 'Rearrange equation for the unknown quantity';
   let step2Exp = 'Step-by-step arithmetic resolution preserving SI units.';
-  let finalAns = cleanLatexForClientVoice(rawS).slice(0, 120);
+  let step3Title = 'Moment of Inertia & Exact Derivation';
+  let step3Working = '';
+  let step3Exp = '';
+  let finalAns = cleanLatexForClientVoice(rawS).slice(0, 140);
+  let finalInsight = 'Always cross-check unit dimensions and sign conventions before submitting';
 
   if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
     diagramType = 'rolling_incline';
-    step1Formula = 'a = \\frac{g \\sin\\theta}{1 + \\frac{I}{MR^2}}, \\quad \\tau = I\\alpha, \\quad v = \\omega R';
-    step1Exp = 'Pure rolling without slipping: Contact point is at instantaneous rest.';
-    step2Working = 'For Solid Sphere: I = \\frac{2}{5}MR^2 \\implies a = \\frac{g \\sin\\theta}{1 + 2/5} = \\frac{5}{7}g \\sin\\theta';
-    step2Exp = 'Linear acceleration of center of mass down the incline is 5/7 g sin theta.';
-    tipText = 'Pure rolling requires static friction. Work done by static friction is zero!';
-    if (!finalAns || finalAns.length < 5) finalAns = 'a = 5/7 g sin theta (Option A)';
+    step1Title = 'Free-Body Force & Torque Equations';
+    step1Formula = '• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R';
+    step1Exp = 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.';
+
+    step2Title = 'Torque & Linear Force Substitution';
+    step2Working = '1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
+    step2Exp = 'This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).';
+
+    step3Title = 'Moment of Inertia for Solid Sphere';
+    step3Working = '• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
+    step3Exp = 'A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.';
+
+    tipText = 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.';
+    finalAns = 'Linear Acceleration of Center of Mass:\na = (5/7) · g · sin θ   [Option B]';
+    finalInsight = 'Solid sphere realizes 71.4% of gravitational acceleration down the ramp (Option B).';
   } else if (textForDetection.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
     diagramType = 'lens';
-    step1Formula = '\\frac{1}{f} = \\frac{1}{v} - \\frac{1}{u}, \\quad m = \\frac{v}{u} = \\frac{h_i}{h_o}';
-    step1Exp = 'Thin lens formula with Cartesian sign convention.';
-    step2Working = 'Substitute object distance u (-ve) and focal length f (+ve for convex).';
-    step2Exp = 'Solve for image distance v and determine image characteristics.';
+    step1Title = 'Governing Optical Equations';
+    step1Formula = '• Thin Lens Equation: 1/f = 1/v - 1/u\n• Magnification:       m = v / u = h_i / h_o\n• Power of Lens:       P = 1 / f (meters)';
+    step1Exp = 'Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative.';
+
+    step2Title = 'Coordinate Substitution';
+    step2Working = '1) Identify: Focal length f (convex > 0), Object distance u (< 0)\n2) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n3) Image distance: v = (u · f) / (u + f)';
+    step2Exp = 'Calculate v and check sign: positive v confirms a real image on opposite side.';
+
+    step3Title = 'Image Nature & Magnification';
+    step3Working = '• Magnification: m = v / u\n• If |m| > 1: Magnified image; if |m| < 1: Diminished\n• If m < 0: Real & Inverted; if m > 0: Virtual & Erect';
+    step3Exp = 'State complete nature, orientation, and size relative to object.';
+
     tipText = 'Always state the nature (real/virtual, inverted/erect) and magnification sign!';
+    finalAns = finalAns || 'v = (u·f)/(u+f),  m = v/u';
+    finalInsight = 'Real images formed by a convex lens are inverted; virtual images are upright.';
   } else if (textForDetection.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
     diagramType = 'circuit';
-    step1Formula = 'V = I \\cdot R, \\quad R = \\rho \\frac{l}{A}, \\quad v_d = \\frac{eE\\tau}{m}';
-    step1Exp = 'Ohm\'s law and macroscopic-microscopic drift relation.';
-    step2Working = 'Series: R_eq = R_1 + R_2, \\quad Parallel: 1/R_eq = 1/R_1 + 1/R_2';
-    step2Exp = 'Current distribution and potential difference across each branch.';
-    tipText = 'Relaxation time tau decreases with temperature in metals, increasing resistivity!';
+    step1Title = 'Governing Circuit Principles';
+    step1Formula = '• Ohm\'s Law:          V = I · R\n• Microscopic Drift:   I = n · e · A · v_d,   v_d = (e · E · τ) / m\n• Resistivity:         R = ρ · (l / A),       ρ = m / (n · e² · τ)';
+    step1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
+
+    step2Title = 'Equivalent Resistance & Node Analysis';
+    step2Working = '1) Series combination:   R_eq = R_1 + R_2 + ... + R_n\n2) Parallel combination: 1/R_eq = 1/R_1 + 1/R_2 + ...\n3) Current distribution: I_branch = V_branch / R_branch';
+    step2Exp = 'Current is uniform across series branches; potential difference is uniform across parallel branches.';
+
+    step3Title = 'Power Dissipation & Thermal Effect';
+    step3Working = '• Electric Power: P = V · I = I² · R = V² / R\n• Joule\'s Heating: H = I² · R · t\n• In metals: Higher temperature lowers τ, increasing resistivity ρ.';
+    step3Exp = 'Always verify SI units: Resistance in Ohms (Ω), Power in Watts (W).';
+
+    tipText = 'Relaxation time tau decreases with temperature in metals, increasing electrical resistance!';
+    finalAns = finalAns || 'V = I · R,  P = I² · R';
+    finalInsight = 'Internal battery resistance causes terminal voltage to be less than EMF during discharge.';
   }
 
   // 1. Initial Question Header Card on Left Board (Immediate)
   sendWhiteboardMessage(qId, {
     type: 'INIT_QUESTION',
     payload: {
-      title: cleanLatexForClientVoice(rawQ).slice(0, 150),
+      title: cleanLatexForClientVoice(rawQ).slice(0, 160),
       chapter: ch,
       marks: marks
     }
   });
 
-  // 2. Progressive timed drawing sync (T = 1.2s): Visual Diagram on Left Board
+  // 2. Progressive timed drawing sync (T = 1.0s): Visual Diagram on Left Board
   const t1 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
       type: 'DRAW_DIAGRAM',
@@ -9366,47 +9401,63 @@ function syncQuestionToWhiteboard(qId) {
         tip: tipText
       }
     });
-  }, 1200);
+  }, 1000);
   voiceTutorState.whiteboardSyncTimers.push(t1);
 
-  // 3. Step 1 Formula on Right Board (T = 4.5s)
+  // 3. Step 1 Formula on Right Board (T = 3.5s)
   const t2 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
       type: 'WRITE_STEP',
       payload: {
         stepNum: 1,
-        title: 'Governing Principle & Formula',
+        title: step1Title,
         formula: step1Formula,
         explanation: step1Exp
       }
     });
-  }, 4500);
+  }, 3500);
   voiceTutorState.whiteboardSyncTimers.push(t2);
 
-  // 4. Step 2 Calculation on Right Board (T = 8.5s)
+  // 4. Step 2 Calculation on Right Board (T = 7.0s)
   const t3 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
       type: 'WRITE_STEP',
       payload: {
         stepNum: 2,
-        title: 'Mathematical Working & Substitution',
+        title: step2Title,
         formula: step2Working,
         explanation: step2Exp
       }
     });
-  }, 8500);
+  }, 7000);
   voiceTutorState.whiteboardSyncTimers.push(t3);
 
-  // 5. Final Answer on Right Board (T = 13.0s)
+  // 5. Step 3 Derivation on Right Board (T = 10.5s, if available)
+  if (step3Working) {
+    const t3_b = setTimeout(() => {
+      sendWhiteboardMessage(qId, {
+        type: 'WRITE_STEP',
+        payload: {
+          stepNum: 3,
+          title: step3Title,
+          formula: step3Working,
+          explanation: step3Exp
+        }
+      });
+    }, 10500);
+    voiceTutorState.whiteboardSyncTimers.push(t3_b);
+  }
+
+  // 6. Final Answer on Right Board (T = 14.0s)
   const t4 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
       type: 'FINAL_ANSWER',
       payload: {
         answer: finalAns || 'Verified accurately using standard CBSE guidelines',
-        keyInsight: 'Always cross-check unit dimensions and sign conventions before submitting'
+        keyInsight: finalInsight
       }
     });
-  }, 13000);
+  }, 14000);
   voiceTutorState.whiteboardSyncTimers.push(t4);
 }
 

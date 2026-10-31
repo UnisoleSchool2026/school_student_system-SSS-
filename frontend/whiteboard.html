@@ -448,22 +448,27 @@
       if (!fbCtx) window.initFallbackCanvas();
       if (!fbCtx) return;
 
-      fbCtx.fillStyle = 'rgba(234, 179, 8, 0.15)';
-      fbCtx.strokeStyle = '#eab308';
+      const lines = (formula || '').split('\n').filter(Boolean);
+      const boxH = Math.max(85, 45 + lines.length * 20);
+
+      fbCtx.fillStyle = stepNum === 1 ? 'rgba(234, 179, 8, 0.15)' : stepNum === 2 ? 'rgba(56, 189, 248, 0.15)' : 'rgba(168, 85, 247, 0.15)';
+      fbCtx.strokeStyle = stepNum === 1 ? '#eab308' : stepNum === 2 ? '#38bdf8' : '#a855f7';
       fbCtx.lineWidth = 2;
-      fbCtx.roundRect ? fbCtx.roundRect(60, fbYOffset, 700, 75, 8) : fbCtx.rect(60, fbYOffset, 700, 75);
+      fbCtx.roundRect ? fbCtx.roundRect(60, fbYOffset, 700, boxH, 8) : fbCtx.rect(60, fbYOffset, 700, boxH);
       fbCtx.fill();
       fbCtx.stroke();
 
-      fbCtx.fillStyle = '#eab308';
+      fbCtx.fillStyle = stepNum === 1 ? '#eab308' : stepNum === 2 ? '#38bdf8' : '#a855f7';
       fbCtx.font = 'bold 13px sans-serif';
       fbCtx.fillText(`Step ${stepNum}: ${title}`, 75, fbYOffset + 24);
 
       fbCtx.fillStyle = '#f8fafc';
-      fbCtx.font = 'bold 15px monospace';
-      fbCtx.fillText(`Formula: ${(formula || '').replace(/\$+/g, '')}`, 75, fbYOffset + 48);
+      fbCtx.font = '13px monospace';
+      lines.forEach((line, idx) => {
+        fbCtx.fillText(line.replace(/\$+/g, ''), 75, fbYOffset + 48 + idx * 20);
+      });
 
-      fbYOffset += 95;
+      fbYOffset += boxH + 20;
     };
 
     window.drawFallbackDoubt = function(doubtText, answerText) {
