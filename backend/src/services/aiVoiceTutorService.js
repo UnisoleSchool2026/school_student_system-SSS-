@@ -111,6 +111,14 @@ async function synthesizeNeuralAudio({ text, voiceKey = 'swara' }) {
 function getCuratedHinglishBrief(topic, questionText) {
   const qLower = (questionText + ' ' + (topic || '')).toLowerCase();
 
+  if (qLower.includes('roll') || qLower.includes('incline') || qLower.includes('rotat') || qLower.includes('sphere') || qLower.includes('moment of inertia')) {
+    return {
+      hinglishBrief: "Dekho bacho, look at this question: Yahan ek solid sphere mass M aur radius R ka inclined plane par roll kar raha hai without slipping. Left side board par iska incline angle theta aur rolling sphere diagram dekho. Point of contact instantaneous rest par hota hai. Ab right side board par Step 1 note karo: acceleration formula a = g sin theta upon 1 plus I upon M R square lagate hain. Solid sphere ka moment of inertia I = 2 upon 5 M R square substitute karne par final answer a = 5 upon 7 g sin theta mil jata hai!",
+      firstStepFormula: "a = \\frac{g \\sin\\theta}{1 + \\frac{I}{MR^2}}, \\quad I_{\\text{solid sphere}} = \\frac{2}{5}MR^2",
+      pitfallTip: "Pure rolling ke liye static friction zaroori hai, lekin static friction koi work done nahi karta kyunki contact point slip nahi karta!"
+    };
+  }
+
   if (qLower.includes('drift') || qLower.includes('resistivity') || qLower.includes('ohm')) {
     return {
       hinglishBrief: "Is question mein hume Drift Velocity concept use karke Ohm's Law aur resistivity derive karni hai. Pehle electron ki drift velocity formula v d = e E tau upon m recall karo. Phir current formula I = n e A v d mein substitute karo. Electric field ko V upon l likhne par resistance aur resistivity rho = m upon n e square tau mil jayegi!",

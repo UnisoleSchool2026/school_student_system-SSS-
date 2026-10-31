@@ -136,6 +136,31 @@ class ErrorBoundary extends Component {
   }
 }
 
+// Smartboard 2-Column Teaching Layout Geometry
+const BOARD_LAYOUT = {
+  // Left Column: Problem & Visual Physics
+  COL_LEFT_X: 50,
+  COL_LEFT_W: 520,
+  HEADER_Y: 50,
+  HEADER_H: 130,
+  DIAGRAM_Y: 200,
+  DIAGRAM_H: 240,
+  TIP_Y: 460,
+  TIP_H: 105,
+
+  // Right Column: Step-by-Step Mathematical Derivation
+  COL_RIGHT_X: 600,
+  COL_RIGHT_W: 640,
+  STEP1_Y: 50,
+  STEP1_H: 130,
+  STEP2_Y: 200,
+  STEP2_H: 145,
+  FINAL_Y: 365,
+  FINAL_H: 130,
+  DOUBT_Y: 515,
+  DOUBT_H: 130
+};
+
 const WhiteboardController = {
   isReady() {
     return !!editorInstance;
@@ -155,14 +180,13 @@ const WhiteboardController = {
     } catch (e) {
       logTelemetry('CLEAR_SHAPES_ERROR', { message: e?.message });
     }
-    shapeYOffset = 60;
   },
 
   zoomFit() {
     logTelemetry('WHITEBOARD_ACTION_ZOOM_FIT');
     if (!editorInstance) return;
     try {
-      editorInstance.zoomToFit({ duration: 350 });
+      editorInstance.zoomToFit({ duration: 400, padding: 35 });
     } catch (e) {
       logTelemetry('ZOOM_FIT_ERROR', { message: e?.message });
     }
@@ -182,19 +206,18 @@ const WhiteboardController = {
 
     safeCreateShape({
       type: 'geo',
-      x: 60,
-      y: shapeYOffset,
+      x: BOARD_LAYOUT.COL_LEFT_X,
+      y: BOARD_LAYOUT.HEADER_Y,
       props: {
         geo: 'rectangle',
-        w: 700,
-        h: 90,
+        w: BOARD_LAYOUT.COL_LEFT_W,
+        h: BOARD_LAYOUT.HEADER_H,
         color: 'blue',
         fill: 'semi',
         size: 'm',
-        richText: toRichText(`${chapter ? chapter.toUpperCase() + (marks ? ` (${marks}M)` : '') + '\n' : ''}${cleanTitle}`)
+        richText: toRichText(`QUESTION STATEMENT (${marks ? `${marks}M` : '3 Marks'})\n${chapter ? chapter.toUpperCase() + '\n' : ''}${cleanTitle.slice(0, 150)}${cleanTitle.length > 150 ? '...' : ''}`)
       }
     });
-    shapeYOffset += 115;
     this.zoomFit();
   },
 
@@ -207,21 +230,37 @@ const WhiteboardController = {
     const cleanFormula = (formula || '').replace(/\$+/g, '').trim();
     const cleanExp = (explanation || '').replace(/\$+/g, '').trim();
 
-    safeCreateShape({
-      type: 'geo',
-      x: 60,
-      y: shapeYOffset,
-      props: {
-        geo: 'rectangle',
-        w: 700,
-        h: 110,
-        color: stepNum === 1 ? 'yellow' : (stepNum === 2 ? 'light-blue' : 'green'),
-        fill: 'semi',
-        size: 'm',
-        richText: toRichText(`Step ${stepNum}: ${title}\nFormula: ${cleanFormula}${cleanExp ? '\n' + cleanExp : ''}`)
-      }
-    });
-    shapeYOffset += 130;
+    if (stepNum === 1) {
+      safeCreateShape({
+        type: 'geo',
+        x: BOARD_LAYOUT.COL_RIGHT_X,
+        y: BOARD_LAYOUT.STEP1_Y,
+        props: {
+          geo: 'rectangle',
+          w: BOARD_LAYOUT.COL_RIGHT_W,
+          h: BOARD_LAYOUT.STEP1_H,
+          color: 'yellow',
+          fill: 'semi',
+          size: 'm',
+          richText: toRichText(`Step 1: ${title}\nFormula: ${cleanFormula}\n${cleanExp ? cleanExp.slice(0, 110) : ''}`)
+        }
+      });
+    } else {
+      safeCreateShape({
+        type: 'geo',
+        x: BOARD_LAYOUT.COL_RIGHT_X,
+        y: BOARD_LAYOUT.STEP2_Y,
+        props: {
+          geo: 'rectangle',
+          w: BOARD_LAYOUT.COL_RIGHT_W,
+          h: BOARD_LAYOUT.STEP2_H,
+          color: 'light-blue',
+          fill: 'semi',
+          size: 'm',
+          richText: toRichText(`Step 2: ${title}\nWorking: ${cleanFormula}\n${cleanExp ? cleanExp.slice(0, 120) : ''}`)
+        }
+      });
+    }
     this.zoomFit();
   },
 
@@ -231,170 +270,282 @@ const WhiteboardController = {
       if (window.drawFallbackDiagram) window.drawFallbackDiagram(type, params);
       return;
     }
-    const cx = 410;
-    const cy = shapeYOffset + 120;
 
-    if (type === 'lens' || type === 'optics') {
-      // Line shape with object points map conforming to TLLineShape schema
+    const lx = BOARD_LAYOUT.COL_LEFT_X;
+    const dy = BOARD_LAYOUT.DIAGRAM_Y;
+
+    if (type === 'rolling_incline' || type === 'rotational' || type === 'rolling') {
+      // 1. Incline Plane Wedge
       safeCreateShape({
         type: 'line',
-        x: 60,
-        y: cy,
+        x: lx,
+        y: dy + 180,
         props: {
           points: {
             a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
-            a2: { id: 'a2', index: 'a2', x: 700, y: 0 }
+            a2: { id: 'a2', index: 'a2', x: 440, y: 0 }
           },
           color: 'grey',
           size: 's',
-          dash: 'dashed',
-          spline: 'line'
+          dash: 'dashed'
         }
       });
+      safeCreateShape({
+        type: 'line',
+        x: lx,
+        y: dy + 30,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 440, y: 150 }
+          },
+          color: 'blue',
+          size: 'm',
+          dash: 'draw'
+        }
+      });
+      safeCreateShape({
+        type: 'line',
+        x: lx,
+        y: dy + 30,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 0, y: 150 }
+          },
+          color: 'grey',
+          size: 's'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 370,
+        y: dy + 155,
+        props: { richText: toRichText('θ (Angle)'), size: 's', color: 'orange' }
+      });
 
+      // 2. Rolling Solid Sphere
       safeCreateShape({
         type: 'geo',
-        x: cx - 22,
-        y: cy - 90,
+        x: lx + 160,
+        y: dy + 45,
         props: {
           geo: 'ellipse',
-          w: 44,
-          h: 180,
-          color: 'light-blue',
+          w: 72,
+          h: 72,
+          color: 'orange',
           fill: 'semi',
-          richText: toRichText('Lens')
+          richText: toRichText('Sphere\n(M, R)')
         }
       });
 
-      safeCreateShape({
-        type: 'text',
-        x: cx - 140,
-        y: cy + 10,
-        props: { richText: toRichText('F1 (Focus)'), size: 's', color: 'orange' }
-      });
-      safeCreateShape({
-        type: 'text',
-        x: cx + 110,
-        y: cy + 10,
-        props: { richText: toRichText('F2 (Focus)'), size: 's', color: 'orange' }
-      });
-
+      // 3. Acceleration & Rotation Vectors
       safeCreateShape({
         type: 'arrow',
-        x: cx - 220,
-        y: cy,
+        x: lx + 205,
+        y: dy + 80,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: 0, y: -70 },
-          color: 'red'
-        }
-      });
-      safeCreateShape({
-        type: 'text',
-        x: cx - 250,
-        y: cy - 90,
-        props: { richText: toRichText('Object (h)'), size: 's', color: 'red' }
-      });
-
-      safeCreateShape({
-        type: 'arrow',
-        x: cx - 220,
-        y: cy - 70,
-        props: {
-          start: { x: 0, y: 0 },
-          end: { x: 220, y: 0 },
-          color: 'yellow'
-        }
-      });
-      safeCreateShape({
-        type: 'arrow',
-        x: cx,
-        y: cy - 70,
-        props: {
-          start: { x: 0, y: 0 },
-          end: { x: 260, y: 150 },
-          color: 'yellow'
-        }
-      });
-
-      safeCreateShape({
-        type: 'arrow',
-        x: cx + 260,
-        y: cy,
-        props: {
-          start: { x: 0, y: 0 },
-          end: { x: 0, y: 80 },
+          end: { x: 80, y: 28 },
           color: 'green'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: cx + 270,
-        y: cy + 30,
+        x: lx + 285,
+        y: dy + 90,
+        props: { richText: toRichText('a = g sin θ / (1 + I/MR²)'), size: 's', color: 'green' }
+      });
+
+      // 4. Static Friction Arrow up the incline
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 185,
+        y: dy + 110,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: -50, y: -17 },
+          color: 'red'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 90,
+        y: dy + 85,
+        props: { richText: toRichText('fs (Friction)'), size: 's', color: 'red' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 120,
+        y: dy + 195,
+        props: { richText: toRichText('Pure Rolling: v = ωR,  I_sphere = (2/5)MR²'), size: 's', color: 'yellow' }
+      });
+
+    } else if (type === 'lens' || type === 'optics') {
+      const cy = dy + 110;
+      safeCreateShape({
+        type: 'line',
+        x: lx,
+        y: cy,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 500, y: 0 }
+          },
+          color: 'grey',
+          size: 's',
+          dash: 'dashed'
+        }
+      });
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 240,
+        y: cy - 80,
+        props: {
+          geo: 'ellipse',
+          w: 36,
+          h: 160,
+          color: 'light-blue',
+          fill: 'semi',
+          richText: toRichText('Lens')
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 120,
+        y: cy + 10,
+        props: { richText: toRichText('F1 (Focus)'), size: 's', color: 'orange' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 360,
+        y: cy + 10,
+        props: { richText: toRichText('F2 (Focus)'), size: 's', color: 'orange' }
+      });
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 60,
+        y: cy,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: -60 }, color: 'red' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 40,
+        y: cy - 80,
+        props: { richText: toRichText('Object (h)'), size: 's', color: 'red' }
+      });
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 440,
+        y: cy,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: 65 }, color: 'green' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 410,
+        y: cy + 75,
         props: { richText: toRichText('Image (Real, Inverted)'), size: 's', color: 'green' }
       });
 
-      shapeYOffset += 260;
     } else if (type === 'circuit' || type === 'electricity') {
+      const cy = dy + 100;
       safeCreateShape({
         type: 'geo',
-        x: 90,
-        y: cy - 60,
+        x: lx + 30,
+        y: cy - 65,
         props: {
           geo: 'rectangle',
-          w: 620,
-          h: 150,
+          w: 440,
+          h: 130,
           color: 'grey',
           fill: 'none',
           richText: toRichText('')
         }
       });
-
       safeCreateShape({
         type: 'geo',
-        x: 320,
+        x: lx + 170,
         y: cy - 80,
         props: {
           geo: 'rectangle',
           w: 160,
-          h: 40,
+          h: 36,
           color: 'orange',
           fill: 'semi',
           richText: toRichText('Resistor (R = V/I)')
         }
       });
-
       safeCreateShape({
         type: 'geo',
-        x: 340,
-        y: cy + 70,
+        x: lx + 190,
+        y: cy + 50,
         props: {
           geo: 'rectangle',
           w: 120,
-          h: 36,
+          h: 32,
           color: 'green',
           fill: 'semi',
           richText: toRichText('Battery (V)')
         }
       });
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 80,
+        y: cy,
+        props: { start: { x: 0, y: 20 }, end: { x: 0, y: -20 }, color: 'yellow' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 50,
+        y: cy - 10,
+        props: { richText: toRichText('I (Current)'), size: 's', color: 'yellow' }
+      });
 
-      shapeYOffset += 210;
     } else {
+      // General Visual Concept Framework
       safeCreateShape({
         type: 'geo',
-        x: 100,
-        y: cy - 40,
+        x: lx,
+        y: dy,
         props: {
-          geo: 'cloud',
-          w: 580,
-          h: 120,
+          geo: 'rectangle',
+          w: BOARD_LAYOUT.COL_LEFT_W,
+          h: 125,
           color: 'violet',
           fill: 'semi',
-          richText: toRichText(params.label || 'Concept Visual Framework')
+          richText: toRichText(`VISUAL CONCEPT FRAMEWORK\n${params.label || 'Physical Governing Relation'}\nIdentify given variables & fundamental law.`)
         }
       });
-      shapeYOffset += 160;
+      safeCreateShape({
+        type: 'geo',
+        x: lx,
+        y: dy + 135,
+        props: {
+          geo: 'rectangle',
+          w: BOARD_LAYOUT.COL_LEFT_W,
+          h: 80,
+          color: 'light-blue',
+          fill: 'semi',
+          richText: toRichText('Sign Convention & SI Unit Integrity: Crucial for CBSE/JEE Standard')
+        }
+      });
     }
+
+    // Teacher Exam Tip Box placed at bottom of Left Column
+    safeCreateShape({
+      type: 'geo',
+      x: lx,
+      y: BOARD_LAYOUT.TIP_Y,
+      props: {
+        geo: 'rectangle',
+        w: BOARD_LAYOUT.COL_LEFT_W,
+        h: BOARD_LAYOUT.TIP_H,
+        color: 'yellow',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`TEACHER EXAM TIP & PITFALL:\n${params.tip || 'Pure rolling requires static friction. Always verify angular & linear motion coordinates before computing!'}`)
+      }
+    });
 
     this.zoomFit();
   },
@@ -405,30 +556,28 @@ const WhiteboardController = {
       if (window.drawFallbackDoubt) window.drawFallbackDoubt(doubtText, answerText);
       return;
     }
-    const curY = shapeYOffset;
 
     safeCreateShape({
       type: 'note',
-      x: 480,
-      y: curY,
+      x: BOARD_LAYOUT.COL_RIGHT_X,
+      y: BOARD_LAYOUT.DOUBT_Y,
       props: {
         color: 'red',
-        richText: toRichText(`Doubt: "${doubtText}"\n\nExplanation: ${answerText}`)
+        richText: toRichText(`Student Doubt: "${doubtText}"\n\nTeacher: ${answerText}`)
       }
     });
 
     safeCreateShape({
       type: 'arrow',
-      x: 410,
-      y: curY + 40,
+      x: BOARD_LAYOUT.COL_RIGHT_X - 45,
+      y: BOARD_LAYOUT.DOUBT_Y + 35,
       props: {
         start: { x: 0, y: 0 },
-        end: { x: 60, y: 0 },
+        end: { x: 40, y: 0 },
         color: 'red'
       }
     });
 
-    shapeYOffset += 160;
     this.zoomFit();
   },
 
@@ -442,12 +591,12 @@ const WhiteboardController = {
 
     safeCreateShape({
       type: 'geo',
-      x: 100,
-      y: shapeYOffset,
+      x: BOARD_LAYOUT.COL_RIGHT_X,
+      y: BOARD_LAYOUT.FINAL_Y,
       props: {
-        geo: 'diamond',
-        w: 580,
-        h: 110,
+        geo: 'rectangle',
+        w: BOARD_LAYOUT.COL_RIGHT_W,
+        h: BOARD_LAYOUT.FINAL_H,
         color: 'green',
         fill: 'semi',
         size: 'm',
@@ -455,7 +604,6 @@ const WhiteboardController = {
       }
     });
 
-    shapeYOffset += 140;
     this.zoomFit();
   }
 };
