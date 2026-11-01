@@ -415,8 +415,8 @@ async function generateSmartboardTeachingPlan({
   let s3Exp = 'Physical check confirms the calculated magnitude and direction.';
   let defaultHinglish = `Is question mein hume ${chapterName || 'concept'} solve karna hai. Pehle left side board par diagram aur given values dekho... Ab right side board par step-by-step formula lagakar solve karte hain... aur answer mil gaya!`;
 
-  let s1Spoken = 'Pehle step mein stated physical parameters aur primary governing relation note karte hain.';
-  let s2Spoken = 'Ab second step mein known quantities substitute karke algebraic simplification karte hain.';
+  let s1Spoken = 'Pehle hum stated physical parameters aur primary governing relation note karte hain.';
+  let s2Spoken = 'Ab equations mein known quantities substitute karke algebraic derivation solve karte hain.';
   let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
   let diagSpoken = `Pehle left side board par diagram aur physical coordinate system dhyan se observe karo.`;
 
@@ -432,7 +432,7 @@ async function generateSmartboardTeachingPlan({
     s2Title = 'Torque & Linear Force Substitution';
     s2Formula = '1) Torque equation: f_s · R = I · (a / R) ⇒ f_s = (I / R²) · a\n2) Substitute f_s: M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
     s2Exp = 'By eliminating friction f_s between linear and rotational equations, we obtain the universal linear acceleration equation valid for any rolling symmetrical body.';
-    s2Spoken = 'Ab right board par Step 2 dekho: Torque equation se static friction eliminate karte hi acceleration ka general formula derive ho jata hai.';
+    s2Spoken = 'Ab right board par derivation dekho: Torque equation se static friction eliminate karte hi acceleration ka general formula derive ho jata hai.';
 
     s3Title = 'Moment of Inertia & Final Acceleration';
     s3Formula = '• Solid Sphere Inertia: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (5/7)·g·sin θ\n• Final Evaluated Result: a = (5/7)·g·sin θ ≈ 0.714·g·sin θ  [Option B]';
@@ -452,7 +452,7 @@ async function generateSmartboardTeachingPlan({
     s2Title = 'Coordinate Substitution & Calculation';
     s2Formula = '1) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n2) Image distance: v = (u · f) / (u + f)\n3) Magnification: m = v / u';
     s2Exp = 'Substitute signed coordinates into the Gaussian lens formula. Positive v confirms a real image formed on the transmission side of the lens.';
-    s2Spoken = 'Ab Step 2 mein 1/f = 1/v - 1/u mein values substitute karke image position v aur magnification calculate karte hain.';
+    s2Spoken = 'Ab lens formula 1/f = 1/v - 1/u mein values substitute karke image position v aur magnification calculate karte hain.';
 
     s3Title = 'Image Nature & Final Result';
     s3Formula = '• Image Position & Magnification: v = calculated, m = calculated\n• Optical Nature: Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f';
@@ -472,7 +472,7 @@ async function generateSmartboardTeachingPlan({
     s2Title = 'Current Derivation & Ohm Deduction';
     s2Formula = '1) Uniform Electric Field: E = V / l\n2) Substitute v_d: I = n·e·A·[(e·V·τ) / (m·l)] = (n·e²·A·τ / m·l)·V\n3) Ratio V / I: V / I = [m / (n·e²·τ)] · (l / A) = Constant (at const temp)';
     s2Exp = 'Since m, e, n, and τ are constants for a material at fixed temperature, the ratio V/I is invariant. This derives and proves Ohm\'s Law V = I·R from first principles.';
-    s2Spoken = 'Ab Step 2 mein current equation mein drift velocity substitute karte hi V by I constant aa jata hai jo Ohm\'s Law ko rigorously prove karta hai.';
+    s2Spoken = 'Ab current equation mein drift velocity substitute karte hi V by I constant aa jata hai jo Ohm\'s Law ko rigorously prove karta hai.';
 
     s3Title = 'Resistivity Formula & Physical Takeaway';
     s3Formula = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Temperature Rule: Higher temperature lowers τ, increasing resistivity ρ';
@@ -492,7 +492,7 @@ async function generateSmartboardTeachingPlan({
     s2Title = 'Trajectory Equation & Peak Calculation';
     s2Formula = '1) Time of Flight: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
     s2Exp = 'At maximum height, vertical velocity component v_y = 0. Substituting t = u·sin θ / g yields maximum height H and total horizontal range R.';
-    s2Spoken = 'Step 2 mein vertical velocity zero karke maximum height aur horizontal range calculate karte hain.';
+    s2Spoken = 'Ab vertical velocity zero karke maximum height aur horizontal range calculate karte hain.';
 
     s3Title = 'Final Kinematic Result & Takeaway';
     s3Formula = '• Range Expression: R = (u² · sin 2θ) / g\n• Maximum Condition: θ = 45° where sin 2θ = 1 ⇒ R_max = u² / g\n• Verification: Neglecting air resistance, path is strictly parabolic';
@@ -530,19 +530,19 @@ Return STRICT JSON only:
     "title": "GIVEN SETUP & GOVERNING PRINCIPLE",
     "formula": "• Stated variables with units\\n• Primary governing formula",
     "explanation": "Detailed explanation of why this governing formula applies and how given variables connect (2-3 clear sentences for the board)",
-    "spokenScript": "Ab right side board par Step 1 note karo... [what teacher speaks for Step 1 in Hinglish]"
+    "spokenScript": "Ab right side board par governing relation note karo... [what teacher speaks in Hinglish without saying Step 1]"
   },
   "step2": {
-    "title": "STEP-BY-STEP DERIVATION & SUBSTITUTION",
-    "formula": "1) Working step 1...\\n2) Working step 2...\\n3) Intermediate algebraic simplification",
+    "title": "MATHEMATICAL DERIVATION & SUBSTITUTION",
+    "formula": "1) Working 1...\\n2) Working 2...\\n3) Intermediate algebraic simplification",
     "explanation": "Detailed algebraic explanation walking through each mathematical substitution step by step (2-3 clear sentences for the board)",
-    "spokenScript": "Ab Step 2 mein values substitute karke solve karte hain... [what teacher speaks for Step 2 in Hinglish]"
+    "spokenScript": "Ab mathematical derivation solve karte hain... [what teacher speaks in Hinglish without saying Step 2]"
   },
   "step3": {
     "title": "FINAL ANSWER & VERIFIED RESULT",
     "formula": "Final Answer: [value with SI units]  ${correctAnswer ? `[Option ${correctAnswer}]` : ''}",
     "explanation": "Physical sanity check confirming why this calculated magnitude and unit makes physical sense (2-3 clear sentences for the board)",
-    "spokenScript": "Aur yeh raha hamara final answer... [what teacher speaks for Step 3 in Hinglish]"
+    "spokenScript": "Aur yeh raha hamara final answer... [what teacher speaks in Hinglish without saying Step 3]"
   },
   "hinglishBrief": "Complete smooth natural spoken lecture (4-5 sentences) combining the spoken scripts smoothly."
 }`;

@@ -222,8 +222,8 @@
 
   <div id="whiteboard-overlay-badge">
     <div class="pulse-dot"></div>
-    <span id="wbStatusText">👨‍🏫 Dr. Vikram Teaching: 1. Visual Physical Diagram</span>
-    <span id="wbPacingTimer" style="display:inline-block; font-size:0.7rem; background:rgba(56,189,248,0.22); border:1px solid rgba(56,189,248,0.5); padding:1px 6px; border-radius:10px; color:#38bdf8; font-weight:700;">7s</span>
+    <span id="wbStatusText">👨‍🏫 Dr. Vikram Teaching: Visual Physical Model</span>
+    <span id="wbPacingTimer" style="display:inline-block; font-size:0.7rem; background:rgba(56,189,248,0.22); border:1px solid rgba(56,189,248,0.5); padding:1px 6px; border-radius:10px; color:#38bdf8; font-weight:700;">10s</span>
     <div style="display:inline-flex; align-items:center; gap:4px; margin-left:4px;">
       <button type="button" class="wb-pacing-btn" id="btnPacePrev" onclick="window.wbPrevConcept()" title="Previous concept">◀</button>
       <button type="button" class="wb-pacing-btn" id="btnPaceToggle" onclick="window.wbTogglePacing()" title="Pause or Resume paced explanation">⏸ Pause</button>
@@ -543,7 +543,7 @@
       fbYOffset += 90;
     };
 
-    window.drawFallbackSmartboardSolution = function(payload) {
+    window.drawFallbackSmartboardSolution = function(payload, activeConcept = null) {
       if (!fbCtx) window.initFallbackCanvas();
       if (!fbCtx) return;
       window.clearFallbackCanvas();
@@ -641,8 +641,11 @@
       const cleanTip = (payload?.examTip || diag.tip || 'Verify unit dimensions, coordinate signs, and physical boundary conditions!').replace(/\$+/g, '');
       fbCtx.fillText(cleanTip.slice(0, 85), 65, 535);
 
-      // Right Column (x: 640, w: 600): 3 Solution Cards
-      // Card 1: Step 1
+      // Helper to strip any numbered prefixes like "1. ", "Step 1: "
+      const cleanCardTitle = (t, fallback) => (t || fallback).replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '').trim().toUpperCase();
+
+      // Right Column (x: 640, w: 600): Solution Sections (No artificial Step 1/2/3 labels)
+      // Card 1: Governing Principles
       fbCtx.fillStyle = 'rgba(234, 179, 8, 0.12)';
       fbCtx.strokeStyle = '#eab308';
       fbCtx.lineWidth = 1.5;
@@ -651,7 +654,7 @@
       fbCtx.stroke();
       fbCtx.fillStyle = '#eab308';
       fbCtx.font = 'bold 13px sans-serif';
-      fbCtx.fillText(`1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}`, 655, 65);
+      fbCtx.fillText(cleanCardTitle(s1.title, 'Governing Principles & Physical Setup'), 655, 65);
       fbCtx.fillStyle = '#f8fafc';
       fbCtx.font = '12px monospace';
       const s1Lines = (s1.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
@@ -660,7 +663,7 @@
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`• ${(s1.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 175);
 
-      // Card 2: Step 2
+      // Card 2: Mathematical Derivation & Algebraic Working
       fbCtx.fillStyle = 'rgba(56, 189, 248, 0.12)';
       fbCtx.strokeStyle = '#38bdf8';
       fbCtx.lineWidth = 1.5;
@@ -669,7 +672,7 @@
       fbCtx.stroke();
       fbCtx.fillStyle = '#38bdf8';
       fbCtx.font = 'bold 13px sans-serif';
-      fbCtx.fillText(`2. ${(s2.title || 'Step-by-Step Derivation & Substitution').toUpperCase()}`, 655, 240);
+      fbCtx.fillText(cleanCardTitle(s2.title, 'Mathematical Derivation & Substitution'), 655, 240);
       fbCtx.fillStyle = '#f8fafc';
       fbCtx.font = '12px monospace';
       const s2Lines = (s2.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
@@ -678,7 +681,7 @@
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`• ${(s2.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 375);
 
-      // Card 3: Step 3
+      // Card 3: Evaluated Result & Key Insight
       fbCtx.fillStyle = 'rgba(34, 197, 94, 0.14)';
       fbCtx.strokeStyle = '#22c55e';
       fbCtx.lineWidth = 1.5;
@@ -687,7 +690,7 @@
       fbCtx.stroke();
       fbCtx.fillStyle = '#22c55e';
       fbCtx.font = 'bold 13px sans-serif';
-      fbCtx.fillText(`3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}`, 655, 435);
+      fbCtx.fillText(cleanCardTitle(s3.title, 'Evaluated Solution & Physical Takeaway'), 655, 435);
       fbCtx.fillStyle = '#86efac';
       fbCtx.font = 'bold 13px monospace';
       const s3Lines = (s3.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
@@ -695,7 +698,6 @@
       fbCtx.fillStyle = '#cbd5e1';
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`Key Takeaway: ${(s3.explanation || '').replace(/\$+/g, '').slice(0, 85)}`, 655, 545);
-    };
 
       // Highlight active concept on fallback canvas if requested
       if (typeof activeConcept === 'number' && activeConcept >= 0 && activeConcept <= 3) {
@@ -737,9 +739,9 @@
     // ============================================================================
     // TEACHER CONCEPT PACING & SPOTLIGHT CONTROLLER
     // ============================================================================
-    const CONCEPT_DURATIONS = [7, 8, 10, 8]; // Diagram (7s), Step 1 (8s), Step 2 (10s), Step 3 (8s)
+    const CONCEPT_DURATIONS = [10, 12, 14, 10]; // Visual Model (10s), Governing Laws (12s), Derivation (14s), Result (10s)
     let currentConceptIndex = 0;
-    let pacingSecondsLeft = 7;
+    let pacingSecondsLeft = 10;
     let pacingInterval = null;
     let isPacingPaused = false;
     let cachedSmartboardPayload = null;
@@ -781,10 +783,10 @@
 
     function updatePacingUI() {
       const titles = [
-        '1. Visual Physical Diagram',
-        '2. Governing Principle & Stated Values',
-        '3. Step-by-Step Derivation & Substitution',
-        '4. Final Result & Exam Takeaway',
+        'Visual Physical Model & Coordinates',
+        'Governing Physical Principles & Laws',
+        'Mathematical Derivation & Working',
+        'Evaluated Solution & Exam Takeaway',
         'Full Board Complete'
       ];
       const statusEl = document.getElementById('wbStatusText');
@@ -792,7 +794,7 @@
         if (isPacingPaused) {
           statusEl.textContent = `⏸ Paused: ${titles[currentConceptIndex] || 'Smartboard'}`;
         } else if (currentConceptIndex <= 3) {
-          statusEl.textContent = `👨‍🏫 Dr. Vikram Teaching: [${currentConceptIndex + 1}/4] ${titles[currentConceptIndex]}`;
+          statusEl.textContent = `👨‍🏫 Dr. Vikram Teaching: ${titles[currentConceptIndex]}`;
         } else {
           statusEl.textContent = '✅ Full Lesson Complete • Ask Any Doubt Live!';
         }

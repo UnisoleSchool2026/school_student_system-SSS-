@@ -314,25 +314,25 @@ function applySpotlight(conceptIndex) {
     {
       x: 44, y: 239, w: 692, h: 507,
       color: 'light-blue',
-      label: '👨‍🏫 LIVE TEACHING: 1. Visual Physical Diagram & Coordinates',
+      label: '👨‍🏫 Dr. Vikram: Visual Physical Model & Coordinates',
       labelX: 50, labelY: 205
     },
     {
       x: 754, y: 44, w: 812, h: 237,
       color: 'yellow',
-      label: '👨‍🏫 LIVE TEACHING: 2. Stated Quantities & Primary Governing Law',
+      label: '👨‍🏫 Dr. Vikram: Governing Principles & Primary Law',
       labelX: 760, labelY: 12
     },
     {
       x: 754, y: 289, w: 812, h: 297,
       color: 'light-blue',
-      label: '👨‍🏫 LIVE TEACHING: 3. Mathematical Derivation & Algebraic Substitution',
+      label: '👨‍🏫 Dr. Vikram: Mathematical Derivation & Algebraic Working',
       labelX: 760, labelY: 257
     },
     {
       x: 754, y: 594, w: 812, h: 272,
       color: 'green',
-      label: '👨‍🏫 LIVE TEACHING: 4. Final Evaluated Answer & Key Exam Tip',
+      label: '👨‍🏫 Dr. Vikram: Evaluated Result & Exam Takeaway',
       labelX: 760, labelY: 562
     }
   ];
@@ -519,11 +519,11 @@ const WhiteboardController = {
     logTelemetry('WHITEBOARD_ACTION_SPOTLIGHT_CONCEPT', { conceptIndex });
     applySpotlight(conceptIndex);
     const titles = [
-      '1. Visual Physical Diagram',
-      '2. Stated Quantities & Governing Law',
-      '3. Step-by-Step Derivation & Substitution',
-      '4. Final Result & Exam Takeaway',
-      'Full Board Summary'
+      'Visual Physical Model',
+      'Governing Physical Principles',
+      'Mathematical Derivation & Working',
+      'Evaluated Solution & Takeaway',
+      'Full Board Complete'
     ];
     const lbl = titles[conceptIndex] || 'Synchronized Classroom Smartboard';
     if (window.updateUIProgress) {
@@ -557,9 +557,12 @@ const WhiteboardController = {
     const rx = BOARD_LAYOUT.COL_RIGHT_X;
     const rw = BOARD_LAYOUT.COL_RIGHT_W;
 
-    // 1. Given Setup & Governing Principle (Top Card)
+    // Helper to strip any numbered prefixes like "1. ", "Step 1: "
+    const cleanSectionTitle = (t, fallback) => (t || fallback).replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '').trim().toUpperCase();
+
+    // 1. Governing Principles & Physical Setup (Top Card)
     const s1 = sol.step1 || {
-      title: 'Given Setup & Governing Principle',
+      title: 'Governing Principles & Physical Setup',
       formula: 'State given physical quantities and fundamental law.',
       explanation: 'Establish foundational governing relation.'
     };
@@ -567,12 +570,10 @@ const WhiteboardController = {
     const s1CleanE = formatMathForWhiteboard(s1.explanation || '');
     const s1Note = s1.teacherNote || s1.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s1.teacherNote || s1.spokenScript)}"` : '';
     const s1Text = [
-      `1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}`,
+      cleanSectionTitle(s1.title, 'Governing Principles & Physical Setup'),
       '',
-      `Governing Formula & Parameters:`,
-      `${s1CleanF}`,
+      s1CleanF,
       '',
-      `Detailed Concept Explanation:`,
       `• ${s1CleanE}`,
       s1Note ? `\n${s1Note}` : ''
     ].filter(Boolean).join('\n');
@@ -592,9 +593,9 @@ const WhiteboardController = {
       }
     });
 
-    // 2. Step-by-Step Derivation & Substitution (Middle Card)
+    // 2. Mathematical Derivation & Working (Middle Card)
     const s2 = sol.step2 || {
-      title: 'Step-by-Step Derivation & Substitution',
+      title: 'Mathematical Derivation & Substitution',
       formula: 'Substitute known values and simplify algebraically.',
       explanation: 'Step-by-step resolution preserving SI units.'
     };
@@ -602,12 +603,10 @@ const WhiteboardController = {
     const s2CleanE = formatMathForWhiteboard(s2.explanation || '');
     const s2Note = s2.teacherNote || s2.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s2.teacherNote || s2.spokenScript)}"` : '';
     const s2Text = [
-      `2. ${(s2.title || 'Step-by-Step Derivation & Substitution').toUpperCase()}`,
+      cleanSectionTitle(s2.title, 'Mathematical Derivation & Substitution'),
       '',
-      `Algebraic Working & Substitution:`,
-      `${s2CleanF}`,
+      s2CleanF,
       '',
-      `Detailed Resolution:`,
       `• ${s2CleanE}`,
       s2Note ? `\n${s2Note}` : ''
     ].filter(Boolean).join('\n');
@@ -627,9 +626,9 @@ const WhiteboardController = {
       }
     });
 
-    // 3. Final Answer & Verified Result (Bottom Hero Card)
+    // 3. Evaluated Result & Exam Takeaway (Bottom Hero Card)
     const s3 = sol.step3 || {
-      title: 'Final Answer & Verified Result',
+      title: 'Evaluated Result & Physical Takeaway',
       formula: 'Calculated value with proper units.',
       explanation: 'Physical check confirms calculated magnitude.'
     };
@@ -637,13 +636,11 @@ const WhiteboardController = {
     const s3CleanE = formatMathForWhiteboard(s3.explanation || '');
     const s3Note = s3.teacherNote || s3.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s3.teacherNote || s3.spokenScript)}"` : '';
     const s3Text = [
-      `3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}`,
+      cleanSectionTitle(s3.title, 'Evaluated Result & Physical Takeaway'),
       '',
-      `Final Result with SI Units:`,
-      `${s3CleanF}`,
+      s3CleanF,
       '',
-      `Physical Sanity Check & Key Exam Takeaway:`,
-      `• ${s3CleanE}`,
+      `Key Takeaway: ${s3CleanE}`,
       s3Note ? `\n${s3Note}` : ''
     ].filter(Boolean).join('\n');
 

@@ -9517,8 +9517,8 @@ function buildLocalSmartboardPlan(qId) {
   let step3Title = 'Final Evaluated Answer & Verified Takeaway';
   let step3Working = `Final Answer: ${cleanLatexForClientVoice(rawS).slice(0, 80) || 'Calculated with SI standard'} ${ans ? `[Option ${ans}]` : ''}`;
   let step3Exp = 'Physical check confirms the calculated magnitude and sign convention.';
-  let s1Spoken = 'Pehle step mein stated physical parameters aur primary governing relation note karte hain.';
-  let s2Spoken = 'Ab second step mein known quantities substitute karke algebraic simplification karte hain.';
+  let s1Spoken = 'Pehle stated physical parameters aur primary governing relation note karte hain.';
+  let s2Spoken = 'Ab known quantities substitute karke algebraic derivation solve karte hain.';
   let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
 
   if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
