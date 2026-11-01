@@ -9480,47 +9480,11 @@ function syncQuestionToWhiteboard(qId) {
     }
   };
 
-  // 1. Initial Classroom Orientation (T = 0): Diagram on left, pedagogical roadmap on right
+  // 1. Initial Classroom Orientation: Question statement and diagram
   sendWhiteboardMessage(qId, {
     type: 'RENDER_ORIENTATION',
     payload: teachingPlan
   });
-
-  // 2. Focused Step 1 Teaching (T = 5.0s): Full right board dedicated to governing equations
-  const t1 = setTimeout(() => {
-    sendWhiteboardMessage(qId, {
-      type: 'RENDER_STEP_1',
-      payload: teachingPlan
-    });
-  }, 5000);
-  voiceTutorState.whiteboardSyncTimers.push(t1);
-
-  // 3. Focused Step 2 Teaching (T = 12.0s): Full right board dedicated to mathematical substitution
-  const t2 = setTimeout(() => {
-    sendWhiteboardMessage(qId, {
-      type: 'RENDER_STEP_2',
-      payload: teachingPlan
-    });
-  }, 12000);
-  voiceTutorState.whiteboardSyncTimers.push(t2);
-
-  // 4. Focused Step 3 Teaching (T = 19.0s): Full right board dedicated to moment of inertia and calculation
-  const t3 = setTimeout(() => {
-    sendWhiteboardMessage(qId, {
-      type: 'RENDER_STEP_3',
-      payload: teachingPlan
-    });
-  }, 19000);
-  voiceTutorState.whiteboardSyncTimers.push(t3);
-
-  // 5. Full Board Master Summary (T = 26.0s): 3 clean stacked cards + final answer hero box
-  const t4 = setTimeout(() => {
-    sendWhiteboardMessage(qId, {
-      type: 'RENDER_FULL_SUMMARY',
-      payload: teachingPlan
-    });
-  }, 26000);
-  voiceTutorState.whiteboardSyncTimers.push(t4);
 }
 
 function syncDoubtToWhiteboard(qId, doubtText, answerText) {

@@ -394,32 +394,10 @@ const WhiteboardController = {
     const diag = plan.diagram || { type: 'rolling_incline', label: 'Rolling Sphere on Incline' };
     this.drawPhysicsDiagram(diag.type || 'rolling_incline', diag);
 
-    const rx = BOARD_LAYOUT.COL_RIGHT_X;
-    const rw = BOARD_LAYOUT.COL_RIGHT_W;
-
-    const roadmapShape = safeCreateShape({
-      type: 'geo',
-      x: rx,
-      y: 50,
-      props: {
-        geo: 'rectangle',
-        w: rw,
-        h: 745,
-        color: 'blue',
-        fill: 'semi',
-        size: 's',
-        richText: toRichText(`AI CLASSROOM SMARTBOARD • PEDAGOGICAL ROADMAP\n\nChapter: ${(qHeader.chapter || 'Senior Physics').toUpperCase()}\n\n1. Visual Physical System (Left Smartboard):\n• Detailed Free-Body Diagram with incline angle θ and sphere mass M, radius R\n• Gravitational components: Downhill M·g·sin θ and Normal M·g·cos θ\n• Static friction f_s acts uphill at contact point P, providing pure roll\n• Instantaneous center of rotation: Point P is at rest (zero relative sliding)\n\n2. Progressive Derivation Roadmap:\n• Step 1: Formulate linear motion & torque governing equations\n• Step 2: Apply pure rolling condition (a = α·R) & substitute friction force\n• Step 3: Insert specific moment of inertia (I = ⅖ MR²) & calculate linear acceleration\n• Step 4: Final Answer & Key Exam Takeaway\n\nClassroom Status: Teacher Dr. Vikram is starting the lesson...`)
-      }
-    });
-
-    rightColumnStepShapeIds.roadmap = roadmapShape ? roadmapShape.id : null;
-    rightColumnStepShapeIds.step1 = null;
-    rightColumnStepShapeIds.step2 = null;
-    rightColumnStepShapeIds.step3 = null;
-    rightColumnStepShapeIds.final = null;
+    this.clearRightBoard();
 
     if (window.updateUIProgress) {
-      window.updateUIProgress(0, 'Voice Tutor Teaching: 1. Visual Diagram');
+      window.updateUIProgress(0, 'Voice Tutor Teaching: Interactive Whiteboard');
     }
 
     this.zoomFit();
@@ -428,151 +406,13 @@ const WhiteboardController = {
   renderStepProgressive(targetStep = 1, plan = null) {
     logTelemetry('WHITEBOARD_ACTION_STEP_PROGRESSIVE', { targetStep });
     if (plan) currentPlanCache = plan;
-    const p = currentPlanCache || {};
     currentStepNumber = targetStep;
 
-    const rx = BOARD_LAYOUT.COL_RIGHT_X;
-    const rw = BOARD_LAYOUT.COL_RIGHT_W;
-
-    if (!editorInstance) {
-      if (window.setFallbackStepMode) window.setFallbackStepMode({ stepNum: targetStep, plan: p });
-      return;
-    }
-
-    // If initial roadmap card is still on right board, delete it so steps can write cleanly
-    if (rightColumnStepShapeIds.roadmap) {
-      try {
-        editorInstance.deleteShapes([rightColumnStepShapeIds.roadmap]);
-      } catch (e) {}
-      rightColumnStepShapeIds.roadmap = null;
-    }
-
-    // Helper: Ensure Step 1 is rendered (Kept on board!)
-    const ensureStep1 = () => {
-      if (rightColumnStepShapeIds.step1) return;
-      const s1 = p.step1 || {
-        title: 'Governing Principles & Equations',
-        formula: '• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R',
-        explanation: 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.'
-      };
-      const cleanFormula = formatMathForWhiteboard(s1.formula || '');
-      const cleanExp = formatMathForWhiteboard(s1.explanation || '');
-      const shape = safeCreateShape({
-        type: 'geo',
-        x: rx,
-        y: BOARD_LAYOUT.STEP1_Y,
-        props: {
-          geo: 'rectangle',
-          w: rw,
-          h: BOARD_LAYOUT.STEP1_H,
-          color: 'yellow',
-          fill: 'semi',
-          size: 's',
-          richText: toRichText(`1. ${(s1.title || 'Governing Equations').toUpperCase()}\n\n${cleanFormula}\n\n• ${cleanExp}`)
-        }
-      });
-      if (shape) rightColumnStepShapeIds.step1 = shape.id;
-    };
-
-    // Helper: Ensure Step 2 is rendered (Kept on board!)
-    const ensureStep2 = () => {
-      if (rightColumnStepShapeIds.step2) return;
-      const s2 = p.step2 || {
-        title: 'Mathematical Substitution & Working',
-        formula: '1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]',
-        explanation: 'This general acceleration equation applies to all rolling symmetrical objects.'
-      };
-      const cleanFormula = formatMathForWhiteboard(s2.formula || '');
-      const cleanExp = formatMathForWhiteboard(s2.explanation || '');
-      const shape = safeCreateShape({
-        type: 'geo',
-        x: rx,
-        y: BOARD_LAYOUT.STEP2_Y,
-        props: {
-          geo: 'rectangle',
-          w: rw,
-          h: BOARD_LAYOUT.STEP2_H,
-          color: 'light-blue',
-          fill: 'semi',
-          size: 's',
-          richText: toRichText(`2. ${(s2.title || 'Substitution & Working').toUpperCase()}\n\n${cleanFormula}\n\n• ${cleanExp}`)
-        }
-      });
-      if (shape) rightColumnStepShapeIds.step2 = shape.id;
-    };
-
-    // Helper: Ensure Step 3 is rendered (Kept on board!)
-    const ensureStep3 = () => {
-      if (rightColumnStepShapeIds.step3) return;
-      const s3 = p.step3 || {
-        title: 'Moment of Inertia & Exact Derivation',
-        formula: '• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ',
-        explanation: 'Solid sphere accelerates faster than hollow sphere due to lower rotational inertia.'
-      };
-      const cleanFormula = formatMathForWhiteboard(s3.formula || '');
-      const cleanExp = formatMathForWhiteboard(s3.explanation || '');
-      const shape = safeCreateShape({
-        type: 'geo',
-        x: rx,
-        y: BOARD_LAYOUT.STEP3_Y,
-        props: {
-          geo: 'rectangle',
-          w: rw,
-          h: BOARD_LAYOUT.STEP3_H,
-          color: 'violet',
-          fill: 'semi',
-          size: 's',
-          richText: toRichText(`3. ${(s3.title || 'Moment of Inertia & Calculation').toUpperCase()}\n\n${cleanFormula}\n\n• ${cleanExp}`)
-        }
-      });
-      if (shape) rightColumnStepShapeIds.step3 = shape.id;
-    };
-
-    // Helper: Ensure Final Answer is rendered (Kept on board!)
-    const ensureFinal = () => {
-      if (rightColumnStepShapeIds.final) return;
-      const finalAns = p.final || {
-        answer: 'Linear Acceleration: a = (5/7) · g · sin θ  [Option B]',
-        keyInsight: 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Mechanical energy is conserved.'
-      };
-      const cleanAns = formatMathForWhiteboard(finalAns.answer || '');
-      const cleanInsight = formatMathForWhiteboard(finalAns.keyInsight || '');
-      const shape = safeCreateShape({
-        type: 'geo',
-        x: rx,
-        y: BOARD_LAYOUT.FINAL_Y,
-        props: {
-          geo: 'rectangle',
-          w: rw,
-          h: BOARD_LAYOUT.FINAL_H,
-          color: 'green',
-          fill: 'semi',
-          size: 's',
-          richText: toRichText(`FINAL ANSWER & VERIFIED TAKEAWAY:\n\n${cleanAns}\n\nExam Key: ${cleanInsight}`)
-        }
-      });
-      if (shape) rightColumnStepShapeIds.final = shape.id;
-    };
-
-    // Progressively accumulate steps: NEVER erase earlier steps!
-    if (targetStep === 1) {
-      ensureStep1();
-    } else if (targetStep === 2) {
-      ensureStep1();
-      ensureStep2();
-    } else if (targetStep === 3) {
-      ensureStep1();
-      ensureStep2();
-      ensureStep3();
-    } else if (targetStep >= 4) {
-      ensureStep1();
-      ensureStep2();
-      ensureStep3();
-      ensureFinal();
-    }
+    // Keep right board clear of automated step boxes per classroom pedagogical preferences
+    this.clearRightBoard();
 
     if (window.updateUIProgress) {
-      window.updateUIProgress(targetStep);
+      window.updateUIProgress(targetStep, 'Voice Tutor Teaching: Interactive Whiteboard');
     }
 
     this.zoomFit();
