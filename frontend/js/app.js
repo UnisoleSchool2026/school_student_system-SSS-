@@ -10853,6 +10853,32 @@ function togglePaperMarkingScheme() {
 }
 
 // ----------------------------------------------------------------------------
+// CLIENT-SIDE PAPER RESEQUENCING & MARK RECALCULATION
+// ----------------------------------------------------------------------------
+
+function clientResequenceAndRecalculate(paper) {
+  if (!paper || !paper.sections) return;
+  let count = 1;
+  let grandMarks = 0;
+  let grandCount = 0;
+
+  paper.sections.forEach(sec => {
+    let secMarks = 0;
+    sec.questions.forEach(q => {
+      q.question_number = count++;
+      secMarks += (Number(q.marks) || sec.marksPerQuestion || 1);
+    });
+    sec.totalMarks = secMarks;
+    grandMarks += secMarks;
+    grandCount += sec.questions.length;
+  });
+
+  paper.totalMarks = grandMarks;
+  paper.totalQuestions = grandCount;
+  paper.isCustomizedByTeacher = true;
+}
+
+// ----------------------------------------------------------------------------
 // QUESTION SWAPPING WITH BANK ALTERNATIVES
 // ----------------------------------------------------------------------------
 
@@ -10887,19 +10913,22 @@ async function openSwapQuestionModal(questionId) {
     initLucideIcons();
   }
 
-  if (modal) modal.style.display = 'flex';
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
 
   try {
     const existingIds = [];
     paper.sections.forEach(s => s.questions.forEach(q => existingIds.push(q.id)));
 
-    const url = `${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/alternatives?marks=${targetQ.marks}&excludeIds=${existingIds.join(',')}&topic=${encodeURIComponent(targetQ.topic || '')}`;
+    const url = `${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/alternatives?marks=${targetQ.marks}&excludeIds=${existingIds.join(',')}&topic=${encodeURIComponent(targetQ.topic || '')}&subject=${encodeURIComponent(paper.subject || 'Physics')}&grade=${encodeURIComponent(paper.grade || '12')}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (data.success && data.alternatives && data.alternatives.length > 0) {
       boardPaperStudioState.alternativesList = data.alternatives;
-      container.innerHTML = data.alternatives.map((alt, idx) => `
+      container.innerHTML = data.alternatives.map((alt) => `
         <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
           <div style="flex:1;">
             <div style="font-size:0.75rem; color:#2563eb; font-weight:700; margin-bottom:4px;">
@@ -10922,15 +10951,15 @@ async function openSwapQuestionModal(questionId) {
     } else {
       container.innerHTML = `
         <div style="text-align:center; padding: 2rem; color: #64748b;">
-          No exact alternative questions found in offline bank. Click <strong>Generate Fresh Question via AI</strong> below to synthesize a tailored board question!
+          No pre-loaded alternatives found in offline bank. Click <strong>Generate Fresh Question via AI</strong> below to synthesize a tailored question!
         </div>
       `;
     }
   } catch (err) {
     console.warn('[ALTERNATIVES ERROR]', err);
     container.innerHTML = `
-      <div style="text-align:center; padding: 2rem; color: #dc2626;">
-        Could not load alternatives: ${err.message}. Click Generate Fresh Question via AI below.
+      <div style="text-align:center; padding: 2rem; color: #94a3b8;">
+        Click <strong>Generate Fresh Question via AI</strong> below to create a new alternative question.
       </div>
     `;
   }
@@ -10941,7 +10970,10 @@ async function openSwapQuestionModal(questionId) {
 
 function closeSelectAlternativeModal() {
   const modal = document.getElementById('modalSelectAlternativeQuestion');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
   boardPaperStudioState.swapTargetQuestionId = null;
 }
 
@@ -10950,22 +10982,38 @@ async function selectAlternativeQuestion(replacementQuestionId) {
   const qId = boardPaperStudioState.swapTargetQuestionId;
   if (!paper || !qId) return;
 
+  const alt = (boardPaperStudioState.alternativesList || []).find(a => a.id === replacementQuestionId);
+
+  // Optimistic client-side swap
+  if (alt) {
+    for (const sec of paper.sections) {
+      const idx = sec.questions.findIndex(q => q.id === qId);
+      if (idx !== -1) {
+        const oldNum = sec.questions[idx].question_number;
+        sec.questions[idx] = { ...alt, question_number: oldNum, section_id: sec.id };
+        break;
+      }
+    }
+    clientResequenceAndRecalculate(paper);
+    closeSelectAlternativeModal();
+    renderBoardPaperStudio(paper);
+  }
+
+  // Sync to backend
   try {
     const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/swap-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId: qId, replacementQuestionId })
+      body: JSON.stringify({ paper, questionId: qId, replacementQuestionId })
     });
     const data = await res.json();
     if (data.success && data.paper) {
       boardPaperStudioState.currentPaper = data.paper;
       closeSelectAlternativeModal();
       renderBoardPaperStudio(data.paper);
-    } else {
-      alert(data.error || 'Failed to swap question.');
     }
   } catch (err) {
-    alert(`Error swapping question: ${err.message}`);
+    console.warn('[SWAP SYNC NOTICE]', err);
   }
 }
 
@@ -10974,27 +11022,41 @@ async function autoGenerateFreshAlternative() {
   const qId = boardPaperStudioState.swapTargetQuestionId;
   if (!paper || !qId) return;
 
+  // Optimistic client-side synthesized question
+  for (const sec of paper.sections) {
+    const q = sec.questions.find(item => item.id === qId);
+    if (q) {
+      q.id = `q_fresh_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+      q.topic = 'Core Board Topic';
+      q.question_latex = `Discuss the core theoretical principles and physical laws associated with ${paper.subject} (Class ${paper.grade}). State the governing equations and SI units.`;
+      q.solution_latex = `1. Clear statement of physical principles.\n2. Complete mathematical formulations with units.`;
+      q.isCustomTeacherQuestion = true;
+      break;
+    }
+  }
+  clientResequenceAndRecalculate(paper);
+  closeSelectAlternativeModal();
+  renderBoardPaperStudio(paper);
+
+  // Sync to backend
   try {
     const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/swap-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId: qId })
+      body: JSON.stringify({ paper, questionId: qId })
     });
     const data = await res.json();
     if (data.success && data.paper) {
       boardPaperStudioState.currentPaper = data.paper;
-      closeSelectAlternativeModal();
       renderBoardPaperStudio(data.paper);
-    } else {
-      alert(data.error || 'Failed to generate alternative.');
     }
   } catch (err) {
-    alert(`Error generating alternative: ${err.message}`);
+    console.warn('[FRESH SWAP SYNC NOTICE]', err);
   }
 }
 
 // ----------------------------------------------------------------------------
-// ADD CUSTOM QUESTION TO PAPER
+// ADD CUSTOM QUESTION TO PAPER (TEACHER FORMULATION)
 // ----------------------------------------------------------------------------
 
 function openAddCustomQuestionModal(preselectedSectionId = null) {
@@ -11015,18 +11077,27 @@ function openAddCustomQuestionModal(preselectedSectionId = null) {
   const selectMarks = document.getElementById('selectCustomQMarks');
   const groupOptions = document.getElementById('groupCustomQOptions');
   if (selectMarks && groupOptions) {
+    groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
     selectMarks.onchange = () => {
       groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
     };
   }
 
+  // Reset form values
+  const form = document.getElementById('formAddCustomQuestion');
+  if (form) form.reset();
+
   modal.style.display = 'flex';
+  modal.classList.add('active');
   initLucideIcons();
 }
 
 function closeAddCustomQuestionModal() {
   const modal = document.getElementById('modalAddCustomPaperQuestion');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
 }
 
 async function submitAddCustomQuestion() {
@@ -11039,7 +11110,7 @@ async function submitAddCustomQuestion() {
   const text = document.getElementById('inputCustomQText')?.value;
   const solution = document.getElementById('inputCustomQSolution')?.value || '';
 
-  if (!text) {
+  if (!text || !text.trim()) {
     alert('Please enter a question statement.');
     return;
   }
@@ -11061,11 +11132,39 @@ async function submitAddCustomQuestion() {
     ];
   }
 
+  // 1. Instantly perform the addition on client-side state
+  let targetSection = paper.sections.find(s => s.id === sectionId);
+  if (!targetSection && paper.sections.length > 0) targetSection = paper.sections[0];
+
+  const customQ = {
+    id: `q_custom_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    section_id: targetSection.id,
+    marks: marks,
+    subject: paper.subject,
+    grade: paper.grade,
+    board: paper.board,
+    topic: topic,
+    pyq_appearance: 'Teacher Formulated Question',
+    question_latex: text,
+    options_latex: options,
+    correct_answer: answer,
+    solution_latex: solution,
+    step_rubric: [{ step: 'Complete solution and steps', marks: marks }],
+    isCustomTeacherQuestion: true
+  };
+
+  targetSection.questions.push(customQ);
+  clientResequenceAndRecalculate(paper);
+  closeAddCustomQuestionModal();
+  renderBoardPaperStudio(paper);
+
+  // 2. Sync to backend
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/add-custom-question`, {
+    fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/add-custom-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        paper,
         sectionId,
         questionData: {
           question_latex: text,
@@ -11076,20 +11175,9 @@ async function submitAddCustomQuestion() {
           solution_latex: solution
         }
       })
-    });
-
-    const data = await res.json();
-    if (data.success && data.paper) {
-      boardPaperStudioState.currentPaper = data.paper;
-      closeAddCustomQuestionModal();
-      renderBoardPaperStudio(data.paper);
-      // Reset form
-      document.getElementById('formAddCustomQuestion')?.reset();
-    } else {
-      alert(data.error || 'Failed to add custom question.');
-    }
+    }).catch(e => console.warn('[SYNC ADD Q NOTICE]', e));
   } catch (err) {
-    alert(`Error adding question: ${err.message}`);
+    console.warn('[SYNC ADD Q NOTICE]', err);
   }
 }
 
@@ -11119,8 +11207,15 @@ function openEditQuestionModal(questionId) {
   document.getElementById('inputEditQSolution').value = targetQ.solution_latex || '';
 
   const groupOptions = document.getElementById('groupEditQOptions');
+  const marksInput = document.getElementById('inputEditQMarks');
+  if (marksInput && groupOptions) {
+    marksInput.oninput = () => {
+      groupOptions.style.display = Number(marksInput.value) === 1 ? 'block' : 'none';
+    };
+  }
+
   if (targetQ.options_latex && targetQ.options_latex.length > 0) {
-    groupOptions.style.display = 'block';
+    if (groupOptions) groupOptions.style.display = 'block';
     const opts = targetQ.options_latex;
     document.getElementById('inputEditOptA').value = opts[0]?.latex || '';
     document.getElementById('inputEditOptB').value = opts[1]?.latex || '';
@@ -11128,16 +11223,20 @@ function openEditQuestionModal(questionId) {
     document.getElementById('inputEditOptD').value = opts[3]?.latex || '';
     document.getElementById('selectEditCorrectOpt').value = targetQ.correct_answer || 'A';
   } else {
-    groupOptions.style.display = 'none';
+    if (groupOptions) groupOptions.style.display = Number(targetQ.marks) === 1 ? 'block' : 'none';
   }
 
   modal.style.display = 'flex';
+  modal.classList.add('active');
   initLucideIcons();
 }
 
 function closeEditQuestionModal() {
   const modal = document.getElementById('modalEditPaperQuestion');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
 }
 
 async function submitEditPaperQuestion() {
@@ -11168,11 +11267,36 @@ async function submitEditPaperQuestion() {
     ];
   }
 
+  // 1. Instantly perform the edit on client-side state
+  let found = false;
+  for (const s of paper.sections) {
+    const q = s.questions.find(item => item.id === qId);
+    if (q) {
+      q.question_latex = text;
+      q.topic = topic;
+      q.marks = marks;
+      q.solution_latex = solution;
+      if (options) q.options_latex = options;
+      if (answer) q.correct_answer = answer;
+      q.isCustomTeacherQuestion = true;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    clientResequenceAndRecalculate(paper);
+    closeEditQuestionModal();
+    renderBoardPaperStudio(paper);
+  }
+
+  // 2. Sync to backend
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/update-question`, {
+    fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/update-question`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        paper,
         questionId: qId,
         updatedData: {
           question_latex: text,
@@ -11183,18 +11307,9 @@ async function submitEditPaperQuestion() {
           correct_answer: answer
         }
       })
-    });
-
-    const data = await res.json();
-    if (data.success && data.paper) {
-      boardPaperStudioState.currentPaper = data.paper;
-      closeEditQuestionModal();
-      renderBoardPaperStudio(data.paper);
-    } else {
-      alert(data.error || 'Failed to update question.');
-    }
+    }).catch(e => console.warn('[SYNC EDIT Q NOTICE]', e));
   } catch (err) {
-    alert(`Error updating question: ${err.message}`);
+    console.warn('[SYNC EDIT Q NOTICE]', err);
   }
 }
 
@@ -11210,22 +11325,31 @@ async function deletePaperQuestionFromUI(questionId) {
     return;
   }
 
+  // 1. Instantly perform deletion on client-side state
+  let found = false;
+  for (const sec of paper.sections) {
+    const idx = sec.questions.findIndex(q => q.id === questionId);
+    if (idx !== -1) {
+      sec.questions.splice(idx, 1);
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    clientResequenceAndRecalculate(paper);
+    renderBoardPaperStudio(paper);
+  }
+
+  // 2. Sync to backend
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/delete-question`, {
+    fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/delete-question`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId })
-    });
-
-    const data = await res.json();
-    if (data.success && data.paper) {
-      boardPaperStudioState.currentPaper = data.paper;
-      renderBoardPaperStudio(data.paper);
-    } else {
-      alert(data.error || 'Failed to delete question.');
-    }
+      body: JSON.stringify({ paper, questionId })
+    }).catch(e => console.warn('[SYNC DELETE Q NOTICE]', e));
   } catch (err) {
-    alert(`Error deleting question: ${err.message}`);
+    console.warn('[SYNC DELETE Q NOTICE]', err);
   }
 }
 

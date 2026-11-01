@@ -841,9 +841,14 @@ router.get('/board-paper/:id', (req, res) => {
 router.post('/board-paper/:id/swap-question', (req, res) => {
   try {
     const { id } = req.params;
-    const { questionId, replacementQuestionId = null, customQuestion = null } = req.body;
+    const questionId = req.body.questionId || req.body.targetQuestionId;
+    const replacementQuestionId = req.body.replacementQuestionId || req.body.newQuestionId || null;
+    const customQuestion = req.body.customQuestion || null;
 
     let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper && req.body.paper) {
+      paper = req.body.paper;
+    }
     if (!paper) {
       const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
       if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
@@ -875,7 +880,7 @@ router.post('/board-paper/:id/swap-question', (req, res) => {
 router.get('/board-paper/:id/alternatives', (req, res) => {
   try {
     const { id } = req.params;
-    const { marks = 1, excludeIds = '', topic = null } = req.query;
+    const { marks = 1, excludeIds = '', topic = null, subject: querySubject, grade: queryGrade } = req.query;
 
     let paper = inMemoryStore.generatedBoardPapers[id];
     if (!paper) {
@@ -883,8 +888,8 @@ router.get('/board-paper/:id/alternatives', (req, res) => {
       if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
     }
 
-    const subject = paper ? paper.subject : 'Physics';
-    const grade = paper ? paper.grade : '12';
+    const subject = querySubject || (paper ? paper.subject : 'Physics');
+    const grade = queryGrade || (paper ? paper.grade : '12');
     const excludeArr = excludeIds ? excludeIds.split(',') : [];
 
     const alternatives = getAlternativeQuestions({
@@ -908,6 +913,9 @@ router.post('/board-paper/:id/add-custom-question', (req, res) => {
     const { sectionId, questionData } = req.body;
 
     let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper && req.body.paper) {
+      paper = req.body.paper;
+    }
     if (!paper) {
       const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
       if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
@@ -940,6 +948,9 @@ router.put('/board-paper/:id/update-question', (req, res) => {
     const { questionId, updatedData } = req.body;
 
     let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper && req.body.paper) {
+      paper = req.body.paper;
+    }
     if (!paper) {
       const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
       if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
@@ -971,6 +982,9 @@ router.delete('/board-paper/:id/delete-question', (req, res) => {
     const { questionId } = req.body;
 
     let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper && req.body.paper) {
+      paper = req.body.paper;
+    }
     if (!paper) {
       const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
       if (asgn && asgn.paperStructure) paper = asgn.paperStructure;

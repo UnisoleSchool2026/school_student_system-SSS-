@@ -1279,17 +1279,20 @@ button:active,
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 100050;
   padding: 1.5rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
-.drilldown-modal-backdrop.active {
-  opacity: 1;
-  pointer-events: auto;
-  cursor: pointer;
+.drilldown-modal-backdrop.active,
+.drilldown-modal-backdrop[style*="display: flex"],
+.drilldown-modal-backdrop[style*="display:flex"] {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 100050 !important;
+  display: flex !important;
 }
 
 .drilldown-modal-content {
