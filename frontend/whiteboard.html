@@ -595,25 +595,35 @@
         window.drawFallbackHeader(plan.questionHeader?.title, plan.questionHeader?.chapter, plan.questionHeader?.marks);
         window.drawFallbackDiagram('rolling_incline', plan.diagram);
       } else if (step === 1) {
-        window.clearFallbackRight();
         window.drawFallbackStep(1, plan.step1?.title || 'Governing Equations', plan.step1?.formula, plan.step1?.explanation);
       } else if (step === 2) {
-        window.clearFallbackRight();
+        window.drawFallbackStep(1, plan.step1?.title || 'Governing Equations', plan.step1?.formula, plan.step1?.explanation);
         window.drawFallbackStep(2, plan.step2?.title || 'Torque & Linear Substitution', plan.step2?.formula, plan.step2?.explanation);
       } else if (step === 3) {
-        window.clearFallbackRight();
+        window.drawFallbackStep(1, plan.step1?.title || 'Governing Equations', plan.step1?.formula, plan.step1?.explanation);
+        window.drawFallbackStep(2, plan.step2?.title || 'Torque & Linear Substitution', plan.step2?.formula, plan.step2?.explanation);
         window.drawFallbackStep(3, plan.step3?.title || 'Moment of Inertia & Calc', plan.step3?.formula, plan.step3?.explanation);
       } else if (step >= 4) {
-        window.clearFallbackRight();
-        window.drawFallbackStep(1, 'Governing Equations', plan.step1?.formula, '');
-        window.drawFallbackStep(2, 'Substitution', plan.step2?.formula, '');
-        window.drawFallbackStep(3, 'Final Calculation', plan.step3?.formula, '');
+        window.drawFallbackStep(1, plan.step1?.title || 'Governing Equations', plan.step1?.formula, plan.step1?.explanation);
+        window.drawFallbackStep(2, plan.step2?.title || 'Torque & Linear Substitution', plan.step2?.formula, plan.step2?.explanation);
+        window.drawFallbackStep(3, plan.step3?.title || 'Moment of Inertia & Calc', plan.step3?.formula, plan.step3?.explanation);
         window.drawFallbackFinal(plan.final?.answer || 'a = (5/7)·g·sin θ', plan.final?.keyInsight);
       }
     };
 
     // Global step controller
     window.currentWhiteboardStep = 0;
+    window.updateUIProgress = function(step, statusText) {
+      window.currentWhiteboardStep = step;
+      document.querySelectorAll('.wb-step-btn[data-step]').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.step) === step);
+      });
+      if (statusText) {
+        const textEl = document.getElementById('wbStatusText');
+        if (textEl) textEl.textContent = statusText;
+      }
+    };
+
     window.wbChangeStep = function(step) {
       window.currentWhiteboardStep = step;
       document.querySelectorAll('.wb-step-btn[data-step]').forEach(btn => {
@@ -637,10 +647,7 @@
       if (!msg) return;
       if (msg.type === 'SET_STEP_MODE' && typeof msg.payload?.stepNum === 'number') {
         const s = msg.payload.stepNum;
-        window.currentWhiteboardStep = s;
-        document.querySelectorAll('.wb-step-btn[data-step]').forEach(btn => {
-          btn.classList.toggle('active', parseInt(btn.dataset.step) === s);
-        });
+        window.updateUIProgress(s);
       }
     });
   </script>
