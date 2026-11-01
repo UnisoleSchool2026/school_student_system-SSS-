@@ -293,6 +293,82 @@ const rightColumnStepShapeIds = {
   final: null
 };
 
+let currentSpotlightShapeIds = [];
+
+function clearSpotlight() {
+  if (!editorInstance) return;
+  if (currentSpotlightShapeIds.length > 0) {
+    try {
+      editorInstance.deleteShapes(currentSpotlightShapeIds);
+    } catch (e) {}
+    currentSpotlightShapeIds = [];
+  }
+}
+
+function applySpotlight(conceptIndex) {
+  clearSpotlight();
+  if (!editorInstance) return;
+  if (typeof conceptIndex !== 'number' || conceptIndex < 0 || conceptIndex > 3) return;
+
+  const configs = [
+    {
+      x: 44, y: 239, w: 692, h: 507,
+      color: 'light-blue',
+      label: '👨‍🏫 LIVE TEACHING: 1. Visual Physical Diagram & Coordinates',
+      labelX: 50, labelY: 205
+    },
+    {
+      x: 754, y: 44, w: 812, h: 237,
+      color: 'yellow',
+      label: '👨‍🏫 LIVE TEACHING: 2. Stated Quantities & Primary Governing Law',
+      labelX: 760, labelY: 12
+    },
+    {
+      x: 754, y: 289, w: 812, h: 297,
+      color: 'light-blue',
+      label: '👨‍🏫 LIVE TEACHING: 3. Mathematical Derivation & Algebraic Substitution',
+      labelX: 760, labelY: 257
+    },
+    {
+      x: 754, y: 594, w: 812, h: 272,
+      color: 'green',
+      label: '👨‍🏫 LIVE TEACHING: 4. Final Evaluated Answer & Key Exam Tip',
+      labelX: 760, labelY: 562
+    }
+  ];
+
+  const cfg = configs[conceptIndex];
+  if (!cfg) return;
+
+  const box = safeCreateShape({
+    type: 'geo',
+    x: cfg.x,
+    y: cfg.y,
+    props: {
+      geo: 'rectangle',
+      w: cfg.w,
+      h: cfg.h,
+      color: cfg.color,
+      fill: 'none',
+      dash: 'dashed',
+      size: 'm'
+    }
+  });
+  if (box && box.id) currentSpotlightShapeIds.push(box.id);
+
+  const tag = safeCreateShape({
+    type: 'text',
+    x: cfg.labelX,
+    y: cfg.labelY,
+    props: {
+      richText: toRichText(cfg.label),
+      size: 's',
+      color: cfg.color
+    }
+  });
+  if (tag && tag.id) currentSpotlightShapeIds.push(tag.id);
+}
+
 const WhiteboardController = {
   isReady() {
     return !!editorInstance;
@@ -439,8 +515,28 @@ const WhiteboardController = {
     this.renderStepProgressive(stepNum, currentPlanCache);
   },
 
+  spotlightConcept(conceptIndex) {
+    logTelemetry('WHITEBOARD_ACTION_SPOTLIGHT_CONCEPT', { conceptIndex });
+    applySpotlight(conceptIndex);
+    const titles = [
+      '1. Visual Physical Diagram',
+      '2. Stated Quantities & Governing Law',
+      '3. Step-by-Step Derivation & Substitution',
+      '4. Final Result & Exam Takeaway',
+      'Full Board Summary'
+    ];
+    const lbl = titles[conceptIndex] || 'Synchronized Classroom Smartboard';
+    if (window.updateUIProgress) {
+      window.updateUIProgress(conceptIndex, `👨‍🏫 Dr. Vikram Teaching: ${lbl}`);
+    }
+    try {
+      window.parent.postMessage({ type: 'WB_CONCEPT_CHANGED', conceptIndex, title: lbl }, '*');
+    } catch (e) {}
+  },
+
   renderSmartboardSolution(payload = {}) {
     logTelemetry('WHITEBOARD_ACTION_RENDER_SMARTBOARD_SOLUTION');
+    currentPlanCache = payload;
     this.clear();
 
     const qHeader = payload.questionHeader || {
@@ -469,6 +565,17 @@ const WhiteboardController = {
     };
     const s1CleanF = formatMathForWhiteboard(s1.formula || '');
     const s1CleanE = formatMathForWhiteboard(s1.explanation || '');
+    const s1Note = s1.teacherNote || s1.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s1.teacherNote || s1.spokenScript)}"` : '';
+    const s1Text = [
+      `1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}`,
+      '',
+      `Governing Formula & Parameters:`,
+      `${s1CleanF}`,
+      '',
+      `Detailed Concept Explanation:`,
+      `• ${s1CleanE}`,
+      s1Note ? `\n${s1Note}` : ''
+    ].filter(Boolean).join('\n');
 
     safeCreateShape({
       type: 'geo',
@@ -477,11 +584,11 @@ const WhiteboardController = {
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 220,
+        h: 225,
         color: 'yellow',
         fill: 'semi',
         size: 's',
-        richText: toRichText(`1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}\n\n${s1CleanF}\n\n• ${s1CleanE}`)
+        richText: toRichText(s1Text)
       }
     });
 
@@ -493,19 +600,30 @@ const WhiteboardController = {
     };
     const s2CleanF = formatMathForWhiteboard(s2.formula || '');
     const s2CleanE = formatMathForWhiteboard(s2.explanation || '');
+    const s2Note = s2.teacherNote || s2.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s2.teacherNote || s2.spokenScript)}"` : '';
+    const s2Text = [
+      `2. ${(s2.title || 'Step-by-Step Derivation & Substitution').toUpperCase()}`,
+      '',
+      `Algebraic Working & Substitution:`,
+      `${s2CleanF}`,
+      '',
+      `Detailed Resolution:`,
+      `• ${s2CleanE}`,
+      s2Note ? `\n${s2Note}` : ''
+    ].filter(Boolean).join('\n');
 
     safeCreateShape({
       type: 'geo',
       x: rx,
-      y: 290,
+      y: 295,
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 275,
+        h: 285,
         color: 'light-blue',
         fill: 'semi',
         size: 's',
-        richText: toRichText(`2. ${(s2.title || 'Derivation & Substitution').toUpperCase()}\n\n${s2CleanF}\n\n• ${s2CleanE}`)
+        richText: toRichText(s2Text)
       }
     });
 
@@ -517,27 +635,41 @@ const WhiteboardController = {
     };
     const s3CleanF = formatMathForWhiteboard(s3.formula || '');
     const s3CleanE = formatMathForWhiteboard(s3.explanation || '');
+    const s3Note = s3.teacherNote || s3.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s3.teacherNote || s3.spokenScript)}"` : '';
+    const s3Text = [
+      `3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}`,
+      '',
+      `Final Result with SI Units:`,
+      `${s3CleanF}`,
+      '',
+      `Physical Sanity Check & Key Exam Takeaway:`,
+      `• ${s3CleanE}`,
+      s3Note ? `\n${s3Note}` : ''
+    ].filter(Boolean).join('\n');
 
     safeCreateShape({
       type: 'geo',
       x: rx,
-      y: 585,
+      y: 600,
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 240,
+        h: 260,
         color: 'green',
         fill: 'semi',
         size: 's',
-        richText: toRichText(`3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}\n\n${s3CleanF}\n\nKey Takeaway: ${s3CleanE}`)
+        richText: toRichText(s3Text)
       }
     });
 
-    if (window.updateUIProgress) {
-      window.updateUIProgress(0, 'Voice Tutor Teaching: Synchronized Classroom Smartboard');
-    }
-
+    // Initial orientation spotlight on Left Visual Diagram
+    this.spotlightConcept(0);
     this.zoomFit();
+
+    // Trigger paced concept reveal in UI
+    if (window.startPacedConceptTeaching) {
+      window.startPacedConceptTeaching();
+    }
   },
 
   drawPhysicsDiagram(type = 'lens', params = {}) {
@@ -1490,6 +1622,10 @@ function processWhiteboardEvent(data) {
 
     case 'RENDER_SMARTBOARD_SOLUTION':
       WhiteboardController.renderSmartboardSolution(data.payload || {});
+      break;
+
+    case 'SPOTLIGHT_CONCEPT':
+      WhiteboardController.spotlightConcept(typeof data.payload?.conceptIndex === 'number' ? data.payload.conceptIndex : (typeof data.payload === 'number' ? data.payload : 0));
       break;
 
     case 'RENDER_FULL_SUMMARY':

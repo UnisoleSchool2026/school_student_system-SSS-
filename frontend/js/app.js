@@ -8784,6 +8784,7 @@ async function explainQuestionInHinglish(qId) {
 function interruptVoiceTutor(qId) {
   stopVoiceAudioPlayback();
   voiceTutorState.activeMode = 'INTERRUPTED';
+  sendWhiteboardMessage(qId, { type: 'PAUSE_PACING' });
 
   const banner = document.getElementById(`voiceBanner_${qId}`);
   const wave = document.getElementById(`voiceWave_${qId}`);
@@ -9394,6 +9395,9 @@ function buildLocalSmartboardPlan(qId) {
   let step3Title = 'Final Evaluated Answer & Verified Takeaway';
   let step3Working = `Final Answer: ${cleanLatexForClientVoice(rawS).slice(0, 80) || 'Calculated with SI standard'} ${ans ? `[Option ${ans}]` : ''}`;
   let step3Exp = 'Physical check confirms the calculated magnitude and sign convention.';
+  let s1Spoken = 'Pehle step mein stated physical parameters aur primary governing relation note karte hain.';
+  let s2Spoken = 'Ab second step mein known quantities substitute karke algebraic simplification karte hain.';
+  let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
 
   if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
     diagramType = 'rolling_incline';
@@ -9466,13 +9470,14 @@ function buildLocalSmartboardPlan(qId) {
     diagram: {
       type: diagramType,
       title: diagTitle,
-      tip: tipText
+      tip: tipText,
+      spokenScript: 'Pehle left side board par visual physical diagram aur coordinate axes observe karo.'
     },
     examTip: tipText,
     solution: {
-      step1: { title: step1Title, formula: step1Formula, explanation: step1Exp },
-      step2: { title: step2Title, formula: step2Working, explanation: step2Exp },
-      step3: { title: step3Title, formula: step3Working, explanation: step3Exp }
+      step1: { title: step1Title, formula: step1Formula, explanation: step1Exp, teacherNote: s1Spoken, spokenScript: s1Spoken },
+      step2: { title: step2Title, formula: step2Working, explanation: step2Exp, teacherNote: s2Spoken, spokenScript: s2Spoken },
+      step3: { title: step3Title, formula: step3Working, explanation: step3Exp, teacherNote: s3Spoken, spokenScript: s3Spoken }
     }
   };
 }
@@ -9547,7 +9552,7 @@ function syncDoubtToWhiteboard(qId, doubtText, answerText) {
   });
 }
 
-// Window listener for iframe readiness
+// Window listener for iframe readiness & concept pacing sync
 window.addEventListener('message', (event) => {
   if (!event.data) return;
   if (event.data.type === 'WHITEBOARD_READY') {
@@ -9561,6 +9566,32 @@ window.addEventListener('message', (event) => {
         type: 'RENDER_SMARTBOARD_SOLUTION',
         payload: planToRender
       });
+    }
+  } else if (event.data.type === 'WB_CONCEPT_CHANGED') {
+    const idx = event.data.conceptIndex;
+    const filtered = state.qbFilteredQuestions || [];
+    const qObj = filtered[state.qbCurrentPage] || {};
+    const qId = qObj.id || `q_${state.qbCurrentPage}`;
+    const plan = voiceTutorState.teachingPlans?.[qId] || { smartboardPlan: buildLocalSmartboardPlan(qId) };
+    const p = plan.smartboardPlan || plan;
+
+    let spokenText = '';
+    if (idx === 0) {
+      spokenText = p.diagram?.spokenScript || 'Dekho beta, pehle left side board par diagram aur given parameters note karo.';
+    } else if (idx === 1) {
+      spokenText = p.solution?.step1?.spokenScript || p.solution?.step1?.teacherNote || p.solution?.step1?.explanation || '';
+    } else if (idx === 2) {
+      spokenText = p.solution?.step2?.spokenScript || p.solution?.step2?.teacherNote || p.solution?.step2?.explanation || '';
+    } else if (idx === 3) {
+      spokenText = p.solution?.step3?.spokenScript || p.solution?.step3?.teacherNote || p.solution?.step3?.explanation || '';
+    } else {
+      spokenText = plan.hinglishBrief || 'Poora solution smartboard par verified hai. Koi doubt ho toh turant pucho!';
+    }
+
+    const transcriptEl = document.getElementById(`voiceTranscript_${qId}`);
+    if (transcriptEl && (!window.geminiLiveVoiceTutor || !window.geminiLiveVoiceTutor.isSessionActive())) {
+      transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">Dr. Vikram [Concept ${idx < 4 ? idx + 1 : 'All'}]:</strong> ${escapeHtml(spokenText)}</div></div>`;
+      initLucideIcons();
     }
   }
 });

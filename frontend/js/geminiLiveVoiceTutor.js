@@ -525,19 +525,30 @@ Pedagogical Rules:
 The interactive classroom smartboard is synchronized and already displays:
 [LEFT BOARD]:
 - Question Statement & Analysis (${teachingPlan.questionHeader?.chapter || chapterName || 'Senior Secondary STEM'})
-- Visual Schematic: ${diagTitle}
+- Visual Schematic: ${diagTitle} (Teacher Note: "${teachingPlan.diagram?.spokenScript || 'Observe physical system forces and axes'}")
 - Teacher Exam Tip: "${tip}"
 
 [RIGHT BOARD]:
-- Card 1: ${s1.title} -> ${s1.formula}. (${s1.explanation})
-- Card 2: ${s2.title} -> ${s2.formula}. (${s2.explanation})
-- Card 3: ${s3.title} -> ${s3.formula}. (${s3.explanation})
+- Card 1: ${s1.title} -> ${s1.formula}
+  Board Explanation: ${s1.explanation}
+  Teacher Script: "${s1.spokenScript || s1.teacherNote || ''}"
+- Card 2: ${s2.title} -> ${s2.formula}
+  Board Explanation: ${s2.explanation}
+  Teacher Script: "${s2.spokenScript || s2.teacherNote || ''}"
+- Card 3: ${s3.title} -> ${s3.formula}
+  Board Explanation: ${s3.explanation}
+  Teacher Script: "${s3.spokenScript || s3.teacherNote || ''}"
 `;
         }
 
         const userPrompt = `Question to teach and solve: "${cleanQ}"\n${boardContext}
 Sir, please teach me this live in front of the smartboard like a real teacher in warm, encouraging Kota/Delhi faculty Hinglish.
-Point me to the left board diagram first, then walk me through Step 1, Step 2, and the final result on the right board so that everything you say matches what is written on my board!`;
+Give appropriate time to explain each concept progressively:
+1. First, point to the Left Board Diagram and explain the physical setup and given variables (~7 seconds).
+2. Then transition to Step 1 on the Right Board: explain the governing law and formula (~8 seconds).
+3. Then transition to Step 2: walk through the algebraic substitution step-by-step (~10 seconds).
+4. Finally conclude with Step 3: state the verified final answer and golden exam tip (~8 seconds).
+Make sure what you speak matches the exact concepts shown on my board!`;
 
         this.sendUserText(userPrompt, cleanQ);
 
@@ -588,18 +599,24 @@ Point me to the left board diagram first, then walk me through Step 1, Step 2, a
         boardContext = `
 The interactive smartboard is synchronized and displays:
 [LEFT BOARD]:
-- Visual Schematic: ${diagTitle}
+- Visual Schematic: ${diagTitle} (Teacher Note: "${teachingPlan.diagram?.spokenScript || ''}")
 - Teacher Exam Tip: "${tip}"
 
 [RIGHT BOARD]:
-- Card 1: ${s1.title} -> ${s1.formula}. (${s1.explanation})
-- Card 2: ${s2.title} -> ${s2.formula}. (${s2.explanation})
-- Card 3: ${s3.title} -> ${s3.formula}. (${s3.explanation})
+- Card 1: ${s1.title} -> ${s1.formula}
+  Board Explanation: ${s1.explanation}
+  Teacher Script: "${s1.spokenScript || s1.teacherNote || ''}"
+- Card 2: ${s2.title} -> ${s2.formula}
+  Board Explanation: ${s2.explanation}
+  Teacher Script: "${s2.spokenScript || s2.teacherNote || ''}"
+- Card 3: ${s3.title} -> ${s3.formula}
+  Board Explanation: ${s3.explanation}
+  Teacher Script: "${s3.spokenScript || s3.teacherNote || ''}"
 `;
       }
 
       const nextQuestionPrompt = `Moving to next question: "${cleanQ}"\n${boardContext}
-Sir, please teach me this new question on the smartboard step-by-step in friendly Hinglish matching what is drawn on the board.`;
+Sir, please teach me this new question on the smartboard step-by-step in friendly Hinglish matching what is written on the board. Give appropriate time to explain the diagram first, then Step 1, Step 2, and Step 3!`;
       this.sendUserText(nextQuestionPrompt, cleanQ);
 
       if (this.callbacks.onQuestionSwitched) {

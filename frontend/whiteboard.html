@@ -65,10 +65,10 @@
       top: 12px;
       left: 12px;
       z-index: 1000;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      backdrop-filter: blur(8px);
-      padding: 6px 14px;
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      backdrop-filter: blur(10px);
+      padding: 5px 12px;
       border-radius: 20px;
       display: flex;
       align-items: center;
@@ -76,8 +76,27 @@
       color: #38bdf8;
       font-size: 0.8rem;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      pointer-events: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+    .wb-pacing-btn {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #e2e8f0;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+    .wb-pacing-btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      color: #38bdf8;
     }
     .pulse-dot {
       width: 8px;
@@ -203,7 +222,14 @@
 
   <div id="whiteboard-overlay-badge">
     <div class="pulse-dot"></div>
-    <span id="wbStatusText">AI Voice Whiteboard &bull; Live tldraw Sync</span>
+    <span id="wbStatusText">👨‍🏫 Dr. Vikram Teaching: 1. Visual Physical Diagram</span>
+    <span id="wbPacingTimer" style="display:inline-block; font-size:0.7rem; background:rgba(56,189,248,0.22); border:1px solid rgba(56,189,248,0.5); padding:1px 6px; border-radius:10px; color:#38bdf8; font-weight:700;">7s</span>
+    <div style="display:inline-flex; align-items:center; gap:4px; margin-left:4px;">
+      <button type="button" class="wb-pacing-btn" id="btnPacePrev" onclick="window.wbPrevConcept()" title="Previous concept">◀</button>
+      <button type="button" class="wb-pacing-btn" id="btnPaceToggle" onclick="window.wbTogglePacing()" title="Pause or Resume paced explanation">⏸ Pause</button>
+      <button type="button" class="wb-pacing-btn" id="btnPaceNext" onclick="window.wbNextConcept()" title="Next concept">Next ▶</button>
+      <button type="button" class="wb-pacing-btn" id="btnPaceAll" onclick="window.wbShowAllConcepts()" title="Show full board">Full Board</button>
+    </div>
   </div>
 
 
@@ -671,6 +697,27 @@
       fbCtx.fillText(`Key Takeaway: ${(s3.explanation || '').replace(/\$+/g, '').slice(0, 85)}`, 655, 545);
     };
 
+      // Highlight active concept on fallback canvas if requested
+      if (typeof activeConcept === 'number' && activeConcept >= 0 && activeConcept <= 3) {
+        fbCtx.lineWidth = 3;
+        fbCtx.setLineDash([8, 6]);
+        if (activeConcept === 0) {
+          fbCtx.strokeStyle = '#38bdf8';
+          fbCtx.strokeRect(46, 161, 568, 318);
+        } else if (activeConcept === 1) {
+          fbCtx.strokeStyle = '#eab308';
+          fbCtx.strokeRect(636, 36, 608, 168);
+        } else if (activeConcept === 2) {
+          fbCtx.strokeStyle = '#38bdf8';
+          fbCtx.strokeRect(636, 211, 608, 188);
+        } else if (activeConcept === 3) {
+          fbCtx.strokeStyle = '#22c55e';
+          fbCtx.strokeRect(636, 406, 608, 163);
+        }
+        fbCtx.setLineDash([]);
+      }
+    };
+
     window.clearFallbackRight = function() {
       if (!fbCtx) return;
       fbCtx.clearRect(400, 0, 480, 700);
@@ -687,6 +734,149 @@
       window.drawFallbackDiagram('rolling_incline', plan.diagram);
     };
 
+    // ============================================================================
+    // TEACHER CONCEPT PACING & SPOTLIGHT CONTROLLER
+    // ============================================================================
+    const CONCEPT_DURATIONS = [7, 8, 10, 8]; // Diagram (7s), Step 1 (8s), Step 2 (10s), Step 3 (8s)
+    let currentConceptIndex = 0;
+    let pacingSecondsLeft = 7;
+    let pacingInterval = null;
+    let isPacingPaused = false;
+    let cachedSmartboardPayload = null;
+
+    window.startPacedConceptTeaching = function(payload = null) {
+      if (payload) cachedSmartboardPayload = payload;
+      clearInterval(pacingInterval);
+      currentConceptIndex = 0;
+      isPacingPaused = false;
+      pacingSecondsLeft = CONCEPT_DURATIONS[0];
+      updatePacingUI();
+      triggerSpotlight(0);
+
+      pacingInterval = setInterval(() => {
+        if (isPacingPaused) return;
+        pacingSecondsLeft--;
+        if (pacingSecondsLeft <= 0) {
+          if (currentConceptIndex < 3) {
+            currentConceptIndex++;
+            pacingSecondsLeft = CONCEPT_DURATIONS[currentConceptIndex];
+            triggerSpotlight(currentConceptIndex);
+          } else {
+            // Reached completion (Full Board)
+            clearInterval(pacingInterval);
+            currentConceptIndex = 4;
+            triggerSpotlight(4);
+            const statusEl = document.getElementById('wbStatusText');
+            if (statusEl) statusEl.textContent = '✅ Full Lesson Complete • Ask Any Doubt Live!';
+            const timerEl = document.getElementById('wbPacingTimer');
+            if (timerEl) timerEl.style.display = 'none';
+            const toggleBtn = document.getElementById('btnPaceToggle');
+            if (toggleBtn) toggleBtn.innerHTML = '↺ Replay';
+            return;
+          }
+        }
+        updatePacingUI();
+      }, 1000);
+    };
+
+    function updatePacingUI() {
+      const titles = [
+        '1. Visual Physical Diagram',
+        '2. Governing Principle & Stated Values',
+        '3. Step-by-Step Derivation & Substitution',
+        '4. Final Result & Exam Takeaway',
+        'Full Board Complete'
+      ];
+      const statusEl = document.getElementById('wbStatusText');
+      if (statusEl) {
+        if (isPacingPaused) {
+          statusEl.textContent = `⏸ Paused: ${titles[currentConceptIndex] || 'Smartboard'}`;
+        } else if (currentConceptIndex <= 3) {
+          statusEl.textContent = `👨‍🏫 Dr. Vikram Teaching: [${currentConceptIndex + 1}/4] ${titles[currentConceptIndex]}`;
+        } else {
+          statusEl.textContent = '✅ Full Lesson Complete • Ask Any Doubt Live!';
+        }
+      }
+
+      const timerEl = document.getElementById('wbPacingTimer');
+      if (timerEl) {
+        if (currentConceptIndex <= 3) {
+          timerEl.style.display = 'inline-block';
+          timerEl.textContent = `${pacingSecondsLeft}s`;
+        } else {
+          timerEl.style.display = 'none';
+        }
+      }
+
+      const toggleBtn = document.getElementById('btnPaceToggle');
+      if (toggleBtn) {
+        if (currentConceptIndex === 4) {
+          toggleBtn.innerHTML = '↺ Replay';
+        } else {
+          toggleBtn.innerHTML = isPacingPaused ? '▶ Play' : '⏸ Pause';
+        }
+      }
+    }
+
+    function triggerSpotlight(index) {
+      if (window.whiteboardController?.spotlightConcept) {
+        window.whiteboardController.spotlightConcept(index);
+      }
+      if (window.drawFallbackSmartboardSolution && cachedSmartboardPayload) {
+        window.drawFallbackSmartboardSolution(cachedSmartboardPayload, index);
+      }
+      try {
+        window.parent.postMessage({
+          type: 'WB_CONCEPT_CHANGED',
+          conceptIndex: index,
+          secondsLeft: pacingSecondsLeft
+        }, '*');
+      } catch (e) {}
+    }
+
+    window.wbTogglePacing = function() {
+      if (currentConceptIndex === 4) {
+        window.startPacedConceptTeaching();
+        return;
+      }
+      isPacingPaused = !isPacingPaused;
+      updatePacingUI();
+    };
+
+    window.wbNextConcept = function() {
+      if (currentConceptIndex < 3) {
+        currentConceptIndex++;
+      } else {
+        currentConceptIndex = 4;
+      }
+      pacingSecondsLeft = CONCEPT_DURATIONS[currentConceptIndex] || 8;
+      triggerSpotlight(currentConceptIndex);
+      updatePacingUI();
+    };
+
+    window.wbPrevConcept = function() {
+      if (currentConceptIndex > 0) {
+        currentConceptIndex--;
+      } else {
+        currentConceptIndex = 0;
+      }
+      pacingSecondsLeft = CONCEPT_DURATIONS[currentConceptIndex] || 8;
+      triggerSpotlight(currentConceptIndex);
+      updatePacingUI();
+    };
+
+    window.wbShowAllConcepts = function() {
+      clearInterval(pacingInterval);
+      currentConceptIndex = 4;
+      triggerSpotlight(4);
+      const timerEl = document.getElementById('wbPacingTimer');
+      if (timerEl) timerEl.style.display = 'none';
+      const statusEl = document.getElementById('wbStatusText');
+      if (statusEl) statusEl.textContent = '👨‍🏫 Smartboard: Full Solution Displayed';
+      const toggleBtn = document.getElementById('btnPaceToggle');
+      if (toggleBtn) toggleBtn.innerHTML = '↺ Replay';
+    };
+
     // Global step controller
     window.currentWhiteboardStep = 0;
     window.updateUIProgress = function(step, statusText) {
@@ -699,25 +889,26 @@
 
     window.wbChangeStep = function(step) {
       window.currentWhiteboardStep = step;
-      if (window.whiteboardController?.setStepMode) {
-        window.whiteboardController.setStepMode({ stepNum: step });
-      }
-      try {
-        window.parent.postMessage({ type: 'WB_STEP_CHANGED', stepNum: step }, '*');
-      } catch (e) {}
+      triggerSpotlight(step);
     };
 
     window.wbNextStep = function() {
-      const next = (window.currentWhiteboardStep + 1) % 5;
-      window.wbChangeStep(next);
+      window.wbNextConcept();
     };
 
     window.addEventListener('message', (event) => {
       const msg = event.data;
       if (!msg) return;
-      if (msg.type === 'SET_STEP_MODE' && typeof msg.payload?.stepNum === 'number') {
-        const s = msg.payload.stepNum;
-        window.updateUIProgress(s);
+      if (msg.type === 'START_PACING') {
+        window.startPacedConceptTeaching(msg.payload);
+      } else if (msg.type === 'PAUSE_PACING') {
+        isPacingPaused = true;
+        updatePacingUI();
+      } else if (msg.type === 'RESUME_PACING') {
+        isPacingPaused = false;
+        updatePacingUI();
+      } else if (msg.type === 'SPOTLIGHT_CONCEPT') {
+        triggerSpotlight(typeof msg.payload?.conceptIndex === 'number' ? msg.payload.conceptIndex : msg.payload);
       }
     });
   </script>

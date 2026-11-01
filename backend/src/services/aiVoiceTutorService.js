@@ -415,62 +415,91 @@ async function generateSmartboardTeachingPlan({
   let s3Exp = 'Physical check confirms the calculated magnitude and direction.';
   let defaultHinglish = `Is question mein hume ${chapterName || 'concept'} solve karna hai. Pehle left side board par diagram aur given values dekho... Ab right side board par step-by-step formula lagakar solve karte hain... aur answer mil gaya!`;
 
+  let s1Spoken = 'Pehle step mein stated physical parameters aur primary governing relation note karte hain.';
+  let s2Spoken = 'Ab second step mein known quantities substitute karke algebraic simplification karte hain.';
+  let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
+  let diagSpoken = `Pehle left side board par diagram aur physical coordinate system dhyan se observe karo.`;
+
   if (textCorpus.match(/roll|sphere|cylinder|incline|ramp|slip|angular|moment of inertia|torque/)) {
     defaultDiagType = 'rolling_incline';
     defaultTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
     defaultTip = 'Static friction sustains pure rolling without dissipating total mechanical energy!';
     s1Title = 'Free-Body Force & Torque Equations';
-    s1Formula = '• Downhill: M·g·sin θ - f_s = M·a\n• Torque about center: τ = f_s · R = I · α\n• Pure Rolling Constraint: a = α · R ⇒ α = a / R';
-    s1Exp = 'Contact point P is at instantaneous rest with zero relative sliding.';
+    s1Formula = '• Downhill Force: M·g·sin θ - f_s = M·a\n• Torque about CM: τ = f_s · R = I · α\n• Pure Rolling Constraint: a = α · R ⇒ α = a / R';
+    s1Exp = 'Contact point P between sphere and ramp is at instantaneous rest with zero relative sliding. Static friction f_s acts uphill to prevent slipping and provides the necessary rotational torque.';
+    s1Spoken = 'Dekho beta, pehle left board par diagram note karo: Downhill component M g sin theta hai aur static friction uphill act kar raha hai.';
+
     s2Title = 'Torque & Linear Force Substitution';
-    s2Formula = '1) Torque equation: f_s = (I / R²) · a\n2) Substitute f_s: M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
-    s2Exp = 'Applies to any symmetrical rolling body (sphere, cylinder, ring).';
+    s2Formula = '1) Torque equation: f_s · R = I · (a / R) ⇒ f_s = (I / R²) · a\n2) Substitute f_s: M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
+    s2Exp = 'By eliminating friction f_s between linear and rotational equations, we obtain the universal linear acceleration equation valid for any rolling symmetrical body.';
+    s2Spoken = 'Ab right board par Step 2 dekho: Torque equation se static friction eliminate karte hi acceleration ka general formula derive ho jata hai.';
+
     s3Title = 'Moment of Inertia & Final Acceleration';
-    s3Formula = '• For Solid Sphere: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (5/7)·g·sin θ\n• Final Result: a = (5/7)·g·sin θ  [Option B]';
-    s3Exp = 'Solid sphere accelerates faster than hollow sphere due to lower rotational inertia.';
-    defaultHinglish = 'Dekho beta, pehle left side board par free-body diagram aur given incline angle note karo. Torque equation se friction substitute karke solid sphere ka moment of inertia lagane par acceleration a = (5/7) g sin theta mil jata hai!';
+    s3Formula = '• Solid Sphere Inertia: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (5/7)·g·sin θ\n• Final Evaluated Result: a = (5/7)·g·sin θ ≈ 0.714·g·sin θ  [Option B]';
+    s3Exp = 'Since rotational inertia ratio is 2/5, 71.4% of gravitational acceleration is realized linearly. A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5).';
+    s3Spoken = 'Aur yeh raha final answer: solid sphere ke liye linear acceleration a = 5/7 g sin theta mil jata hai, Option B sahi hai!';
+    diagSpoken = 'Pehle left board par incline angle theta aur contact point P par lagne wale forces note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   } else if (textCorpus.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
     defaultDiagType = 'lens';
     defaultTitle = 'Ray Optics • Principal Axis & Image Formation';
     defaultTip = 'Cartesian Sign Convention: Distances measured along incident light are positive; opposite are negative!';
     s1Title = 'Governing Optical Equations';
     s1Formula = '• Thin Lens Formula: 1/f = 1/v - 1/u\n• Linear Magnification: m = v / u = h_i / h_o\n• Power of Lens: P = 1 / f (meters)';
-    s1Exp = 'Identify focal length f (convex > 0, concave < 0) and object distance u (< 0).';
+    s1Exp = 'Cartesian sign convention sets distances along incident ray as positive and opposite as negative. Identify focal length f (convex > 0, concave < 0) and object distance u (< 0).';
+    s1Spoken = 'Dekho beta, pehle optical sign convention ke sath focal length f aur object distance u note karte hain.';
+
     s2Title = 'Coordinate Substitution & Calculation';
     s2Formula = '1) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n2) Image distance: v = (u · f) / (u + f)\n3) Magnification: m = v / u';
-    s2Exp = 'Positive v confirms a real, inverted image formed on the opposite side.';
+    s2Exp = 'Substitute signed coordinates into the Gaussian lens formula. Positive v confirms a real image formed on the transmission side of the lens.';
+    s2Spoken = 'Ab Step 2 mein 1/f = 1/v - 1/u mein values substitute karke image position v aur magnification calculate karte hain.';
+
     s3Title = 'Image Nature & Final Result';
-    s3Formula = '• Calculated image distance v and magnification m\n• Nature: Real & Inverted if m < 0; Virtual & Erect if m > 0';
-    s3Exp = 'State complete optical image nature relative to the object.';
-    defaultHinglish = 'Dekho beta, left board par principal axis aur lens diagram observe karo. 1/f = 1/v - 1/u formula mein sign convention ke sath values substitute karte hi image position aur magnification aa jata hai!';
+    s3Formula = '• Image Position & Magnification: v = calculated, m = calculated\n• Optical Nature: Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f';
+    s3Exp = 'State complete nature, orientation, and size relative to object. Real images formed by convex lenses are always inverted.';
+    s3Spoken = 'Aur final result mein image distance aur magnification ka sign dekhkar image real aur inverted confirm hoti hai.';
+    diagSpoken = 'Pehle left board par principal axis aur convex lens ke ray diagram ko dhyan se dekho.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   } else if (textCorpus.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
     defaultDiagType = 'circuit';
     defaultTitle = 'Electric Circuit • Current & Resistivity Model';
     defaultTip = 'Relaxation time τ decreases with temperature in metals, increasing electrical resistance!';
     s1Title = 'Governing Circuit Principles';
     s1Formula = '• Ohm\'s Law: V = I · R\n• Microscopic Current: I = n · e · A · v_d,  v_d = (e · E · τ) / m\n• Resistivity Formula: R = ρ · (l / A),  ρ = m / (n · e² · τ)';
-    s1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
+    s1Exp = 'Under electric field E, free electrons drift with average velocity v_d. Mean free relaxation time τ connects microscopic electron kinematics to macroscopic Ohm\'s resistance.';
+    s1Spoken = 'Dekho beta, left board par conductor model dekho: electric field ke under electrons drift velocity se move karte hain.';
+
     s2Title = 'Current Derivation & Ohm Deduction';
-    s2Formula = '1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R';
-    s2Exp = 'Confirms Ohm\'s Law V = IR with resistivity ρ = m / (n·e²·τ).';
-    s3Title = 'Final Formula & Board Takeaway';
-    s3Formula = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verification: Ohm\'s law verified from microscopic electron drift';
-    s3Exp = 'Resistivity depends only on material electron density n and relaxation time τ.';
-    defaultHinglish = 'Dekho beta, left board par conductor circuit model dekho. Current formula I = n e A v d mein drift velocity substitute karte hi Ohm\'s Law V = I R aur resistivity ka formula derive ho jata hai!';
+    s2Formula = '1) Uniform Electric Field: E = V / l\n2) Substitute v_d: I = n·e·A·[(e·V·τ) / (m·l)] = (n·e²·A·τ / m·l)·V\n3) Ratio V / I: V / I = [m / (n·e²·τ)] · (l / A) = Constant (at const temp)';
+    s2Exp = 'Since m, e, n, and τ are constants for a material at fixed temperature, the ratio V/I is invariant. This derives and proves Ohm\'s Law V = I·R from first principles.';
+    s2Spoken = 'Ab Step 2 mein current equation mein drift velocity substitute karte hi V by I constant aa jata hai jo Ohm\'s Law ko rigorously prove karta hai.';
+
+    s3Title = 'Resistivity Formula & Physical Takeaway';
+    s3Formula = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Temperature Rule: Higher temperature lowers τ, increasing resistivity ρ';
+    s3Exp = 'Resistivity ρ is an intrinsic material property depending solely on electron density n and relaxation time τ, completely independent of wire dimensions length and area.';
+    s3Spoken = 'Aur final result mein resistivity rho = m / n e square tau mil jata hai, jo wire ke dimensions par depend nahi karta!';
+    diagSpoken = 'Pehle left board par conductor circuit model aur electron drift direction ko note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   } else if (textCorpus.match(/projectile|trajectory|parabola|horizontal range|max height/)) {
     defaultDiagType = 'projectile';
     defaultTitle = 'Projectile Motion • Parabolic Trajectory';
     defaultTip = 'Horizontal velocity u_x = u·cos θ remains CONSTANT throughout flight (zero horizontal acceleration)!';
     s1Title = 'Kinematic Component Equations';
     s1Formula = '• Horizontal: u_x = u · cos θ,  a_x = 0,  x(t) = (u · cos θ) · t\n• Vertical: u_y = u · sin θ,  a_y = -g,  y(t) = (u · sin θ) · t - ½·g·t²';
-    s1Exp = 'Two independent perpendicular motions occurring simultaneously.';
+    s1Exp = 'Motion decomposes into two independent perpendicular components: uniform velocity horizontally and uniform acceleration vertically under gravity.';
+    s1Spoken = 'Dekho beta, projectile motion mein horizontal aur vertical velocity components separate formulate karte hain.';
+
     s2Title = 'Trajectory Equation & Peak Calculation';
-    s2Formula = '1) Flight Time: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
-    s2Exp = 'Peak height occurs at vertical velocity v_y = 0.';
-    s3Title = 'Final Kinematic Result';
-    s3Formula = '• Computed values for trajectory parameters\n• Final Answer: Verified with standard formulas';
-    s3Exp = 'Range is maximum when launch angle θ = 45°.';
-    defaultHinglish = 'Dekho beta, projectile motion mein horizontal aur vertical velocity components separate hote hain. Formula apply karke height aur range calculate kar sakte hain!';
+    s2Formula = '1) Time of Flight: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
+    s2Exp = 'At maximum height, vertical velocity component v_y = 0. Substituting t = u·sin θ / g yields maximum height H and total horizontal range R.';
+    s2Spoken = 'Step 2 mein vertical velocity zero karke maximum height aur horizontal range calculate karte hain.';
+
+    s3Title = 'Final Kinematic Result & Takeaway';
+    s3Formula = '• Range Expression: R = (u² · sin 2θ) / g\n• Maximum Condition: θ = 45° where sin 2θ = 1 ⇒ R_max = u² / g\n• Verification: Neglecting air resistance, path is strictly parabolic';
+    s3Exp = 'Maximum horizontal range occurs at launch angle 45 degrees. Complementary launch angles θ and (90° - θ) yield identical horizontal ranges.';
+    s3Spoken = 'Aur yeh raha final result: maximum range 45 degree angle par milta hai!';
+    diagSpoken = 'Pehle left board par parabolic trajectory aur launch velocity vector ko note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   }
 
   // 2. Query LLM for dynamic, high-fidelity question-specific plan
@@ -478,10 +507,10 @@ async function generateSmartboardTeachingPlan({
   if (groqKey) {
     try {
       const prompt = `You are Dr. Vikram Sharma, an elite Indian STEM faculty member teaching a student live in front of an interactive classroom smartboard.
-Analyze the following question and produce a synchronized teaching plan:
-- One side has the visual diagram/schematic and question statement.
-- The other side has the step-by-step solution formatted cleanly like a teacher writing on a board.
-- Spoken Hinglish explanation for the voice tutor matching the board steps.
+Analyze the following question and produce a synchronized teaching plan with rich explanations:
+- Left board has the visual physical diagram/schematic and question statement.
+- Right board has the step-by-step solution with rich pedagogical explanations written directly on the board.
+- Spoken Hinglish explanation for the voice tutor exactly matching what is written on each card.
 
 Question: "${cleanQ}"
 Chapter: "${chapterName || 'Physics/STEM'}"
@@ -494,23 +523,28 @@ Return STRICT JSON only:
 {
   "diagramType": "circuit|rolling_incline|lens|projectile|fbd|oscillator|concept",
   "diagramTitle": "Concise diagram title",
+  "diagramExplanation": "Clear description of visual forces, axes, and components shown in the diagram.",
+  "diagramSpoken": "Dekho beta, pehle left side board par diagram aur physical system note karo...",
   "examTip": "One golden teacher exam tip / pitfall (1 crisp sentence)",
   "step1": {
     "title": "GIVEN SETUP & GOVERNING PRINCIPLE",
     "formula": "• Stated variables with units\\n• Primary governing formula",
-    "explanation": "Brief intuition for step 1"
+    "explanation": "Detailed explanation of why this governing formula applies and how given variables connect (2-3 clear sentences for the board)",
+    "spokenScript": "Ab right side board par Step 1 note karo... [what teacher speaks for Step 1 in Hinglish]"
   },
   "step2": {
     "title": "STEP-BY-STEP DERIVATION & SUBSTITUTION",
-    "formula": "1) Working step 1...\\n2) Working step 2...",
-    "explanation": "Brief algebraic explanation"
+    "formula": "1) Working step 1...\\n2) Working step 2...\\n3) Intermediate algebraic simplification",
+    "explanation": "Detailed algebraic explanation walking through each mathematical substitution step by step (2-3 clear sentences for the board)",
+    "spokenScript": "Ab Step 2 mein values substitute karke solve karte hain... [what teacher speaks for Step 2 in Hinglish]"
   },
   "step3": {
     "title": "FINAL ANSWER & VERIFIED RESULT",
     "formula": "Final Answer: [value with SI units]  ${correctAnswer ? `[Option ${correctAnswer}]` : ''}",
-    "explanation": "Why this result makes physical sense"
+    "explanation": "Physical sanity check confirming why this calculated magnitude and unit makes physical sense (2-3 clear sentences for the board)",
+    "spokenScript": "Aur yeh raha hamara final answer... [what teacher speaks for Step 3 in Hinglish]"
   },
-  "hinglishBrief": "Warm, encouraging spoken Hinglish explanation (3-4 sentences) walking the student through the left board diagram and right board derivation steps."
+  "hinglishBrief": "Complete smooth natural spoken lecture (4-5 sentences) combining the spoken scripts smoothly."
 }`;
 
       const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
@@ -535,7 +569,7 @@ Return STRICT JSON only:
               ],
               response_format: { type: 'json_object' },
               temperature: 0.2,
-              max_tokens: 700
+              max_tokens: 850
             }),
             signal: controller.signal
           });
@@ -550,19 +584,50 @@ Return STRICT JSON only:
                 const rawDiag = (parsed.diagramType || '').toLowerCase().trim();
                 const cleanDiag = VALID_DIAGRAMS.includes(rawDiag) ? rawDiag : defaultDiagType;
 
+                const s1 = parsed.step1 || {};
+                const s2 = parsed.step2 || {};
+                const s3 = parsed.step3 || {};
+
+                const fullHinglish = parsed.hinglishBrief || [
+                  parsed.diagramSpoken || diagSpoken,
+                  s1.spokenScript || s1Spoken,
+                  s2.spokenScript || s2Spoken,
+                  s3.spokenScript || s3Spoken
+                ].filter(Boolean).join(' ');
+
                 return {
                   questionId,
                   diagram: {
                     type: cleanDiag,
-                    title: parsed.diagramTitle || defaultTitle
+                    title: parsed.diagramTitle || defaultTitle,
+                    explanation: parsed.diagramExplanation || 'Visual model representing the physical coordinate system.',
+                    spokenScript: parsed.diagramSpoken || diagSpoken
                   },
                   examTip: parsed.examTip || defaultTip,
                   solution: {
-                    step1: parsed.step1,
-                    step2: parsed.step2,
-                    step3: parsed.step3
+                    step1: {
+                      title: s1.title || s1Title,
+                      formula: s1.formula || s1Formula,
+                      explanation: s1.explanation || s1Exp,
+                      spokenScript: s1.spokenScript || s1Spoken,
+                      teacherNote: s1.spokenScript || s1Spoken
+                    },
+                    step2: {
+                      title: s2.title || s2Title,
+                      formula: s2.formula || s2Formula,
+                      explanation: s2.explanation || s2Exp,
+                      spokenScript: s2.spokenScript || s2Spoken,
+                      teacherNote: s2.spokenScript || s2Spoken
+                    },
+                    step3: {
+                      title: s3.title || s3Title,
+                      formula: s3.formula || s3Formula,
+                      explanation: s3.explanation || s3Exp,
+                      spokenScript: s3.spokenScript || s3Spoken,
+                      teacherNote: s3.spokenScript || s3Spoken
+                    }
                   },
-                  hinglishBrief: parsed.hinglishBrief || defaultHinglish,
+                  hinglishBrief: fullHinglish,
                   source: `GROQ_${m.toUpperCase()}`
                 };
               }
@@ -582,13 +647,15 @@ Return STRICT JSON only:
     questionId,
     diagram: {
       type: defaultDiagType,
-      title: defaultTitle
+      title: defaultTitle,
+      explanation: 'Visual physical system schematic and boundary coordinates.',
+      spokenScript: diagSpoken
     },
     examTip: defaultTip,
     solution: {
-      step1: { title: s1Title, formula: s1Formula, explanation: s1Exp },
-      step2: { title: s2Title, formula: s2Formula, explanation: s2Exp },
-      step3: { title: s3Title, formula: s3Formula, explanation: s3Exp }
+      step1: { title: s1Title, formula: s1Formula, explanation: s1Exp, spokenScript: s1Spoken, teacherNote: s1Spoken },
+      step2: { title: s2Title, formula: s2Formula, explanation: s2Exp, spokenScript: s2Spoken, teacherNote: s2Spoken },
+      step3: { title: s3Title, formula: s3Formula, explanation: s3Exp, spokenScript: s3Spoken, teacherNote: s3Spoken }
     },
     hinglishBrief: defaultHinglish,
     source: 'CURATED_TEACHER_LOGIC'
