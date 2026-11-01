@@ -9167,13 +9167,17 @@ function syncLiveVoiceAssistantToCurrentQuestion() {
     syncQuestionToWhiteboard(qId);
   }
 
-  // Send new question turn to active Gemini Live session
+  const cached = voiceTutorState.teachingPlans?.[qId];
+  const teachingPlan = (cached && cached.smartboardPlan) ? cached.smartboardPlan : buildLocalSmartboardPlan(qId);
+
+  // Send new question turn to active Gemini Live session with synchronized smartboard plan
   window.geminiLiveVoiceTutor.switchToQuestion({
     questionId: qId,
     questionText: rawQ,
     solutionText: rawS,
     chapterName: ch,
-    topic: top
+    topic: top,
+    teachingPlan: teachingPlan
   });
 }
 
@@ -9228,6 +9232,9 @@ async function startRealtimeVoiceAssistant(qId) {
   attachLiveVoiceCallbacks(qId);
   toggleLiveWhiteboard(qId, true);
 
+  const cached = voiceTutorState.teachingPlans?.[qId];
+  const teachingPlan = (cached && cached.smartboardPlan) ? cached.smartboardPlan : buildLocalSmartboardPlan(qId);
+
   try {
     await window.geminiLiveVoiceTutor.startSession({
       questionId: qId,
@@ -9235,6 +9242,7 @@ async function startRealtimeVoiceAssistant(qId) {
       solutionText: rawS,
       chapterName: ch,
       topic: top,
+      teachingPlan: teachingPlan,
       apiBaseUrl: getApiBaseUrl()
     });
   } catch (err) {
@@ -9365,34 +9373,31 @@ async function startUnifiedClassroomSession(qId) {
   await startRealtimeVoiceAssistant(qId);
 }
 
-function syncQuestionToWhiteboard(qId) {
-  clearWhiteboardTimers();
-  if (!voiceTutorState.whiteboardSyncTimers) voiceTutorState.whiteboardSyncTimers = [];
-
+function buildLocalSmartboardPlan(qId) {
   const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
   const rawQ = qObj.question_latex || qObj.questionText || '';
   const rawS = qObj.solution_latex || '';
   const ch = qObj.chapter_name || qObj.chapter || 'Physics / Science';
   const marks = qObj.marks || 3;
+  const ans = qObj.correct_answer_latex || qObj.correct_answer || '';
 
-  // Detect diagram type and pedagogical variables
-  const textForDetection = (rawQ + ' ' + ch + ' ' + (qObj.topic || '') + ' ' + (qObj.subtopic || '')).toLowerCase();
+  const textForDetection = (rawQ + ' ' + ch + ' ' + (qObj.topic || '') + ' ' + (qObj.subtopic || '') + ' ' + rawS).toLowerCase();
   let diagramType = 'concept';
-  let tipText = 'Always cross-check unit dimensions and sign conventions before submitting!';
-  let step1Title = 'Governing Physics Principles';
-  let step1Formula = 'Identify given physical variables and recall governing law.';
-  let step1Exp = 'Pure rolling without slipping: Contact point is at instantaneous rest.';
-  let step2Title = 'Mathematical Working & Substitution';
-  let step2Working = 'Rearrange equation for the unknown quantity';
-  let step2Exp = 'Step-by-step arithmetic resolution preserving SI units.';
-  let step3Title = 'Moment of Inertia & Exact Derivation';
-  let step3Working = '';
-  let step3Exp = '';
-  let finalAns = cleanLatexForClientVoice(rawS).slice(0, 140);
-  let finalInsight = 'Always cross-check unit dimensions and sign conventions before submitting';
+  let diagTitle = `${ch} • Conceptual Schematic`;
+  let tipText = 'Always cross-check unit dimensions, coordinate signs, and physical boundary conditions!';
+  let step1Title = 'Given Setup & Governing Principle';
+  let step1Formula = '• Identify given physical inputs and stated boundary constraints.\n• Primary governing mathematical relation applied.';
+  let step1Exp = 'Establish foundational physical law linking known inputs to target output.';
+  let step2Title = 'Step-by-Step Derivation & Substitution';
+  let step2Working = cleanLatexForClientVoice(rawS).slice(0, 180) || '• Substitute numerical values into the equation.\n• Simplify algebraic terms step by step.';
+  let step2Exp = 'Step-by-step resolution preserving SI units throughout.';
+  let step3Title = 'Final Evaluated Answer & Verified Takeaway';
+  let step3Working = `Final Answer: ${cleanLatexForClientVoice(rawS).slice(0, 80) || 'Calculated with SI standard'} ${ans ? `[Option ${ans}]` : ''}`;
+  let step3Exp = 'Physical check confirms the calculated magnitude and sign convention.';
 
   if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
     diagramType = 'rolling_incline';
+    diagTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
     step1Title = 'Free-Body Force & Torque Equations';
     step1Formula = '• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R';
     step1Exp = 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.';
@@ -9401,90 +9406,135 @@ function syncQuestionToWhiteboard(qId) {
     step2Working = '1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
     step2Exp = 'This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).';
 
-    step3Title = 'Moment of Inertia for Solid Sphere';
+    step3Title = 'Moment of Inertia & Final Acceleration';
     step3Working = '• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
     step3Exp = 'A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.';
-
     tipText = 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.';
-    finalAns = 'Linear Acceleration of Center of Mass:\na = (5/7) · g · sin θ   [Option B]';
-    finalInsight = 'Solid sphere realizes 71.4% of gravitational acceleration down the ramp (Option B).';
   } else if (textForDetection.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
     diagramType = 'lens';
+    diagTitle = 'Ray Optics • Principal Axis & Image Formation';
     step1Title = 'Governing Optical Equations';
     step1Formula = '• Thin Lens Equation: 1/f = 1/v - 1/u\n• Magnification:       m = v / u = h_i / h_o\n• Power of Lens:       P = 1 / f (meters)';
     step1Exp = 'Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative.';
 
-    step2Title = 'Coordinate Substitution';
+    step2Title = 'Coordinate Substitution & Calculation';
     step2Working = '1) Identify: Focal length f (convex > 0), Object distance u (< 0)\n2) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n3) Image distance: v = (u · f) / (u + f)';
     step2Exp = 'Calculate v and check sign: positive v confirms a real image on opposite side.';
 
-    step3Title = 'Image Nature & Magnification';
-    step3Working = '• Magnification: m = v / u\n• If |m| > 1: Magnified image; if |m| < 1: Diminished\n• If m < 0: Real & Inverted; if m > 0: Virtual & Erect';
+    step3Title = 'Image Nature & Final Result';
+    step3Working = '• Magnification: m = v / u\n• Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f (in meters)';
     step3Exp = 'State complete nature, orientation, and size relative to object.';
-
     tipText = 'Always state the nature (real/virtual, inverted/erect) and magnification sign!';
-    finalAns = finalAns || 'v = (u·f)/(u+f),  m = v/u';
-    finalInsight = 'Real images formed by a convex lens are inverted; virtual images are upright.';
   } else if (textForDetection.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
     diagramType = 'circuit';
+    diagTitle = 'Electric Circuit • Current & Resistivity Model';
     step1Title = 'Governing Circuit Principles';
     step1Formula = '• Ohm\'s Law:          V = I · R\n• Microscopic Drift:   I = n · e · A · v_d,   v_d = (e · E · τ) / m\n• Resistivity:         R = ρ · (l / A),       ρ = m / (n · e² · τ)';
     step1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
 
-    step2Title = 'Equivalent Resistance & Node Analysis';
-    step2Working = '1) Series combination:   R_eq = R_1 + R_2 + ... + R_n\n2) Parallel combination: 1/R_eq = 1/R_1 + 1/R_2 + ...\n3) Current distribution: I_branch = V_branch / R_branch';
-    step2Exp = 'Current is uniform across series branches; potential difference is uniform across parallel branches.';
+    step2Title = 'Current Derivation & Ohm Deduction';
+    step2Working = '1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R';
+    step2Exp = 'Confirms Ohm\'s Law V = IR with resistivity ρ = m / (n·e²·τ).';
 
-    step3Title = 'Power Dissipation & Thermal Effect';
-    step3Working = '• Electric Power: P = V · I = I² · R = V² / R\n• Joule\'s Heating: H = I² · R · t\n• In metals: Higher temperature lowers τ, increasing resistivity ρ.';
-    step3Exp = 'Always verify SI units: Resistance in Ohms (Ω), Power in Watts (W).';
-
+    step3Title = 'Final Formula & Board Takeaway';
+    step3Working = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verified Result: Microscopic basis of electrical resistance established';
+    step3Exp = 'Resistivity depends only on material electron density n and relaxation time τ.';
     tipText = 'Relaxation time tau decreases with temperature in metals, increasing electrical resistance!';
-    finalAns = finalAns || 'V = I · R,  P = I² · R';
-    finalInsight = 'Internal battery resistance causes terminal voltage to be less than EMF during discharge.';
+  } else if (textForDetection.match(/projectile|trajectory|parabola|horizontal range|max height/)) {
+    diagramType = 'projectile';
+    diagTitle = 'Projectile Motion • Parabolic Trajectory';
+    step1Title = 'Kinematic Component Equations';
+    step1Formula = '• Horizontal: u_x = u · cos θ,  a_x = 0,  x(t) = (u · cos θ) · t\n• Vertical: u_y = u · sin θ,  a_y = -g,  y(t) = (u · sin θ) · t - ½·g·t²';
+    step1Exp = 'Two independent perpendicular motions occurring simultaneously.';
+
+    step2Title = 'Trajectory Equation & Peak Calculation';
+    step2Working = '1) Flight Time: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
+    step2Exp = 'Peak height occurs at vertical velocity v_y = 0.';
+
+    step3Title = 'Final Answer & Range Verification';
+    step3Working = `Final Answer: Maximum range occurs at θ = 45° where R_max = u² / g ${ans ? `[Option ${ans}]` : ''}`;
+    step3Exp = 'Air resistance is neglected; path is purely parabolic.';
+    tipText = 'Horizontal velocity u_x = u·cos θ remains CONSTANT throughout flight!';
   }
 
-  // Compile structured pedagogical plan
-  const teachingPlan = {
+  return {
     questionHeader: {
-      title: cleanLatexForClientVoice(rawQ).slice(0, 160),
+      title: cleanLatexForClientVoice(rawQ).slice(0, 180),
       chapter: ch,
       marks: marks
     },
     diagram: {
       type: diagramType,
-      label: `${ch} - Visual Mechanics`,
+      title: diagTitle,
       tip: tipText
     },
-    step1: {
-      title: step1Title,
-      formula: step1Formula,
-      explanation: step1Exp,
-      studentPrompt: 'Beta, Free-body force balance aur pure rolling condition clear hai?'
-    },
-    step2: {
-      title: step2Title,
-      formula: step2Working,
-      explanation: step2Exp,
-      studentPrompt: 'Beta, torque equation se static friction substitute karna clear hai?'
-    },
-    step3: {
-      title: step3Title,
-      formula: step3Working,
-      explanation: step3Exp,
-      studentPrompt: 'Beta, solid sphere ka moment of inertia (2/5 MR²) lagane par a = (5/7) g sin θ clear hai?'
-    },
-    final: {
-      answer: finalAns || 'Linear acceleration a = (5/7)·g·sin θ [Option B]',
-      keyInsight: finalInsight
+    examTip: tipText,
+    solution: {
+      step1: { title: step1Title, formula: step1Formula, explanation: step1Exp },
+      step2: { title: step2Title, formula: step2Working, explanation: step2Exp },
+      step3: { title: step3Title, formula: step3Working, explanation: step3Exp }
     }
   };
+}
 
-  // 1. Initial Classroom Orientation: Question statement and diagram
+function syncQuestionToWhiteboard(qId) {
+  clearWhiteboardTimers();
+  if (!voiceTutorState.teachingPlans) voiceTutorState.teachingPlans = {};
+
+  // 1. Send instant local plan immediately so whiteboard renders with zero delay
+  const localPlan = buildLocalSmartboardPlan(qId);
+  const existingPlan = voiceTutorState.teachingPlans[qId];
+  const planToRender = (existingPlan && existingPlan.smartboardPlan) ? existingPlan.smartboardPlan : localPlan;
+
   sendWhiteboardMessage(qId, {
-    type: 'RENDER_ORIENTATION',
-    payload: teachingPlan
+    type: 'RENDER_SMARTBOARD_SOLUTION',
+    payload: planToRender
   });
+
+  // 2. Fetch synchronized LLM teaching plan from server if not yet fetched
+  if (!existingPlan) {
+    const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
+    fetch('/api/voice-tutor/solve-and-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: qId,
+        questionText: qObj.question_latex || qObj.questionText || '',
+        solutionText: qObj.solution_latex || '',
+        chapterName: qObj.chapter_name || qObj.chapter || '',
+        topic: qObj.topic || qObj.subtopic || '',
+        options: qObj.options_latex || qObj.options || [],
+        correctAnswer: qObj.correct_answer_latex || qObj.correct_answer || '',
+        marks: qObj.marks_weightage || qObj.marks || 3,
+        voice: voiceTutorState.selectedVoice || 'swara'
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.success && data.smartboardPlan) {
+        voiceTutorState.teachingPlans[qId] = data;
+        sendWhiteboardMessage(qId, {
+          type: 'RENDER_SMARTBOARD_SOLUTION',
+          payload: data.smartboardPlan
+        });
+
+        // If Gemini Live is active on this question, notify it of the updated plan
+        if (window.geminiLiveVoiceTutor && window.geminiLiveVoiceTutor.isSessionActive() && window.geminiLiveVoiceTutor.getActiveQuestionId() === qId) {
+          window.geminiLiveVoiceTutor.updateTeachingPlan(data.smartboardPlan);
+        }
+
+        // If transcript drawer is shown, display Dr. Vikram's Hinglish brief
+        const transcriptEl = document.getElementById(`voiceTranscript_${qId}`);
+        if (transcriptEl && (!window.geminiLiveVoiceTutor || !window.geminiLiveVoiceTutor.isSessionActive())) {
+          transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">Teacher Dr. Vikram:</strong> ${escapeHtml(data.hinglishBrief)}</div></div>`;
+          initLucideIcons();
+        }
+      }
+    })
+    .catch(err => {
+      console.warn('[WHITEBOARD SYNC] Failed to fetch server smartboard plan:', err);
+    });
+  }
 }
 
 function syncDoubtToWhiteboard(qId, doubtText, answerText) {
@@ -9496,6 +9546,24 @@ function syncDoubtToWhiteboard(qId, doubtText, answerText) {
     }
   });
 }
+
+// Window listener for iframe readiness
+window.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'WHITEBOARD_READY') {
+    const filtered = state.qbFilteredQuestions || [];
+    const qObj = filtered[state.qbCurrentPage] || {};
+    const qId = qObj.id || `q_${state.qbCurrentPage}`;
+    if (qId) {
+      const cached = voiceTutorState.teachingPlans?.[qId];
+      const planToRender = (cached && cached.smartboardPlan) ? cached.smartboardPlan : buildLocalSmartboardPlan(qId);
+      sendWhiteboardMessage(qId, {
+        type: 'RENDER_SMARTBOARD_SOLUTION',
+        payload: planToRender
+      });
+    }
+  }
+});
 
 // Global exports for inline HTML onclick handlers
 window.readQuestionAloud = readQuestionAloud;
@@ -9516,6 +9584,7 @@ window.clearLiveWhiteboard = clearLiveWhiteboard;
 window.fitLiveWhiteboard = fitLiveWhiteboard;
 window.syncQuestionToWhiteboard = syncQuestionToWhiteboard;
 window.syncDoubtToWhiteboard = syncDoubtToWhiteboard;
+window.buildLocalSmartboardPlan = buildLocalSmartboardPlan;
 
 
 function renderQbCurrentPage() {

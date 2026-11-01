@@ -517,6 +517,160 @@
       fbYOffset += 90;
     };
 
+    window.drawFallbackSmartboardSolution = function(payload) {
+      if (!fbCtx) window.initFallbackCanvas();
+      if (!fbCtx) return;
+      window.clearFallbackCanvas();
+
+      const q = payload?.questionHeader || {};
+      const diag = payload?.diagram || {};
+      const sol = payload?.solution || {};
+      const s1 = sol.step1 || {};
+      const s2 = sol.step2 || {};
+      const s3 = sol.step3 || {};
+
+      // Left Column (x: 50, w: 560): Question Header, Diagram, Tip
+      // 1. Header Box
+      fbCtx.fillStyle = 'rgba(30, 58, 138, 0.25)';
+      fbCtx.strokeStyle = '#38bdf8';
+      fbCtx.lineWidth = 2;
+      fbCtx.roundRect ? fbCtx.roundRect(50, 40, 560, 110, 8) : fbCtx.rect(50, 40, 560, 110);
+      fbCtx.fill();
+      fbCtx.stroke();
+
+      fbCtx.fillStyle = '#38bdf8';
+      fbCtx.font = 'bold 12px sans-serif';
+      fbCtx.fillText(`QUESTION STATEMENT • ${q.marks || 3} MARKS | ${(q.chapter || 'SCIENCE').toUpperCase()}`, 65, 65);
+
+      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.font = '13px sans-serif';
+      const cleanQ = (q.title || '').replace(/\$+/g, '');
+      const words = cleanQ.split(' ');
+      let line = '';
+      let y = 90;
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        if (fbCtx.measureText(testLine).width > 530 && n > 0) {
+          fbCtx.fillText(line, 65, y);
+          line = words[n] + ' ';
+          y += 20;
+          if (y > 135) break;
+        } else {
+          line = testLine;
+        }
+      }
+      if (y <= 135) fbCtx.fillText(line, 65, y);
+
+      // 2. Diagram Box
+      fbCtx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+      fbCtx.strokeStyle = '#60a5fa';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.roundRect ? fbCtx.roundRect(50, 165, 560, 310, 8) : fbCtx.rect(50, 165, 560, 310);
+      fbCtx.fill();
+      fbCtx.stroke();
+
+      fbCtx.fillStyle = '#60a5fa';
+      fbCtx.font = 'bold 12px sans-serif';
+      fbCtx.fillText(`VISUAL SYSTEM SCHEMATIC • ${(diag.title || 'SYSTEM MODEL').toUpperCase()}`, 65, 190);
+
+      // Schematic Flow
+      fbCtx.strokeStyle = '#94a3b8';
+      fbCtx.lineWidth = 2;
+      fbCtx.strokeRect(90, 220, 200, 95);
+      fbCtx.fillStyle = '#e2e8f0';
+      fbCtx.font = '12px monospace';
+      fbCtx.fillText('GIVEN PARAMETERS', 110, 255);
+      fbCtx.fillText('SI Input Quantities', 110, 275);
+
+      fbCtx.strokeStyle = '#eab308';
+      fbCtx.beginPath();
+      fbCtx.moveTo(290, 268);
+      fbCtx.lineTo(350, 268);
+      fbCtx.stroke();
+
+      fbCtx.strokeStyle = '#34d399';
+      fbCtx.strokeRect(350, 220, 200, 95);
+      fbCtx.fillStyle = '#34d399';
+      fbCtx.fillText('TARGET SOLUTION', 370, 255);
+      fbCtx.fillText('Verified Result', 370, 275);
+
+      fbCtx.strokeStyle = '#a855f7';
+      fbCtx.strokeRect(90, 335, 460, 80);
+      fbCtx.fillStyle = '#c084fc';
+      fbCtx.fillText('CORE GOVERNING LAW & BOUNDARY CONDITIONS', 110, 370);
+
+      // 3. Teacher Tip Box
+      fbCtx.fillStyle = 'rgba(234, 179, 8, 0.15)';
+      fbCtx.strokeStyle = '#eab308';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.roundRect ? fbCtx.roundRect(50, 490, 560, 75, 8) : fbCtx.rect(50, 490, 560, 75);
+      fbCtx.fill();
+      fbCtx.stroke();
+
+      fbCtx.fillStyle = '#eab308';
+      fbCtx.font = 'bold 11px sans-serif';
+      fbCtx.fillText('TEACHER EXAM TIP & COMMON PITFALL:', 65, 512);
+      fbCtx.fillStyle = '#fef08a';
+      fbCtx.font = '12px sans-serif';
+      const cleanTip = (payload?.examTip || diag.tip || 'Verify unit dimensions, coordinate signs, and physical boundary conditions!').replace(/\$+/g, '');
+      fbCtx.fillText(cleanTip.slice(0, 85), 65, 535);
+
+      // Right Column (x: 640, w: 600): 3 Solution Cards
+      // Card 1: Step 1
+      fbCtx.fillStyle = 'rgba(234, 179, 8, 0.12)';
+      fbCtx.strokeStyle = '#eab308';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.roundRect ? fbCtx.roundRect(640, 40, 600, 160, 8) : fbCtx.rect(640, 40, 600, 160);
+      fbCtx.fill();
+      fbCtx.stroke();
+      fbCtx.fillStyle = '#eab308';
+      fbCtx.font = 'bold 13px sans-serif';
+      fbCtx.fillText(`1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}`, 655, 65);
+      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.font = '12px monospace';
+      const s1Lines = (s1.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
+      s1Lines.slice(0, 3).forEach((l, i) => fbCtx.fillText(l.slice(0, 75), 655, 90 + i * 20));
+      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.font = '11px sans-serif';
+      fbCtx.fillText(`• ${(s1.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 175);
+
+      // Card 2: Step 2
+      fbCtx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      fbCtx.strokeStyle = '#38bdf8';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.roundRect ? fbCtx.roundRect(640, 215, 600, 180, 8) : fbCtx.rect(640, 215, 600, 180);
+      fbCtx.fill();
+      fbCtx.stroke();
+      fbCtx.fillStyle = '#38bdf8';
+      fbCtx.font = 'bold 13px sans-serif';
+      fbCtx.fillText(`2. ${(s2.title || 'Step-by-Step Derivation & Substitution').toUpperCase()}`, 655, 240);
+      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.font = '12px monospace';
+      const s2Lines = (s2.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
+      s2Lines.slice(0, 4).forEach((l, i) => fbCtx.fillText(l.slice(0, 75), 655, 265 + i * 20));
+      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.font = '11px sans-serif';
+      fbCtx.fillText(`• ${(s2.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 375);
+
+      // Card 3: Step 3
+      fbCtx.fillStyle = 'rgba(34, 197, 94, 0.14)';
+      fbCtx.strokeStyle = '#22c55e';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.roundRect ? fbCtx.roundRect(640, 410, 600, 155, 8) : fbCtx.rect(640, 410, 600, 155);
+      fbCtx.fill();
+      fbCtx.stroke();
+      fbCtx.fillStyle = '#22c55e';
+      fbCtx.font = 'bold 13px sans-serif';
+      fbCtx.fillText(`3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}`, 655, 435);
+      fbCtx.fillStyle = '#86efac';
+      fbCtx.font = 'bold 13px monospace';
+      const s3Lines = (s3.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
+      s3Lines.slice(0, 2).forEach((l, i) => fbCtx.fillText(l.slice(0, 70), 655, 460 + i * 22));
+      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.font = '11px sans-serif';
+      fbCtx.fillText(`Key Takeaway: ${(s3.explanation || '').replace(/\$+/g, '').slice(0, 85)}`, 655, 545);
+    };
+
     window.clearFallbackRight = function() {
       if (!fbCtx) return;
       fbCtx.clearRect(400, 0, 480, 700);

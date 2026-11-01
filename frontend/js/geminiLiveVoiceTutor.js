@@ -246,6 +246,7 @@
       solutionText = '',
       chapterName = '',
       topic = '',
+      teachingPlan = null,
       apiBaseUrl = '',
       callbacks = {}
     }) {
@@ -254,7 +255,7 @@
       }
 
       this.activeQuestionId = questionId;
-      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic };
+      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic, teachingPlan };
       this.callbacks = callbacks;
       this.status = 'CONNECTING';
       if (this.callbacks.onStatusChange) this.callbacks.onStatusChange('CONNECTING');
@@ -512,7 +513,32 @@ Pedagogical Rules:
           .replace(/\\sqrt\{([^}]+)\}/g, 'square root of $1')
           .trim();
 
-        const userPrompt = `Look, this is the question: "${cleanQ}"\nSir, please teach me this question on the interactive smartboard like a human classroom teacher. Explain in warm, natural Hinglish what is happening, what to look at on the left whiteboard diagram, and guide me through the derivation steps on the right board.`;
+        let boardContext = '';
+        if (teachingPlan && teachingPlan.solution) {
+          const s1 = teachingPlan.solution.step1 || {};
+          const s2 = teachingPlan.solution.step2 || {};
+          const s3 = teachingPlan.solution.step3 || {};
+          const diagTitle = teachingPlan.diagram?.title || 'Physical System Schematic';
+          const tip = teachingPlan.examTip || 'Verify unit dimensions and boundary conditions';
+
+          boardContext = `
+The interactive classroom smartboard is synchronized and already displays:
+[LEFT BOARD]:
+- Question Statement & Analysis (${teachingPlan.questionHeader?.chapter || chapterName || 'Senior Secondary STEM'})
+- Visual Schematic: ${diagTitle}
+- Teacher Exam Tip: "${tip}"
+
+[RIGHT BOARD]:
+- Card 1: ${s1.title} -> ${s1.formula}. (${s1.explanation})
+- Card 2: ${s2.title} -> ${s2.formula}. (${s2.explanation})
+- Card 3: ${s3.title} -> ${s3.formula}. (${s3.explanation})
+`;
+        }
+
+        const userPrompt = `Question to teach and solve: "${cleanQ}"\n${boardContext}
+Sir, please teach me this live in front of the smartboard like a real teacher in warm, encouraging Kota/Delhi faculty Hinglish.
+Point me to the left board diagram first, then walk me through Step 1, Step 2, and the final result on the right board so that everything you say matches what is written on my board!`;
+
         this.sendUserText(userPrompt, cleanQ);
 
         return true;
@@ -524,16 +550,23 @@ Pedagogical Rules:
       }
     }
 
+    updateTeachingPlan(plan) {
+      if (this.activeQuestionData) {
+        this.activeQuestionData.teachingPlan = plan;
+      }
+    }
+
     switchToQuestion({
       questionId,
       questionText = '',
       solutionText = '',
       chapterName = '',
-      topic = ''
+      topic = '',
+      teachingPlan = null
     }) {
       if (!this.isSessionActive()) return false;
       this.activeQuestionId = questionId;
-      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic };
+      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic, teachingPlan };
 
       // Stop any audio playing for the previous question
       this.stopPlayback();
@@ -544,7 +577,29 @@ Pedagogical Rules:
         .replace(/\\sqrt\{([^}]+)\}/g, 'square root of $1')
         .trim();
 
-      const nextQuestionPrompt = `Moving to next question: "${cleanQ}"\nSir, how do we solve this one? Please explain step-by-step in friendly Hinglish.`;
+      let boardContext = '';
+      if (teachingPlan && teachingPlan.solution) {
+        const s1 = teachingPlan.solution.step1 || {};
+        const s2 = teachingPlan.solution.step2 || {};
+        const s3 = teachingPlan.solution.step3 || {};
+        const diagTitle = teachingPlan.diagram?.title || 'Physical System Schematic';
+        const tip = teachingPlan.examTip || 'Verify unit dimensions and boundary conditions';
+
+        boardContext = `
+The interactive smartboard is synchronized and displays:
+[LEFT BOARD]:
+- Visual Schematic: ${diagTitle}
+- Teacher Exam Tip: "${tip}"
+
+[RIGHT BOARD]:
+- Card 1: ${s1.title} -> ${s1.formula}. (${s1.explanation})
+- Card 2: ${s2.title} -> ${s2.formula}. (${s2.explanation})
+- Card 3: ${s3.title} -> ${s3.formula}. (${s3.explanation})
+`;
+      }
+
+      const nextQuestionPrompt = `Moving to next question: "${cleanQ}"\n${boardContext}
+Sir, please teach me this new question on the smartboard step-by-step in friendly Hinglish matching what is drawn on the board.`;
       this.sendUserText(nextQuestionPrompt, cleanQ);
 
       if (this.callbacks.onQuestionSwitched) {

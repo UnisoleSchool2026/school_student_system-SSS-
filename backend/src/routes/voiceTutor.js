@@ -5,6 +5,7 @@ const {
   generateHinglishAudioBrief,
   answerStudentInterruption,
   synthesizeNeuralAudio,
+  generateSmartboardTeachingPlan,
   NEURAL_VOICES
 } = require('../services/aiVoiceTutorService');
 
@@ -176,6 +177,91 @@ router.post('/explain', async (req, res) => {
     });
   } catch (err) {
     console.error('[VOICE TUTOR ROUTE ERROR]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/voice-tutor/solve-and-sync
+ * Solves the current question using LLM and creates synchronized payload for Smartboard + Voice
+ * Request body: { questionId, questionText, solutionText, chapterName, topic, options, correctAnswer, marks, voice }
+ */
+router.post('/solve-and-sync', async (req, res) => {
+  try {
+    const {
+      questionId = 'q_active',
+      questionText = '',
+      solutionText = '',
+      chapterName = '',
+      topic = '',
+      options = [],
+      correctAnswer = '',
+      marks = 3,
+      voice = 'swara'
+    } = req.body;
+
+    // Look up question in memory store if questionText not directly supplied
+    let qText = questionText;
+    let sText = solutionText;
+    let ch = chapterName;
+    let top = topic;
+    let opts = options;
+    let ans = correctAnswer;
+    let m = marks;
+
+    if (!qText && questionId) {
+      const allBanks = Object.values(inMemoryStore.subjectBanks || {});
+      for (const bank of allBanks) {
+        if (Array.isArray(bank)) {
+          const match = bank.find(item => item.id === questionId);
+          if (match) {
+            qText = match.question_latex || match.questionText || '';
+            sText = match.solution_latex || '';
+            ch = match.chapter_name || match.chapter || '';
+            top = match.topic || match.subtopic || '';
+            opts = match.options_latex || opts;
+            ans = match.correct_answer_latex || match.correct_answer || ans;
+            m = match.marks_weightage || m;
+            break;
+          }
+        }
+      }
+    }
+
+    const plan = await generateSmartboardTeachingPlan({
+      questionId,
+      questionText: qText,
+      solutionText: sText,
+      chapterName: ch,
+      topic: top,
+      options: opts,
+      correctAnswer: ans,
+      marks: m
+    });
+
+    const audioUrl = `/api/voice-tutor/audio?text=${encodeURIComponent(plan.hinglishBrief)}&voice=${encodeURIComponent(voice)}`;
+
+    const payload = {
+      success: true,
+      questionId,
+      smartboardPlan: {
+        questionHeader: {
+          title: qText,
+          chapter: ch,
+          marks: m
+        },
+        diagram: plan.diagram,
+        solution: plan.solution,
+        examTip: plan.examTip
+      },
+      hinglishBrief: plan.hinglishBrief,
+      audioUrl,
+      source: plan.source
+    };
+
+    res.json(payload);
+  } catch (err) {
+    console.error('[VOICE TUTOR SOLVE-AND-SYNC ERROR]', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

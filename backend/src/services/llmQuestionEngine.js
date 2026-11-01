@@ -284,7 +284,7 @@ function cleanAndParseJson(raw) {
  */
 async function callGroqApi({ apiKey, systemPrompt, userPrompt }) {
   const start = Date.now();
-  const modelsToTry = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'llama-3.2-3b-preview'];
+  const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
   let lastError = null;
 
   for (const model of modelsToTry) {

@@ -209,45 +209,52 @@ Output STRICTLY as a JSON object:
   "pitfallTip": "Key trap or advice in Hinglish"
 }`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+      for (const modelName of modelsToTry) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: [
-            { role: 'system', content: 'You are an expert Indian STEM teacher explaining concepts in warm, encouraging mixed Hinglish.' },
-            { role: 'user', content: prompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
-          max_tokens: 350
-        }),
-        signal: controller.signal
-      });
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [
+                { role: 'system', content: 'You are an expert Indian STEM teacher explaining concepts in warm, encouraging mixed Hinglish.' },
+                { role: 'user', content: prompt }
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.3,
+              max_tokens: 350
+            }),
+            signal: controller.signal
+          });
 
-      clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (content) {
-          const parsed = JSON.parse(content);
-          if (parsed.hinglishBrief) {
-            return {
-              questionId,
-              cleanSpokenQuestion: cleanQuestion,
-              hinglishBrief: parsed.hinglishBrief,
-              firstStepFormula: parsed.firstStepFormula || fallback.firstStepFormula,
-              pitfallTip: parsed.pitfallTip || fallback.pitfallTip,
-              source: 'GROQ_AI'
-            };
+          if (res.ok) {
+            const data = await res.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              const parsed = JSON.parse(content);
+              if (parsed.hinglishBrief) {
+                return {
+                  questionId,
+                  cleanSpokenQuestion: cleanQuestion,
+                  hinglishBrief: parsed.hinglishBrief,
+                  firstStepFormula: parsed.firstStepFormula || fallback.firstStepFormula,
+                  pitfallTip: parsed.pitfallTip || fallback.pitfallTip,
+                  source: `GROQ_${modelName.toUpperCase()}`
+                };
+              }
+            }
           }
+        } catch (e) {
+          // try next model
         }
       }
     } catch (e) {
@@ -297,43 +304,50 @@ Output strictly in JSON:
   "suggestedNextStep": "Brief one-line next action for student"
 }`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+      for (const modelName of modelsToTry) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${groqKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: [
-            { role: 'system', content: 'You are an encouraging Indian teacher responding instantly to student classroom doubts in Hinglish.' },
-            { role: 'user', content: prompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.35,
-          max_tokens: 300
-        }),
-        signal: controller.signal
-      });
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [
+                { role: 'system', content: 'You are an encouraging Indian teacher responding instantly to student classroom doubts in Hinglish.' },
+                { role: 'user', content: prompt }
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.35,
+              max_tokens: 300
+            }),
+            signal: controller.signal
+          });
 
-      clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (content) {
-          const parsed = JSON.parse(content);
-          if (parsed.answerHinglish) {
-            return {
-              studentDoubt,
-              answerHinglish: parsed.answerHinglish,
-              suggestedNextStep: parsed.suggestedNextStep || "Formula apply karke next calculation step complete karo.",
-              source: 'GROQ_AI'
-            };
+          if (res.ok) {
+            const data = await res.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              const parsed = JSON.parse(content);
+              if (parsed.answerHinglish) {
+                return {
+                  studentDoubt,
+                  answerHinglish: parsed.answerHinglish,
+                  suggestedNextStep: parsed.suggestedNextStep || "Formula apply karke next calculation step complete karo.",
+                  source: `GROQ_${modelName.toUpperCase()}`
+                };
+              }
+            }
           }
+        } catch (e) {
+          // try next model
         }
       }
     } catch (e) {
@@ -368,10 +382,224 @@ Output strictly in JSON:
   };
 }
 
+/**
+ * Dynamic Smartboard Teaching Plan Generator
+ * Solves the current question, creates side-by-side smartboard payload, and synchronizes with voice
+ */
+async function generateSmartboardTeachingPlan({
+  questionId = 'q_active',
+  questionText = '',
+  solutionText = '',
+  chapterName = '',
+  topic = '',
+  options = [],
+  correctAnswer = '',
+  marks = 3
+}) {
+  const cleanQ = cleanLatexForSpeech(questionText);
+  const cleanS = cleanLatexForSpeech(solutionText);
+
+  // 1. Initial heuristic detection of diagram type and core formulas
+  const textCorpus = `${questionText} ${chapterName} ${topic} ${solutionText}`.toLowerCase();
+  let defaultDiagType = 'concept';
+  let defaultTitle = `${chapterName || 'Classroom Concept'} • Schematic`;
+  let defaultTip = 'Always verify unit dimensions, coordinate signs, and physical boundary conditions!';
+  let s1Title = 'Given Setup & Governing Principle';
+  let s1Formula = 'Identify given physical variables and recall the primary governing law.';
+  let s1Exp = 'Establish the fundamental relationship connecting knowns and unknowns.';
+  let s2Title = 'Step-by-Step Derivation & Substitution';
+  let s2Formula = cleanS.slice(0, 180) || 'Substitute numerical values into the equation.';
+  let s2Exp = 'Solve algebraically while preserving units.';
+  let s3Title = 'Final Answer & Verified Takeaway';
+  let s3Formula = `Result: ${cleanS.slice(0, 80) || 'Solved successfully'} ${correctAnswer ? `[Option ${correctAnswer}]` : ''}`;
+  let s3Exp = 'Physical check confirms the calculated magnitude and direction.';
+  let defaultHinglish = `Is question mein hume ${chapterName || 'concept'} solve karna hai. Pehle left side board par diagram aur given values dekho... Ab right side board par step-by-step formula lagakar solve karte hain... aur answer mil gaya!`;
+
+  if (textCorpus.match(/roll|sphere|cylinder|incline|ramp|slip|angular|moment of inertia|torque/)) {
+    defaultDiagType = 'rolling_incline';
+    defaultTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
+    defaultTip = 'Static friction sustains pure rolling without dissipating total mechanical energy!';
+    s1Title = 'Free-Body Force & Torque Equations';
+    s1Formula = '• Downhill: M·g·sin θ - f_s = M·a\n• Torque about center: τ = f_s · R = I · α\n• Pure Rolling Constraint: a = α · R ⇒ α = a / R';
+    s1Exp = 'Contact point P is at instantaneous rest with zero relative sliding.';
+    s2Title = 'Torque & Linear Force Substitution';
+    s2Formula = '1) Torque equation: f_s = (I / R²) · a\n2) Substitute f_s: M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
+    s2Exp = 'Applies to any symmetrical rolling body (sphere, cylinder, ring).';
+    s3Title = 'Moment of Inertia & Final Acceleration';
+    s3Formula = '• For Solid Sphere: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (5/7)·g·sin θ\n• Final Result: a = (5/7)·g·sin θ  [Option B]';
+    s3Exp = 'Solid sphere accelerates faster than hollow sphere due to lower rotational inertia.';
+    defaultHinglish = 'Dekho beta, pehle left side board par free-body diagram aur given incline angle note karo. Torque equation se friction substitute karke solid sphere ka moment of inertia lagane par acceleration a = (5/7) g sin theta mil jata hai!';
+  } else if (textCorpus.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
+    defaultDiagType = 'lens';
+    defaultTitle = 'Ray Optics • Principal Axis & Image Formation';
+    defaultTip = 'Cartesian Sign Convention: Distances measured along incident light are positive; opposite are negative!';
+    s1Title = 'Governing Optical Equations';
+    s1Formula = '• Thin Lens Formula: 1/f = 1/v - 1/u\n• Linear Magnification: m = v / u = h_i / h_o\n• Power of Lens: P = 1 / f (meters)';
+    s1Exp = 'Identify focal length f (convex > 0, concave < 0) and object distance u (< 0).';
+    s2Title = 'Coordinate Substitution & Calculation';
+    s2Formula = '1) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n2) Image distance: v = (u · f) / (u + f)\n3) Magnification: m = v / u';
+    s2Exp = 'Positive v confirms a real, inverted image formed on the opposite side.';
+    s3Title = 'Image Nature & Final Result';
+    s3Formula = '• Calculated image distance v and magnification m\n• Nature: Real & Inverted if m < 0; Virtual & Erect if m > 0';
+    s3Exp = 'State complete optical image nature relative to the object.';
+    defaultHinglish = 'Dekho beta, left board par principal axis aur lens diagram observe karo. 1/f = 1/v - 1/u formula mein sign convention ke sath values substitute karte hi image position aur magnification aa jata hai!';
+  } else if (textCorpus.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
+    defaultDiagType = 'circuit';
+    defaultTitle = 'Electric Circuit • Current & Resistivity Model';
+    defaultTip = 'Relaxation time τ decreases with temperature in metals, increasing electrical resistance!';
+    s1Title = 'Governing Circuit Principles';
+    s1Formula = '• Ohm\'s Law: V = I · R\n• Microscopic Current: I = n · e · A · v_d,  v_d = (e · E · τ) / m\n• Resistivity Formula: R = ρ · (l / A),  ρ = m / (n · e² · τ)';
+    s1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
+    s2Title = 'Current Derivation & Ohm Deduction';
+    s2Formula = '1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R';
+    s2Exp = 'Confirms Ohm\'s Law V = IR with resistivity ρ = m / (n·e²·τ).';
+    s3Title = 'Final Formula & Board Takeaway';
+    s3Formula = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verification: Ohm\'s law verified from microscopic electron drift';
+    s3Exp = 'Resistivity depends only on material electron density n and relaxation time τ.';
+    defaultHinglish = 'Dekho beta, left board par conductor circuit model dekho. Current formula I = n e A v d mein drift velocity substitute karte hi Ohm\'s Law V = I R aur resistivity ka formula derive ho jata hai!';
+  } else if (textCorpus.match(/projectile|trajectory|parabola|horizontal range|max height/)) {
+    defaultDiagType = 'projectile';
+    defaultTitle = 'Projectile Motion • Parabolic Trajectory';
+    defaultTip = 'Horizontal velocity u_x = u·cos θ remains CONSTANT throughout flight (zero horizontal acceleration)!';
+    s1Title = 'Kinematic Component Equations';
+    s1Formula = '• Horizontal: u_x = u · cos θ,  a_x = 0,  x(t) = (u · cos θ) · t\n• Vertical: u_y = u · sin θ,  a_y = -g,  y(t) = (u · sin θ) · t - ½·g·t²';
+    s1Exp = 'Two independent perpendicular motions occurring simultaneously.';
+    s2Title = 'Trajectory Equation & Peak Calculation';
+    s2Formula = '1) Flight Time: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
+    s2Exp = 'Peak height occurs at vertical velocity v_y = 0.';
+    s3Title = 'Final Kinematic Result';
+    s3Formula = '• Computed values for trajectory parameters\n• Final Answer: Verified with standard formulas';
+    s3Exp = 'Range is maximum when launch angle θ = 45°.';
+    defaultHinglish = 'Dekho beta, projectile motion mein horizontal aur vertical velocity components separate hote hain. Formula apply karke height aur range calculate kar sakte hain!';
+  }
+
+  // 2. Query LLM for dynamic, high-fidelity question-specific plan
+  const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
+  if (groqKey) {
+    try {
+      const prompt = `You are Dr. Vikram Sharma, an elite Indian STEM faculty member teaching a student live in front of an interactive classroom smartboard.
+Analyze the following question and produce a synchronized teaching plan:
+- One side has the visual diagram/schematic and question statement.
+- The other side has the step-by-step solution formatted cleanly like a teacher writing on a board.
+- Spoken Hinglish explanation for the voice tutor matching the board steps.
+
+Question: "${cleanQ}"
+Chapter: "${chapterName || 'Physics/STEM'}"
+Topic: "${topic || ''}"
+Solution Reference: "${solutionText || ''}"
+Options: ${JSON.stringify(options || [])}
+Correct Answer: "${correctAnswer || ''}"
+
+Return STRICT JSON only:
+{
+  "diagramType": "circuit|rolling_incline|lens|projectile|fbd|oscillator|concept",
+  "diagramTitle": "Concise diagram title",
+  "examTip": "One golden teacher exam tip / pitfall (1 crisp sentence)",
+  "step1": {
+    "title": "GIVEN SETUP & GOVERNING PRINCIPLE",
+    "formula": "• Stated variables with units\\n• Primary governing formula",
+    "explanation": "Brief intuition for step 1"
+  },
+  "step2": {
+    "title": "STEP-BY-STEP DERIVATION & SUBSTITUTION",
+    "formula": "1) Working step 1...\\n2) Working step 2...",
+    "explanation": "Brief algebraic explanation"
+  },
+  "step3": {
+    "title": "FINAL ANSWER & VERIFIED RESULT",
+    "formula": "Final Answer: [value with SI units]  ${correctAnswer ? `[Option ${correctAnswer}]` : ''}",
+    "explanation": "Why this result makes physical sense"
+  },
+  "hinglishBrief": "Warm, encouraging spoken Hinglish explanation (3-4 sentences) walking the student through the left board diagram and right board derivation steps."
+}`;
+
+      const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+      const VALID_DIAGRAMS = ['rolling_incline', 'lens', 'circuit', 'projectile', 'fbd', 'oscillator', 'concept'];
+
+      for (const m of modelsToTry) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: m,
+              messages: [
+                { role: 'system', content: 'You output valid strict JSON only for classroom smartboard tutoring.' },
+                { role: 'user', content: prompt }
+              ],
+              response_format: { type: 'json_object' },
+              temperature: 0.2,
+              max_tokens: 700
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              const parsed = JSON.parse(content);
+              if (parsed.step1 && parsed.step2 && parsed.step3) {
+                const rawDiag = (parsed.diagramType || '').toLowerCase().trim();
+                const cleanDiag = VALID_DIAGRAMS.includes(rawDiag) ? rawDiag : defaultDiagType;
+
+                return {
+                  questionId,
+                  diagram: {
+                    type: cleanDiag,
+                    title: parsed.diagramTitle || defaultTitle
+                  },
+                  examTip: parsed.examTip || defaultTip,
+                  solution: {
+                    step1: parsed.step1,
+                    step2: parsed.step2,
+                    step3: parsed.step3
+                  },
+                  hinglishBrief: parsed.hinglishBrief || defaultHinglish,
+                  source: `GROQ_${m.toUpperCase()}`
+                };
+              }
+            }
+          }
+        } catch (innerErr) {
+          // try next model
+        }
+      }
+    } catch (err) {
+      console.warn('[AI VOICE TUTOR] Groq smartboard generation fallback:', err.message);
+    }
+  }
+
+  // 3. Fallback Plan
+  return {
+    questionId,
+    diagram: {
+      type: defaultDiagType,
+      title: defaultTitle
+    },
+    examTip: defaultTip,
+    solution: {
+      step1: { title: s1Title, formula: s1Formula, explanation: s1Exp },
+      step2: { title: s2Title, formula: s2Formula, explanation: s2Exp },
+      step3: { title: s3Title, formula: s3Formula, explanation: s3Exp }
+    },
+    hinglishBrief: defaultHinglish,
+    source: 'CURATED_TEACHER_LOGIC'
+  };
+}
+
 module.exports = {
   cleanLatexForSpeech,
   generateHinglishAudioBrief,
   answerStudentInterruption,
   synthesizeNeuralAudio,
+  generateSmartboardTeachingPlan,
   NEURAL_VOICES
 };

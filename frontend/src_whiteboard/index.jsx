@@ -439,6 +439,107 @@ const WhiteboardController = {
     this.renderStepProgressive(stepNum, currentPlanCache);
   },
 
+  renderSmartboardSolution(payload = {}) {
+    logTelemetry('WHITEBOARD_ACTION_RENDER_SMARTBOARD_SOLUTION');
+    this.clear();
+
+    const qHeader = payload.questionHeader || {
+      title: 'Question Statement & Analysis',
+      chapter: 'Senior Secondary STEM',
+      marks: 3
+    };
+    this.addQuestionHeader(qHeader);
+
+    const diag = payload.diagram || { type: 'concept', title: 'System Model & Visual Analysis' };
+    this.drawPhysicsDiagram(diag.type || 'concept', {
+      ...diag,
+      label: diag.title,
+      tip: payload.examTip || diag.tip
+    });
+
+    const sol = payload.solution || {};
+    const rx = BOARD_LAYOUT.COL_RIGHT_X;
+    const rw = BOARD_LAYOUT.COL_RIGHT_W;
+
+    // 1. Given Setup & Governing Principle (Top Card)
+    const s1 = sol.step1 || {
+      title: 'Given Setup & Governing Principle',
+      formula: 'State given physical quantities and fundamental law.',
+      explanation: 'Establish foundational governing relation.'
+    };
+    const s1CleanF = formatMathForWhiteboard(s1.formula || '');
+    const s1CleanE = formatMathForWhiteboard(s1.explanation || '');
+
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 50,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 220,
+        color: 'yellow',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`1. ${(s1.title || 'Given Setup & Governing Principle').toUpperCase()}\n\n${s1CleanF}\n\n• ${s1CleanE}`)
+      }
+    });
+
+    // 2. Step-by-Step Derivation & Substitution (Middle Card)
+    const s2 = sol.step2 || {
+      title: 'Step-by-Step Derivation & Substitution',
+      formula: 'Substitute known values and simplify algebraically.',
+      explanation: 'Step-by-step resolution preserving SI units.'
+    };
+    const s2CleanF = formatMathForWhiteboard(s2.formula || '');
+    const s2CleanE = formatMathForWhiteboard(s2.explanation || '');
+
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 290,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 275,
+        color: 'light-blue',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`2. ${(s2.title || 'Derivation & Substitution').toUpperCase()}\n\n${s2CleanF}\n\n• ${s2CleanE}`)
+      }
+    });
+
+    // 3. Final Answer & Verified Result (Bottom Hero Card)
+    const s3 = sol.step3 || {
+      title: 'Final Answer & Verified Result',
+      formula: 'Calculated value with proper units.',
+      explanation: 'Physical check confirms calculated magnitude.'
+    };
+    const s3CleanF = formatMathForWhiteboard(s3.formula || '');
+    const s3CleanE = formatMathForWhiteboard(s3.explanation || '');
+
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 585,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 240,
+        color: 'green',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`3. ${(s3.title || 'Final Answer & Verified Result').toUpperCase()}\n\n${s3CleanF}\n\nKey Takeaway: ${s3CleanE}`)
+      }
+    });
+
+    if (window.updateUIProgress) {
+      window.updateUIProgress(0, 'Voice Tutor Teaching: Synchronized Classroom Smartboard');
+    }
+
+    this.zoomFit();
+  },
+
   drawPhysicsDiagram(type = 'lens', params = {}) {
     logTelemetry('WHITEBOARD_ACTION_DRAW_DIAGRAM', { type, params });
     if (!editorInstance) {
@@ -912,39 +1013,338 @@ const WhiteboardController = {
         }
       });
 
-    } else {
+    } else if (type === 'projectile') {
       safeCreateShape({
         type: 'text',
         x: lx + 20,
         y: dy + 15,
         props: {
-          richText: toRichText(`VISUAL CONCEPT FRAMEWORK • ${params.label || 'Physics Principles'}`),
+          richText: toRichText(`PROJECTILE TRAJECTORY • 2D KINEMATICS (${params.title || 'Parabolic Path'})`),
           size: 's',
           color: 'blue'
         }
       });
 
+      const cy = dy + 180;
+      // Ground horizontal line
       safeCreateShape({
-        type: 'geo',
+        type: 'line',
         x: lx + 40,
-        y: dy + 70,
+        y: cy + 120,
         props: {
-          geo: 'rectangle',
-          w: 470,
-          h: 120,
-          color: 'violet',
-          fill: 'semi',
-          size: 's',
-          richText: toRichText('GOVERNING PHYSICAL LAWS & BOUNDARY CONDITIONS\n• Identify all given independent variables and state constraints.\n• Choose coordinate axes aligned with acceleration direction.\n• Apply conservation theorems (Energy, Linear Momentum, Angular Momentum).')
+          points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 580, y: 0 } },
+          color: 'grey',
+          size: 's'
         }
       });
 
+      // Launch vector arrow v0
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 50,
+        y: cy + 120,
+        props: { start: { x: 0, y: 0 }, end: { x: 90, y: -70 }, color: 'green' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 65,
+        y: cy + 30,
+        props: { richText: toRichText('v_0 (Launch Velocity)'), size: 's', color: 'green' }
+      });
+
+      // Angle theta arc
+      safeCreateShape({
+        type: 'text',
+        x: lx + 90,
+        y: cy + 90,
+        props: { richText: toRichText('θ (Launch Angle)'), size: 's', color: 'orange' }
+      });
+
+      // Peak max height indicator
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 330,
+        y: cy + 120,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: -130 }, color: 'blue' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 340,
+        y: cy + 20,
+        props: { richText: toRichText('H_max = (v_0²·sin²θ) / 2g'), size: 's', color: 'blue' }
+      });
+
+      // Range callout
+      safeCreateShape({
+        type: 'text',
+        x: lx + 220,
+        y: cy + 135,
+        props: { richText: toRichText('Horizontal Range R = (v_0²·sin 2θ) / g'), size: 's', color: 'yellow' }
+      });
+
+      // Bottom Note
       safeCreateShape({
         type: 'text',
         x: lx + 25,
         y: dy + 348,
         props: {
-          richText: toRichText('Sign Convention & SI Unit Integrity: Essential for full marks in CBSE/JEE exams'),
+          richText: toRichText('Kinematics: a_x = 0 (Constant velocity)  |  a_y = -g (Uniform acceleration)'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'fbd' || type === 'mechanics') {
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText(`FREE-BODY DIAGRAM (FBD) • ${params.title || 'FORCE RESOLUTION'}`),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      const cy = dy + 180;
+      // Surface line
+      safeCreateShape({
+        type: 'line',
+        x: lx + 50,
+        y: cy + 60,
+        props: { points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 500, y: 0 } }, color: 'grey', size: 's' }
+      });
+
+      // Mass block
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 230,
+        y: cy - 30,
+        props: { geo: 'rectangle', w: 140, h: 90, color: 'orange', fill: 'semi', richText: toRichText('Mass (M)') }
+      });
+
+      // Normal Reaction N upward
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 300,
+        y: cy - 30,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: -70 }, color: 'blue' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 310,
+        y: cy - 90,
+        props: { richText: toRichText('N (Normal Reaction)'), size: 's', color: 'blue' }
+      });
+
+      // Gravity mg downward
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 300,
+        y: cy + 60,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: 70 }, color: 'grey' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 310,
+        y: cy + 100,
+        props: { richText: toRichText('M·g (Weight)'), size: 's', color: 'grey' }
+      });
+
+      // Applied force F rightward
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 370,
+        y: cy + 15,
+        props: { start: { x: 0, y: 0 }, end: { x: 80, y: 0 }, color: 'green' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 410,
+        y: cy - 10,
+        props: { richText: toRichText('F (Applied)'), size: 's', color: 'green' }
+      });
+
+      // Friction f_s leftward
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 230,
+        y: cy + 55,
+        props: { start: { x: 0, y: 0 }, end: { x: -70, y: 0 }, color: 'red' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 120,
+        y: cy + 40,
+        props: { richText: toRichText('f_s (Friction)'), size: 's', color: 'red' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 25,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Newton\'s 2nd Law: Σ F_x = M·a_x  |  Σ F_y = N - M·g = 0  ⇒  N = M·g'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'oscillator' || type === 'shm') {
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText(`HARMONIC OSCILLATOR (SHM) • ${params.title || 'RESTORING DYNAMICS'}`),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      const cy = dy + 180;
+      // Fixed wall line
+      safeCreateShape({
+        type: 'line',
+        x: lx + 60,
+        y: cy - 80,
+        props: { points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 0, y: 160 } }, color: 'grey', size: 'm' }
+      });
+
+      // Spring coil box
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 70,
+        y: cy - 25,
+        props: { geo: 'rectangle', w: 180, h: 50, color: 'grey', fill: 'none', richText: toRichText('Spring k (Coil)') }
+      });
+
+      // Attached mass
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 260,
+        y: cy - 40,
+        props: { geo: 'rectangle', w: 100, h: 80, color: 'violet', fill: 'semi', richText: toRichText('Mass (m)') }
+      });
+
+      // Equilibrium dashed line
+      safeCreateShape({
+        type: 'line',
+        x: lx + 310,
+        y: cy - 70,
+        props: { points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 0, y: 140 } }, color: 'blue', size: 's', dash: 'dashed' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 285,
+        y: cy + 85,
+        props: { richText: toRichText('x = 0 (Mean Position)'), size: 's', color: 'blue' }
+      });
+
+      // Restoring force arrow
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 360,
+        y: cy,
+        props: { start: { x: 0, y: 0 }, end: { x: -60, y: 0 }, color: 'red' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 375,
+        y: cy - 15,
+        props: { richText: toRichText('F = -k·x'), size: 's', color: 'red' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 25,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Equation of Motion: m·(d²x/dt²) + k·x = 0  ⇒  ω = √(k/m),  T = 2π√(m/k)'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else {
+      // General Visual Concept Framework (Universal for all subjects & concepts)
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText(`VISUAL CONCEPT FRAMEWORK • ${(params.title || params.label || 'SYSTEM SCHEMATIC').toUpperCase()}`),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      const cy = dy + 120;
+      // Block A: Stated Given Parameters
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 40,
+        y: cy,
+        props: {
+          geo: 'rectangle',
+          w: 240,
+          h: 90,
+          color: 'orange',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText(`1. GIVEN PARAMETERS\n• Physical Inputs Identified\n• Units Converted to SI standard`)
+        }
+      });
+
+      // Transfer arrow
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 290,
+        y: cy + 45,
+        props: { start: { x: 0, y: 0 }, end: { x: 60, y: 0 }, color: 'yellow' }
+      });
+
+      // Block B: Target Solution
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 360,
+        y: cy,
+        props: {
+          geo: 'rectangle',
+          w: 240,
+          h: 90,
+          color: 'green',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText(`2. TARGET OUTPUT\n• Calculated Variable\n• Verified Result with Units`)
+        }
+      });
+
+      // Central Governing Framework card
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 40,
+        y: cy + 115,
+        props: {
+          geo: 'rectangle',
+          w: 560,
+          h: 90,
+          color: 'violet',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText(`CORE GOVERNING LAW & MATHEMATICAL RELATION\n• Establish direct mathematical formulation linking given inputs to output.\n• Check physical boundary conditions and coordinate sign conventions.`)
+        }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 25,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Systematic Problem-Solving: Clear boundary definitions guarantee full marks in CBSE/JEE exams'),
           size: 's',
           color: 'yellow'
         }
@@ -963,7 +1363,7 @@ const WhiteboardController = {
         color: 'yellow',
         fill: 'semi',
         size: 's',
-        richText: toRichText(`TEACHER EXAM TIP & COMMON PITFALL:\n${formatMathForWhiteboard(params.tip || 'Pure rolling requires STATIC friction. Work done by static friction is zero! Total mechanical energy is conserved.')}`)
+        richText: toRichText(`TEACHER EXAM TIP & COMMON PITFALL:\n${formatMathForWhiteboard(params.tip || 'Verify unit dimensions, coordinate signs, and physical boundary conditions!')}`)
       }
     });
 
@@ -1054,6 +1454,8 @@ function processWhiteboardEvent(data) {
       window.drawFallbackDoubt(data.payload?.doubtText, data.payload?.answerText);
     } else if (window.drawFallbackFinal && data.type === 'FINAL_ANSWER') {
       window.drawFallbackFinal(data.payload?.answer, data.payload?.keyInsight);
+    } else if (data.type === 'RENDER_SMARTBOARD_SOLUTION' && window.drawFallbackSmartboardSolution) {
+      window.drawFallbackSmartboardSolution(data.payload);
     } else if (window.clearFallbackCanvas && data.type === 'CLEAR_BOARD') {
       window.clearFallbackCanvas();
     }
@@ -1084,6 +1486,10 @@ function processWhiteboardEvent(data) {
 
     case 'RENDER_STEP_3':
       WhiteboardController.setStepMode({ stepNum: 3, plan: data.payload });
+      break;
+
+    case 'RENDER_SMARTBOARD_SOLUTION':
+      WhiteboardController.renderSmartboardSolution(data.payload || {});
       break;
 
     case 'RENDER_FULL_SUMMARY':
