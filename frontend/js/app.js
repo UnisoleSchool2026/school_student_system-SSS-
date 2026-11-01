@@ -10722,7 +10722,7 @@ function renderBoardPaperStudio(paper) {
         GENERAL INSTRUCTIONS / सामान्य निर्देश:
       </strong>
       <ol style="margin: 0; padding-left: 20px;">
-        ${(paper.instructions || []).map(inst => `<li style="margin-bottom: 3px;">${inst}</li>`).join('')}
+        ${(paper.instructions || []).map(inst => `<li style="margin-bottom: 3px;">${renderLatexString(inst)}</li>`).join('')}
       </ol>
     </div>
 
@@ -10737,7 +10737,7 @@ function renderBoardPaperStudio(paper) {
           <span>${sec.name}</span>
           <span style="font-size: 0.85rem; font-weight: 700; color: #2563eb;">[${sec.totalMarks} Marks]</span>
         </div>
-        ${sec.description ? `<div style="font-size: 0.8rem; color: #475569; margin-bottom: 12px; font-style: italic;">${sec.description}</div>` : ''}
+        ${sec.description ? `<div style="font-size: 0.8rem; color: #475569; margin-bottom: 12px; font-style: italic;">${renderLatexString(sec.description)}</div>` : ''}
 
         <div class="paper-questions-list">
     `;
@@ -10759,14 +10759,14 @@ function renderBoardPaperStudio(paper) {
           </div>
 
           <div class="paper-q-text">
-            ${cleanMathDisplay(q.question_latex)}
+            ${renderLatexString(q.question_latex)}
           </div>
 
           ${isMcq && q.options_latex && q.options_latex.length > 0 ? `
             <div class="paper-q-options">
               ${q.options_latex.map(opt => `
                 <div class="paper-q-option ${showScheme && (opt.is_correct || opt.key === q.correct_answer) ? 'correct-option' : ''}">
-                  <strong>(${opt.key})</strong> ${cleanMathDisplay(opt.latex || opt.text || '')}
+                  <strong>(${opt.key})</strong> <span>${renderLatexString(opt.latex || opt.text || '')}</span>
                 </div>
               `).join('')}
             </div>
@@ -10777,16 +10777,16 @@ function renderBoardPaperStudio(paper) {
             <div class="paper-q-solution-box">
               <div style="font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="check-circle" style="width: 14px; height: 14px; color: #059669;"></i>
-                <span>Official Marking Scheme &amp; Step Rubric (Answer: ${q.correct_answer || 'See Solution'}):</span>
+                <span>Official Marking Scheme &amp; Step Rubric (Answer: ${renderLatexString(q.correct_answer || 'See Solution')}):</span>
               </div>
               <div style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line;">
-                ${cleanMathDisplay(q.solution_latex || 'Award marks based on valid logical derivation steps.')}
+                ${renderLatexString(q.solution_latex || 'Award marks based on valid logical derivation steps.')}
               </div>
               ${q.step_rubric && q.step_rubric.length > 0 ? `
                 <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(5,150,105,0.3); font-size: 0.78rem;">
                   <strong>Step Breakdown:</strong>
                   <ul style="margin: 2px 0 0 16px; padding: 0;">
-                    ${q.step_rubric.map(r => `<li>${r.step} — <strong>[${r.marks}M]</strong></li>`).join('')}
+                    ${q.step_rubric.map(r => `<li>${renderLatexString(r.step)} — <strong>[${r.marks}M]</strong></li>`).join('')}
                   </ul>
                 </div>
               ` : ''}
@@ -10831,33 +10831,17 @@ function renderBoardPaperStudio(paper) {
 
 function cleanMathDisplay(text = '') {
   if (!text) return '';
-  return text
-    .replace(/\\rightarrow/g, ' → ')
-    .replace(/\\implies/g, ' ⇒ ')
-    .replace(/\\pm/g, ' ± ')
-    .replace(/\\times/g, ' × ')
-    .replace(/\\cdot/g, ' · ')
-    .replace(/\\alpha/g, 'α')
-    .replace(/\\beta/g, 'β')
-    .replace(/\\gamma/g, 'γ')
-    .replace(/\\theta/g, 'θ')
-    .replace(/\\lambda/g, 'λ')
-    .replace(/\\mu_0/g, 'μ₀')
-    .replace(/\\epsilon_0/g, 'ε₀')
-    .replace(/\\tau/g, 'τ')
-    .replace(/\\pi/g, 'π')
-    .replace(/\\Delta/g, 'Δ')
-    .replace(/\\sum/g, '∑')
-    .replace(/\\int/g, '∫')
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    .replace(/\\text\{([^}]+)\}/g, '$1')
-    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1 / $2)');
+  return renderLatexString(text);
 }
 
 function typesetMathInElement(el) {
   if (!el) return;
-  if (window.MathJax && window.MathJax.typesetPromise) {
-    window.MathJax.typesetPromise([el]).catch(e => console.warn('[MathJax typeset error]', e));
+  if (typeof renderMathInElement === 'function') {
+    try {
+      renderMathInElement(el);
+    } catch (e) {
+      console.warn('[renderMathInElement error]', e);
+    }
   }
 }
 
@@ -10922,11 +10906,11 @@ async function openSwapQuestionModal(questionId) {
               [${alt.topic || 'Syllabus Topic'}] &bull; ${alt.marks} Mark${alt.marks > 1 ? 's' : ''} &bull; ${alt.pyq_appearance || 'Board PYQ'}
             </div>
             <div style="font-size:0.88rem; color:var(--text-primary); line-height:1.45;">
-              ${cleanMathDisplay(alt.question_latex)}
+              ${renderLatexString(alt.question_latex)}
             </div>
             ${alt.options_latex && alt.options_latex.length > 0 ? `
               <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
-                ${alt.options_latex.map(o => `<span style="font-size:0.75rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">(${o.key}) ${cleanMathDisplay(o.latex || '')}</span>`).join('')}
+                ${alt.options_latex.map(o => `<span style="font-size:0.75rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">(${o.key}) <span>${renderLatexString(o.latex || '')}</span></span>`).join('')}
               </div>
             ` : ''}
           </div>
@@ -10952,6 +10936,7 @@ async function openSwapQuestionModal(questionId) {
   }
 
   initLucideIcons();
+  typesetMathInElement(container);
 }
 
 function closeSelectAlternativeModal() {

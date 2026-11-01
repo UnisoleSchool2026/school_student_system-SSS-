@@ -4449,3 +4449,56 @@ button:active,
     page-break-inside: avoid;
   }
 }
+
+/* ==========================================================================
+   BOARD QUESTION PAPER: PRISTINE KATEX MATHEMATICAL TYPOGRAPHY
+   ========================================================================== */
+.board-paper-sheet .katex {
+  color: #0f172a !important;
+  font-size: 1.05em;
+  text-rendering: auto;
+}
+
+.board-paper-sheet .katex-display {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  margin: 0.5rem 0 !important;
+  padding: 0.5rem 0.85rem !important;
+  text-align: left !important;
+  overflow-x: auto !important;
+}
+
+.board-paper-sheet .katex-inline-fallback {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+.board-paper-sheet .katex-display-fallback {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-left: 3px solid #2563eb !important;
+  padding: 0.4rem 0.75rem !important;
+  margin: 0.4rem 0 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+@media print {
+  .board-paper-sheet .katex,
+  .board-paper-sheet .katex * {
+    color: #000000 !important;
+  }
+  .board-paper-sheet .katex-display {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0.25rem 0 !important;
+    margin: 0.25rem 0 !important;
+  }
+}
