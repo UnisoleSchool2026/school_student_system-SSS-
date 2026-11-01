@@ -9444,83 +9444,82 @@ function syncQuestionToWhiteboard(qId) {
     finalInsight = 'Internal battery resistance causes terminal voltage to be less than EMF during discharge.';
   }
 
-  // 1. Initial Question Header Card on Left Board (Immediate)
-  sendWhiteboardMessage(qId, {
-    type: 'INIT_QUESTION',
-    payload: {
+  // Compile structured pedagogical plan
+  const teachingPlan = {
+    questionHeader: {
       title: cleanLatexForClientVoice(rawQ).slice(0, 160),
       chapter: ch,
       marks: marks
+    },
+    diagram: {
+      type: diagramType,
+      label: `${ch} - Visual Mechanics`,
+      tip: tipText
+    },
+    step1: {
+      title: step1Title,
+      formula: step1Formula,
+      explanation: step1Exp,
+      studentPrompt: 'Beta, Free-body force balance aur pure rolling condition clear hai?'
+    },
+    step2: {
+      title: step2Title,
+      formula: step2Working,
+      explanation: step2Exp,
+      studentPrompt: 'Beta, torque equation se static friction substitute karna clear hai?'
+    },
+    step3: {
+      title: step3Title,
+      formula: step3Working,
+      explanation: step3Exp,
+      studentPrompt: 'Beta, solid sphere ka moment of inertia (2/5 MR²) lagane par a = (5/7) g sin θ clear hai?'
+    },
+    final: {
+      answer: finalAns || 'Linear acceleration a = (5/7)·g·sin θ [Option B]',
+      keyInsight: finalInsight
     }
+  };
+
+  // 1. Initial Classroom Orientation (T = 0): Diagram on left, pedagogical roadmap on right
+  sendWhiteboardMessage(qId, {
+    type: 'RENDER_ORIENTATION',
+    payload: teachingPlan
   });
 
-  // 2. Progressive timed drawing sync (T = 1.0s): Visual Diagram on Left Board
+  // 2. Focused Step 1 Teaching (T = 5.0s): Full right board dedicated to governing equations
   const t1 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
-      type: 'DRAW_DIAGRAM',
-      payload: {
-        diagramType: diagramType,
-        label: `${ch} - Visual Mechanics`,
-        tip: tipText
-      }
+      type: 'RENDER_STEP_1',
+      payload: teachingPlan
     });
-  }, 1000);
+  }, 5000);
   voiceTutorState.whiteboardSyncTimers.push(t1);
 
-  // 3. Step 1 Formula on Right Board (T = 3.5s)
+  // 3. Focused Step 2 Teaching (T = 12.0s): Full right board dedicated to mathematical substitution
   const t2 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
-      type: 'WRITE_STEP',
-      payload: {
-        stepNum: 1,
-        title: step1Title,
-        formula: step1Formula,
-        explanation: step1Exp
-      }
+      type: 'RENDER_STEP_2',
+      payload: teachingPlan
     });
-  }, 3500);
+  }, 12000);
   voiceTutorState.whiteboardSyncTimers.push(t2);
 
-  // 4. Step 2 Calculation on Right Board (T = 7.0s)
+  // 4. Focused Step 3 Teaching (T = 19.0s): Full right board dedicated to moment of inertia and calculation
   const t3 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
-      type: 'WRITE_STEP',
-      payload: {
-        stepNum: 2,
-        title: step2Title,
-        formula: step2Working,
-        explanation: step2Exp
-      }
+      type: 'RENDER_STEP_3',
+      payload: teachingPlan
     });
-  }, 7000);
+  }, 19000);
   voiceTutorState.whiteboardSyncTimers.push(t3);
 
-  // 5. Step 3 Derivation on Right Board (T = 10.5s, if available)
-  if (step3Working) {
-    const t3_b = setTimeout(() => {
-      sendWhiteboardMessage(qId, {
-        type: 'WRITE_STEP',
-        payload: {
-          stepNum: 3,
-          title: step3Title,
-          formula: step3Working,
-          explanation: step3Exp
-        }
-      });
-    }, 10500);
-    voiceTutorState.whiteboardSyncTimers.push(t3_b);
-  }
-
-  // 6. Final Answer on Right Board (T = 14.0s)
+  // 5. Full Board Master Summary (T = 26.0s): 3 clean stacked cards + final answer hero box
   const t4 = setTimeout(() => {
     sendWhiteboardMessage(qId, {
-      type: 'FINAL_ANSWER',
-      payload: {
-        answer: finalAns || 'Verified accurately using standard CBSE guidelines',
-        keyInsight: finalInsight
-      }
+      type: 'RENDER_FULL_SUMMARY',
+      payload: teachingPlan
     });
-  }, 14000);
+  }, 26000);
   voiceTutorState.whiteboardSyncTimers.push(t4);
 }
 

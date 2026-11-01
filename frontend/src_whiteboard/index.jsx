@@ -256,32 +256,35 @@ function formatMathForWhiteboard(input) {
   return str;
 }
 
-// Smartboard 2-Column Teaching Layout Geometry (Zero Overlap Guaranteed)
+// Smartboard 2-Column Teaching Layout Geometry (Full Board Utilization & Zero Overlap)
 const BOARD_LAYOUT = {
-  // Left Column: Problem & Visual Physics
+  // Left Column: Question Header & High-Definition Visual Physics / Math Diagram
   COL_LEFT_X: 50,
-  COL_LEFT_W: 550,
+  COL_LEFT_W: 680,
   HEADER_Y: 50,
   HEADER_H: 175,
-  DIAGRAM_Y: 250,
-  DIAGRAM_H: 390,
-  TIP_Y: 665,
-  TIP_H: 125,
+  DIAGRAM_Y: 245,
+  DIAGRAM_H: 495,
+  TIP_Y: 755,
+  TIP_H: 115,
 
-  // Right Column: Step-by-Step Mathematical Derivation
-  COL_RIGHT_X: 630,
-  COL_RIGHT_W: 620,
+  // Right Column: Step-by-Step Mathematical Derivation & Concept Focus
+  COL_RIGHT_X: 760,
+  COL_RIGHT_W: 800,
   STEP1_Y: 50,
   STEP1_H: 175,
-  STEP2_Y: 250,
+  STEP2_Y: 245,
   STEP2_H: 185,
-  STEP3_Y: 455,
-  STEP3_H: 190,
-  FINAL_Y: 665,
-  FINAL_H: 125,
-  DOUBT_Y: 810,
+  STEP3_Y: 450,
+  STEP3_H: 185,
+  FINAL_Y: 655,
+  FINAL_H: 130,
+  DOUBT_Y: 805,
   DOUBT_H: 130
 };
+
+let currentPlanCache = null;
+let currentStepNumber = 0;
 
 const WhiteboardController = {
   isReady() {
@@ -304,11 +307,30 @@ const WhiteboardController = {
     }
   },
 
+  clearRightBoard() {
+    logTelemetry('WHITEBOARD_ACTION_CLEAR_RIGHT');
+    if (!editorInstance) {
+      if (window.clearFallbackRight) window.clearFallbackRight();
+      return;
+    }
+    try {
+      const allShapes = Array.from(editorInstance.getCurrentPageShapes?.() || []);
+      const rightShapeIds = allShapes
+        .filter(s => (s.x || 0) >= (BOARD_LAYOUT.COL_RIGHT_X - 30))
+        .map(s => s.id);
+      if (rightShapeIds.length > 0) {
+        editorInstance.deleteShapes(rightShapeIds);
+      }
+    } catch (e) {
+      logTelemetry('CLEAR_RIGHT_ERROR', { message: e?.message });
+    }
+  },
+
   zoomFit() {
     logTelemetry('WHITEBOARD_ACTION_ZOOM_FIT');
     if (!editorInstance) return;
     try {
-      editorInstance.zoomToFit({ duration: 400, padding: 35 });
+      editorInstance.zoomToFit({ duration: 350, padding: 40 });
     } catch (e) {
       logTelemetry('ZOOM_FIT_ERROR', { message: e?.message });
     }
@@ -339,52 +361,209 @@ const WhiteboardController = {
     this.zoomFit();
   },
 
-  addStepFormula({ stepNum = 1, title = 'Governing Law', formula = '', explanation = '' }) {
-    logTelemetry('WHITEBOARD_ACTION_ADD_STEP', { stepNum, title, formula });
-    if (!editorInstance) {
-      if (window.drawFallbackStep) window.drawFallbackStep(stepNum, title, formula, explanation);
-      return;
-    }
-    const cleanFormula = formatMathForWhiteboard(formula || '');
-    const cleanExp = formatMathForWhiteboard(explanation || '');
+  renderOrientationSetup(plan = {}) {
+    logTelemetry('WHITEBOARD_ACTION_ORIENTATION_SETUP');
+    currentPlanCache = plan;
+    currentStepNumber = 0;
+    this.clear();
 
-    let yPos = BOARD_LAYOUT.STEP1_Y;
-    let hVal = BOARD_LAYOUT.STEP1_H;
-    let cardColor = 'yellow';
+    const qHeader = plan.questionHeader || {
+      title: plan.title || 'Pure Rolling Motion of Solid Sphere',
+      chapter: plan.chapter || 'System of Particles & Rotational Motion',
+      marks: plan.marks || 4
+    };
+    this.addQuestionHeader(qHeader);
 
-    if (stepNum === 1) {
-      yPos = BOARD_LAYOUT.STEP1_Y;
-      hVal = BOARD_LAYOUT.STEP1_H;
-      cardColor = 'yellow';
-    } else if (stepNum === 2) {
-      yPos = BOARD_LAYOUT.STEP2_Y;
-      hVal = BOARD_LAYOUT.STEP2_H;
-      cardColor = 'light-blue';
-    } else if (stepNum === 3) {
-      yPos = BOARD_LAYOUT.STEP3_Y;
-      hVal = BOARD_LAYOUT.STEP3_H;
-      cardColor = 'violet';
-    } else {
-      yPos = BOARD_LAYOUT.STEP3_Y + (stepNum - 2) * 195;
-      hVal = 185;
-      cardColor = 'light-blue';
-    }
+    const diag = plan.diagram || { type: 'rolling_incline', label: 'Rolling Sphere on Incline' };
+    this.drawPhysicsDiagram(diag.type || 'rolling_incline', diag);
+
+    const rx = BOARD_LAYOUT.COL_RIGHT_X;
+    const rw = BOARD_LAYOUT.COL_RIGHT_W;
 
     safeCreateShape({
       type: 'geo',
-      x: BOARD_LAYOUT.COL_RIGHT_X,
-      y: yPos,
+      x: rx,
+      y: 50,
       props: {
         geo: 'rectangle',
-        w: BOARD_LAYOUT.COL_RIGHT_W,
-        h: hVal,
-        color: cardColor,
+        w: rw,
+        h: 690,
+        color: 'blue',
         fill: 'semi',
-        size: 's',
-        richText: toRichText(`Step ${stepNum}: ${title}\n\n${cleanFormula}\n\n${cleanExp}`)
+        size: 'm',
+        richText: toRichText(`AI CLASSROOM SMARTBOARD • PEDAGOGICAL ROADMAP\n\nChapter: ${(qHeader.chapter || 'Senior Physics').toUpperCase()}\n\n1. Visual Physical System (Left Smartboard):\n• Detailed Free-Body Diagram with incline angle θ and sphere mass M, radius R\n• Gravitational components: Downhill M·g·sin θ and Normal M·g·cos θ\n• Static friction f_s acts uphill at contact point P, providing pure roll\n• Instantaneous center of rotation: Point P is at rest (zero relative sliding)\n\n2. Structured Derivation Roadmap:\n• Step 1: Formulate linear motion & torque governing equations\n• Step 2: Apply pure rolling condition (a = α·R) & substitute friction force\n• Step 3: Insert specific moment of inertia (I = ⅖ MR²) & calculate linear acceleration\n\n3. Classroom Status:\nDr. Vikram is walking you through the diagram. Listen closely as we begin!`)
       }
     });
+
     this.zoomFit();
+  },
+
+  renderSingleStepFocused({ stepNum = 1, totalSteps = 3, title = '', formula = '', explanation = '', studentPrompt = '' }) {
+    logTelemetry('WHITEBOARD_ACTION_SINGLE_STEP', { stepNum, title });
+    currentStepNumber = stepNum;
+    this.clearRightBoard();
+
+    if (!editorInstance) {
+      if (window.drawFallbackSingleStep) window.drawFallbackSingleStep(stepNum, totalSteps, title, formula, explanation, studentPrompt);
+      return;
+    }
+
+    const cleanFormula = formatMathForWhiteboard(formula || '');
+    const cleanExp = formatMathForWhiteboard(explanation || '');
+    const cleanPrompt = formatMathForWhiteboard(studentPrompt || 'Beta, is this step clear? Ask a doubt or say "Next step" to proceed.');
+
+    const rx = BOARD_LAYOUT.COL_RIGHT_X;
+    const rw = BOARD_LAYOUT.COL_RIGHT_W;
+    const stepColor = stepNum === 1 ? 'yellow' : stepNum === 2 ? 'light-blue' : 'violet';
+
+    // 1. Primary Active Step Focus Card (Takes full right board with crystal-clear formatting)
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 50,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 475,
+        color: stepColor,
+        fill: 'semi',
+        size: 'm',
+        richText: toRichText(`STEP ${stepNum} OF ${totalSteps}: ${title.toUpperCase()}\n\n${cleanFormula}\n\n${cleanExp}`)
+      }
+    });
+
+    // 2. Interactive Student Comprehension Checkpoint Card at bottom
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 545,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 195,
+        color: 'green',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`STUDENT COMPREHENSION CHECKPOINT • STEP ${stepNum}\n\n"${cleanPrompt}"\n\n[ Voice confirmation: Speak into mic ("Clear hai", "Next step") or click "Next Step" ]`)
+      }
+    });
+
+    this.zoomFit();
+  },
+
+  renderFullBoardSummary(plan = null) {
+    logTelemetry('WHITEBOARD_ACTION_FULL_SUMMARY');
+    const p = plan || currentPlanCache || {};
+    currentStepNumber = 4;
+    this.clearRightBoard();
+
+    if (!editorInstance) {
+      if (window.drawFallbackFullSummary) window.drawFallbackFullSummary(p);
+      return;
+    }
+
+    const rx = BOARD_LAYOUT.COL_RIGHT_X;
+    const rw = BOARD_LAYOUT.COL_RIGHT_W;
+
+    const s1 = p.step1 || { title: 'Governing Principles', formula: 'M·g·sin θ - f_s = M·a,  τ = f_s·R = I·α,  a = α·R' };
+    const s2 = p.step2 || { title: 'Force & Torque Substitution', formula: 'f_s = (I / R²)·a  ⇒  a = (g·sin θ) / [1 + I / (M·R²)]' };
+    const s3 = p.step3 || { title: 'Solid Sphere Moment of Inertia', formula: 'I = ⅖ M·R²  ⇒  a = (g·sin θ) / (1 + 2/5) = (5/7)·g·sin θ' };
+    const finalAns = p.final || { answer: 'a = (5/7)·g·sin θ  [Option B]', keyInsight: 'Solid sphere realizes 71.4% of gravitational acceleration down ramp.' };
+
+    // Step 1 Mini-Card
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 50,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 155,
+        color: 'yellow',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`1. ${s1.title || 'Governing Equations'}\n${formatMathForWhiteboard(s1.formula || '')}`)
+      }
+    });
+
+    // Step 2 Mini-Card
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 220,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 165,
+        color: 'light-blue',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`2. ${s2.title || 'Substitution & Working'}\n${formatMathForWhiteboard(s2.formula || '')}`)
+      }
+    });
+
+    // Step 3 Mini-Card
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 400,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 165,
+        color: 'violet',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`3. ${s3.title || 'Moment of Inertia & Resolution'}\n${formatMathForWhiteboard(s3.formula || '')}`)
+      }
+    });
+
+    // Final Answer Hero Box
+    safeCreateShape({
+      type: 'geo',
+      x: rx,
+      y: 580,
+      props: {
+        geo: 'rectangle',
+        w: rw,
+        h: 160,
+        color: 'green',
+        fill: 'semi',
+        size: 's',
+        richText: toRichText(`FINAL ANSWER & VERIFIED TAKEAWAY:\n\n${formatMathForWhiteboard(finalAns.answer || 'Option B Verified')}\n\nExam Key: ${formatMathForWhiteboard(finalAns.keyInsight || 'Work done by static friction in pure rolling is ZERO; total mechanical energy is conserved.')}`)
+      }
+    });
+
+    this.zoomFit();
+  },
+
+  setStepMode(payload = {}) {
+    const stepNum = typeof payload.stepNum === 'number' ? payload.stepNum : (payload.step || 0);
+    const plan = payload.plan || currentPlanCache || payload;
+    currentPlanCache = plan;
+
+    if (stepNum === 0) {
+      this.renderOrientationSetup(plan);
+    } else if (stepNum === 1) {
+      this.renderSingleStepFocused({ stepNum: 1, totalSteps: 3, ...plan.step1 });
+    } else if (stepNum === 2) {
+      this.renderSingleStepFocused({ stepNum: 2, totalSteps: 3, ...plan.step2 });
+    } else if (stepNum === 3) {
+      this.renderSingleStepFocused({ stepNum: 3, totalSteps: 3, ...plan.step3 });
+    } else if (stepNum >= 4) {
+      this.renderFullBoardSummary(plan);
+    }
+  },
+
+  addStepFormula({ stepNum = 1, title = 'Governing Law', formula = '', explanation = '' }) {
+    this.renderSingleStepFocused({
+      stepNum,
+      totalSteps: 3,
+      title,
+      formula,
+      explanation,
+      studentPrompt: `Beta, kya Step ${stepNum} clear hai?`
+    });
   },
 
   drawPhysicsDiagram(type = 'lens', params = {}) {
@@ -414,7 +593,7 @@ const WhiteboardController = {
     });
 
     if (type === 'rolling_incline' || type === 'rotational' || type === 'rolling') {
-      // Title Header inside Diagram Card
+      // 1. Diagram Title Header
       safeCreateShape({
         type: 'text',
         x: lx + 20,
@@ -426,16 +605,16 @@ const WhiteboardController = {
         }
       });
 
-      // 1. Inclined Plane Wedge
+      // 2. Inclined Plane Wedge
       // Horizontal ground line
       safeCreateShape({
         type: 'line',
         x: lx + 40,
-        y: dy + 310,
+        y: dy + 370,
         props: {
           points: {
             a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
-            a2: { id: 'a2', index: 'a2', x: 440, y: 0 }
+            a2: { id: 'a2', index: 'a2', x: 580, y: 0 }
           },
           color: 'grey',
           size: 's',
@@ -451,7 +630,7 @@ const WhiteboardController = {
         props: {
           points: {
             a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
-            a2: { id: 'a2', index: 'a2', x: 0, y: 200 }
+            a2: { id: 'a2', index: 'a2', x: 0, y: 260 }
           },
           color: 'grey',
           size: 's'
@@ -466,7 +645,7 @@ const WhiteboardController = {
         props: {
           points: {
             a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
-            a2: { id: 'a2', index: 'a2', x: 440, y: 200 }
+            a2: { id: 'a2', index: 'a2', x: 580, y: 260 }
           },
           color: 'blue',
           size: 'm',
@@ -474,52 +653,52 @@ const WhiteboardController = {
         }
       });
 
-      // Angle theta indicator at bottom corner
+      // Angle θ arc and label at bottom corner
       safeCreateShape({
         type: 'text',
-        x: lx + 420,
-        y: dy + 285,
-        props: { richText: toRichText('θ (Angle)'), size: 's', color: 'orange' }
+        x: lx + 530,
+        y: dy + 340,
+        props: { richText: toRichText('θ (Incline Angle)'), size: 's', color: 'orange' }
       });
 
-      // 2. Rolling Solid Sphere (Positioned cleanly on incline slope)
-      // Sphere center: (lx + 263, dy + 149)
+      // 3. Rolling Solid Sphere (Positioned with geometric precision on incline)
+      // Sphere center: (lx + 320, dy + 195)
       safeCreateShape({
         type: 'geo',
-        x: lx + 227,
-        y: dy + 113,
+        x: lx + 275,
+        y: dy + 150,
         props: {
           geo: 'ellipse',
-          w: 72,
-          h: 72,
+          w: 90,
+          h: 90,
           color: 'orange',
           fill: 'semi',
           richText: toRichText('')
         }
       });
 
-      // Center of mass indicator dot
+      // Center of mass dot
       safeCreateShape({
         type: 'geo',
-        x: lx + 260,
-        y: dy + 146,
+        x: lx + 316,
+        y: dy + 191,
         props: {
           geo: 'ellipse',
-          w: 6,
-          h: 6,
+          w: 8,
+          h: 8,
           color: 'orange',
           fill: 'solid',
           richText: toRichText('')
         }
       });
 
-      // External label for sphere placed ABOVE to prevent word clipping
+      // Sphere Descriptor Label Above
       safeCreateShape({
         type: 'text',
-        x: lx + 120,
-        y: dy + 65,
+        x: lx + 160,
+        y: dy + 85,
         props: {
-          richText: toRichText('Solid Sphere (Mass M, Radius R, I = ⅖ MR²)'),
+          richText: toRichText('Solid Sphere (Mass M, Radius R, I_cm = ⅖ MR²)'),
           size: 's',
           color: 'orange'
         }
@@ -528,135 +707,148 @@ const WhiteboardController = {
       // Angular rotation direction inside sphere
       safeCreateShape({
         type: 'text',
-        x: lx + 242,
-        y: dy + 138,
+        x: lx + 295,
+        y: dy + 180,
         props: {
-          richText: toRichText('↻ α'),
+          richText: toRichText('↻ α (Torque τ = f_s·R)'),
           size: 's',
           color: 'orange'
         }
       });
 
-      // 3. Force Vectors from Center of Mass
+      // 4. Force Vectors from Center of Mass
       // Gravity Mg (straight down)
       safeCreateShape({
         type: 'arrow',
-        x: lx + 263,
-        y: dy + 149,
+        x: lx + 320,
+        y: dy + 195,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: 0, y: 68 },
+          end: { x: 0, y: 85 },
           color: 'grey'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 268,
-        y: dy + 218,
-        props: { richText: toRichText('M·g'), size: 's', color: 'grey' }
+        x: lx + 328,
+        y: dy + 280,
+        props: { richText: toRichText('M·g (Weight)'), size: 's', color: 'grey' }
       });
 
       // Normal reaction N (perpendicular away from plane)
       safeCreateShape({
         type: 'arrow',
-        x: lx + 263,
-        y: dy + 149,
+        x: lx + 320,
+        y: dy + 195,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: 22, y: -48 },
+          end: { x: 28, y: -62 },
           color: 'blue'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 288,
-        y: dy + 95,
-        props: { richText: toRichText('N (Normal)'), size: 's', color: 'blue' }
+        x: lx + 355,
+        y: dy + 125,
+        props: { richText: toRichText('N (Normal Reaction)'), size: 's', color: 'blue' }
       });
 
-      // Down-plane gravity component: Mg sin θ
+      // Down-plane gravity driving component: Mg sin θ
       safeCreateShape({
         type: 'arrow',
-        x: lx + 263,
-        y: dy + 149,
+        x: lx + 320,
+        y: dy + 195,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: 50, y: 23 },
+          end: { x: 68, y: 31 },
           color: 'green'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 318,
-        y: dy + 172,
-        props: { richText: toRichText('M·g·sin θ'), size: 's', color: 'green' }
+        x: lx + 395,
+        y: dy + 215,
+        props: { richText: toRichText('M·g·sin θ (Downhill Force)'), size: 's', color: 'green' }
       });
 
-      // Perpendicular gravity component: Mg cos θ
+      // Perpendicular gravity balance component: Mg cos θ
       safeCreateShape({
         type: 'arrow',
-        x: lx + 263,
-        y: dy + 149,
+        x: lx + 320,
+        y: dy + 195,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: -18, y: 40 },
+          end: { x: -25, y: 56 },
           color: 'grey',
           dash: 'dashed'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 175,
-        y: dy + 190,
-        props: { richText: toRichText('M·g·cos θ'), size: 's', color: 'grey' }
+        x: lx + 210,
+        y: dy + 250,
+        props: { richText: toRichText('M·g·cos θ (= N)'), size: 's', color: 'grey' }
       });
 
-      // 4. Static Friction Force fs (at contact point P, pointing UP the incline)
+      // 5. Static Friction Force fs (at contact point P, pointing UP the incline)
       safeCreateShape({
         type: 'arrow',
-        x: lx + 248,
-        y: dy + 182,
+        x: lx + 301,
+        y: dy + 236,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: -46, y: -21 },
+          end: { x: -62, y: -28 },
           color: 'red'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 120,
-        y: dy + 155,
-        props: { richText: toRichText('f_s (Static Friction)'), size: 's', color: 'red' }
+        x: lx + 130,
+        y: dy + 195,
+        props: { richText: toRichText('f_s (Static Friction, Uphill)'), size: 's', color: 'red' }
       });
 
-      // 5. Linear Acceleration a vector (parallel to incline)
+      // 6. Point of Contact Callout Badge
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 296,
+        y: dy + 231,
+        props: {
+          geo: 'ellipse',
+          w: 10,
+          h: 10,
+          color: 'red',
+          fill: 'solid',
+          richText: toRichText('')
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 30,
+        y: dy + 395,
+        props: {
+          richText: toRichText('CONTACT POINT P: Instantaneous Center of Zero Velocity (v_p = 0)\nPure Rolling Constraint: a_cm = α·R  |  Work done by static friction W_fs = 0'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+      // 7. Linear Acceleration Vector (Parallel to Incline)
       safeCreateShape({
         type: 'arrow',
-        x: lx + 325,
-        y: dy + 130,
+        x: lx + 410,
+        y: dy + 160,
         props: {
           start: { x: 0, y: 0 },
-          end: { x: 55, y: 25 },
+          end: { x: 70, y: 31 },
           color: 'green'
         }
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 325,
-        y: dy + 105,
-        props: { richText: toRichText('a = (5/7)·g·sin θ'), size: 's', color: 'green' }
-      });
-
-      // 6. Summary Footer note inside Diagram Card
-      safeCreateShape({
-        type: 'text',
-        x: lx + 25,
-        y: dy + 348,
-        props: {
-          richText: toRichText('Pure Rolling Condition: v = ω·R  and  a = α·R  |  Contact point P is at instantaneous rest'),
-          size: 's',
-          color: 'yellow'
-        }
+        x: lx + 410,
+        y: dy + 130,
+        props: { richText: toRichText('a_cm = (5/7)·g·sin θ'), size: 's', color: 'green' }
       });
 
     } else if (type === 'lens' || type === 'optics') {
@@ -977,6 +1169,10 @@ function processWhiteboardEvent(data) {
     if (window.drawFallbackHeader && data.type === 'INIT_QUESTION') {
       window.clearFallbackCanvas && window.clearFallbackCanvas();
       window.drawFallbackHeader(data.payload?.title, data.payload?.chapter, data.payload?.marks);
+    } else if (data.type === 'SET_STEP_MODE' && window.setFallbackStepMode) {
+      window.setFallbackStepMode(data.payload);
+    } else if (data.type === 'RENDER_FULL_SUMMARY' && window.drawFallbackFullSummary) {
+      window.drawFallbackFullSummary(data.payload);
     } else if (window.drawFallbackDiagram && data.type === 'DRAW_DIAGRAM') {
       window.drawFallbackDiagram(data.payload?.diagramType, data.payload || {});
     } else if (window.drawFallbackStep && data.type === 'WRITE_STEP') {
@@ -997,6 +1193,30 @@ function processWhiteboardEvent(data) {
       WhiteboardController.addQuestionHeader(data.payload || {});
       break;
 
+    case 'SET_STEP_MODE':
+      WhiteboardController.setStepMode(data.payload || {});
+      break;
+
+    case 'RENDER_ORIENTATION':
+      WhiteboardController.renderOrientationSetup(data.payload || {});
+      break;
+
+    case 'RENDER_STEP_1':
+      WhiteboardController.setStepMode({ stepNum: 1, plan: data.payload });
+      break;
+
+    case 'RENDER_STEP_2':
+      WhiteboardController.setStepMode({ stepNum: 2, plan: data.payload });
+      break;
+
+    case 'RENDER_STEP_3':
+      WhiteboardController.setStepMode({ stepNum: 3, plan: data.payload });
+      break;
+
+    case 'RENDER_FULL_SUMMARY':
+      WhiteboardController.renderFullBoardSummary(data.payload);
+      break;
+
     case 'DRAW_DIAGRAM':
       WhiteboardController.drawPhysicsDiagram(data.payload?.diagramType, data.payload || {});
       break;
@@ -1015,6 +1235,10 @@ function processWhiteboardEvent(data) {
 
     case 'CLEAR_BOARD':
       WhiteboardController.clear();
+      break;
+
+    case 'CLEAR_RIGHT':
+      WhiteboardController.clearRightBoard();
       break;
 
     case 'ZOOM_FIT':

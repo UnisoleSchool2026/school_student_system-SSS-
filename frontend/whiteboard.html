@@ -190,6 +190,59 @@
     .diag-entry.info {
       color: #94a3b8;
     }
+
+    /* Interactive Step Navigation Bar */
+    #whiteboard-step-strip {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      padding: 4px 8px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+    .wb-step-btn {
+      padding: 4px 11px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .wb-step-btn:hover {
+      color: #f8fafc;
+      background: rgba(51, 65, 85, 0.8);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .wb-step-btn.active {
+      color: #38bdf8;
+      background: rgba(14, 165, 233, 0.25);
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+    .wb-step-btn.next-step-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+      margin-left: 4px;
+    }
+    .wb-step-btn.next-step-btn:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+    }
   </style>
 </head>
 <body>
@@ -203,6 +256,16 @@
   <div id="whiteboard-overlay-badge">
     <div class="pulse-dot"></div>
     <span id="wbStatusText">AI Voice Whiteboard &bull; Live tldraw Sync</span>
+  </div>
+
+  <!-- Interactive Pedagogical Step Bar (Directly Switch Steps / Advance) -->
+  <div id="whiteboard-step-strip">
+    <button type="button" class="wb-step-btn active" data-step="0" onclick="wbChangeStep(0)">1. Diagram</button>
+    <button type="button" class="wb-step-btn" data-step="1" onclick="wbChangeStep(1)">2. Step 1 (Eqs)</button>
+    <button type="button" class="wb-step-btn" data-step="2" onclick="wbChangeStep(2)">3. Step 2 (Solve)</button>
+    <button type="button" class="wb-step-btn" data-step="3" onclick="wbChangeStep(3)">4. Step 3 (Calc)</button>
+    <button type="button" class="wb-step-btn" data-step="4" onclick="wbChangeStep(4)">5. Full Board</button>
+    <button type="button" class="wb-step-btn next-step-btn" onclick="wbNextStep()" title="Advance to next step">Next Step &rarr;</button>
   </div>
 
   <div id="whiteboard-quick-actions">
@@ -514,6 +577,72 @@
 
       fbYOffset += 90;
     };
+
+    window.clearFallbackRight = function() {
+      if (!fbCtx) return;
+      fbCtx.clearRect(400, 0, 480, 700);
+      fbCtx.fillStyle = '#090d16';
+      fbCtx.fillRect(400, 0, 480, 700);
+    };
+
+    window.setFallbackStepMode = function(payload) {
+      if (!fbCtx) window.initFallbackCanvas();
+      if (!fbCtx) return;
+      const step = payload?.stepNum || 0;
+      const plan = payload?.plan || payload || {};
+      if (step === 0) {
+        window.clearFallbackCanvas();
+        window.drawFallbackHeader(plan.questionHeader?.title, plan.questionHeader?.chapter, plan.questionHeader?.marks);
+        window.drawFallbackDiagram('rolling_incline', plan.diagram);
+      } else if (step === 1) {
+        window.clearFallbackRight();
+        window.drawFallbackStep(1, plan.step1?.title || 'Governing Equations', plan.step1?.formula, plan.step1?.explanation);
+      } else if (step === 2) {
+        window.clearFallbackRight();
+        window.drawFallbackStep(2, plan.step2?.title || 'Torque & Linear Substitution', plan.step2?.formula, plan.step2?.explanation);
+      } else if (step === 3) {
+        window.clearFallbackRight();
+        window.drawFallbackStep(3, plan.step3?.title || 'Moment of Inertia & Calc', plan.step3?.formula, plan.step3?.explanation);
+      } else if (step >= 4) {
+        window.clearFallbackRight();
+        window.drawFallbackStep(1, 'Governing Equations', plan.step1?.formula, '');
+        window.drawFallbackStep(2, 'Substitution', plan.step2?.formula, '');
+        window.drawFallbackStep(3, 'Final Calculation', plan.step3?.formula, '');
+        window.drawFallbackFinal(plan.final?.answer || 'a = (5/7)·g·sin θ', plan.final?.keyInsight);
+      }
+    };
+
+    // Global step controller
+    window.currentWhiteboardStep = 0;
+    window.wbChangeStep = function(step) {
+      window.currentWhiteboardStep = step;
+      document.querySelectorAll('.wb-step-btn[data-step]').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.step) === step);
+      });
+      if (window.whiteboardController?.setStepMode) {
+        window.whiteboardController.setStepMode({ stepNum: step });
+      }
+      try {
+        window.parent.postMessage({ type: 'WB_STEP_CHANGED', stepNum: step }, '*');
+      } catch (e) {}
+    };
+
+    window.wbNextStep = function() {
+      const next = (window.currentWhiteboardStep + 1) % 5;
+      window.wbChangeStep(next);
+    };
+
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (!msg) return;
+      if (msg.type === 'SET_STEP_MODE' && typeof msg.payload?.stepNum === 'number') {
+        const s = msg.payload.stepNum;
+        window.currentWhiteboardStep = s;
+        document.querySelectorAll('.wb-step-btn[data-step]').forEach(btn => {
+          btn.classList.toggle('active', parseInt(btn.dataset.step) === s);
+        });
+      }
+    });
   </script>
 
   <!-- Local self-contained bundle: zero external CDN, instant load, rock-solid -->
