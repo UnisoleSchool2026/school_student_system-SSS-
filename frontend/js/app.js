@@ -508,7 +508,10 @@ function switchTeacherTab(targetTabId) {
     }
   } else if (targetTabId === 'tabClassAnalytics') {
     const selectAssessment = document.getElementById('selectAnalyticsAssessment');
-    const targetId = state.lastSubmittedAssessmentId || (selectAssessment && selectAssessment.value) || state.activeAssessment?.id;
+    const selVal = selectAssessment && selectAssessment.value;
+    const targetId = (!selVal || selVal.startsWith('paper_')) 
+      ? (state.lastSubmittedAssessmentId || state.activeAssessment?.id || null) 
+      : selVal;
     loadClassAnalytics(targetId);
   } else if (targetTabId === 'tabSmartReports') {
     loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
@@ -4701,7 +4704,7 @@ function generateFallbackClassAnalytics(assessmentId, targetSubjKey) {
 
 async function loadClassAnalytics(assessmentId) {
   try {
-    const sKey = (teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'CLASS10_MATHEMATICS').toUpperCase();
+    const sKey = (teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS').toUpperCase();
     
     // Quick indicator if empty
     const kpiAvg = document.getElementById('kpiAvgScore');
@@ -4709,8 +4712,14 @@ async function loadClassAnalytics(assessmentId) {
       kpiAvg.innerHTML = '<span style="font-size:1.1rem; color:var(--text-muted);"><i data-lucide="loader-2" class="spin" style="width:14px; height:14px; vertical-align:middle;"></i> Loading...</span>';
     }
 
-    let url = assessmentId 
-      ? `${getApiBaseUrl()}/api/analytics/class-dashboard?assessmentId=${encodeURIComponent(assessmentId)}&subjectKey=${encodeURIComponent(sKey)}`
+    // Never default to a board paper for class progress dashboard
+    let cleanAssessmentId = assessmentId;
+    if (cleanAssessmentId && cleanAssessmentId.startsWith('paper_')) {
+      cleanAssessmentId = null;
+    }
+
+    let url = cleanAssessmentId 
+      ? `${getApiBaseUrl()}/api/analytics/class-dashboard?assessmentId=${encodeURIComponent(cleanAssessmentId)}&subjectKey=${encodeURIComponent(sKey)}`
       : `${getApiBaseUrl()}/api/analytics/class-dashboard?subjectKey=${encodeURIComponent(sKey)}`;
 
     let data = null;
@@ -4726,21 +4735,21 @@ async function loadClassAnalytics(assessmentId) {
     // Remote fallback if local endpoint failed
     if (!data || !data.success) {
       try {
-        const prodUrl = assessmentId
-          ? `https://haps-ai-scholar-assistant.vercel.app/api/analytics/class-dashboard?assessmentId=${encodeURIComponent(assessmentId)}&subjectKey=${encodeURIComponent(sKey)}`
-          : `https://haps-ai-scholar-assistant.vercel.app/api/analytics/class-dashboard?subjectKey=${encodeURIComponent(sKey)}`;
+        const prodUrl = cleanAssessmentId
+          ? `https://haps-ai-scholar-assistant-staging.vercel.app/api/analytics/class-dashboard?assessmentId=${encodeURIComponent(cleanAssessmentId)}&subjectKey=${encodeURIComponent(sKey)}`
+          : `https://haps-ai-scholar-assistant-staging.vercel.app/api/analytics/class-dashboard?subjectKey=${encodeURIComponent(sKey)}`;
         const prodRes = await fetch(prodUrl);
         if (prodRes.ok) {
           data = await prodRes.json();
         }
       } catch (prodErr) {
-        console.warn('[CLASS ANALYTICS] Production fallback fetch error:', prodErr);
+        console.warn('[CLASS ANALYTICS] Fallback fetch error:', prodErr);
       }
     }
 
     // Dynamic, subject-accurate client-side fallback
     if (!data || !data.success) {
-      data = generateFallbackClassAnalytics(assessmentId, sKey);
+      data = generateFallbackClassAnalytics(cleanAssessmentId, sKey);
     }
 
     currentAnalyticsData = data;
@@ -4748,12 +4757,13 @@ async function loadClassAnalytics(assessmentId) {
     // Populate dropdown safely
     const selectAssessment = document.getElementById('selectAnalyticsAssessment');
     if (selectAssessment && Array.isArray(data.availableAssessments) && data.availableAssessments.length > 0) {
-      const currentVal = assessmentId || data.assessment?.id || data.availableAssessments[0]?.id;
+      const currentVal = cleanAssessmentId || data.assessment?.id || data.availableAssessments[0]?.id;
       selectAssessment.innerHTML = data.availableAssessments.map(a => `
         <option value="${a.id}" ${a.id === currentVal ? 'selected' : ''}>
-          ${a.title} (${a.grade ? 'Class ' + a.grade : 'General'})
+          ${a.title}
         </option>
       `).join('');
+      selectAssessment.value = currentVal;
     }
 
     renderClassAnalytics(data);
@@ -4763,6 +4773,8 @@ async function loadClassAnalytics(assessmentId) {
     renderClassAnalytics(fallback);
   }
 }
+window.loadClassAnalytics = loadClassAnalytics;
+window.renderClassAnalytics = renderClassAnalytics;
 
 // -----------------------------------------------------------------------------
 // VISUAL PROGRESS CHARTS (Chart.js)
@@ -10501,7 +10513,10 @@ window.handleTabActivated = function(tabId) {
     loadQuestionBankView();
   } else if (tabId === 'tabClassAnalytics') {
     const selectAssessment = document.getElementById('selectAnalyticsAssessment');
-    const targetId = (selectAssessment && selectAssessment.value) || state.lastSubmittedAssessmentId || state.activeAssessment?.id;
+    const selVal = selectAssessment && selectAssessment.value;
+    const targetId = (!selVal || selVal.startsWith('paper_')) 
+      ? (state.lastSubmittedAssessmentId || state.activeAssessment?.id || null) 
+      : selVal;
     loadClassAnalytics(targetId);
   }
 };

@@ -53,7 +53,10 @@ router.get('/class-dashboard', (req, res) => {
       assessment = assessmentsList.find(a => a.id === assessmentId);
     }
     if (!assessment) {
-      assessment = relevantAssessments.find(a => allSubmissions.some(s => s.assessmentId === a.id)) 
+      assessment = relevantAssessments.find(a => !a.id.startsWith('paper_') && allSubmissions.some(s => s.assessmentId === a.id)) 
+        || relevantAssessments.find(a => allSubmissions.some(s => s.assessmentId === a.id))
+        || assessmentsList.find(a => !a.id.startsWith('paper_') && allSubmissions.some(s => s.assessmentId === a.id))
+        || relevantAssessments.find(a => !a.id.startsWith('paper_'))
         || relevantAssessments[0] 
         || assessmentsList[0];
     }
@@ -64,8 +67,55 @@ router.get('/class-dashboard', (req, res) => {
 
     const submissions = allSubmissions.filter(s => s.assessmentId === assessment.id);
 
+    // Helper to format available assessments sorted by submission count
+    const getAvailableAssessmentsList = () => {
+      const pool = [...relevantAssessments, ...assessmentsList.filter(a => !relevantAssessments.some(r => r.id === a.id))];
+      return pool
+        .filter(a => !a.id.startsWith('paper_') || (assessment && a.id === assessment.id))
+        .sort((a, b) => {
+          const countA = allSubmissions.filter(s => s.assessmentId === a.id).length;
+          const countB = allSubmissions.filter(s => s.assessmentId === b.id).length;
+          return countB - countA;
+        })
+        .map(a => {
+          const count = allSubmissions.filter(s => s.assessmentId === a.id).length;
+          return {
+            id: a.id,
+            title: `${a.title}${count > 0 ? ` (${count} Submissions)` : ' (Pending Attempt)'}`,
+            rawTitle: a.title,
+            grade: a.grade,
+            section: a.section,
+            subject: a.subject,
+            subjectKey: a.subjectKey,
+            submissionCount: count
+          };
+        });
+    };
+
     if (submissions.length === 0) {
-      const classStudents = (inMemoryStore.users || []).filter(u => u.role === 'STUDENT' && (u.section === assessment.section || (!assessment.section && u.grade === assessment.grade)));
+      let classStudents = (inMemoryStore.users || []).filter(u => u.role === 'STUDENT' && (u.section === assessment.section || (!assessment.section && u.grade === assessment.grade)));
+      if (classStudents.length === 0) {
+        const gradeStr = String(assessment.grade || '12');
+        classStudents = (inMemoryStore.users || []).filter(u => u.role === 'STUDENT' && String(u.grade) === gradeStr);
+      }
+      if (classStudents.length === 0) {
+        if (String(assessment.grade) === '10') {
+          classStudents = [
+            { id: 'stu_10_01', full_name: 'Rohit Verma', roll_number: '10-A-01' },
+            { id: 'stu_10_02', full_name: 'Aditya Chauhan', roll_number: '10-A-02' },
+            { id: 'stu_10_03', full_name: 'Tanvi Sood', roll_number: '10-A-03' },
+            { id: 'stu_10_04', full_name: 'Nikhil Rana', roll_number: '10-A-04' }
+          ];
+        } else {
+          classStudents = [
+            { id: 'b0000000-0000-0000-0000-000000000001', full_name: 'Aryan Sharma', roll_number: '12-NM-01' },
+            { id: 'b0000000-0000-0000-0000-000000000002', full_name: 'Rohit Negi', roll_number: '12-NM-02' },
+            { id: 'b0000000-0000-0000-0000-000000000003', full_name: 'Kavya Verma', roll_number: '12-NM-03' },
+            { id: 'b0000000-0000-0000-0000-000000000004', full_name: 'Kunal Sharma', roll_number: '12-NM-04' }
+          ];
+        }
+      }
+
       const questionsMeta = assessment.questions || [];
       const totalMarks = assessment.totalMarks || (questionsMeta.length * 4) || 16;
       const durationMins = assessment.durationMinutes || 25;
@@ -142,14 +192,7 @@ router.get('/class-dashboard', (req, res) => {
           timeManagementAlerts: []
         },
         studentRoster,
-        availableAssessments: relevantAssessments.map(a => ({
-          id: a.id,
-          title: a.title,
-          grade: a.grade,
-          section: a.section,
-          subject: a.subject,
-          subjectKey: a.subjectKey
-        }))
+        availableAssessments: getAvailableAssessmentsList()
       });
     }
 
@@ -401,7 +444,7 @@ router.get('/class-dashboard', (req, res) => {
         timeManagementAlerts
       },
       studentRoster,
-      availableAssessments: relevantAssessments.map(a => ({ id: a.id, title: a.title, grade: a.grade, section: a.section, subject: a.subject, subjectKey: a.subjectKey }))
+      availableAssessments: getAvailableAssessmentsList()
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

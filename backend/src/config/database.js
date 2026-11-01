@@ -1807,6 +1807,81 @@ const inMemoryStore = {
             "What is the total electric flux through the entire closed Gaussian cube?",
             "Divide by the number of symmetrical square faces."
           ]
+        },
+        {
+          id: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          grade: '12',
+          board: 'JEE_MAIN',
+          subject: 'Physics',
+          subjectKey: 'PHYSICS',
+          question_type: 'MCQ_SINGLE',
+          difficulty: 'MEDIUM',
+          benchmark_time_seconds: 60,
+          question_latex: 'An electric dipole of dipole moment $\\vec{p}$ is placed in a uniform electric field $\\vec{E}$. The torque $\\vec{\\tau}$ acting on the dipole and its potential energy $U$ are given by:',
+          options_latex: [
+            { key: 'A', latex: '$\\vec{\\tau} = \\vec{p} \\times \\vec{E}, \\quad U = -\\vec{p} \\cdot \\vec{E}$', is_correct: true, distractor_trap: null },
+            { key: 'B', latex: '$\\vec{\\tau} = \\vec{p} \\cdot \\vec{E}, \\quad U = \\vec{p} \\times \\vec{E}$', is_correct: false, distractor_trap: 'Swapped vector cross product and scalar dot product.' },
+            { key: 'C', latex: '$\\vec{\\tau} = \\vec{E} \\times \\vec{p}, \\quad U = -\\vec{p} \\cdot \\vec{E}$', is_correct: false, distractor_trap: 'Reversed cross product vector order.' },
+            { key: 'D', latex: '$\\vec{\\tau} = \\vec{p} \\times \\vec{E}, \\quad U = \\vec{p} \\cdot \\vec{E}$', is_correct: false, distractor_trap: 'Omitted negative sign in potential energy.' }
+          ],
+          correct_answer: 'A',
+          solution_latex: 'The torque on a dipole in a uniform electric field is $\\vec{\\tau} = \\vec{p} \\times \\vec{E}$, and its electrostatic potential energy is $U = -\\vec{p} \\cdot \\vec{E} = -pE\\cos\\theta$.',
+          socratic_hints: [
+            "Recall whether torque is a vector cross product or a scalar dot product.",
+            "Remember that dipole is in stable equilibrium at theta = 0 where potential energy is minimum (-pE)."
+          ]
+        },
+        {
+          id: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          grade: '12',
+          board: 'JEE_MAIN',
+          subject: 'Physics',
+          subjectKey: 'PHYSICS',
+          question_type: 'MCQ_SINGLE',
+          difficulty: 'HARD',
+          benchmark_time_seconds: 90,
+          question_latex: 'For a short electric dipole, what is the ratio of electric field intensity at a distance $r$ on the axial line to that at the same distance $r$ on the equatorial line ($E_{\\text{axial}} : E_{\\text{equatorial}}$)?',
+          options_latex: [
+            { key: 'A', latex: '$2 : 1$', is_correct: true, distractor_trap: null },
+            { key: 'B', latex: '$1 : 2$', is_correct: false, distractor_trap: 'Inverted axial and equatorial formulas.' },
+            { key: 'C', latex: '$4 : 1$', is_correct: false, distractor_trap: 'Squared the factor of 2.' },
+            { key: 'D', latex: '$1 : 1$', is_correct: false, distractor_trap: 'Assumed spherical symmetry like point charge.' }
+          ],
+          correct_answer: 'A',
+          solution_latex: 'For a short dipole ($r \\gg 2a$), $E_{\\text{axial}} = \\frac{2kp}{r^3}$ and $E_{\\text{equatorial}} = \\frac{kp}{r^3}$. Hence, the ratio is $E_{\\text{axial}} : E_{\\text{equatorial}} = 2 : 1$.',
+          socratic_hints: [
+            "Write the formulas for E_axial and E_equatorial for a short dipole.",
+            "Compare the numerical prefactors while holding distance r constant."
+          ]
+        },
+        {
+          id: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          grade: '12',
+          board: 'JEE_MAIN',
+          subject: 'Physics',
+          subjectKey: 'PHYSICS',
+          question_type: 'MCQ_SINGLE',
+          difficulty: 'HARD',
+          benchmark_time_seconds: 90,
+          question_latex: 'A parallel plate capacitor of capacitance $C_0$ is charged to potential $V_0$ and then disconnected from the battery. A dielectric slab of dielectric constant $K = 4$ is now inserted to completely fill the space between the plates. The new electrostatic energy stored in the capacitor is:',
+          options_latex: [
+            { key: 'A', latex: '$U = \\frac{U_0}{4}$', is_correct: true, distractor_trap: null },
+            { key: 'B', latex: '$U = 4U_0$', is_correct: false, distractor_trap: 'Assumed battery remained connected (V constant instead of Q constant).' },
+            { key: 'C', latex: '$U = 16U_0$', is_correct: false, distractor_trap: 'Applied squared factor with incorrect formula.' },
+            { key: 'D', latex: '$U = U_0$', is_correct: false, distractor_trap: 'Assumed energy is conserved.' }
+          ],
+          correct_answer: 'A',
+          solution_latex: 'Since the battery is disconnected, charge $Q$ remains constant ($Q = Q_0$). The capacitance increases to $C = KC_0 = 4C_0$. Stored energy $U = \\frac{Q^2}{2C} = \\frac{Q_0^2}{2(4C_0)} = \\frac{U_0}{4}$.',
+          socratic_hints: [
+            "When the battery is disconnected, which quantity remains constant: charge Q or voltage V?",
+            "Use the energy formula in terms of constant Q: U = Q^2 / (2C)."
+          ]
         }
       ],
       createdAt: new Date().toISOString()
@@ -2632,6 +2707,534 @@ const inMemoryStore = {
         }
       ],
       submittedAt: new Date(Date.now() - 3600000 * 2.8).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_aryan',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000001',
+      studentName: 'Aryan Sharma',
+      rollNumber: '12-NM-01',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 16,
+      totalMarks: 16,
+      percentage: 100,
+      totalTimeSpentSeconds: 210,
+      smartCardSummary: 'Mastered all 4 topics with sub-benchmark speeds. Flawless application of Gauss law symmetry, dipole torque cross-products, and capacitor dielectrics.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 45,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Applied 6-face cubic symmetry instantly.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 38,
+          benchmarkSeconds: 60,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct vector cross product and negative potential energy.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 55,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Accurate 2:1 axial-to-equatorial field ratio.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 72,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Recognized Q = constant with battery disconnected and energy scaled by 1/K.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 5).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_kavya',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000003',
+      studentName: 'Kavya Verma',
+      rollNumber: '12-NM-03',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 12,
+      totalMarks: 16,
+      percentage: 75,
+      totalTimeSpentSeconds: 235,
+      smartCardSummary: 'High proficiency across electrostatics. Minor hesitation on capacitor energy scaling with disconnected battery.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 52,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct Gaussian flux.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 42,
+          benchmarkSeconds: 60,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct dipole formulation.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 61,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct axial ratio.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Conceptual Slip', explanation: 'Assumed battery remained connected (V = constant instead of Q = constant).' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 4.2).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_rohit',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000002',
+      studentName: 'Rohit Negi',
+      rollNumber: '12-NM-02',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 12,
+      totalMarks: 16,
+      percentage: 75,
+      totalTimeSpentSeconds: 245,
+      smartCardSummary: 'Solid conceptual understanding. Inverted axial/equatorial field ratio due to formula confusion.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 58,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct flux through cube face.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 48,
+          benchmarkSeconds: 60,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct torque cross product.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 72,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'FORMULA_BASED', label: 'Formula Confusion', explanation: 'Inverted axial and equatorial formulas (chose 1:2 instead of 2:1).' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 67,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct dielectric scaling.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 3.8).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_divyansh',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000005',
+      studentName: 'Divyansh Thakur',
+      rollNumber: '12-NM-05',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 12,
+      totalMarks: 16,
+      percentage: 75,
+      totalTimeSpentSeconds: 240,
+      smartCardSummary: 'Consistent problem solver. Stumbled on dielectric energy change when capacitor is disconnected.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 50,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Accurate Gaussian symmetry.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 45,
+          benchmarkSeconds: 60,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Accurate dipole relations.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 65,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Accurate axial field.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Conceptual Error', explanation: 'Confused charge conservation with voltage conservation.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 3.2).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_kunal',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000004',
+      studentName: 'Kunal Sharma',
+      rollNumber: '12-NM-04',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 8,
+      totalMarks: 16,
+      percentage: 50,
+      totalTimeSpentSeconds: 270,
+      smartCardSummary: 'Good grasp of Gauss law. Needs review on dipole axial field formulation and capacitor dielectric energy.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 65,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct flux calculation.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 52,
+          benchmarkSeconds: 60,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct torque relation.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 75,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'C',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'FORMULA_BASED', label: 'Formula Slip', explanation: 'Applied squared factor.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 78,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Conceptual Error', explanation: 'Assumed V constant instead of Q constant.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 2.5).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_akshat',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000006',
+      studentName: 'Akshat Jaswal',
+      rollNumber: '12-NM-06',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 8,
+      totalMarks: 16,
+      percentage: 50,
+      totalTimeSpentSeconds: 260,
+      smartCardSummary: 'Moderate pace. Lost marks on dipole torque sign convention and capacitor dielectric energy.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 55,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct symmetry.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 58,
+          benchmarkSeconds: 60,
+          isCorrect: false,
+          selectedOption: 'D',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'SIGN_CONVENTION', label: 'Sign Convention Slip', explanation: 'Omitted minus sign in potential energy U = -p.E.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 68,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Accurate ratio.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 79,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'C',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CALCULATION', label: 'Calculation Error', explanation: 'Multiplied by K^2.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 2).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_rahul',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000007',
+      studentName: 'Rahul Sen',
+      rollNumber: '12-NM-07',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 8,
+      totalMarks: 16,
+      percentage: 50,
+      totalTimeSpentSeconds: 275,
+      smartCardSummary: 'Consistent effort. Remedial focus suggested on dipole torque cross product and capacitor dielectrics.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 62,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct Gaussian flux.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 65,
+          benchmarkSeconds: 60,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Vector Operation Slip', explanation: 'Swapped cross product and dot product.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 68,
+          benchmarkSeconds: 90,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correct ratio.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Conceptual Slip', explanation: 'Assumed V constant.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 1.5).toISOString()
+    },
+    {
+      submissionId: 'sub_phy_01_sahil',
+      assessmentId: 'asgn_12_phy_01',
+      assessmentTitle: 'Class 12 Physics: Electrostatics & Fields - JEE Main Diagnostic Test',
+      studentId: 'b0000000-0000-0000-0000-000000000008',
+      studentName: 'Sahil Dhiman',
+      rollNumber: '12-NM-08',
+      grade: '12',
+      section: '12-NonMed',
+      totalScore: 4,
+      totalMarks: 16,
+      percentage: 25,
+      totalTimeSpentSeconds: 310,
+      smartCardSummary: 'Significant hesitation across electrostatics. Remedial 1-on-1 coaching needed on dipole torque and capacitor dielectric physics.',
+      questionBreakdown: [
+        {
+          questionIndex: 1,
+          questionId: 'q_phy_01',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Gauss Law & Symmetric Field Calculations',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 75,
+          isCorrect: true,
+          selectedOption: 'A',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'NONE', label: 'Flawless Execution', explanation: 'Correctly found flux.' }
+        },
+        {
+          questionIndex: 2,
+          questionId: 'q_phy_02',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Dipole in Uniform Field & Torque',
+          timeSpentSeconds: 70,
+          benchmarkSeconds: 60,
+          isCorrect: false,
+          selectedOption: 'C',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Reversed Cross Product', explanation: 'Reversed vector order.' }
+        },
+        {
+          questionIndex: 3,
+          questionId: 'q_phy_03',
+          topic: 'Electric Charges and Fields',
+          subtopic: 'Electric Field of Dipole: Axial vs Equatorial',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'FORMULA_BASED', label: 'Formula Inversion', explanation: 'Inverted ratio.' }
+        },
+        {
+          questionIndex: 4,
+          questionId: 'q_phy_04',
+          topic: 'Electrostatic Potential and Capacitance',
+          subtopic: 'Parallel Plate Capacitor with Dielectric Slab',
+          timeSpentSeconds: 80,
+          benchmarkSeconds: 90,
+          isCorrect: false,
+          selectedOption: 'B',
+          correctAnswer: 'A',
+          mistakeClassification: { type: 'CONCEPTUAL', label: 'Conceptual Error', explanation: 'Assumed V constant.' }
+        }
+      ],
+      submittedAt: new Date(Date.now() - 3600000 * 1).toISOString()
     }
   ]
 };
