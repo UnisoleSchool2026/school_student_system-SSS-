@@ -180,6 +180,19 @@ function initApp() {
       console.warn(`[INIT] Warning during ${name}:`, err);
     }
   });
+
+  // Handle Role Gateway & Role Routing
+  try {
+    const savedRole = localStorage.getItem('haps_active_role');
+    if (savedRole && (savedRole === 'teacher' || savedRole === 'student' || savedRole === 'director' || savedRole === 'principal')) {
+      switchPortalRole(savedRole);
+    } else {
+      window.openRoleGatewayModal();
+      switchPortalRole('teacher');
+    }
+  } catch (e) {
+    switchPortalRole('teacher');
+  }
 }
 
 
@@ -418,10 +431,45 @@ function renderMathInElement(element) {
 
 
 // -----------------------------------------------------------------------------
-// 1. ROLE & NAVIGATION SWITCHING
+// 1. ROLE & NAVIGATION SWITCHING (3 LOGINS: PRINCIPAL, TEACHER, STUDENT)
 // -----------------------------------------------------------------------------
+window.openRoleGatewayModal = function() {
+  const modal = document.getElementById('portalRoleGatewayModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    initLucideIcons();
+  }
+};
+
+window.closeRoleGatewayModal = function() {
+  const modal = document.getElementById('portalRoleGatewayModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+};
+
+window.loginWithRole = function(role) {
+  try {
+    localStorage.setItem('haps_active_role', role);
+  } catch (e) {}
+  window.closeRoleGatewayModal();
+  switchPortalRole(role);
+};
+
+window.handleTeacherSignOut = function() {
+  closeSidebarDrawer();
+  window.openRoleGatewayModal();
+};
+
 function switchPortalRole(role) {
-  state.activeRole = role;
+  const normalizedRole = (role === 'principal' || role === 'director') ? 'director' : role;
+  state.activeRole = normalizedRole;
+  try {
+    localStorage.setItem('haps_active_role', normalizedRole);
+  } catch (e) {}
+
   const sections = {
     teacher: document.getElementById('teacherView'),
     student: document.getElementById('studentView'),
@@ -429,35 +477,109 @@ function switchPortalRole(role) {
   };
 
   Object.keys(sections).forEach(r => {
-    if (sections[r]) sections[r].classList.toggle('active', r === role);
+    if (sections[r]) sections[r].classList.toggle('active', r === normalizedRole);
   });
 
   document.querySelectorAll('.role-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-role') === role);
+    btn.classList.toggle('active', btn.getAttribute('data-role') === normalizedRole);
   });
 
   document.querySelectorAll('.drawer-nav-item[id^="drawerBtnRole"]').forEach(btn => {
-    btn.classList.toggle('active', btn.id === `drawerBtnRole${role.charAt(0).toUpperCase() + role.slice(1)}`);
+    btn.classList.toggle('active', btn.id === `drawerBtnRole${normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1)}`);
   });
 
   const headerTitle = document.getElementById('headerNavTitle');
-  if (headerTitle) {
-    if (role === 'student') headerTitle.innerText = 'Student Test Portal';
-    else if (role === 'director') headerTitle.innerText = 'School Overview & Directives';
-    else {
-      const activeProf = teacherBuilderState.activeTeacher;
-      const subjName = activeProf ? activeProf.subjectName : 'Physics';
-      headerTitle.innerText = `Teacher Portal • Department of ${subjName}`;
-    }
-  }
+  const facultyName = document.getElementById('headerFacultyName');
+  const facultyTag = document.getElementById('headerFacultyTag');
+  const roleDot = document.getElementById('headerRoleDot');
+  const drawerName = document.getElementById('drawerFacultyName');
+  const drawerRole = document.getElementById('drawerFacultyRole');
+  const drawerSubject = document.getElementById('drawerFacultySubject');
 
-  if (role === 'student') {
+  if (normalizedRole === 'student') {
+    if (headerTitle) headerTitle.innerText = 'Student Learning Portal • Adaptive Tests & Smartboard';
+    if (facultyName) facultyName.innerText = 'Aryan Sharma';
+    if (facultyTag) {
+      facultyTag.innerText = 'Student (Class 11A)';
+      facultyTag.style.background = 'rgba(16, 185, 129, 0.2)';
+      facultyTag.style.color = '#34d399';
+    }
+    if (roleDot) roleDot.style.background = '#10b981';
+    if (drawerName) drawerName.innerText = 'Aryan Sharma';
+    if (drawerRole) drawerRole.innerText = 'Class 11 Science • Roll #101';
+    if (drawerSubject) drawerSubject.innerText = 'Stream: Senior Secondary Non-Medical';
+
     renderStudentQuestion();
+
+  } else if (normalizedRole === 'director') {
+    if (headerTitle) headerTitle.innerText = 'Principal Executive Portal • School Intelligence & Analytics';
+    if (facultyName) facultyName.innerText = 'Dr. Anita Chandel';
+    if (facultyTag) {
+      facultyTag.innerText = 'Principal & Director';
+      facultyTag.style.background = 'rgba(168, 85, 247, 0.2)';
+      facultyTag.style.color = '#c084fc';
+    }
+    if (roleDot) roleDot.style.background = '#a855f7';
+    if (drawerName) drawerName.innerText = 'Dr. Anita Chandel';
+    if (drawerRole) drawerRole.innerText = 'Principal & Director, Unisole AI School';
+    if (drawerSubject) drawerSubject.innerText = 'Scope: Institutional Oversight & Directives';
+
+  } else {
+    // Teacher Role
+    if (headerTitle) headerTitle.innerText = 'Teacher Portal • Class 11 & 12 Physics Syllabus';
+    if (facultyName) facultyName.innerText = 'Dr. Vikram Sharma';
+    if (facultyTag) {
+      facultyTag.innerText = 'Senior Faculty (Physics)';
+      facultyTag.style.background = 'rgba(56, 189, 248, 0.2)';
+      facultyTag.style.color = '#38bdf8';
+    }
+    if (roleDot) roleDot.style.background = '#38bdf8';
+    if (drawerName) drawerName.innerText = 'Dr. Vikram Sharma';
+    if (drawerRole) drawerRole.innerText = 'Senior Physics Faculty • HOD';
+    if (drawerSubject) drawerSubject.innerText = 'Department: Physics (Classes 11 & 12)';
+
+    // Render teacher syllabus
+    if (window.renderTeacherSyllabusChapters) {
+      window.renderTeacherSyllabusChapters('11', 'ALL');
+    }
+    const syllabusTab = document.getElementById('tabTeacherSyllabus');
+    if (syllabusTab) {
+      document.querySelectorAll('.teacher-tab-content').forEach(t => {
+        if (t.id === 'tabTeacherSyllabus') {
+          t.style.display = 'block';
+          t.classList.add('active');
+        } else {
+          t.style.display = 'none';
+          t.classList.remove('active');
+        }
+      });
+    }
   }
 
   closeSidebarDrawer();
   initLucideIcons();
 }
+
+window.filterSyllabusGrade = function(grade) {
+  document.querySelectorAll('.syllabus-filter-btn[id^="filterBtnClass"]').forEach(b => {
+    b.classList.toggle('active', b.id === `filterBtnClass${grade}`);
+  });
+  if (window.renderTeacherSyllabusChapters) {
+    window.renderTeacherSyllabusChapters(grade, window.currentSyllabusTrackFilter || 'ALL');
+  }
+};
+
+window.filterSyllabusTrack = function(track) {
+  window.currentSyllabusTrackFilter = track;
+  document.querySelectorAll('.syllabus-filter-btn[id^="filterTrack"]').forEach(b => {
+    b.classList.toggle('active', b.id === `filterTrack${track}`);
+  });
+  const activeGradeBtn = document.querySelector('.syllabus-filter-btn[id^="filterBtnClass"].active');
+  const grade = activeGradeBtn && activeGradeBtn.id.includes('12') ? '12' : '11';
+  if (window.renderTeacherSyllabusChapters) {
+    window.renderTeacherSyllabusChapters(grade, track);
+  }
+};
 
 function switchTeacherTab(targetTabId) {
   state.activeTeacherTab = targetTabId;

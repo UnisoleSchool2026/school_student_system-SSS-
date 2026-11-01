@@ -272,6 +272,7 @@
         }
       } catch (e) {}
       var titles = {
+        'tabTeacherSyllabus': 'Teacher Portal • Class 11 & 12 Physics Syllabus',
         'tabGenerator': 'Create Tests & Quizzes • Department of ' + curSubject,
         'tabQuestionBank': 'Question Bank & PYQ Repository • Department of ' + curSubject,
         'tabClassAnalytics': 'Class Progress Dashboard • Department of ' + curSubject,
@@ -298,6 +299,100 @@
   </script>
 </head>
 <body>
+
+  <!-- ========================================================================
+       ROLE GATEWAY MODAL (PRINCIPAL / TEACHER / STUDENT AUTHENTICATION)
+       ======================================================================== -->
+  <div class="role-gateway-overlay" id="portalRoleGatewayModal">
+    <div class="role-gateway-container">
+      <div class="role-gateway-header">
+        <div class="brand-logo-badge" style="width:46px; height:46px; font-size:1.15rem; margin:0 auto 12px; background:linear-gradient(135deg, #0284c7, #6366f1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900;">UNISOLE</div>
+        <div class="role-gateway-badge">
+          <i data-lucide="shield-check" style="width:14px; height:14px;"></i> Role-Based Scholar Gateway
+        </div>
+        <h2 style="font-size:1.75rem; font-weight:800; color:#f8fafc; margin:0 0 6px 0;">Select Your Portal Access</h2>
+        <p style="color:#94a3b8; font-size:0.88rem; max-width:560px; margin:0 auto; line-height:1.5;">
+          Dedicated role-based portals for School Leadership, Academic Faculty, and Students.
+        </p>
+      </div>
+
+      <div class="role-gateway-grid">
+        
+        <!-- 1. Principal Login Card -->
+        <div class="role-gateway-card card-principal" onclick="loginWithRole('director')">
+          <div>
+            <span class="role-card-badge">Executive Leadership</span>
+            <div class="role-card-avatar" style="background:rgba(168, 85, 247, 0.2); color:#c084fc;">
+              🏛️
+            </div>
+            <h3 class="role-card-title">The Principal</h3>
+            <div class="role-card-name">Dr. Anita Chandel &bull; Director</div>
+            <p class="role-card-desc">
+              Strategic oversight across the school: 14-day pilot adoption analytics, class cohort velocity, hostel evening prep directives, and faculty syllabus audits.
+            </p>
+            <ul class="role-card-features">
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> 14-Day Pilot Intelligence Dashboard</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Class 11 Academic Cohort Analytics</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Hostel Evening Prep &amp; Parent Directives</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Cross-Department Syllabus Audit</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('director');">
+            <span>Enter Principal Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+          </button>
+        </div>
+
+        <!-- 2. Teacher Login Card -->
+        <div class="role-gateway-card card-teacher" onclick="loginWithRole('teacher')">
+          <div>
+            <span class="role-card-badge">Educator &bull; Senior Faculty</span>
+            <div class="role-card-avatar" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8;">
+              👨‍🏫
+            </div>
+            <h3 class="role-card-title">Senior Faculty</h3>
+            <div class="role-card-name">Dr. Vikram Sharma &bull; Dept. of Physics</div>
+            <p class="role-card-desc">
+              Dedicated curriculum syllabus workspace: monitor Class 11 &amp; 12 Physics chapters, lecture progress, topic coverage, and laboratory practicals.
+            </p>
+            <ul class="role-card-features">
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> Dedicated Physics Syllabus Tracker</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> 10 Master Units &amp; Granular Topics</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> Lecture Tracking (88/155 Delivered)</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> NCERT &amp; Competitive Exam Roadmap</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('teacher');">
+            <span>Enter Teacher Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+          </button>
+        </div>
+
+        <!-- 3. Student Login Card -->
+        <div class="role-gateway-card card-student" onclick="loginWithRole('student')">
+          <div>
+            <span class="role-card-badge">Student Scholar</span>
+            <div class="role-card-avatar" style="background:rgba(16, 185, 129, 0.2); color:#34d399;">
+              🎓
+            </div>
+            <h3 class="role-card-title">Student Portal</h3>
+            <div class="role-card-name">Aryan Sharma &bull; Class 11 (Roll #101)</div>
+            <p class="role-card-desc">
+              Interactive learning environment: take active faculty assignments, practice on NTA standard 30-question palette, and learn on AI voice smartboard.
+            </p>
+            <ul class="role-card-features">
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Active Assigned Tests &amp; Quizzes</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> NTA 30-Question Exam Simulator</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Dr. Vikram Live AI Voice Whiteboard</li>
+              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Personalized Remedial Practice Cards</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('student');">
+            <span>Enter Student Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <!-- ========================================================================
        TOP-LEFT 3-LINE SIDEBAR NAVIGATION DRAWER (BOARD, JEE, NEET, ALL TABS, SIGN OUT)
@@ -516,11 +611,15 @@
     </div>
 
     <div class="header-right">
-      <div class="header-faculty-chip" onclick="openTeacherSignInModal()" title="Faculty: Dr. Vikram Sharma (Physics). Click to switch.">
-        <span class="faculty-indicator-dot"></span>
+      <div class="header-faculty-chip" id="headerRoleBadge" onclick="openRoleGatewayModal()" title="Current Active Portal. Click to switch.">
+        <span class="faculty-indicator-dot" id="headerRoleDot"></span>
         <span id="headerFacultyName">Dr. Vikram Sharma</span>
-        <span class="header-faculty-tag" id="headerFacultyTag">Physics</span>
+        <span class="header-faculty-tag" id="headerFacultyTag">Teacher</span>
       </div>
+      <button type="button" class="btn-role-switch" id="btnHeaderSwitchRole" onclick="openRoleGatewayModal()" title="Switch Portal (Principal / Teacher / Student)">
+        <i data-lucide="repeat" style="width:14px; height:14px;"></i>
+        <span>Switch Portal</span>
+      </button>
       <button class="btn-icon" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle Light/Dark Theme">
         <i data-lucide="sun" id="themeIcon" style="width:17px; height:17px;"></i>
       </button>
@@ -559,8 +658,108 @@
         </div>
       </div>
 
-      <!-- TAB: CREATE TEST & QUIZZES (TEACHER SCOPED - DEFAULT ACTIVE TAB) -->
-      <div class="teacher-tab-content active" id="tabGenerator">
+      <!-- ====================================================================
+           PRIMARY TEACHER PORTAL: SYLLABUS & CURRICULUM MANAGEMENT
+           ==================================================================== -->
+      <div class="teacher-tab-content active" id="tabTeacherSyllabus" style="display:block;">
+        <div class="teacher-syllabus-view">
+          
+          <!-- Syllabus Hero Banner -->
+          <div class="syllabus-hero-card">
+            <div class="syllabus-hero-top">
+              <div>
+                <div class="role-card-badge" style="background:rgba(56, 189, 248, 0.18); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.4); margin-bottom:8px;">
+                  CBSE &bull; HP Board &bull; JEE &bull; NEET Aligned
+                </div>
+                <h2 class="syllabus-hero-title">
+                  <i data-lucide="book-open" style="width:24px; height:24px; color:#38bdf8;"></i>
+                  Senior Physics Curriculum &bull; Syllabus Tracking
+                </h2>
+                <p class="syllabus-hero-subtitle">
+                  Academic Year 2026–2027 &bull; Department of Physics &bull; Faculty: <strong>Dr. Vikram Sharma</strong>
+                </p>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:0.75rem; color:#94a3b8; background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+                  Class 11 Science (Section A &amp; B)
+                </span>
+                <button type="button" class="btn-role-switch" onclick="openRoleGatewayModal()" title="Switch user login">
+                  <i data-lucide="repeat" style="width:13px; height:13px;"></i> Switch Portal
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress Meter -->
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; color:#e2e8f0; margin-bottom:4px;">
+                <span>Overall Term Progress: <strong>55% Completed</strong></span>
+                <span style="color:#38bdf8;">88 of 155 Lectures Delivered</span>
+              </div>
+              <div class="chapter-progress-track" style="height:10px; background:rgba(255,255,255,0.1);">
+                <div class="chapter-progress-fill" style="width:55%; background:linear-gradient(90deg, #0284c7, #38bdf8, #34d399);"></div>
+              </div>
+            </div>
+
+            <!-- Stat Counters Grid -->
+            <div class="syllabus-stat-grid">
+              <div class="syllabus-stat-box">
+                <div class="syllabus-stat-label">Total Units &amp; Chapters</div>
+                <div class="syllabus-stat-value">10 Units</div>
+                <div class="syllabus-stat-subtext">10 Master Chapters (NCERT)</div>
+              </div>
+
+              <div class="syllabus-stat-box">
+                <div class="syllabus-stat-label">Delivered Lectures</div>
+                <div class="syllabus-stat-value">88 / 155</div>
+                <div class="syllabus-stat-subtext">56.8% Class Hours Completed</div>
+              </div>
+
+              <div class="syllabus-stat-box">
+                <div class="syllabus-stat-label">Current Active Unit</div>
+                <div class="syllabus-stat-value" style="color:#fbbf24;">Unit V</div>
+                <div class="syllabus-stat-subtext">Rotational Motion (85% done)</div>
+              </div>
+
+              <div class="syllabus-stat-box">
+                <div class="syllabus-stat-label">Syllabus Health</div>
+                <div class="syllabus-stat-value" style="color:#34d399;">On Track</div>
+                <div class="syllabus-stat-subtext">Target: Pre-Boards (Dec 15)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade & Stream Filter Tabs -->
+          <div class="syllabus-filter-bar">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.76rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">View Grade:</span>
+              <div class="syllabus-filter-tabs">
+                <button type="button" class="syllabus-filter-btn active" id="filterBtnClass11" onclick="filterSyllabusGrade('11')">Class 11 Physics (Current)</button>
+                <button type="button" class="syllabus-filter-btn" id="filterBtnClass12" onclick="filterSyllabusGrade('12')">Class 12 Physics (Board)</button>
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.76rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Exam Track:</span>
+              <div class="syllabus-filter-tabs">
+                <button type="button" class="syllabus-filter-btn active" id="filterTrackALL" onclick="filterSyllabusTrack('ALL')">All Tracks</button>
+                <button type="button" class="syllabus-filter-btn" id="filterTrackCBSE" onclick="filterSyllabusTrack('CBSE')">CBSE Board</button>
+                <button type="button" class="syllabus-filter-btn" id="filterTrackJEE" onclick="filterSyllabusTrack('JEE')">JEE Main</button>
+                <button type="button" class="syllabus-filter-btn" id="filterTrackNEET" onclick="filterSyllabusTrack('NEET')">NEET UG</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class 11/12 Physics Chapter Cards Container -->
+          <div class="syllabus-chapters-list" id="syllabusChaptersList">
+            <!-- Rendered by renderTeacherSyllabusChapters() -->
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB: CREATE TEST & QUIZZES (TEACHER SCOPED - HIDDEN IN DEFAULT SYLLABUS VIEW) -->
+      <div class="teacher-tab-content" id="tabGenerator" style="display:none;">
         
         <!-- COMPACT TRACK STATUS STRIP (REPLACES MESSY HORIZONTAL CARDS) -->
         <div class="stream-compact-strip" id="streamCompactStrip">
@@ -2892,6 +3091,9 @@ _Unisole AI School Scholar Assistant_</div>
       </div>
     </div>
   </div>
+
+  <!-- Senior Physics Hardcoded Curriculum & Syllabus Taxonomy -->
+  <script src="js/syllabusData.js?v=1.0"></script>
 
   <!-- Real-Time Voice Assistant & Gemini Live Audio Engine -->
   <script src="js/geminiLiveVoiceTutor.js?v=1.0"></script>

@@ -134,13 +134,19 @@ async function bootstrap() {
   console.log('------------------------------------------------------------');
 
   initDatabase();
-  await initKafkaProducer();
-  await initKafkaConsumer();
 
-  server.listen(PORT, () => {
+  server.listen(PORT, async () => {
     console.log(`[SERVER] HAPS-AI Gateway listening on port ${PORT}`);
     console.log(`[SERVER] Health endpoint: http://localhost:${PORT}/api/health`);
     console.log(`[SERVER] WebSocket server live at ws://localhost:${PORT}`);
+
+    // Asynchronously connect Kafka without blocking server startup
+    try {
+      await initKafkaProducer();
+      await initKafkaConsumer();
+    } catch (e) {
+      console.warn('[SERVER] Kafka optional connection notice:', e.message);
+    }
   });
 }
 
