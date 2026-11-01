@@ -636,6 +636,30 @@
          ====================================================================== -->
     <section class="view-section active" id="teacherView">
       
+      <!-- TEACHER PORTAL SUB-NAVIGATION BAR (WCAG 2.2 AA compliant, Token-based) -->
+      <div class="teacher-portal-nav" id="teacherPortalNav">
+        <button type="button" class="teacher-nav-pill active" id="teacherPillSyllabus" data-tab="tabTeacherSyllabus" onclick="switchTeacherTab('tabTeacherSyllabus')">
+          <i data-lucide="book-open" style="width:16px; height:16px;"></i>
+          <span>Senior Physics Syllabus</span>
+          <span class="teacher-nav-badge">10 Units</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillGenerator" data-tab="tabGenerator" onclick="switchTeacherTab('tabGenerator')">
+          <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
+          <span>Create &amp; Assign Tests</span>
+          <span class="teacher-nav-badge badge-blue">Test Creator</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillAnalytics" data-tab="tabClassAnalytics" onclick="switchTeacherTab('tabClassAnalytics')">
+          <i data-lucide="bar-chart-3" style="width:16px; height:16px;"></i>
+          <span>Overall Class Performance</span>
+          <span class="teacher-nav-badge badge-green">74.2% Avg</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillWeakConcepts" data-tab="tabTeacherWeakConcepts" onclick="switchTeacherTab('tabTeacherWeakConcepts')">
+          <i data-lucide="target" style="width:16px; height:16px;"></i>
+          <span>Weak Concepts to Teach</span>
+          <span class="teacher-nav-badge badge-rose">4 Priority Blind Spots</span>
+        </button>
+      </div>
+
       <!-- Hidden legacy tab buttons kept for DOM selector compatibility -->
       <div class="sub-tabs-bar" id="teacherSubTabs" style="display:none !important;">
         <button class="sub-tab-btn" id="tabBtnClassAnalytics" data-tab="tabClassAnalytics">Class Progress Dashboard</button>
@@ -802,6 +826,148 @@
               <button type="button" class="btn-secondary" onclick="openBoardPaperStudio('HP_BOARD')" style="border-color: rgba(245, 158, 11, 0.6); color: #fbbf24; font-size: 0.82rem; padding: 8px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.08); border-radius: var(--radius-sm); cursor: pointer;">
                 <i data-lucide="scroll" style="width: 15px; height: 15px;"></i> Generate HP Board Paper
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAST TEST CREATOR & ASSIGNED ASSESSMENTS DASHBOARD -->
+        <div class="test-creator-container" style="margin-bottom: 1.5rem;">
+          <!-- Left: Test Creator Form -->
+          <div class="test-creator-form-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <div>
+                <h3 style="font-size:1.15rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="sparkles" style="width:18px; height:18px; color:#38bdf8;"></i> Create New Assessment
+                </h3>
+                <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+                  Design and instantly dispatch tests to student portals or generate printable examination papers.
+                </p>
+              </div>
+              <span class="pilot-tag" style="background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3);">
+                Class 11 Science (Sec A &amp; B)
+              </span>
+            </div>
+
+            <form id="formTeacherCreateTest" onsubmit="event.preventDefault(); window.createTeacherAssessment(event);">
+              <div class="test-form-group">
+                <label class="test-form-label">Assessment Title</label>
+                <input type="text" id="inputTeacherTestTitle" class="form-input" value="Class 11 Science • Diagnostic Test: Rotational Dynamics &amp; Torque" placeholder="e.g. Weekly Quiz: Current Electricity" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.85rem;" required>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem;">
+                <div>
+                  <label class="test-form-label">Assessment Format</label>
+                  <select class="form-select" id="selectTeacherTestType" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.82rem;">
+                    <option value="QUIZ_15">⚡ 15-Min Quick Quiz (5 Qs • 20 Marks)</option>
+                    <option value="UNIT_45" selected>📝 45-Min Unit Exam (15 Qs • 45 Marks)</option>
+                    <option value="MOCK_180">🎯 180-Min Full NTA Mock (30 Qs • 100 Marks)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="test-form-label">Difficulty Standard</label>
+                  <select class="form-select" id="selectTeacherDifficulty" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.82rem;">
+                    <option value="BOARD">CBSE / HP Board Standard (NCERT Exemplar)</option>
+                    <option value="BALANCED" selected>Balanced Track (60% Board + 40% JEE Main)</option>
+                    <option value="ADVANCED">Challenger Track (JEE Advanced / Olympiad)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="test-form-group">
+                <label class="test-form-label">Target Syllabus Chapters &amp; Topics (Select to include)</label>
+                <div class="test-topic-chips" id="creatorTopicChips">
+                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Unit V: Rotational Motion</span>
+                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Torque &amp; Angular Momentum</span>
+                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Pure Rolling on Incline</span>
+                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Moment of Inertia</span>
+                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit X: Oscillations &amp; Waves</span>
+                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit III: Current Electricity</span>
+                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit VI: Ray Optics</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:0.75rem; color:#94a3b8;">
+                  Target Cohort: <strong>All 48 Enrolled Students</strong> in Class 11 Science
+                </div>
+                <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 20px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff;">
+                  <i data-lucide="send" style="width:16px; height:16px;"></i>
+                  <span>Generate &amp; Assign to Class</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Active & Assigned Assessments Table -->
+          <div class="assigned-tests-table-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h4 style="font-size:0.95rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:6px;">
+                <i data-lucide="layers" style="width:15px; height:15px; color:#10b981;"></i> Assigned Assessments
+              </h4>
+              <span style="font-size:0.72rem; color:#34d399; font-weight:700;">Class 11 Science</span>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="assigned-table" id="tableClassAssignedTests">
+                <thead>
+                  <tr>
+                    <th>Test Title</th>
+                    <th>Submissions</th>
+                    <th>Class Avg</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAssignedTests">
+                  <tr>
+                    <td>
+                      <div style="font-weight:700; color:#f8fafc;">Rotational Dynamics Unit Test</div>
+                      <div style="font-size:0.7rem; color:#94a3b8;">Assigned: Yesterday &bull; 15 Qs</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:700; color:#38bdf8;">44 / 48</div>
+                      <div style="font-size:0.68rem; color:#94a3b8;">91.7% turned in</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:800; color:#34d399;">72.8%</div>
+                    </td>
+                    <td>
+                      <span class="status-badge status-active">Active</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:700; color:#f8fafc;">Current Electricity &amp; Ohm's Law</div>
+                      <div style="font-size:0.7rem; color:#94a3b8;">Assigned: Oct 28 &bull; 10 Qs</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:700; color:#38bdf8;">48 / 48</div>
+                      <div style="font-size:0.68rem; color:#94a3b8;">100% turned in</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:800; color:#34d399;">78.4%</div>
+                    </td>
+                    <td>
+                      <span class="status-badge" style="background:rgba(52,211,153,0.15); color:#34d399;">Completed</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="font-weight:700; color:#f8fafc;">Damped Oscillations Remedial Drill</div>
+                      <div style="font-size:0.7rem; color:#94a3b8;">Scheduled &bull; 3 Qs (Weak Cohort)</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:700; color:#94a3b8;">0 / 33</div>
+                      <div style="font-size:0.68rem; color:#94a3b8;">Starts Tomorrow</div>
+                    </td>
+                    <td>
+                      <div style="font-weight:800; color:#94a3b8;">--</div>
+                    </td>
+                    <td>
+                      <span class="status-badge" style="background:rgba(245,158,11,0.15); color:#fbbf24;">Scheduled</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1665,6 +1831,278 @@
                 <!-- Dynamically populated -->
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           4. WEAK CONCEPTS & TEACHING DIRECTIVES ("WHAT TO TEACH NEXT")
+           ==================================================================== -->
+      <div class="teacher-tab-content" id="tabTeacherWeakConcepts" style="display:none;">
+        <div class="weak-concepts-view">
+
+          <!-- Hero Directive Banner: Priority Blind Spot for Tomorrow -->
+          <div class="remedial-hero-card">
+            <div class="remedial-hero-header">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="remedial-tag critical">
+                  <i data-lucide="alert-octagon" style="width:13px; height:13px;"></i> Critical Class Blind Spot
+                </span>
+                <span class="remedial-tag" style="background:rgba(255,255,255,0.08); color:#e2e8f0; border-color:rgba(255,255,255,0.15);">
+                  Class 11 Science (Sec A &amp; B) &bull; 48 Enrolled Students
+                </span>
+                <span class="remedial-tag" style="background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3);">
+                  Target Lecture: Tomorrow Period 2 (45 Mins)
+                </span>
+              </div>
+              <div style="font-size:0.78rem; color:#94a3b8; font-weight:700;">
+                Diagnostic Telemetry: <span style="color:#fb7185;">33 / 48 Students Weak (68.8% Failure Rate)</span>
+              </div>
+            </div>
+
+            <div class="remedial-hero-body">
+              <div class="remedial-hero-left">
+                <h3 class="remedial-hero-title">
+                  <i data-lucide="target" style="width:22px; height:22px; color:#f43f5e;"></i>
+                  Damped Oscillations &amp; Resonance (Unit X &bull; Oscillations &amp; Waves)
+                </h3>
+                <p class="remedial-hero-desc">
+                  Students consistently fail questions on <strong>logarithmic decrement</strong>, confusing underdamped decaying oscillations with non-oscillatory overdamping, and misapplying the damping factor &gamma; in quality factor calculations $Q = \frac{\omega_0}{2\gamma}$.
+                </p>
+
+                <div class="remedial-action-plan-box">
+                  <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#38bdf8; font-weight:800; margin-bottom:8px;">
+                    <i data-lucide="clock" style="width:12px; height:12px; vertical-align:middle;"></i> Recommended 45-Minute Classroom Lecture Plan:
+                  </div>
+                  <div class="lecture-plan-steps">
+                    <div class="lecture-step">
+                      <span class="lecture-step-time">00–15m</span>
+                      <div>
+                        <strong>Visual Smartboard Demo:</strong> Display underdamped displacement envelope $x(t) = A_0 e^{-\gamma t}\cos(\omega' t + \phi)$ alongside driven mechanical resonance curve.
+                      </div>
+                    </div>
+                    <div class="lecture-step">
+                      <span class="lecture-step-time">15–30m</span>
+                      <div>
+                        <strong>Board Derivation:</strong> Formulate viscous resistive force $F_d = -b v$ and derive energy loss rate $\Delta E = 2\gamma E$ from first principles.
+                      </div>
+                    </div>
+                    <div class="lecture-step">
+                      <span class="lecture-step-time">30–45m</span>
+                      <div>
+                        <strong>Guided Problem Solving:</strong> Solve 2 standard CBSE/JEE numericals on resonant frequency $\omega_r = \sqrt{\omega_0^2 - 2\gamma^2}$ and sharpness of resonance.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="remedial-hero-actions">
+                <div class="remedial-lift-badge">
+                  <div class="remedial-lift-val">+14.2%</div>
+                  <div class="remedial-lift-sub">Expected Class Term Score Lift</div>
+                </div>
+
+                <button type="button" class="btn-launch-smartboard" onclick="launchTeacherSmartboardForTopic('damped_oscillations')">
+                  <i data-lucide="presentation" style="width:16px; height:16px;"></i>
+                  <span>Launch Smartboard Lesson</span>
+                </button>
+
+                <button type="button" class="btn-assign-drill" onclick="assignRemedialPracticeDrill('damped_oscillations', 'Damped Oscillations & Resonance Remedial Drill')">
+                  <i data-lucide="send" style="width:15px; height:15px;"></i>
+                  <span>Assign 15-Min Drill (33 Students)</span>
+                </button>
+
+                <div style="font-size:0.72rem; color:#94a3b8; text-align:center; line-height:1.4;">
+                  Struggling Students: <strong>Aryan S., Rohit V., Vikrant C.</strong>, and 30 others
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Heading -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:800; color:#f8fafc; margin:0;">
+                Class Conceptual Blind Spots &bull; Ranked by Failure Rate
+              </h3>
+              <p style="font-size:0.8rem; color:#94a3b8; margin:2px 0 0 0;">
+                Prioritized syllabus topics where students need immediate pedagogical intervention before upcoming Pre-Board assessments.
+              </p>
+            </div>
+          </div>
+
+          <!-- Weak Concepts Grid -->
+          <div class="weak-concepts-grid" id="weakConceptsGrid">
+
+            <!-- Card 1: Damped Oscillations & Resonance -->
+            <div class="weak-concept-card border-critical">
+              <div>
+                <div class="concept-card-top">
+                  <div>
+                    <span class="remedial-tag critical" style="margin-bottom:6px;">Critical &bull; 68.8% Weak</span>
+                    <h4 class="concept-card-title">Damped Oscillations &amp; Resonance</h4>
+                    <span class="concept-card-chapter">Unit X &bull; Oscillations &amp; Waves (NCERT P. 345–352)</span>
+                  </div>
+                  <div class="concept-failure-rate-box">
+                    <div class="concept-failure-val" style="color:#fb7185;">33 / 48</div>
+                    <div class="concept-failure-sub">Students Struggling</div>
+                  </div>
+                </div>
+
+                <div class="chapter-progress-track" style="margin: 8px 0;">
+                  <div class="chapter-progress-fill" style="width:68.8%; background:#f43f5e;"></div>
+                </div>
+
+                <div class="concept-pitfall-box" style="margin-top:8px;">
+                  <strong style="color:#fb7185;">Common Exam Pitfall:</strong> Confusing underdamped decay envelope $A_0 e^{-\gamma t}$ with overdamped non-oscillatory motion, and miscalculating quality factor $Q = \frac{\omega_0}{2\gamma}$.
+                </div>
+
+                <div class="concept-students-strip" style="margin-top:10px;">
+                  <span>Struggling Cohort:</span>
+                  <span class="student-flagged-chip">Aryan Sharma</span>
+                  <span class="student-flagged-chip">Rohit Verma</span>
+                  <span class="student-flagged-chip">Vikrant Chauhan</span>
+                  <span class="student-flagged-chip">+30 others</span>
+                </div>
+              </div>
+
+              <div class="concept-card-actions">
+                <button type="button" class="btn-concept-action primary" onclick="launchTeacherSmartboardForTopic('damped_oscillations')">
+                  <i data-lucide="presentation" style="width:14px; height:14px;"></i> Smartboard Demo
+                </button>
+                <button type="button" class="btn-concept-action secondary" onclick="assignRemedialPracticeDrill('damped_oscillations', 'Damped Oscillations Drill')">
+                  <i data-lucide="send" style="width:14px; height:14px;"></i> Assign Drill
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 2: Torque & Pure Rolling Without Slipping -->
+            <div class="weak-concept-card border-high">
+              <div>
+                <div class="concept-card-top">
+                  <div>
+                    <span class="remedial-tag" style="background:rgba(245,158,11,0.2); color:#fbbf24; border-color:rgba(245,158,11,0.4); margin-bottom:6px;">High Priority &bull; 54.2% Weak</span>
+                    <h4 class="concept-card-title">Torque &amp; Pure Rolling Without Slipping</h4>
+                    <span class="concept-card-chapter">Unit V &bull; Rotational Motion (NCERT P. 165–178)</span>
+                  </div>
+                  <div class="concept-failure-rate-box">
+                    <div class="concept-failure-val" style="color:#fbbf24;">26 / 48</div>
+                    <div class="concept-failure-sub">Students Struggling</div>
+                  </div>
+                </div>
+
+                <div class="chapter-progress-track" style="margin: 8px 0;">
+                  <div class="chapter-progress-fill" style="width:54.2%; background:#f59e0b;"></div>
+                </div>
+
+                <div class="concept-pitfall-box" style="margin-top:8px;">
+                  <strong style="color:#fbbf24;">Common Exam Pitfall:</strong> Assuming static friction acts downhill or does negative work; failing to recognize contact point P is at instantaneous rest with zero relative sliding.
+                </div>
+
+                <div class="concept-students-strip" style="margin-top:10px;">
+                  <span>Struggling Cohort:</span>
+                  <span class="student-flagged-chip">Rohit Verma</span>
+                  <span class="student-flagged-chip">Rahul Thakur</span>
+                  <span class="student-flagged-chip">Vikrant Chauhan</span>
+                  <span class="student-flagged-chip">+23 others</span>
+                </div>
+              </div>
+
+              <div class="concept-card-actions">
+                <button type="button" class="btn-concept-action primary" onclick="launchTeacherSmartboardForTopic('pure_rolling')">
+                  <i data-lucide="presentation" style="width:14px; height:14px;"></i> Smartboard Demo
+                </button>
+                <button type="button" class="btn-concept-action secondary" onclick="assignRemedialPracticeDrill('pure_rolling', 'Pure Rolling Dynamics Drill')">
+                  <i data-lucide="send" style="width:14px; height:14px;"></i> Assign Drill
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 3: Microscopic Drift Velocity & Resistivity -->
+            <div class="weak-concept-card border-moderate">
+              <div>
+                <div class="concept-card-top">
+                  <div>
+                    <span class="remedial-tag" style="background:rgba(56,189,248,0.2); color:#38bdf8; border-color:rgba(56,189,248,0.4); margin-bottom:6px;">Moderate &bull; 47.9% Weak</span>
+                    <h4 class="concept-card-title">Microscopic Drift Velocity &amp; Resistivity</h4>
+                    <span class="concept-card-chapter">Unit III &bull; Current Electricity (NCERT P. 94–106)</span>
+                  </div>
+                  <div class="concept-failure-rate-box">
+                    <div class="concept-failure-val" style="color:#38bdf8;">23 / 48</div>
+                    <div class="concept-failure-sub">Students Struggling</div>
+                  </div>
+                </div>
+
+                <div class="chapter-progress-track" style="margin: 8px 0;">
+                  <div class="chapter-progress-fill" style="width:47.9%; background:#0ea5e9;"></div>
+                </div>
+
+                <div class="concept-pitfall-box" style="margin-top:8px;">
+                  <strong style="color:#38bdf8;">Common Exam Pitfall:</strong> Forgetting that mean relaxation time &tau; decreases with temperature in metallic conductors, which increases resistivity $\rho = \frac{m}{ne^2\tau}$.
+                </div>
+
+                <div class="concept-students-strip" style="margin-top:10px;">
+                  <span>Struggling Cohort:</span>
+                  <span class="student-flagged-chip">Ananya Thakur</span>
+                  <span class="student-flagged-chip">Vikrant Chauhan</span>
+                  <span class="student-flagged-chip">Amit Paul</span>
+                  <span class="student-flagged-chip">+20 others</span>
+                </div>
+              </div>
+
+              <div class="concept-card-actions">
+                <button type="button" class="btn-concept-action primary" onclick="launchTeacherSmartboardForTopic('drift_velocity')">
+                  <i data-lucide="presentation" style="width:14px; height:14px;"></i> Smartboard Demo
+                </button>
+                <button type="button" class="btn-concept-action secondary" onclick="assignRemedialPracticeDrill('drift_velocity', 'Microscopic Drift Velocity Drill')">
+                  <i data-lucide="send" style="width:14px; height:14px;"></i> Assign Drill
+                </button>
+              </div>
+            </div>
+
+            <!-- Card 4: Thin Lens Formula & Sign Convention -->
+            <div class="weak-concept-card border-moderate">
+              <div>
+                <div class="concept-card-top">
+                  <div>
+                    <span class="remedial-tag" style="background:rgba(56,189,248,0.2); color:#38bdf8; border-color:rgba(56,189,248,0.4); margin-bottom:6px;">Moderate &bull; 41.7% Weak</span>
+                    <h4 class="concept-card-title">Thin Lens Formula &amp; Sign Convention</h4>
+                    <span class="concept-card-chapter">Unit VI &bull; Ray Optics (NCERT P. 310–324)</span>
+                  </div>
+                  <div class="concept-failure-rate-box">
+                    <div class="concept-failure-val" style="color:#38bdf8;">20 / 48</div>
+                    <div class="concept-failure-sub">Students Struggling</div>
+                  </div>
+                </div>
+
+                <div class="chapter-progress-track" style="margin: 8px 0;">
+                  <div class="chapter-progress-fill" style="width:41.7%; background:#0ea5e9;"></div>
+                </div>
+
+                <div class="concept-pitfall-box" style="margin-top:8px;">
+                  <strong style="color:#38bdf8;">Common Exam Pitfall:</strong> Cartesian sign convention errors: failing to assign negative sign to object distance $u < 0$ and inverted magnification $m < 0$.
+                </div>
+
+                <div class="concept-students-strip" style="margin-top:10px;">
+                  <span>Struggling Cohort:</span>
+                  <span class="student-flagged-chip">Rohit Verma</span>
+                  <span class="student-flagged-chip">Kavya Negi</span>
+                  <span class="student-flagged-chip">Sanjay Sen</span>
+                  <span class="student-flagged-chip">+17 others</span>
+                </div>
+              </div>
+
+              <div class="concept-card-actions">
+                <button type="button" class="btn-concept-action primary" onclick="launchTeacherSmartboardForTopic('lens_formula')">
+                  <i data-lucide="presentation" style="width:14px; height:14px;"></i> Smartboard Demo
+                </button>
+                <button type="button" class="btn-concept-action secondary" onclick="assignRemedialPracticeDrill('lens_formula', 'Ray Optics Sign Convention Drill')">
+                  <i data-lucide="send" style="width:14px; height:14px;"></i> Assign Drill
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -3088,6 +3526,28 @@ _Unisole AI School Scholar Assistant_</div>
         <button type="button" class="btn-secondary" id="btnAutoGenerateAlternative" onclick="autoGenerateFreshAlternative()" style="border-color: rgba(56,189,248,0.4); color: var(--accent-cyan); font-size: 0.82rem; padding: 6px 14px;">
           <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Generate Fresh Question via AI
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEACHER SMARTBOARD LIVE LESSON PREVIEW -->
+  <div class="modal-smartboard-preview-overlay" id="modalTeacherSmartboard" role="dialog" aria-modal="true" onclick="if (event.target === this) closeTeacherSmartboardModal();">
+    <div class="modal-smartboard-dialog">
+      <div class="modal-smartboard-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="remedial-tag" style="background:rgba(56,189,248,0.2); color:#38bdf8; border-color:rgba(56,189,248,0.4);">
+            <i data-lucide="presentation" style="width:13px; height:13px;"></i> Live Smartboard Classroom Mode
+          </span>
+          <strong id="modalTeacherSmartboardTopic" style="color:#f8fafc; font-size:0.95rem;">Damped Oscillations &amp; Resonance</strong>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-role-switch" onclick="closeTeacherSmartboardModal()" title="Close Smartboard">
+            <i data-lucide="x" style="width:14px; height:14px;"></i> Close Board
+          </button>
+        </div>
+      </div>
+      <div class="modal-smartboard-body">
+        <iframe id="iframeTeacherSmartboard" class="modal-smartboard-iframe" src="/whiteboard.html?role=teacher" allow="clipboard-read; clipboard-write"></iframe>
       </div>
     </div>
   </div>

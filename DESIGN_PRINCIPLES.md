@@ -499,3 +499,4 @@ When starting UI work, silently run this checklist; when finishing, report in th
 - web.dev Core Web Vitals: https://web.dev/vitals/
 - Material Design, Apple HIG, Carbon, Polaris, and Radix/Shadcn as pattern references
 - Nielsen Norman Group: 10 Usability Heuristics
+

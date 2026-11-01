@@ -10,3 +10,4 @@ Before touching any UI code:
 4. Verify states (default, hover, focus, disabled, loading, empty, error).
 5. Verify responsive layout at 360px, 768px, 1024px, 1440px.
 6. Provide the final report matching Section 16 of [DESIGN_PRINCIPLES.md](./DESIGN_PRINCIPLES.md).
+

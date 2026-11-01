@@ -526,7 +526,14 @@ function switchPortalRole(role) {
 
   } else {
     // Teacher Role
-    if (headerTitle) headerTitle.innerText = 'Teacher Portal • Class 11 & 12 Physics Syllabus';
+    const currentTeacherTab = state.activeTeacherTab || 'tabTeacherSyllabus';
+    const teacherTabTitles = {
+      'tabTeacherSyllabus': 'Teacher Portal • Senior Physics Curriculum & Syllabus',
+      'tabGenerator': 'Teacher Portal • Create & Assign Tests',
+      'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
+      'tabTeacherWeakConcepts': 'Teacher Portal • Weak Concepts Diagnostic & What to Teach in Class'
+    };
+    if (headerTitle) headerTitle.innerText = teacherTabTitles[currentTeacherTab] || 'Teacher Portal • Senior Physics Curriculum & Syllabus';
     if (facultyName) facultyName.innerText = 'Dr. Vikram Sharma';
     if (facultyTag) {
       facultyTag.innerText = 'Senior Faculty (Physics)';
@@ -542,18 +549,16 @@ function switchPortalRole(role) {
     if (window.renderTeacherSyllabusChapters) {
       window.renderTeacherSyllabusChapters('11', 'ALL');
     }
-    const syllabusTab = document.getElementById('tabTeacherSyllabus');
-    if (syllabusTab) {
-      document.querySelectorAll('.teacher-tab-content').forEach(t => {
-        if (t.id === 'tabTeacherSyllabus') {
-          t.style.display = 'block';
-          t.classList.add('active');
-        } else {
-          t.style.display = 'none';
-          t.classList.remove('active');
-        }
-      });
-    }
+    
+    document.querySelectorAll('.teacher-tab-content').forEach(t => {
+      const isTarget = t.id === currentTeacherTab;
+      t.style.display = isTarget ? 'block' : 'none';
+      t.classList.toggle('active', isTarget);
+    });
+
+    document.querySelectorAll('.teacher-nav-pill').forEach(pill => {
+      pill.classList.toggle('active', pill.getAttribute('data-tab') === currentTeacherTab);
+    });
   }
 
   closeSidebarDrawer();
@@ -587,6 +592,11 @@ function switchTeacherTab(targetTabId) {
   // Ensure Teacher view is visible
   switchPortalRole('teacher');
 
+  // Update pills
+  document.querySelectorAll('.teacher-nav-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.getAttribute('data-tab') === targetTabId);
+  });
+
   // Update active state across sub-tab and drawer buttons
   document.querySelectorAll('.sub-tab-btn, .drawer-tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTabId);
@@ -608,9 +618,11 @@ function switchTeacherTab(targetTabId) {
     : (activeProf ? activeProf.subjectName : 'Physics');
 
   const tabTitles = {
-    'tabGenerator': `Create Tests & Quizzes • ${curSubjName}`,
+    'tabTeacherSyllabus': 'Teacher Portal • Senior Physics Curriculum & Syllabus',
+    'tabGenerator': 'Teacher Portal • Create & Assign Tests',
+    'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
+    'tabTeacherWeakConcepts': 'Teacher Portal • Weak Concepts Diagnostic & What to Teach in Class',
     'tabQuestionBank': `Question Bank & PYQ Repository • ${curSubjName}`,
-    'tabClassAnalytics': `Class Progress Dashboard • ${curSubjName}`,
     'tabStudents': `Students & Smart Cards • ${curSubjName}`,
     'tabSmartReports': `Weekly Smart Report • ${curSubjName}`,
     'tabHandwritten': `Scan Paper Sheets • ${curSubjName}`
@@ -11630,5 +11642,266 @@ window.closeEditQuestionModal = closeEditQuestionModal;
 window.submitEditPaperQuestion = submitEditPaperQuestion;
 window.deletePaperQuestionFromUI = deletePaperQuestionFromUI;
 window.printBoardQuestionPaper = printBoardQuestionPaper;
+
+// ============================================================================
+// TEACHER PORTAL LEVEL 2: TEST CREATOR & WEAK CONCEPTS DIAGNOSTIC HANDLERS
+// ============================================================================
+
+window.toggleTestTopicChip = function(el) {
+  if (el) el.classList.toggle('selected');
+};
+
+window.createTeacherAssessment = function(event) {
+  if (event) event.preventDefault();
+  const titleInput = document.getElementById('inputTeacherTestTitle');
+  const typeSelect = document.getElementById('selectTeacherTestType');
+  const title = titleInput?.value?.trim() || 'Class 11 Science • Diagnostic Test: Rotational Dynamics';
+  const typeName = typeSelect?.options[typeSelect.selectedIndex]?.text || '45-Min Unit Exam';
+
+  const tbody = document.getElementById('tbodyAssignedTests');
+  if (tbody) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:700; color:#f8fafc;">${escapeHtml(title)}</div>
+        <div style="font-size:0.7rem; color:#38bdf8;">Assigned Just Now &bull; ${escapeHtml(typeName)}</div>
+      </td>
+      <td>
+        <div style="font-weight:700; color:#38bdf8;">0 / 48</div>
+        <div style="font-size:0.68rem; color:#94a3b8;">Dispatched to student portal</div>
+      </td>
+      <td>
+        <div style="font-weight:800; color:#94a3b8;">--</div>
+      </td>
+      <td>
+        <span class="status-badge status-active">Active</span>
+      </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+  }
+
+  // Flash confirmation toast
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Assessment Dispatched:</strong> '${escapeHtml(title)}' is now live for all 48 students!</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
+const TEACHER_REMEDIAL_PLANS = {
+  'damped_oscillations': {
+    questionHeader: {
+      title: "A damped harmonic oscillator has mass m = 0.2 kg, spring constant k = 80 N/m, and damping constant b = 0.04 kg/s. Calculate the natural angular frequency omega_0, damping factor gamma, and the quality factor Q.",
+      chapter: "OSCILLATIONS AND WAVES",
+      marks: 3
+    },
+    diagram: {
+      type: "oscillator",
+      title: "Damped Harmonic Oscillator • Mechanical Decay Model",
+      tip: "Quality factor Q measures rate of energy loss: higher Q means lower damping and longer sustained oscillations!"
+    },
+    examTip: "Quality factor Q measures rate of energy loss: higher Q means lower damping and longer sustained oscillations!",
+    solution: {
+      step1: {
+        title: "Governing Differential Equation & Parameters",
+        formula: "• Equation of Motion: m·(d²x/dt²) + b·(dx/dt) + k·x = 0\n• Standard Form:      d²x/dt² + 2γ·(dx/dt) + ω₀²·x = 0\n• Natural Frequency:  ω₀ = √(k/m) = √(80 / 0.2) = 20 rad/s\n• Damping Factor:     γ = b / (2m) = 0.04 / (2 × 0.2) = 0.1 s⁻¹",
+        explanation: "Since γ (0.1) << ω₀ (20), this system is strictly UNDERDAMPED with oscillatory decay envelope A(t) = A₀ e^(-γt).",
+        spokenScript: "Pehle oscillator ka standard differential equation aur natural angular frequency note karte hain."
+      },
+      step2: {
+        title: "Damped Frequency & Energy Loss Calculation",
+        formula: "1) Damped Angular Frequency: ω' = √(ω₀² - γ²) = √(400 - 0.01) ≈ 19.9997 rad/s\n2) Quality Factor Formula:   Q = ω₀ / (2γ) = 20 / (2 × 0.1) = 100\n3) Relaxation Time:          τ = 1 / (2γ) = 1 / 0.2 = 5.0 seconds",
+        explanation: "A high quality factor Q = 100 indicates the oscillator completes approximately Q/π ≈ 32 cycles before energy decays to 1/e of its initial value.",
+        spokenScript: "Ab quality factor Q = omega 0 upon 2 gamma formula lagakar energy dissipation rate calculate karte hain."
+      },
+      step3: {
+        title: "Evaluated Result & Classroom Takeaway",
+        formula: "• Natural Frequency:  ω₀ = 20 rad/s\n• Damping Constant:   γ = 0.1 s⁻¹\n• Quality Factor:     Q = 100  [Dimensionless]\n• Verified Answer:    System oscillates underdamped with Q = 100",
+        explanation: "Damping shifts the resonance peak slightly lower than ω₀. For weak damping, ω' is practically indistinguishable from ω₀.",
+        spokenScript: "Aur yeh raha final verified result: Quality factor Q = 100 hai jo high resonance sharpness confirm karta hai."
+      }
+    }
+  },
+  'pure_rolling': {
+    questionHeader: {
+      title: "A solid sphere of mass M and radius R rolls without slipping down an inclined plane of inclination theta. Find the linear acceleration a of the center of mass.",
+      chapter: "SYSTEM OF PARTICLES AND ROTATIONAL MOTION",
+      marks: 3
+    },
+    diagram: {
+      type: "rolling_incline",
+      title: "Free-Body Diagram • Solid Sphere on Incline (θ)",
+      tip: "Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved."
+    },
+    examTip: "Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.",
+    solution: {
+      step1: {
+        title: "Free-Body Force & Torque Equations",
+        formula: "• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R",
+        explanation: "Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.",
+        spokenScript: "Pehle stated physical parameters aur primary governing relation note karte hain."
+      },
+      step2: {
+        title: "Torque & Linear Force Substitution",
+        formula: "1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]",
+        explanation: "This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).",
+        spokenScript: "Ab known quantities substitute karke algebraic derivation solve karte hain."
+      },
+      step3: {
+        title: "Moment of Inertia & Final Acceleration",
+        formula: "• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ",
+        explanation: "A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.",
+        spokenScript: "Aur yeh raha final verified result with proper SI units aur physical significance."
+      }
+    }
+  },
+  'drift_velocity': {
+    questionHeader: {
+      title: "Define drift velocity of free electrons. Derive the microscopic relation between electric current I and drift velocity v_d. Hence, deduce Ohm's law and obtain resistivity rho.",
+      chapter: "CURRENT ELECTRICITY",
+      marks: 3
+    },
+    diagram: {
+      type: "circuit",
+      title: "Circuit Diagram • Ohm's Law & Resistivity",
+      tip: "Relaxation time tau decreases with temperature in metals, increasing electrical resistance!"
+    },
+    examTip: "Relaxation time tau decreases with temperature in metals, increasing electrical resistance!",
+    solution: {
+      step1: {
+        title: "Governing Circuit Principles",
+        formula: "• Ohm's Law:          V = I · R\n• Microscopic Drift:   I = n · e · A · v_d,   v_d = (e · E · τ) / m\n• Resistivity:         R = ρ · (l / A),       ρ = m / (n · e² · τ)",
+        explanation: "Relaxation time τ connects microscopic electron kinematics to macroscopic electrical resistance.",
+        spokenScript: "Pehle stated physical parameters aur primary governing relation note karte hain."
+      },
+      step2: {
+        title: "Current Derivation & Ohm Deduction",
+        formula: "1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R",
+        explanation: "Confirms Ohm's Law V = IR with resistivity ρ = m / (n·e²·τ).",
+        spokenScript: "Ab known quantities substitute karke algebraic derivation solve karte hain."
+      },
+      step3: {
+        title: "Final Formula & Board Takeaway",
+        formula: "• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verified Result: Microscopic basis of electrical resistance established",
+        explanation: "Resistivity depends only on material electron density n and relaxation time τ.",
+        spokenScript: "Aur yeh raha final verified result with proper SI units aur physical significance."
+      }
+    }
+  },
+  'lens_formula': {
+    questionHeader: {
+      title: "An object is placed at distance u from a convex lens of focal length f. Derive the thin lens formula 1/f = 1/v - 1/u and state Cartesian sign conventions.",
+      chapter: "RAY OPTICS AND OPTICAL INSTRUMENTS",
+      marks: 3
+    },
+    diagram: {
+      type: "lens",
+      title: "Ray Optics • Principal Axis & Image Formation",
+      tip: "Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative!"
+    },
+    examTip: "Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative!",
+    solution: {
+      step1: {
+        title: "Governing Optical Equations",
+        formula: "• Thin Lens Equation: 1/f = 1/v - 1/u\n• Magnification:       m = v / u = h_i / h_o\n• Power of Lens:       P = 1 / f (meters)",
+        explanation: "Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative.",
+        spokenScript: "Pehle optical sign convention ke sath focal length f aur object distance u note karte hain."
+      },
+      step2: {
+        title: "Coordinate Substitution & Calculation",
+        formula: "1) Identify: Focal length f (convex > 0), Object distance u (< 0)\n2) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n3) Image distance: v = (u · f) / (u + f)",
+        explanation: "Calculate v and check sign: positive v confirms a real image on opposite side.",
+        spokenScript: "Ab lens formula 1/f = 1/v - 1/u mein values substitute karke image position v aur magnification calculate karte hain."
+      },
+      step3: {
+        title: "Image Nature & Final Result",
+        formula: "• Magnification: m = v / u\n• Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f (in meters)",
+        explanation: "State complete nature, orientation, and size relative to object.",
+        spokenScript: "Aur final result mein image distance aur magnification ka sign dekhkar image real aur inverted confirm hoti hai."
+      }
+    }
+  }
+};
+
+window.launchTeacherSmartboardForTopic = function(topicKey) {
+  const plan = TEACHER_REMEDIAL_PLANS[topicKey] || TEACHER_REMEDIAL_PLANS['damped_oscillations'];
+  const modal = document.getElementById('modalTeacherSmartboard');
+  const label = document.getElementById('modalTeacherSmartboardTopic');
+  const iframe = document.getElementById('iframeTeacherSmartboard');
+
+  if (label) {
+    label.textContent = plan.questionHeader?.chapter + ' • ' + (plan.diagram?.title || 'Classroom Lesson');
+  }
+
+  if (modal) {
+    modal.classList.add('active');
+  }
+
+  if (iframe) {
+    const deliverPlan = () => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'RENDER_SMARTBOARD_SOLUTION',
+          payload: plan
+        }, '*');
+      }
+    };
+    deliverPlan();
+    setTimeout(deliverPlan, 500);
+  }
+};
+
+window.closeTeacherSmartboardModal = function() {
+  const modal = document.getElementById('modalTeacherSmartboard');
+  if (modal) modal.classList.remove('active');
+};
+
+window.assignRemedialPracticeDrill = function(topicKey, title) {
+  const tbody = document.getElementById('tbodyAssignedTests');
+  if (tbody) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:700; color:#fb7185;">${escapeHtml(title)}</div>
+        <div style="font-size:0.7rem; color:#94a3b8;">Remedial Targeted Drill &bull; 3 Qs (Weak Cohort)</div>
+      </td>
+      <td>
+        <div style="font-weight:700; color:#38bdf8;">0 / 33</div>
+        <div style="font-size:0.68rem; color:#94a3b8;">Assigned to struggling students</div>
+      </td>
+      <td>
+        <div style="font-weight:800; color:#94a3b8;">--</div>
+      </td>
+      <td>
+        <span class="status-badge" style="background:rgba(244,63,94,0.15); color:#fb7185;">Remedial</span>
+      </td>
+    `;
+    tbody.insertBefore(tr, tbody.firstChild);
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Targeted Drill Scheduled:</strong> '${escapeHtml(title)}' assigned to the 33 struggling students in Class 11 Science!</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
+window.filterWeakConcepts = function(severity) {
+  document.querySelectorAll('.syllabus-filter-btn[id^="btnFilterWeak"]').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `btnFilterWeak${severity.charAt(0) + severity.slice(1).toLowerCase()}`);
+  });
+  const cards = document.querySelectorAll('.weak-concept-card');
+  cards.forEach(card => {
+    if (severity === 'ALL') {
+      card.style.display = 'flex';
+    } else if (severity === 'CRITICAL') {
+      card.style.display = card.classList.contains('border-critical') ? 'flex' : 'none';
+    } else if (severity === 'MODERATE') {
+      card.style.display = (card.classList.contains('border-high') || card.classList.contains('border-moderate')) ? 'flex' : 'none';
+    }
+  });
+};
 
 

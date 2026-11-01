@@ -16,3 +16,4 @@ All UI, UX, styling, and front-end engineering in this repository MUST strictly 
 5. **State Completeness**: Always implement and verify default, hover, focus-visible, active, disabled, loading, empty, and error states.
 6. **Breakpoints Verification**: Verify at 360px, 768px, 1024px, 1440px with zero unintended horizontal overflow.
 7. **Definition of Done**: Run Section 15 checklist and format the final report per Section 16 of [DESIGN_PRINCIPLES.md](../../DESIGN_PRINCIPLES.md).
+
