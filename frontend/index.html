@@ -352,6 +352,10 @@
           <i data-lucide="database" style="width:16px; height:16px;"></i>
           <span>Question Bank &amp; PYQs</span>
         </button>
+        <button type="button" class="drawer-tab-btn" id="btnDrawerBoardPaperStudio" onclick="closeSidebarDrawer(); openBoardPaperStudio();" style="border-left: 2px solid #f59e0b;">
+          <i data-lucide="scroll" style="width:16px; height:16px; color:#f59e0b;"></i>
+          <span>Board Paper Studio (CBSE / HP)</span>
+        </button>
         <button type="button" class="drawer-tab-btn" data-tab="tabClassAnalytics" onclick="switchTeacherTab('tabClassAnalytics')">
           <i data-lucide="bar-chart-3" style="width:16px; height:16px;"></i>
           <span>Class Progress Dashboard</span>
@@ -576,6 +580,31 @@
             <i data-lucide="menu" style="width:13px; height:13px;"></i>
             <span>Change Track</span>
           </button>
+        </div>
+
+        <!-- BOARD QUESTION PAPER STUDIO LAUNCHER BANNER -->
+        <div class="glass-card" style="margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(30, 58, 138, 0.45), rgba(15, 23, 42, 0.85)); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: var(--radius-md); padding: 16px 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; margin-bottom: 6px;">
+                <i data-lucide="award" style="width: 12px; height: 12px;"></i> Official Board Exam Studio
+              </div>
+              <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0 0 4px 0;">
+                Full-Length Board Question Paper Generator &amp; Customizer
+              </h3>
+              <p style="font-size: 0.8rem; color: #cbd5e1; margin: 0;">
+                Generate official 3-hour examination papers in <strong>CBSE Board</strong> and <strong>HP Board (HPBOSE)</strong> formats with full question swapping, teacher custom additions, and 1-click printing.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-primary" onclick="openBoardPaperStudio('CBSE')" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); font-size: 0.82rem; padding: 8px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
+                <i data-lucide="file-text" style="width: 15px; height: 15px;"></i> Generate CBSE Paper
+              </button>
+              <button type="button" class="btn-secondary" onclick="openBoardPaperStudio('HP_BOARD')" style="border-color: rgba(245, 158, 11, 0.6); color: #fbbf24; font-size: 0.82rem; padding: 8px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.08); border-radius: var(--radius-sm); cursor: pointer;">
+                <i data-lucide="scroll" style="width: 15px; height: 15px;"></i> Generate HP Board Paper
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- TEACHER CLASS CONTEXT & SUBJECT SELECTOR BAR -->
@@ -2615,10 +2644,261 @@ _Unisole AI School Scholar Assistant_</div>
     </div>
   </div>
 
+  <!-- ========================================================================
+       MODAL: FULL-LENGTH BOARD QUESTION PAPER STUDIO & CUSTOMIZER
+       ======================================================================== -->
+  <div class="board-paper-studio-overlay" id="modalBoardPaperStudio" style="display: none;">
+    <!-- STUDIO NAVBAR -->
+    <header class="board-paper-studio-navbar">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+            <i data-lucide="scroll" style="width: 18px; height: 18px;"></i>
+          </div>
+          <div>
+            <strong style="font-size: 0.95rem; color: #fff; display: block;" id="studioPaperMainTitle">Board Question Paper Studio</strong>
+            <span style="font-size: 0.72rem; color: #94a3b8;" id="studioPaperSubtitle">Official Pattern &bull; Full 3-Hour Paper</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+          <!-- Board Selector Toggle -->
+          <div style="display: inline-flex; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 2px;">
+            <button type="button" class="btn-paper-board-toggle active" id="btnToggleBoardCbse" onclick="changeStudioBoard('CBSE')" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; background: #2563eb; color: #fff;">CBSE Board</button>
+            <button type="button" class="btn-paper-board-toggle" id="btnToggleBoardHp" onclick="changeStudioBoard('HP_BOARD')" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; background: transparent; color: #94a3b8;">HP Board (HPBOSE)</button>
+          </div>
+
+          <!-- Subject Selector -->
+          <select id="selectStudioSubject" class="form-select" onchange="regenerateStudioPaper()" style="font-size: 0.8rem; font-weight: 700; padding: 5px 10px; background: #1e293b; color: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 6px;">
+            <option value="Physics">Class 12 Physics (70M / 60M)</option>
+            <option value="Chemistry">Class 12 Chemistry (70M / 60M)</option>
+            <option value="Mathematics">Class 12 Mathematics (80M)</option>
+            <option value="Science">Class 10 Science (80M / 70M)</option>
+            <option value="Mathematics10">Class 10 Mathematics (80M)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- NAVBAR ACTIONS -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <!-- Toggle Solution / Marking Scheme -->
+        <button type="button" class="btn-secondary" id="btnToggleMarkingScheme" onclick="togglePaperMarkingScheme()" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;" title="Toggle Step Rubric & Marking Scheme View">
+          <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+          <span id="labelToggleMarkingScheme">Show Marking Scheme</span>
+        </button>
+
+        <!-- Add Custom Question Button -->
+        <button type="button" class="btn-secondary" onclick="openAddCustomQuestionModal()" style="font-size: 0.78rem; padding: 6px 12px; border-color: rgba(52, 211, 153, 0.4); color: #34d399; display: inline-flex; align-items: center; gap: 6px;" title="Add teacher custom question to this paper">
+          <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i>
+          <span>Add Question</span>
+        </button>
+
+        <!-- Print Question Paper -->
+        <button type="button" class="btn-primary" onclick="printBoardQuestionPaper()" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.78rem; padding: 6px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 6px; color: #fff; cursor: pointer;" title="Print clean exam paper">
+          <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
+          <span>Print Paper</span>
+        </button>
+
+        <!-- Close Button -->
+        <button type="button" onclick="closeBoardPaperStudio()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;" title="Close Studio" aria-label="Close Studio">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- STUDIO CANVAS CONTAINER -->
+    <main class="board-paper-studio-body" id="studioPaperScrollBody">
+      <div class="board-paper-sheet" id="boardPaperPrintCanvas">
+        <!-- Paper content dynamically injected by renderBoardPaperStudio() -->
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: ADD CUSTOM QUESTION (TEACHER INPUT) -->
+  <div class="drilldown-modal-backdrop" id="modalAddCustomPaperQuestion" role="dialog" aria-modal="true" style="display: none; z-index: 100010;">
+    <div class="drilldown-modal-content" style="max-width: 620px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+        <div>
+          <span class="pilot-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">Teacher Custom Formulation</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;">
+            Add Custom Question to Paper
+          </h2>
+          <p style="font-size: 0.8rem; color: var(--text-secondary);">
+            Specify question statement, target section, marks weightage, and marking rubric.
+          </p>
+        </div>
+        <button class="btn-icon" type="button" onclick="closeAddCustomQuestionModal()" title="Close" aria-label="Close" style="background: rgba(255,255,255,0.06); border-radius: 50%; cursor: pointer;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+
+      <form id="formAddCustomQuestion" onsubmit="event.preventDefault(); submitAddCustomQuestion();">
+        <div class="grid-2col" style="gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Target Section</label>
+            <select class="form-select" id="selectCustomQSection" style="width: 100%;">
+              <!-- Injected dynamically based on paper sections -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Marks Weightage</label>
+            <select class="form-select" id="selectCustomQMarks" style="width: 100%;">
+              <option value="1">1 Mark (MCQ / Objective)</option>
+              <option value="2" selected>2 Marks (Very Short Answer)</option>
+              <option value="3">3 Marks (Short Answer)</option>
+              <option value="4">4 Marks (Case-Based Integrated)</option>
+              <option value="5">5 Marks (Long Answer / Proof)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" style="font-weight: 600;">Chapter / Topic Tag</label>
+          <input type="text" class="form-select" id="inputCustomQTopic" placeholder="e.g. Current Electricity or Quadratic Equations" style="width: 100%;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" style="font-weight: 600;">Question Statement (Supports Math / LaTeX)</label>
+          <textarea class="form-select" id="inputCustomQText" rows="4" required placeholder="Type the question text here. LaTeX formulas supported: e.g. $E = mc^2$ or $\frac{1}{f} = \frac{1}{v} - \frac{1}{u}$" style="width: 100%; font-family: inherit; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-group" id="groupCustomQOptions" style="margin-bottom: 1rem; display: none;">
+          <label class="form-label" style="font-weight: 600;">Options (A, B, C, D)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <input type="text" class="form-select" id="inputCustomOptA" placeholder="Option A" />
+            <input type="text" class="form-select" id="inputCustomOptB" placeholder="Option B" />
+            <input type="text" class="form-select" id="inputCustomOptC" placeholder="Option C" />
+            <input type="text" class="form-select" id="inputCustomOptD" placeholder="Option D" />
+          </div>
+          <div style="margin-top: 6px;">
+            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Correct Option:</label>
+            <select class="form-select" id="selectCustomCorrectOpt" style="padding: 3px 8px; font-size: 0.8rem; margin-left: 6px;">
+              <option value="A">Option A</option>
+              <option value="B">Option B</option>
+              <option value="C">Option C</option>
+              <option value="D">Option D</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" style="font-weight: 600;">Marking Scheme &amp; Step-by-Step Solution</label>
+          <textarea class="form-select" id="inputCustomQSolution" rows="3" placeholder="Step 1: Formula definition (1M), Step 2: Substitution & answer (1M)..." style="width: 100%; font-family: inherit; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <button type="button" class="btn-secondary" onclick="closeAddCustomQuestionModal()" style="padding: 7px 14px;">Cancel</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); font-weight: 700; padding: 7px 18px;">
+            <i data-lucide="check" style="width: 14px; height: 14px;"></i> Insert Into Paper
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT EXISTING QUESTION IN-PLACE -->
+  <div class="drilldown-modal-backdrop" id="modalEditPaperQuestion" role="dialog" aria-modal="true" style="display: none; z-index: 100010;">
+    <div class="drilldown-modal-content" style="max-width: 620px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+        <div>
+          <span class="pilot-tag" style="background: rgba(56, 189, 248, 0.2); color: var(--accent-cyan);" id="labelEditQBadge">Editing Question</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;">
+            Edit Question Statement &amp; Solution
+          </h2>
+        </div>
+        <button class="btn-icon" type="button" onclick="closeEditQuestionModal()" title="Close" aria-label="Close" style="background: rgba(255,255,255,0.06); border-radius: 50%; cursor: pointer;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+
+      <form id="formEditPaperQuestion" onsubmit="event.preventDefault(); submitEditPaperQuestion();">
+        <input type="hidden" id="hiddenEditQuestionId" />
+        <div class="grid-2col" style="gap: 1rem; margin-bottom: 1rem;">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Chapter / Topic</label>
+            <input type="text" class="form-select" id="inputEditQTopic" style="width: 100%;" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Marks</label>
+            <input type="number" min="1" max="10" class="form-select" id="inputEditQMarks" style="width: 100%;" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" style="font-weight: 600;">Question Statement</label>
+          <textarea class="form-select" id="inputEditQText" rows="4" required style="width: 100%; font-family: inherit; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-group" id="groupEditQOptions" style="margin-bottom: 1rem; display: none;">
+          <label class="form-label" style="font-weight: 600;">Options (A, B, C, D)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <input type="text" class="form-select" id="inputEditOptA" placeholder="Option A" />
+            <input type="text" class="form-select" id="inputEditOptB" placeholder="Option B" />
+            <input type="text" class="form-select" id="inputEditOptC" placeholder="Option C" />
+            <input type="text" class="form-select" id="inputEditOptD" placeholder="Option D" />
+          </div>
+          <div style="margin-top: 6px;">
+            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Correct Option:</label>
+            <select class="form-select" id="selectEditCorrectOpt" style="padding: 3px 8px; font-size: 0.8rem; margin-left: 6px;">
+              <option value="A">Option A</option>
+              <option value="B">Option B</option>
+              <option value="C">Option C</option>
+              <option value="D">Option D</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" style="font-weight: 600;">Marking Scheme &amp; Solution</label>
+          <textarea class="form-select" id="inputEditQSolution" rows="3" style="width: 100%; font-family: inherit; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <button type="button" class="btn-secondary" onclick="closeEditQuestionModal()" style="padding: 7px 14px;">Cancel</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); font-weight: 700; padding: 7px 18px;">
+            <i data-lucide="check" style="width: 14px; height: 14px;"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SWAP QUESTION CHOOSER (BANK ALTERNATIVES) -->
+  <div class="drilldown-modal-backdrop" id="modalSelectAlternativeQuestion" role="dialog" aria-modal="true" style="display: none; z-index: 100010;">
+    <div class="drilldown-modal-content" style="max-width: 680px; max-height: 85vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1rem;">
+        <div>
+          <span class="pilot-tag" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">Question Bank PYQ Alternatives</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;">
+            Choose Replacement Question
+          </h2>
+          <p style="font-size: 0.8rem; color: var(--text-secondary);" id="labelSwapModalHint">
+            Select any question from the curated board PYQ bank to replace current question.
+          </p>
+        </div>
+        <button class="btn-icon" type="button" onclick="closeSelectAlternativeModal()" title="Close" aria-label="Close" style="background: rgba(255,255,255,0.06); border-radius: 50%; cursor: pointer;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+
+      <div id="containerAlternativeQuestionsList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px; margin-top: 12px;">
+        <button type="button" class="btn-secondary" onclick="closeSelectAlternativeModal()" style="font-size: 0.82rem; padding: 6px 14px;">Cancel</button>
+        <button type="button" class="btn-secondary" id="btnAutoGenerateAlternative" onclick="autoGenerateFreshAlternative()" style="border-color: rgba(56,189,248,0.4); color: var(--accent-cyan); font-size: 0.82rem; padding: 6px 14px;">
+          <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Generate Fresh Question via AI
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Real-Time Voice Assistant & Gemini Live Audio Engine -->
   <script src="js/geminiLiveVoiceTutor.js?v=1.0"></script>
 
   <!-- Application Logic -->
-  <script src="js/app.js?v=11.1"></script>
+  <script src="js/app.js?v=11.2"></script>
 </body>
 </html>
+

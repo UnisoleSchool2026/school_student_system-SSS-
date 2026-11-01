@@ -10531,3 +10531,744 @@ window.prevQbQuestion = prevQbQuestion;
 window.setQbQuestionIndex = setQbQuestionIndex;
 window.renderQbCurrentPage = renderQbCurrentPage;
 
+// ============================================================================
+// FULL-LENGTH BOARD QUESTION PAPER STUDIO & TEACHER CUSTOMIZER
+// Supports CBSE & HP Board (HPBOSE) examination generation, swapping,
+// custom additions, editing, and printing.
+// ============================================================================
+
+const boardPaperStudioState = {
+  currentPaper: null,
+  board: 'CBSE', // 'CBSE' or 'HP_BOARD'
+  grade: '12',
+  subject: 'Physics',
+  showMarkingScheme: false,
+  swapTargetQuestionId: null,
+  alternativesList: []
+};
+
+async function openBoardPaperStudio(preferredBoard = null, preferredGrade = null, preferredSubject = null) {
+  if (preferredBoard) boardPaperStudioState.board = preferredBoard;
+  if (preferredGrade) boardPaperStudioState.grade = preferredGrade;
+  if (preferredSubject) boardPaperStudioState.subject = preferredSubject;
+
+  const modal = document.getElementById('modalBoardPaperStudio');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  // Update UI toggles
+  updateBoardToggleUI();
+
+  // Load or generate paper
+  await generateOrLoadBoardPaper();
+}
+
+function closeBoardPaperStudio() {
+  const modal = document.getElementById('modalBoardPaperStudio');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function updateBoardToggleUI() {
+  const btnCbse = document.getElementById('btnToggleBoardCbse');
+  const btnHp = document.getElementById('btnToggleBoardHp');
+  const isCbse = boardPaperStudioState.board === 'CBSE';
+
+  if (btnCbse && btnHp) {
+    btnCbse.style.background = isCbse ? '#2563eb' : 'transparent';
+    btnCbse.style.color = isCbse ? '#fff' : '#94a3b8';
+    btnHp.style.background = !isCbse ? '#d97706' : 'transparent';
+    btnHp.style.color = !isCbse ? '#fff' : '#94a3b8';
+  }
+
+  const subSelect = document.getElementById('selectStudioSubject');
+  if (subSelect) {
+    if (boardPaperStudioState.subject === 'Science') subSelect.value = 'Science';
+    else if (boardPaperStudioState.subject === 'Mathematics' && boardPaperStudioState.grade === '10') subSelect.value = 'Mathematics10';
+    else if (boardPaperStudioState.subject === 'Chemistry') subSelect.value = 'Chemistry';
+    else if (boardPaperStudioState.subject === 'Mathematics') subSelect.value = 'Mathematics';
+    else subSelect.value = 'Physics';
+  }
+}
+
+async function changeStudioBoard(newBoard) {
+  boardPaperStudioState.board = newBoard;
+  updateBoardToggleUI();
+  await generateOrLoadBoardPaper();
+}
+
+async function regenerateStudioPaper() {
+  const subSelect = document.getElementById('selectStudioSubject');
+  if (subSelect) {
+    const val = subSelect.value;
+    if (val === 'Mathematics10') {
+      boardPaperStudioState.subject = 'Mathematics';
+      boardPaperStudioState.grade = '10';
+    } else if (val === 'Science') {
+      boardPaperStudioState.subject = 'Science';
+      boardPaperStudioState.grade = '10';
+    } else {
+      boardPaperStudioState.subject = val;
+      boardPaperStudioState.grade = '12';
+    }
+  }
+  await generateOrLoadBoardPaper();
+}
+
+async function generateOrLoadBoardPaper() {
+  const canvas = document.getElementById('boardPaperPrintCanvas');
+  if (canvas) {
+    canvas.innerHTML = `
+      <div style="text-align:center; padding: 4rem 2rem; color: #64748b;">
+        <i data-lucide="loader-2" class="spin" style="width:32px; height:32px; margin:0 auto 12px; display:block; color:#2563eb;"></i>
+        <strong style="font-size:1.1rem; color:#0f172a; display:block;">Synthesizing Official ${boardPaperStudioState.board === 'HP_BOARD' ? 'HP Board (HPBOSE)' : 'CBSE Board'} Examination Paper...</strong>
+        <span style="font-size:0.85rem;">Aligning authentic PYQs, section mark blueprints, and marking rubrics...</span>
+      </div>
+    `;
+    initLucideIcons();
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        board: boardPaperStudioState.board,
+        grade: boardPaperStudioState.grade,
+        subject: boardPaperStudioState.subject,
+        schoolName: 'HIM ACADEMY PUBLIC SCHOOL (HAPS)',
+        academicYear: '2025–26'
+      })
+    });
+
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      renderBoardPaperStudio(data.paper);
+    } else {
+      throw new Error(data.error || 'Failed to synthesize board paper.');
+    }
+  } catch (err) {
+    console.error('[BOARD PAPER GEN ERROR]', err);
+    if (canvas) {
+      canvas.innerHTML = `
+        <div style="text-align:center; padding: 3rem; color: #dc2626;">
+          <i data-lucide="alert-circle" style="width:32px; height:32px; margin:0 auto 10px; display:block;"></i>
+          <strong>Could not generate board paper: ${err.message}</strong>
+        </div>
+      `;
+      initLucideIcons();
+    }
+  }
+}
+
+function renderBoardPaperStudio(paper) {
+  const canvas = document.getElementById('boardPaperPrintCanvas');
+  if (!canvas || !paper) return;
+
+  const isHp = paper.board === 'HP_BOARD';
+  const showScheme = boardPaperStudioState.showMarkingScheme;
+
+  // Header Subtitle in navbar
+  const subtitle = document.getElementById('studioPaperSubtitle');
+  if (subtitle) {
+    subtitle.innerHTML = `${paper.boardName} &bull; ${paper.grade}th ${paper.subject} &bull; ${paper.totalMarks} Marks (${paper.timeAllowedHours} Hours)`;
+  }
+
+  // Label on Marking Scheme Toggle button
+  const labelScheme = document.getElementById('labelToggleMarkingScheme');
+  if (labelScheme) {
+    labelScheme.innerText = showScheme ? 'Hide Marking Scheme' : 'Show Marking Scheme';
+  }
+
+  let html = `
+    <!-- OFFICIAL EXAMINATION HEADER -->
+    <div class="paper-official-header">
+      <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; letter-spacing: 1px; margin-bottom: 2px;">
+        ${paper.schoolName || 'HIM ACADEMY PUBLIC SCHOOL (HAPS)'}
+      </div>
+      <div class="paper-school-name">
+        ${isHp ? 'हिमाचल प्रदेश स्कूल शिक्षा बोर्ड (HPBOSE)' : 'CENTRAL BOARD OF SECONDARY EDUCATION (CBSE)'}
+      </div>
+      <div class="paper-board-title">
+        ANNUAL BOARD MODEL EXAMINATION • SESSION ${paper.academicYear || '2025–26'}
+      </div>
+      <div style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin-top: 4px;">
+        CLASS: ${paper.grade}th &bull; SUBJECT: ${paper.subject.toUpperCase()} ${isHp ? (paper.subject === 'Science' ? '(विज्ञान)' : '(भौतिक विज्ञान - सैद्धांतिक)') : '(THEORY)'}
+      </div>
+
+      <!-- ROLL NUMBER & TIME/MARKS BAR -->
+      <div class="paper-meta-grid">
+        <div class="paper-roll-box">
+          <span>ROLL NO:</span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+          <span class="paper-roll-cell"></span>
+        </div>
+        <div>TIME ALLOWED: ${paper.timeAllowedHours} HOURS</div>
+        <div>MAXIMUM MARKS: ${paper.totalMarks}</div>
+      </div>
+    </div>
+
+    <!-- GENERAL INSTRUCTIONS -->
+    <div class="paper-instructions-box">
+      <strong style="display: block; margin-bottom: 4px; font-size: 0.85rem; color: #0f172a;">
+        GENERAL INSTRUCTIONS / सामान्य निर्देश:
+      </strong>
+      <ol style="margin: 0; padding-left: 20px;">
+        ${(paper.instructions || []).map(inst => `<li style="margin-bottom: 3px;">${inst}</li>`).join('')}
+      </ol>
+    </div>
+
+    <!-- SECTIONS & QUESTIONS -->
+    <div class="paper-sections-container">
+  `;
+
+  paper.sections.forEach(sec => {
+    html += `
+      <div class="paper-section-block" id="paperSection_${sec.id}">
+        <div class="paper-section-title">
+          <span>${sec.name}</span>
+          <span style="font-size: 0.85rem; font-weight: 700; color: #2563eb;">[${sec.totalMarks} Marks]</span>
+        </div>
+        ${sec.description ? `<div style="font-size: 0.8rem; color: #475569; margin-bottom: 12px; font-style: italic;">${sec.description}</div>` : ''}
+
+        <div class="paper-questions-list">
+    `;
+
+    sec.questions.forEach(q => {
+      const isMcq = q.marks === 1 || (q.options_latex && q.options_latex.length > 0);
+      const isCustom = !!q.isCustomTeacherQuestion;
+
+      html += `
+        <div class="paper-question-item ${isCustom ? 'custom-teacher-q' : ''}" id="paperQuestion_${q.id}">
+          <div class="paper-q-header">
+            <div class="paper-q-num">
+              <strong>Q${q.question_number}.</strong>
+              ${q.topic ? `<span style="font-size:0.75rem; color:#64748b; font-weight:600; margin-left:6px;">[${q.topic}]</span>` : ''}
+              ${q.pyq_appearance ? `<span style="font-size:0.7rem; color:#059669; font-weight:700; margin-left:6px; background:#ecfdf5; padding:1px 6px; border-radius:3px;">${q.pyq_appearance}</span>` : ''}
+              ${isCustom ? `<span style="font-size:0.7rem; color:#d97706; font-weight:700; margin-left:6px; background:#fef3c7; padding:1px 6px; border-radius:3px;">Teacher Formulated</span>` : ''}
+            </div>
+            <div class="paper-q-marks">[${q.marks} Mark${q.marks > 1 ? 's' : ''}]</div>
+          </div>
+
+          <div class="paper-q-text">
+            ${cleanMathDisplay(q.question_latex)}
+          </div>
+
+          ${isMcq && q.options_latex && q.options_latex.length > 0 ? `
+            <div class="paper-q-options">
+              ${q.options_latex.map(opt => `
+                <div class="paper-q-option ${showScheme && (opt.is_correct || opt.key === q.correct_answer) ? 'correct-option' : ''}">
+                  <strong>(${opt.key})</strong> ${cleanMathDisplay(opt.latex || opt.text || '')}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <!-- MARKING SCHEME / SOLUTION (IF TOGGLED ON) -->
+          ${showScheme ? `
+            <div class="paper-q-solution-box">
+              <div style="font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                <i data-lucide="check-circle" style="width: 14px; height: 14px; color: #059669;"></i>
+                <span>Official Marking Scheme &amp; Step Rubric (Answer: ${q.correct_answer || 'See Solution'}):</span>
+              </div>
+              <div style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line;">
+                ${cleanMathDisplay(q.solution_latex || 'Award marks based on valid logical derivation steps.')}
+              </div>
+              ${q.step_rubric && q.step_rubric.length > 0 ? `
+                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(5,150,105,0.3); font-size: 0.78rem;">
+                  <strong>Step Breakdown:</strong>
+                  <ul style="margin: 2px 0 0 16px; padding: 0;">
+                    ${q.step_rubric.map(r => `<li>${r.step} — <strong>[${r.marks}M]</strong></li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+
+          <!-- TEACHER CUSTOMIZATION TOOLBAR -->
+          <div class="paper-q-teacher-tools">
+            <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Teacher Controls:</span>
+            <button type="button" class="btn-paper-tool swap" onclick="openSwapQuestionModal('${q.id}')" title="Swap this question with another authentic PYQ from the question bank">
+              <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Swap / Change Question
+            </button>
+            <button type="button" class="btn-paper-tool" onclick="openEditQuestionModal('${q.id}')" title="Edit question text, options, marks or solution in place">
+              <i data-lucide="pencil" style="width: 12px; height: 12px;"></i> Edit Question
+            </button>
+            <button type="button" class="btn-paper-tool delete" onclick="deletePaperQuestionFromUI('${q.id}')" title="Delete this question from paper">
+              <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Delete
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    // Add button at bottom of section
+    html += `
+          <div style="margin-top: 10px; text-align: center;" class="paper-q-teacher-tools">
+            <button type="button" class="btn-secondary" onclick="openAddCustomQuestionModal('${sec.id}')" style="font-size: 0.76rem; padding: 5px 12px; border-color: rgba(37,99,235,0.4); color: #2563eb;">
+              <i data-lucide="plus" style="width: 12px; height: 12px;"></i> Add Custom Question to ${sec.name.split(':')[0]}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  canvas.innerHTML = html;
+
+  initLucideIcons();
+  typesetMathInElement(canvas);
+}
+
+function cleanMathDisplay(text = '') {
+  if (!text) return '';
+  return text
+    .replace(/\\rightarrow/g, ' → ')
+    .replace(/\\implies/g, ' ⇒ ')
+    .replace(/\\pm/g, ' ± ')
+    .replace(/\\times/g, ' × ')
+    .replace(/\\cdot/g, ' · ')
+    .replace(/\\alpha/g, 'α')
+    .replace(/\\beta/g, 'β')
+    .replace(/\\gamma/g, 'γ')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\\lambda/g, 'λ')
+    .replace(/\\mu_0/g, 'μ₀')
+    .replace(/\\epsilon_0/g, 'ε₀')
+    .replace(/\\tau/g, 'τ')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\Delta/g, 'Δ')
+    .replace(/\\sum/g, '∑')
+    .replace(/\\int/g, '∫')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\text\{([^}]+)\}/g, '$1')
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1 / $2)');
+}
+
+function typesetMathInElement(el) {
+  if (!el) return;
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    window.MathJax.typesetPromise([el]).catch(e => console.warn('[MathJax typeset error]', e));
+  }
+}
+
+function togglePaperMarkingScheme() {
+  boardPaperStudioState.showMarkingScheme = !boardPaperStudioState.showMarkingScheme;
+  if (boardPaperStudioState.currentPaper) {
+    renderBoardPaperStudio(boardPaperStudioState.currentPaper);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// QUESTION SWAPPING WITH BANK ALTERNATIVES
+// ----------------------------------------------------------------------------
+
+async function openSwapQuestionModal(questionId) {
+  boardPaperStudioState.swapTargetQuestionId = questionId;
+  const paper = boardPaperStudioState.currentPaper;
+  if (!paper) return;
+
+  let targetQ = null;
+  for (const s of paper.sections) {
+    const found = s.questions.find(q => q.id === questionId);
+    if (found) { targetQ = found; break; }
+  }
+
+  if (!targetQ) return;
+
+  const modal = document.getElementById('modalSelectAlternativeQuestion');
+  const container = document.getElementById('containerAlternativeQuestionsList');
+  const hint = document.getElementById('labelSwapModalHint');
+
+  if (hint) {
+    hint.innerHTML = `Replacing <strong>Q${targetQ.question_number}</strong> (${targetQ.marks} Mark${targetQ.marks > 1 ? 's' : ''}): <em>${targetQ.question_latex.slice(0, 70)}...</em>`;
+  }
+
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 2rem; color: #64748b;">
+        <i data-lucide="loader-2" class="spin" style="width:24px; height:24px; margin:0 auto 8px; display:block; color:#f59e0b;"></i>
+        Loading alternative questions from Question Bank...
+      </div>
+    `;
+    initLucideIcons();
+  }
+
+  if (modal) modal.style.display = 'flex';
+
+  try {
+    const existingIds = [];
+    paper.sections.forEach(s => s.questions.forEach(q => existingIds.push(q.id)));
+
+    const url = `${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/alternatives?marks=${targetQ.marks}&excludeIds=${existingIds.join(',')}&topic=${encodeURIComponent(targetQ.topic || '')}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.success && data.alternatives && data.alternatives.length > 0) {
+      boardPaperStudioState.alternativesList = data.alternatives;
+      container.innerHTML = data.alternatives.map((alt, idx) => `
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:0.75rem; color:#2563eb; font-weight:700; margin-bottom:4px;">
+              [${alt.topic || 'Syllabus Topic'}] &bull; ${alt.marks} Mark${alt.marks > 1 ? 's' : ''} &bull; ${alt.pyq_appearance || 'Board PYQ'}
+            </div>
+            <div style="font-size:0.88rem; color:var(--text-primary); line-height:1.45;">
+              ${cleanMathDisplay(alt.question_latex)}
+            </div>
+            ${alt.options_latex && alt.options_latex.length > 0 ? `
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                ${alt.options_latex.map(o => `<span style="font-size:0.75rem; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">(${o.key}) ${cleanMathDisplay(o.latex || '')}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+          <button type="button" class="btn-primary" onclick="selectAlternativeQuestion('${alt.id}')" style="font-size:0.75rem; padding:6px 12px; background:linear-gradient(135deg, #10b981, #059669); font-weight:700; flex-shrink:0;">
+            Select This Question
+          </button>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `
+        <div style="text-align:center; padding: 2rem; color: #64748b;">
+          No exact alternative questions found in offline bank. Click <strong>Generate Fresh Question via AI</strong> below to synthesize a tailored board question!
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.warn('[ALTERNATIVES ERROR]', err);
+    container.innerHTML = `
+      <div style="text-align:center; padding: 2rem; color: #dc2626;">
+        Could not load alternatives: ${err.message}. Click Generate Fresh Question via AI below.
+      </div>
+    `;
+  }
+
+  initLucideIcons();
+}
+
+function closeSelectAlternativeModal() {
+  const modal = document.getElementById('modalSelectAlternativeQuestion');
+  if (modal) modal.style.display = 'none';
+  boardPaperStudioState.swapTargetQuestionId = null;
+}
+
+async function selectAlternativeQuestion(replacementQuestionId) {
+  const paper = boardPaperStudioState.currentPaper;
+  const qId = boardPaperStudioState.swapTargetQuestionId;
+  if (!paper || !qId) return;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/swap-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionId: qId, replacementQuestionId })
+    });
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      closeSelectAlternativeModal();
+      renderBoardPaperStudio(data.paper);
+    } else {
+      alert(data.error || 'Failed to swap question.');
+    }
+  } catch (err) {
+    alert(`Error swapping question: ${err.message}`);
+  }
+}
+
+async function autoGenerateFreshAlternative() {
+  const paper = boardPaperStudioState.currentPaper;
+  const qId = boardPaperStudioState.swapTargetQuestionId;
+  if (!paper || !qId) return;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/swap-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionId: qId })
+    });
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      closeSelectAlternativeModal();
+      renderBoardPaperStudio(data.paper);
+    } else {
+      alert(data.error || 'Failed to generate alternative.');
+    }
+  } catch (err) {
+    alert(`Error generating alternative: ${err.message}`);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// ADD CUSTOM QUESTION TO PAPER
+// ----------------------------------------------------------------------------
+
+function openAddCustomQuestionModal(preselectedSectionId = null) {
+  const modal = document.getElementById('modalAddCustomPaperQuestion');
+  const paper = boardPaperStudioState.currentPaper;
+  if (!modal || !paper) return;
+
+  const selectSec = document.getElementById('selectCustomQSection');
+  if (selectSec) {
+    selectSec.innerHTML = paper.sections.map(s => `
+      <option value="${s.id}" ${s.id === preselectedSectionId ? 'selected' : ''}>
+        ${s.name} (${s.marksPerQuestion}M per Q)
+      </option>
+    `).join('');
+  }
+
+  // Toggle options group based on marks
+  const selectMarks = document.getElementById('selectCustomQMarks');
+  const groupOptions = document.getElementById('groupCustomQOptions');
+  if (selectMarks && groupOptions) {
+    selectMarks.onchange = () => {
+      groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
+    };
+  }
+
+  modal.style.display = 'flex';
+  initLucideIcons();
+}
+
+function closeAddCustomQuestionModal() {
+  const modal = document.getElementById('modalAddCustomPaperQuestion');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitAddCustomQuestion() {
+  const paper = boardPaperStudioState.currentPaper;
+  if (!paper) return;
+
+  const sectionId = document.getElementById('selectCustomQSection')?.value;
+  const marks = Number(document.getElementById('selectCustomQMarks')?.value || 2);
+  const topic = document.getElementById('inputCustomQTopic')?.value || 'Teacher Custom Topic';
+  const text = document.getElementById('inputCustomQText')?.value;
+  const solution = document.getElementById('inputCustomQSolution')?.value || '';
+
+  if (!text) {
+    alert('Please enter a question statement.');
+    return;
+  }
+
+  let options = [];
+  let answer = 'A';
+  if (marks === 1) {
+    const optA = document.getElementById('inputCustomOptA')?.value || 'Option A';
+    const optB = document.getElementById('inputCustomOptB')?.value || 'Option B';
+    const optC = document.getElementById('inputCustomOptC')?.value || 'Option C';
+    const optD = document.getElementById('inputCustomOptD')?.value || 'Option D';
+    answer = document.getElementById('selectCustomCorrectOpt')?.value || 'A';
+
+    options = [
+      { key: 'A', latex: optA, is_correct: answer === 'A' },
+      { key: 'B', latex: optB, is_correct: answer === 'B' },
+      { key: 'C', latex: optC, is_correct: answer === 'C' },
+      { key: 'D', latex: optD, is_correct: answer === 'D' }
+    ];
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/add-custom-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sectionId,
+        questionData: {
+          question_latex: text,
+          marks,
+          topic,
+          options_latex: options,
+          correct_answer: answer,
+          solution_latex: solution
+        }
+      })
+    });
+
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      closeAddCustomQuestionModal();
+      renderBoardPaperStudio(data.paper);
+      // Reset form
+      document.getElementById('formAddCustomQuestion')?.reset();
+    } else {
+      alert(data.error || 'Failed to add custom question.');
+    }
+  } catch (err) {
+    alert(`Error adding question: ${err.message}`);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// EDIT EXISTING QUESTION IN-PLACE
+// ----------------------------------------------------------------------------
+
+function openEditQuestionModal(questionId) {
+  const paper = boardPaperStudioState.currentPaper;
+  if (!paper) return;
+
+  let targetQ = null;
+  for (const s of paper.sections) {
+    const f = s.questions.find(q => q.id === questionId);
+    if (f) { targetQ = f; break; }
+  }
+  if (!targetQ) return;
+
+  const modal = document.getElementById('modalEditPaperQuestion');
+  if (!modal) return;
+
+  document.getElementById('hiddenEditQuestionId').value = targetQ.id;
+  document.getElementById('labelEditQBadge').innerText = `Editing Q${targetQ.question_number}`;
+  document.getElementById('inputEditQTopic').value = targetQ.topic || '';
+  document.getElementById('inputEditQMarks').value = targetQ.marks || 1;
+  document.getElementById('inputEditQText').value = targetQ.question_latex || '';
+  document.getElementById('inputEditQSolution').value = targetQ.solution_latex || '';
+
+  const groupOptions = document.getElementById('groupEditQOptions');
+  if (targetQ.options_latex && targetQ.options_latex.length > 0) {
+    groupOptions.style.display = 'block';
+    const opts = targetQ.options_latex;
+    document.getElementById('inputEditOptA').value = opts[0]?.latex || '';
+    document.getElementById('inputEditOptB').value = opts[1]?.latex || '';
+    document.getElementById('inputEditOptC').value = opts[2]?.latex || '';
+    document.getElementById('inputEditOptD').value = opts[3]?.latex || '';
+    document.getElementById('selectEditCorrectOpt').value = targetQ.correct_answer || 'A';
+  } else {
+    groupOptions.style.display = 'none';
+  }
+
+  modal.style.display = 'flex';
+  initLucideIcons();
+}
+
+function closeEditQuestionModal() {
+  const modal = document.getElementById('modalEditPaperQuestion');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitEditPaperQuestion() {
+  const paper = boardPaperStudioState.currentPaper;
+  const qId = document.getElementById('hiddenEditQuestionId')?.value;
+  if (!paper || !qId) return;
+
+  const text = document.getElementById('inputEditQText')?.value;
+  const topic = document.getElementById('inputEditQTopic')?.value;
+  const marks = Number(document.getElementById('inputEditQMarks')?.value || 1);
+  const solution = document.getElementById('inputEditQSolution')?.value || '';
+
+  let options = undefined;
+  let answer = undefined;
+  const groupOptions = document.getElementById('groupEditQOptions');
+  if (groupOptions && groupOptions.style.display !== 'none') {
+    const optA = document.getElementById('inputEditOptA')?.value || '';
+    const optB = document.getElementById('inputEditOptB')?.value || '';
+    const optC = document.getElementById('inputEditOptC')?.value || '';
+    const optD = document.getElementById('inputEditOptD')?.value || '';
+    answer = document.getElementById('selectEditCorrectOpt')?.value || 'A';
+
+    options = [
+      { key: 'A', latex: optA, is_correct: answer === 'A' },
+      { key: 'B', latex: optB, is_correct: answer === 'B' },
+      { key: 'C', latex: optC, is_correct: answer === 'C' },
+      { key: 'D', latex: optD, is_correct: answer === 'D' }
+    ];
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/update-question`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: qId,
+        updatedData: {
+          question_latex: text,
+          topic,
+          marks,
+          solution_latex: solution,
+          options_latex: options,
+          correct_answer: answer
+        }
+      })
+    });
+
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      closeEditQuestionModal();
+      renderBoardPaperStudio(data.paper);
+    } else {
+      alert(data.error || 'Failed to update question.');
+    }
+  } catch (err) {
+    alert(`Error updating question: ${err.message}`);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// DELETE QUESTION FROM PAPER
+// ----------------------------------------------------------------------------
+
+async function deletePaperQuestionFromUI(questionId) {
+  const paper = boardPaperStudioState.currentPaper;
+  if (!paper) return;
+
+  if (!confirm('Are you sure you want to remove this question from the question paper? Question numbers will automatically be re-sequenced.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/delete-question`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionId })
+    });
+
+    const data = await res.json();
+    if (data.success && data.paper) {
+      boardPaperStudioState.currentPaper = data.paper;
+      renderBoardPaperStudio(data.paper);
+    } else {
+      alert(data.error || 'Failed to delete question.');
+    }
+  } catch (err) {
+    alert(`Error deleting question: ${err.message}`);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// 1-CLICK PRINT QUESTION PAPER
+// ----------------------------------------------------------------------------
+
+function printBoardQuestionPaper() {
+  window.print();
+}
+
+// Expose on window object
+window.openBoardPaperStudio = openBoardPaperStudio;
+window.closeBoardPaperStudio = closeBoardPaperStudio;
+window.changeStudioBoard = changeStudioBoard;
+window.regenerateStudioPaper = regenerateStudioPaper;
+window.togglePaperMarkingScheme = togglePaperMarkingScheme;
+window.openSwapQuestionModal = openSwapQuestionModal;
+window.closeSelectAlternativeModal = closeSelectAlternativeModal;
+window.selectAlternativeQuestion = selectAlternativeQuestion;
+window.autoGenerateFreshAlternative = autoGenerateFreshAlternative;
+window.openAddCustomQuestionModal = openAddCustomQuestionModal;
+window.closeAddCustomQuestionModal = closeAddCustomQuestionModal;
+window.submitAddCustomQuestion = submitAddCustomQuestion;
+window.openEditQuestionModal = openEditQuestionModal;
+window.closeEditQuestionModal = closeEditQuestionModal;
+window.submitEditPaperQuestion = submitEditPaperQuestion;
+window.deletePaperQuestionFromUI = deletePaperQuestionFromUI;
+window.printBoardQuestionPaper = printBoardQuestionPaper;
+
+

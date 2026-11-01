@@ -17,6 +17,15 @@ const { generatePersonalizedRemedialAssignment, verifyStudentFormula } = require
 const { generateAssignmentDocxBuffer } = require('../services/docxExportService');
 const { ensureQuestionHasRichOptions } = require('../services/questionOptionEngine');
 const { quizTool, testTool, assignmentTool } = require('../services/pipelineTools');
+const {
+  BOARD_BLUEPRINTS,
+  generateBoardQuestionPaper,
+  swapPaperQuestion,
+  getAlternativeQuestions,
+  addCustomQuestionToPaper,
+  updatePaperQuestion,
+  deletePaperQuestion
+} = require('../services/boardPaperGeneratorService');
 
 // 1. GET /api/assessments - List all test assignments
 router.get('/', (req, res) => {
@@ -725,5 +734,266 @@ router.post('/pattern-exam/generate', async (req, res) => {
   }
 });
 
+// ============================================================================
+// BOARD QUESTION PAPER GENERATOR & TEACHER CUSTOMIZER API ENDPOINTS
+// ============================================================================
+
+// Global cache for live board paper customization sessions
+if (!inMemoryStore.generatedBoardPapers) {
+  inMemoryStore.generatedBoardPapers = {};
+}
+
+// 1. GET /api/assessments/board-paper/blueprints - List available CBSE & HP Board blueprints
+router.get('/board-paper/blueprints', (req, res) => {
+  try {
+    const list = Object.values(BOARD_BLUEPRINTS).map(b => ({
+      blueprintId: b.blueprintId,
+      board: b.board,
+      grade: b.grade,
+      subject: b.subject,
+      title: b.title,
+      totalMarks: b.totalMarks,
+      timeAllowedHours: b.timeAllowedHours,
+      sectionsCount: b.sections.length
+    }));
+    res.json({ success: true, blueprints: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. POST /api/assessments/board-paper/generate - Generate full-length board paper
+router.post('/board-paper/generate', async (req, res) => {
+  try {
+    const {
+      board = 'CBSE',
+      grade = '12',
+      subject = 'Physics',
+      schoolName = 'HIM ACADEMY PUBLIC SCHOOL (HAPS)',
+      academicYear = '2025–26',
+      customTitle = null
+    } = req.body;
+
+    const paper = generateBoardQuestionPaper({
+      board,
+      grade,
+      subject,
+      schoolName,
+      academicYear,
+      customTitle
+    });
+
+    inMemoryStore.generatedBoardPapers[paper.id] = paper;
+
+    // Also register into general assessments pool for student access
+    if (!inMemoryStore.assessments) inMemoryStore.assessments = [];
+    const allQuestionsFlat = [];
+    paper.sections.forEach(s => allQuestionsFlat.push(...s.questions));
+    inMemoryStore.assessments.unshift({
+      id: paper.id,
+      title: paper.title,
+      description: `Official ${paper.board} Board Examination (${paper.totalMarks} Marks, ${paper.timeAllowedHours} Hours)`,
+      teacherName: 'HAPS Senior Board Faculty',
+      grade: paper.grade,
+      section: `${paper.grade}-Board-Prep`,
+      board: paper.board,
+      subject: paper.subject,
+      durationMinutes: paper.timeAllowedMinutes,
+      totalMarks: paper.totalMarks,
+      questions: allQuestionsFlat,
+      paperStructure: paper,
+      createdAt: paper.createdAt
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Generated full-length ${paper.board} Board Question Paper for ${paper.subject} (${paper.totalMarks} Marks, ${paper.totalQuestions} Questions).`,
+      paper
+    });
+  } catch (err) {
+    console.error('[BOARD PAPER GENERATE ERROR]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. GET /api/assessments/board-paper/:id - Fetch generated paper with full sections
+router.get('/board-paper/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    let paper = inMemoryStore.generatedBoardPapers[id];
+
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    if (!paper) {
+      return res.status(404).json({ success: false, error: 'Question paper not found.' });
+    }
+
+    res.json({ success: true, paper });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. POST /api/assessments/board-paper/:id/swap-question - Teacher swaps a question with an alternative
+router.post('/board-paper/:id/swap-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionId, replacementQuestionId = null, customQuestion = null } = req.body;
+
+    let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    if (!paper) return res.status(404).json({ success: false, error: 'Question paper not found.' });
+
+    const result = swapPaperQuestion({
+      paper,
+      questionId,
+      replacementQuestionId,
+      customQuestion
+    });
+
+    inMemoryStore.generatedBoardPapers[id] = result.paper;
+    res.json({
+      success: true,
+      message: 'Question swapped successfully.',
+      paper: result.paper,
+      replacedQuestion: result.replacedQuestion,
+      newQuestion: result.newQuestion
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. GET /api/assessments/board-paper/:id/alternatives - Fetch 3-5 alternative matching questions
+router.get('/board-paper/:id/alternatives', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { marks = 1, excludeIds = '', topic = null } = req.query;
+
+    let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    const subject = paper ? paper.subject : 'Physics';
+    const grade = paper ? paper.grade : '12';
+    const excludeArr = excludeIds ? excludeIds.split(',') : [];
+
+    const alternatives = getAlternativeQuestions({
+      subject,
+      grade,
+      marks: Number(marks),
+      excludeIds: excludeArr,
+      topic
+    });
+
+    res.json({ success: true, alternatives });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. POST /api/assessments/board-paper/:id/add-custom-question - Teacher adds their own question
+router.post('/board-paper/:id/add-custom-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sectionId, questionData } = req.body;
+
+    let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    if (!paper) return res.status(404).json({ success: false, error: 'Question paper not found.' });
+
+    const result = addCustomQuestionToPaper({
+      paper,
+      sectionId,
+      questionData
+    });
+
+    inMemoryStore.generatedBoardPapers[id] = result.paper;
+    res.status(201).json({
+      success: true,
+      message: 'Custom question added successfully to question paper.',
+      paper: result.paper,
+      addedQuestion: result.addedQuestion
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. PUT /api/assessments/board-paper/:id/update-question - Teacher edits question in-place
+router.put('/board-paper/:id/update-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionId, updatedData } = req.body;
+
+    let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    if (!paper) return res.status(404).json({ success: false, error: 'Question paper not found.' });
+
+    const updatedPaper = updatePaperQuestion({
+      paper,
+      questionId,
+      updatedData
+    });
+
+    inMemoryStore.generatedBoardPapers[id] = updatedPaper;
+    res.json({
+      success: true,
+      message: 'Question updated successfully.',
+      paper: updatedPaper
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. DELETE /api/assessments/board-paper/:id/delete-question - Teacher removes a question
+router.delete('/board-paper/:id/delete-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionId } = req.body;
+
+    let paper = inMemoryStore.generatedBoardPapers[id];
+    if (!paper) {
+      const asgn = (inMemoryStore.assessments || []).find(a => a.id === id);
+      if (asgn && asgn.paperStructure) paper = asgn.paperStructure;
+    }
+
+    if (!paper) return res.status(404).json({ success: false, error: 'Question paper not found.' });
+
+    const updatedPaper = deletePaperQuestion({
+      paper,
+      questionId
+    });
+
+    inMemoryStore.generatedBoardPapers[id] = updatedPaper;
+    res.json({
+      success: true,
+      message: 'Question removed from paper and numbers re-sequenced.',
+      paper: updatedPaper
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
+
 

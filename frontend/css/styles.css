@@ -4177,6 +4177,275 @@ button:active,
   height: calc(100vh - 80px);
 }
 
+/* ==========================================================================
+   BOARD QUESTION PAPER STUDIO & PRINTABLE EXAM PAPER STYLES
+   ========================================================================== */
+.board-paper-studio-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
+.board-paper-studio-navbar {
+  height: 60px;
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
 
+.board-paper-studio-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: #0b1120;
+  display: flex;
+  justify-content: center;
+}
 
+.board-paper-sheet {
+  width: 100%;
+  max-width: 900px;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 40px 48px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", Times, serif;
+}
+
+.paper-official-header {
+  text-align: center;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.paper-school-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.paper-board-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.paper-meta-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-top: 1px dashed #64748b;
+  border-bottom: 1px dashed #64748b;
+  padding: 8px 12px;
+  margin: 12px 0;
+  color: #1e293b;
+}
+
+.paper-roll-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.paper-roll-cell {
+  width: 22px;
+  height: 24px;
+  border: 1px solid #0f172a;
+  display: inline-block;
+}
+
+.paper-instructions-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.paper-section-block {
+  margin-bottom: 28px;
+  page-break-inside: avoid;
+}
+
+.paper-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f1f5f9;
+  border-left: 4px solid #2563eb;
+  padding: 6px 14px;
+  margin-bottom: 14px;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paper-question-item {
+  position: relative;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.paper-question-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.paper-q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.paper-q-num {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.paper-q-marks {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.paper-q-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.paper-q-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.paper-q-option {
+  font-size: 0.88rem;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+
+.paper-q-solution-box {
+  margin-top: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #065f46;
+}
+
+.paper-q-teacher-tools {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.btn-paper-tool {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.btn-paper-tool:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-paper-tool.swap:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.btn-paper-tool.delete:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+/* Print Media Stylesheet: Pure clean exam sheet */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .board-paper-studio-overlay,
+  .board-paper-studio-body,
+  .board-paper-sheet,
+  .board-paper-sheet * {
+    visibility: visible;
+  }
+  .board-paper-studio-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .board-paper-studio-navbar,
+  .paper-q-teacher-tools,
+  .btn-paper-tool,
+  #btnToggleMarkingScheme,
+  .paper-q-solution-box.hide-in-student-print {
+    display: none !important;
+  }
+  .board-paper-sheet {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .paper-section-block {
+    page-break-inside: avoid;
+  }
+}
