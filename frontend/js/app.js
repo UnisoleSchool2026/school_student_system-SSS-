@@ -7853,25 +7853,62 @@ function populateQbChapterPills(activeVal = 'ALL') {
   const strip = document.getElementById('qbChapterPillsStrip');
   if (!strip) return;
 
+  const heading = document.getElementById('qbChapterSelectHeading');
+  const countLabel = document.getElementById('qbChaptersCoveredCount');
+
+  const isClass10 = state.currentUser?.grade === '10' || 
+                    teacherBuilderState.selectedClassGrade === '10' ||
+                    (teacherBuilderState.selectedSubjectKey || '').startsWith('CLASS10_');
+  const activeSubj = teacherBuilderState.selectedSubjectKey || (isClass10 ? 'CLASS10_MATHEMATICS' : 'PHYSICS');
+
+  let chapters = [];
+  let subjectDisplayName = 'Physics';
+
+  if (isClass10 && activeSubj === 'CLASS10_MATHEMATICS') {
+    chapters = CLASS10_MATH_CHAPTERS.map(c => ({
+      num: c.num,
+      name: c.name,
+      short: c.short,
+      count: c.count
+    }));
+    subjectDisplayName = 'Class 10th Math';
+  } else if (teacherBuilderState.currentTaxonomy?.chapters) {
+    subjectDisplayName = teacherBuilderState.currentTaxonomy.subjectName || activeSubj;
+    chapters = teacherBuilderState.currentTaxonomy.chapters.map(c => ({
+      num: c.chapterNumber || c.id,
+      name: c.chapterName || c.title || `Chapter ${c.chapterNumber}`,
+      short: (c.chapterName || c.title || '').replace(/^Chapter \d+:\s*/i, '').slice(0, 24),
+      count: null
+    }));
+  }
+
+  if (heading) {
+    heading.innerHTML = `<i data-lucide="layers" style="width:12px; height:12px; vertical-align:middle;"></i> Quick Select Chapter (${subjectDisplayName} NCERT):`;
+  }
+  if (countLabel) {
+    countLabel.innerText = chapters.length > 0 ? `${chapters.length} Chapters Covered` : 'Curriculum Loaded';
+  }
+
   let html = `
     <button type="button" class="qb-chapter-pill ${activeVal === 'ALL' ? 'active' : ''}" data-chapter="ALL" onclick="quickFilterQbChapter('ALL')">
       <span class="ch-badge">ALL</span>
-      <span>All 14 Chapters (438 Qs)</span>
+      <span>All ${chapters.length > 0 ? chapters.length : ''} Chapters</span>
     </button>
   `;
 
-  CLASS10_MATH_CHAPTERS.forEach(ch => {
+  chapters.forEach(ch => {
     const isActive = String(ch.num) === String(activeVal);
     html += `
       <button type="button" class="qb-chapter-pill ${isActive ? 'active' : ''}" data-chapter="${ch.num}" onclick="quickFilterQbChapter('${ch.num}')" title="Chapter ${ch.num}: ${ch.name}">
         <span class="ch-badge">Ch ${ch.num}</span>
         <span>${ch.short}</span>
-        <span style="opacity:0.75; font-size:0.68rem;">(${ch.count})</span>
+        ${ch.count ? `<span style="opacity:0.75; font-size:0.68rem;">(${ch.count})</span>` : ''}
       </button>
     `;
   });
 
   strip.innerHTML = html;
+  if (typeof initLucideIcons === 'function') initLucideIcons();
 }
 
 function quickFilterQbChapter(chNum) {
@@ -8306,6 +8343,20 @@ async function loadQuestionBankView(forceReload = false) {
         <option value="MATHEMATICS" ${activeSubj === 'MATHEMATICS' ? 'selected' : ''}>Mathematics (Senior Secondary)</option>
         <option value="BIOLOGY" ${activeSubj === 'BIOLOGY' ? 'selected' : ''}>Biology (Senior Secondary / NEET)</option>
       `;
+    }
+  }
+
+  if (!isClass10 || activeSubj === 'CLASS10_SCIENCE') {
+    const taxSubj = teacherBuilderState.currentTaxonomy?.subjectKey || teacherBuilderState.currentTaxonomy?.subject;
+    if (!teacherBuilderState.currentTaxonomy || taxSubj !== activeSubj) {
+      try {
+        const taxRes = await fetch(`${getApiBaseUrl()}/api/curriculum/taxonomy/${activeSubj}?grade=ALL`);
+        if (taxRes.ok) {
+          teacherBuilderState.currentTaxonomy = await taxRes.json();
+        }
+      } catch (e) {
+        console.warn('Failed to load taxonomy for QB:', e);
+      }
     }
   }
 

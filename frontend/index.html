@@ -724,16 +724,16 @@
             </span>
             <div id="qbSourcePillsStrip" style="display:flex; gap:6px; flex-wrap:wrap;">
               <button type="button" class="qb-source-pill active" data-source="ALL" onclick="quickFilterQbSource('ALL')">
-                All Sources (438)
+                All Sources
               </button>
               <button type="button" class="qb-source-pill" data-source="PYQ" onclick="quickFilterQbSource('PYQ')" style="border-color:rgba(245, 158, 11, 0.4); color:#fbbf24;">
-                <i data-lucide="award" style="width:12px; height:12px;"></i> Board PYQs (2018-2024 • 310 Qs)
+                <i data-lucide="award" style="width:12px; height:12px;"></i> Board PYQs
               </button>
               <button type="button" class="qb-source-pill" data-source="NCERT_EXERCISE" onclick="quickFilterQbSource('NCERT_EXERCISE')" style="border-color:rgba(16, 185, 129, 0.4); color:#34d399;">
-                <i data-lucide="book" style="width:12px; height:12px;"></i> NCERT Exercises &amp; Examples (68 Qs)
+                <i data-lucide="book" style="width:12px; height:12px;"></i> NCERT Exercises &amp; Examples
               </button>
               <button type="button" class="qb-source-pill" data-source="CBSE_PATTERN" onclick="quickFilterQbSource('CBSE_PATTERN')" style="border-color:rgba(56, 189, 248, 0.4); color:#38bdf8;">
-                <i data-lucide="check-square" style="width:12px; height:12px;"></i> CBSE Standard &amp; Basic (60 Qs)
+                <i data-lucide="check-square" style="width:12px; height:12px;"></i> Standard Exam Pattern
               </button>
             </div>
           </div>
@@ -741,10 +741,10 @@
           <!-- QUICK CHAPTER CAROUSEL / PILL STRIP -->
           <div style="margin-bottom:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
-                <i data-lucide="layers" style="width:12px; height:12px; vertical-align:middle;"></i> Quick Select Chapter (Class 10th NCERT):
+              <span id="qbChapterSelectHeading" style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
+                <i data-lucide="layers" style="width:12px; height:12px; vertical-align:middle;"></i> Quick Select Chapter:
               </span>
-              <span style="font-size:0.72rem; color:var(--text-muted);">14 Chapters Covered</span>
+              <span id="qbChaptersCoveredCount" style="font-size:0.72rem; color:var(--text-muted);">Loading Chapters...</span>
             </div>
             <div id="qbChapterPillsStrip" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin;">
               <!-- Populated dynamically via app.js -->
@@ -758,8 +758,7 @@
                 Subject Discipline
               </label>
               <select id="selectQbSubject" class="form-select" onchange="handleQbSubjectChange(this.value)" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="CLASS10_MATHEMATICS" selected>Mathematics (Class 10th • 438 Qs)</option>
-                <option value="CLASS10_SCIENCE">Science (Class 10th)</option>
+                <option value="PHYSICS" selected>Physics (Senior Secondary)</option>
               </select>
             </div>
 
@@ -768,7 +767,7 @@
                 Chapter Scope
               </label>
               <select id="selectQbChapter" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="ALL" selected>All 14 Chapters</option>
+                <option value="ALL" selected>All Chapters</option>
               </select>
             </div>
 

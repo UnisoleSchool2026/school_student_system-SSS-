@@ -834,9 +834,9 @@ const CURRICULUM_TAXONOMY = {
   // 2. SENIOR PHYSICS (Class 11 & Class 12) - JEE Main / Advanced / Boards
   // ==========================================================================
   'PHYSICS': {
-    subjectName: 'Class 12 Physics',
+    subjectName: 'Senior Physics (+1 & +2)',
     stream: 'COMMON_SENIOR',
-    grades: ['12'],
+    grades: ['11', '12'],
     targetExams: ['CBSE_CLASS_12', 'HP_BOARD_CLASS_12', 'NEET_UG', 'JEE_MAIN'],
     units: [
       { unitNumber: 'I & II', unitName: 'Electrostatics & Current Electricity', weightageMarks: 16, chapters: [1, 2, 3] },
@@ -1636,6 +1636,181 @@ const CURRICULUM_TAXONOMY = {
               'Role of capacitor filter: Smoothing rectified DC ripples by charging during peak voltage and discharging through R_L'
             ]
           }
+        ]
+      },
+      {
+        id: 'phy_11_ch01',
+        grade: '11',
+        discipline: 'GENERAL_PHYSICS',
+        unit: 'Physical World and Measurement',
+        chapterNumber: 1,
+        chapterName: 'Units and Measurements',
+        boardExamFocus: { highYield: 'Dimensional analysis, principle of homogeneity, and error propagation', questionType: '2/3-mark application questions' },
+        topics: [
+          { id: 'phy_11_ch01_t1', topicName: 'SI Units & Dimensional Analysis', ncertSection: '1.1', highYield: true, subtopics: ['Fundamental and derived units', 'Dimensional formulas of physical quantities', 'Principle of homogeneity', 'Conversion of units across systems'] },
+          { id: 'phy_11_ch01_t2', topicName: 'Errors in Measurement', ncertSection: '1.2', highYield: true, subtopics: ['Absolute, relative and percentage errors', 'Combination of errors in addition, multiplication and powers'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch02',
+        grade: '11',
+        discipline: 'KINEMATICS',
+        unit: 'Kinematics',
+        chapterNumber: 2,
+        chapterName: 'Motion in a Straight Line',
+        boardExamFocus: { highYield: 'Equations of motion using calculus, relative velocity, and v-t graphs', questionType: '3-mark derivations and numericals' },
+        topics: [
+          { id: 'phy_11_ch02_t1', topicName: 'Kinematic Equations of Uniformly Accelerated Motion', ncertSection: '2.1', highYield: true, subtopics: ['Calculus derivation of v = u + at, s = ut + 1/2 at², v² = u² + 2as', 'Motion under gravity (free fall)', 'Stopping distance and reaction time'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch03',
+        grade: '11',
+        discipline: 'KINEMATICS',
+        unit: 'Kinematics',
+        chapterNumber: 3,
+        chapterName: 'Motion in a Plane',
+        boardExamFocus: { highYield: 'Projectile motion derivations and centripetal acceleration', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch03_t1', topicName: 'Projectile Motion', ncertSection: '3.1', highYield: true, subtopics: ['Parabolic trajectory equation', 'Time of flight: T = 2u sin θ / g', 'Maximum height: H = u² sin² θ / 2g', 'Horizontal range: R = u² sin 2θ / g'] },
+          { id: 'phy_11_ch03_t2', topicName: 'Uniform Circular Motion & Centripetal Acceleration', ncertSection: '3.2', highYield: true, subtopics: ['Centripetal acceleration derivation: a_c = v²/r = ω²r', 'Angular velocity and frequency relations'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch04',
+        grade: '11',
+        discipline: 'MECHANICS',
+        unit: 'Laws of Motion',
+        chapterNumber: 4,
+        chapterName: 'Laws of Motion',
+        boardExamFocus: { highYield: 'Newton\'s second law derivation, impulse, friction, banking of roads', questionType: '3/5-mark derivations and numericals' },
+        topics: [
+          { id: 'phy_11_ch04_t1', topicName: 'Newton\'s Second Law & Momentum', ncertSection: '4.1', highYield: true, subtopics: ['F = dp/dt = ma derivation', 'Impulse J = F Δt = Δp', 'Law of conservation of linear momentum with recoil of gun'] },
+          { id: 'phy_11_ch04_t2', topicName: 'Friction & Banking of Circular Roads', ncertSection: '4.2', highYield: true, subtopics: ['Static and kinetic friction', 'Angle of repose', 'Maximum safe speed on banked road: v_max = sqrt(rg(μ + tan θ)/(1 - μ tan θ))'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch05',
+        grade: '11',
+        discipline: 'MECHANICS',
+        unit: 'Work, Energy and Power',
+        chapterNumber: 5,
+        chapterName: 'Work, Energy and Power',
+        boardExamFocus: { highYield: 'Work-Energy Theorem, spring potential energy, 1D elastic collisions', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch05_t1', topicName: 'Work-Energy Theorem & Variable Forces', ncertSection: '5.1', highYield: true, subtopics: ['Work-Energy Theorem for variable force: W = ∫F dx = ΔK', 'Potential energy of a spring: U = 1/2 k x²', 'Conservative forces and potential energy relation F = -dU/dx'] },
+          { id: 'phy_11_ch05_t2', topicName: 'Collisions in One Dimension', ncertSection: '5.2', highYield: true, subtopics: ['Elastic collision velocities in 1D', 'Inelastic collisions and loss of kinetic energy'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch06',
+        grade: '11',
+        discipline: 'ROTATIONAL_MOTION',
+        unit: 'System of Particles and Rotational Motion',
+        chapterNumber: 6,
+        chapterName: 'System of Particles and Rotational Motion',
+        boardExamFocus: { highYield: 'Center of mass, torque, angular momentum, moment of inertia, rolling acceleration', questionType: '3/5-mark derivations and JEE Main numericals' },
+        topics: [
+          { id: 'phy_11_ch06_t1', topicName: 'Center of Mass & Torque', ncertSection: '6.1', highYield: true, subtopics: ['Center of mass of two-particle system and rigid bodies', 'Torque τ = r × F and angular momentum L = r × p', 'Conservation of angular momentum'] },
+          { id: 'phy_11_ch06_t2', topicName: 'Moment of Inertia & Rolling Motion', ncertSection: '6.2', highYield: true, subtopics: ['Moment of inertia of ring, disc, cylinder and sphere', 'Radius of gyration', 'Acceleration of rolling without slipping: a = g sin θ / (1 + I/MR²)'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch07',
+        grade: '11',
+        discipline: 'GRAVITATION',
+        unit: 'Gravitation',
+        chapterNumber: 7,
+        chapterName: 'Gravitation',
+        boardExamFocus: { highYield: 'Variation of g with altitude and depth, escape speed, orbital velocity', questionType: '3-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch07_t1', topicName: 'Variation in g with Altitude and Depth', ncertSection: '7.1', highYield: true, subtopics: ['Variation with altitude: g_h = g(1 - 2h/R)', 'Variation with depth: g_d = g(1 - d/R)', 'Gravitational potential and potential energy'] },
+          { id: 'phy_11_ch07_t2', topicName: 'Escape Velocity & Satellite Motion', ncertSection: '7.2', highYield: true, subtopics: ['Escape velocity derivation: v_e = sqrt(2gR)', 'Orbital velocity of satellite: v_o = sqrt(GM/r)', 'Kepler\'s three laws of planetary motion'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch08',
+        grade: '11',
+        discipline: 'PROPERTIES_OF_MATTER',
+        unit: 'Properties of Bulk Matter',
+        chapterNumber: 8,
+        chapterName: 'Mechanical Properties of Solids',
+        boardExamFocus: { highYield: 'Stress-strain curve, Hooke\'s law, Young\'s modulus', questionType: '2/3-mark questions' },
+        topics: [
+          { id: 'phy_11_ch08_t1', topicName: 'Elastic Moduli & Stress-Strain Curve', ncertSection: '8.1', highYield: true, subtopics: ['Hooke\'s law', 'Young\'s modulus Y = (F/A)/(ΔL/L)', 'Elastic potential energy density u = 1/2 × stress × strain'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch09',
+        grade: '11',
+        discipline: 'PROPERTIES_OF_MATTER',
+        unit: 'Properties of Bulk Matter',
+        chapterNumber: 9,
+        chapterName: 'Mechanical Properties of Fluids',
+        boardExamFocus: { highYield: 'Bernoulli\'s principle, Pascal\'s law, Stoke\'s law, surface tension', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch09_t1', topicName: 'Bernoulli\'s Theorem & Applications', ncertSection: '9.1', highYield: true, subtopics: ['Equation of continuity: A₁v₁ = A₂v₂', 'Bernoulli\'s equation derivation: P + 1/2 ρv² + ρgh = constant', 'Torricelli\'s law and Venturimeter'] },
+          { id: 'phy_11_ch09_t2', topicName: 'Viscosity, Terminal Velocity & Surface Tension', ncertSection: '9.2', highYield: true, subtopics: ['Stoke\'s law: F = 6πηrv', 'Terminal velocity: v_t = 2r²(ρ - σ)g / 9η', 'Surface energy and excess pressure inside liquid drop (2T/R) and bubble (4T/R)'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch10',
+        grade: '11',
+        discipline: 'THERMAL_PHYSICS',
+        unit: 'Thermodynamics & Heat',
+        chapterNumber: 10,
+        chapterName: 'Thermal Properties of Matter',
+        boardExamFocus: { highYield: 'Specific heat, latent heat, Newton\'s law of cooling, thermal conduction', questionType: '2/3-mark questions' },
+        topics: [
+          { id: 'phy_11_ch10_t1', topicName: 'Thermal Expansion & Calorimetry', ncertSection: '10.1', highYield: true, subtopics: ['Thermal expansion coefficients', 'Specific heat capacity and latent heat', 'Principle of calorimetry'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch11',
+        grade: '11',
+        discipline: 'THERMAL_PHYSICS',
+        unit: 'Thermodynamics',
+        chapterNumber: 11,
+        chapterName: 'Thermodynamics',
+        boardExamFocus: { highYield: 'First law of thermodynamics, isothermal and adiabatic work done, Mayer\'s relation', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch11_t1', topicName: 'First Law & Thermodynamic Processes', ncertSection: '11.1', highYield: true, subtopics: ['First law: ΔQ = ΔU + ΔW', 'Isothermal work done: W = nRT ln(V₂/V₁)', 'Adiabatic work done: W = (P₁V₁ - P₂V₂)/(γ - 1)', 'Mayer\'s relation: C_p - C_v = R'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch12',
+        grade: '11',
+        discipline: 'THERMAL_PHYSICS',
+        unit: 'Kinetic Theory',
+        chapterNumber: 12,
+        chapterName: 'Kinetic Theory',
+        boardExamFocus: { highYield: 'Pressure of ideal gas, degrees of freedom, equipartition of energy', questionType: '3-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch12_t1', topicName: 'Pressure of an Ideal Gas', ncertSection: '12.1', highYield: true, subtopics: ['Pressure derivation P = 1/3 ρ v_rms²', 'Kinetic interpretation of temperature: E = 3/2 k_B T', 'Degrees of freedom and molar specific heats'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch13',
+        grade: '11',
+        discipline: 'OSCILLATIONS_AND_WAVES',
+        unit: 'Oscillations and Waves',
+        chapterNumber: 13,
+        chapterName: 'Oscillations',
+        boardExamFocus: { highYield: 'Simple Harmonic Motion (SHM), simple pendulum time period, energy conservation', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch13_t1', topicName: 'Simple Harmonic Motion & Time Period', ncertSection: '13.1', highYield: true, subtopics: ['Differential equation of SHM: d²x/dt² + ω²x = 0', 'Displacement, velocity and acceleration relations', 'Total energy in SHM: E = 1/2 m ω² A²', 'Time period of simple pendulum: T = 2π sqrt(L/g)'] }
+        ]
+      },
+      {
+        id: 'phy_11_ch14',
+        grade: '11',
+        discipline: 'OSCILLATIONS_AND_WAVES',
+        unit: 'Oscillations and Waves',
+        chapterNumber: 14,
+        chapterName: 'Waves',
+        boardExamFocus: { highYield: 'Speed of transverse and sound waves, organ pipes standing waves, beats', questionType: '3/5-mark derivations' },
+        topics: [
+          { id: 'phy_11_ch14_t1', topicName: 'Standing Waves in Organ Pipes & Beats', ncertSection: '14.1', highYield: true, subtopics: ['Speed of longitudinal wave in gas (Newton-Laplace formula)', 'Modes of vibration in open organ pipe: f_n = nv / 2L', 'Modes of vibration in closed organ pipe: f_n = (2n-1)v / 4L', 'Beats frequency: f_beat = |f₁ - f₂|'] }
         ]
       }
     ]

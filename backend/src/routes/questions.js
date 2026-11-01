@@ -452,28 +452,49 @@ router.get('/subject-banks/:subjectKey', (req, res) => {
   try {
     const { subjectKey } = req.params;
     const banks = inMemoryStore.subjectBanks || {};
-    const tableData = banks[subjectKey];
+
+    const aliasMap = {
+      'PHYSICS': 'senior_physics',
+      'SENIOR_PHYSICS': 'senior_physics',
+      'CHEMISTRY': 'senior_chemistry',
+      'SENIOR_CHEMISTRY': 'senior_chemistry',
+      'BIOLOGY': 'senior_biology',
+      'SENIOR_BIOLOGY': 'senior_biology',
+      'MATHEMATICS': 'senior_mathematics',
+      'SENIOR_MATHEMATICS': 'senior_mathematics',
+      'CLASS10_MATHEMATICS': 'class10_math_pyq_ncert',
+      'CLASS10_MATHS': 'class10_math_pyq_ncert',
+      'CLASS10_SCIENCE': 'class10_science'
+    };
+
+    const targetKey = aliasMap[(subjectKey || '').toUpperCase()] || subjectKey;
+    const tableData = banks[targetKey];
 
     if (!tableData) {
       return res.status(404).json({
         success: false,
-        error: `Subject bank "${subjectKey}" not found. Valid keys: class10_maths, class10_math_pyq_ncert, class10_science, senior_physics, senior_chemistry, senior_mathematics, senior_biology.`
+        error: `Subject bank "${subjectKey}" not found. Valid keys: PHYSICS, CHEMISTRY, BIOLOGY, MATHEMATICS, CLASS10_MATHEMATICS, CLASS10_SCIENCE, senior_physics, senior_chemistry, senior_mathematics, senior_biology, class10_science, class10_math_pyq_ncert.`
       });
     }
 
     const { chapter, difficulty, targetExam, grade } = req.query;
     let filtered = [...tableData];
 
-    if (grade) {
+    if (grade && grade !== 'ALL') {
       filtered = filtered.filter(q => String(q.grade) === String(grade));
     }
-    if (chapter) {
-      filtered = filtered.filter(q => q.chapter_name?.toLowerCase().includes(chapter.toLowerCase()));
+    if (chapter && chapter !== 'ALL') {
+      filtered = filtered.filter(q => {
+        if (q.chapter_number !== undefined && String(q.chapter_number) === String(chapter)) return true;
+        if (q.chapter && String(q.chapter) === String(chapter)) return true;
+        if (q.chapter_name && q.chapter_name.toLowerCase().includes(String(chapter).toLowerCase())) return true;
+        return false;
+      });
     }
-    if (difficulty) {
+    if (difficulty && difficulty !== 'ALL') {
       filtered = filtered.filter(q => q.difficulty?.toUpperCase() === difficulty.toUpperCase());
     }
-    if (targetExam) {
+    if (targetExam && targetExam !== 'ALL') {
       filtered = filtered.filter(q => 
         (q.target_exam && q.target_exam.toLowerCase().includes(targetExam.toLowerCase())) ||
         (q.curriculum_board && q.curriculum_board.toLowerCase().includes(targetExam.toLowerCase()))
@@ -483,6 +504,7 @@ router.get('/subject-banks/:subjectKey', (req, res) => {
     res.json({
       success: true,
       subjectKey,
+      tableKey: targetKey,
       count: filtered.length,
       questions: filtered
     });
