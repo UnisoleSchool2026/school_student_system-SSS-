@@ -5260,9 +5260,9 @@ button:active,
   animation: fadeIn 0.2s ease-in-out;
 }
 
-/* Clean Active Workspace Indicator Strip */
+/* Clean Active Workspace Indicator Strip (Hidden per user request for clean layout) */
 .teacher-workspace-indicator-strip {
-  display: flex;
+  display: none !important;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
@@ -6131,9 +6131,9 @@ body.role-teacher #drawerSectionPortalViews {
   color: #38bdf8;
 }
 
-/* Student Portal Navigation Pills */
+/* Student Portal Navigation Pills (Hidden - now unified in side drawer menu) */
 .student-portal-nav {
-  display: flex;
+  display: none !important;
   gap: 10px;
   background: #ffffff;
   border: 1px solid var(--border-subtle);

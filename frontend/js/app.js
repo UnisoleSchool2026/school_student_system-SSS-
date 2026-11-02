@@ -564,6 +564,20 @@ window.switchStudentTab = function(tabId) {
       window.loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
     }
   }
+
+  // Update header title for active student workspace
+  const studentTitles = {
+    'tabStudentActiveTest': 'Student Learning Portal • Adaptive Test & Exam Practice',
+    'tabStudentSmartReport': 'Student Learning Portal • Weekly Report Card & Diagnostics',
+    'tabStudentPreviousTests': 'Student Learning Portal • Record of Previous Tests',
+    'tabStudentRemedial': 'Student Learning Portal • Personalized Post-Test Drills',
+    'tabStudentSmartboard': 'Student Learning Portal • AI Voice Smartboard Tutor'
+  };
+  const headerTitle = document.getElementById('headerNavTitle');
+  if (headerTitle && studentTitles[tabId]) {
+    headerTitle.innerText = studentTitles[tabId];
+  }
+
   initLucideIcons();
 };
 
