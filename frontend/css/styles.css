@@ -2728,7 +2728,7 @@ button:active,
   left: 0;
   width: 320px;
   max-width: 86vw;
-  background: #0f172a;
+  background: #ffffff;
   border-right: 1px solid var(--border-subtle);
   z-index: 1001;
   transform: translateX(-100%);
@@ -2737,6 +2737,11 @@ button:active,
   flex-direction: column;
   overflow-y: auto;
   padding: 1.25rem;
+  box-shadow: 12px 0 35px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="dark"] .sidebar-nav-drawer {
+  background: #0f172a;
   box-shadow: 12px 0 35px rgba(0, 0, 0, 0.55);
 }
 
@@ -6130,13 +6135,14 @@ body.role-teacher #drawerSectionPortalViews {
 .student-portal-nav {
   display: flex;
   gap: 10px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
   padding: 6px;
   border-radius: 14px;
   margin-bottom: 1.5rem;
   overflow-x: auto;
   scrollbar-width: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .student-portal-nav::-webkit-scrollbar {
@@ -6144,35 +6150,56 @@ body.role-teacher #drawerSectionPortalViews {
 }
 
 .student-nav-pill {
-  flex: 1;
-  min-width: 170px;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 44px;
+  min-height: 40px;
   white-space: nowrap;
 }
 
 .student-nav-pill:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.student-nav-pill.active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+[data-theme="dark"] .student-portal-nav {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .student-nav-pill {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .student-nav-pill:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #f8fafc;
 }
 
-.student-nav-pill.active {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.4);
-  color: #34d399;
-  font-weight: 700;
+[data-theme="dark"] .student-nav-pill.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -6344,4 +6371,46 @@ body.role-teacher #drawerSectionPortalViews {
   background: rgba(56, 189, 248, 0.16);
   border-color: #38bdf8;
   color: #38bdf8;
+}
+
+/* Student Weekly Diagnostic Report Card Styles */
+.student-focus-topic-card {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.06);
+}
+
+[data-theme="dark"] .student-focus-topic-card {
+  background: rgba(124, 45, 18, 0.2);
+  border-color: rgba(234, 88, 12, 0.35);
+  box-shadow: none;
+}
+
+.student-focus-topic-card.critical {
+  border-left: 4px solid #ea580c;
+}
+
+.student-focus-topic-card.medium {
+  background: #fefce8;
+  border: 1.5px solid #fef08a;
+  border-left: 4px solid #ca8a04;
+}
+
+[data-theme="dark"] .student-focus-topic-card.medium {
+  background: rgba(113, 63, 18, 0.2);
+  border-color: rgba(202, 138, 4, 0.35);
+}
+
+.student-focus-topic-card.mastered {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+}
+
+[data-theme="dark"] .student-focus-topic-card.mastered {
+  background: rgba(20, 83, 45, 0.2);
+  border-color: rgba(22, 163, 74, 0.35);
 }

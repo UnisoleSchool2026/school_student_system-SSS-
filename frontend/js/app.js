@@ -555,7 +555,9 @@ window.switchStudentTab = function(tabId) {
     content.classList.toggle('active', isTarget);
   });
   if (tabId === 'tabStudentSmartReport') {
-    if (window.loadAndRenderSmartReport) {
+    if (window.renderStudentSmartReport) {
+      window.renderStudentSmartReport();
+    } else if (window.loadAndRenderSmartReport) {
       window.loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
     }
   }
@@ -15733,5 +15735,692 @@ window.filterWeakConcepts = function(severity) {
     }
   });
 };
+
+// ============================================================================
+// STUDENT WEEKLY REPORT CARD & TEST TELEMETRY (STUDENT PORTAL)
+// ============================================================================
+
+const STUDENT_REPORT_DATA = {
+  student: {
+    id: 'b0000000-0000-0000-0000-000000000001',
+    name: 'Aryan Sharma',
+    roll: '12-NM-01',
+    grade: '12',
+    section: 'Class 12th (Non-Medical)',
+    subject: 'Physics',
+    parentPhone: '+91 98160 12345',
+    assignmentsAssigned: 10,
+    assignmentsSubmitted: 8,
+    assignmentCompletionRate: '80.0%',
+    pendingAssignments: 2,
+    testsAttempted: 4,
+    totalTestsScheduled: 4,
+    testAttemptRate: '100%',
+    cumulativeScore: 155,
+    totalMarksPossible: 180,
+    averagePercentage: '86.1%',
+    rank: 4,
+    totalClassStudents: 48,
+    standing: '#4 / 48 Scholars',
+    percentile: '91.7th Percentile (Top 8.3%)',
+    overallGrade: 'Grade A (Distinction)'
+  },
+  tests: [
+    {
+      id: 'test_12_01',
+      code: 'Test 01',
+      title: 'Electric Charges, Coulomb\'s Law & Superposition',
+      chapter: 'Chapter 1: Electric Charges and Fields',
+      topic: 'Coulomb\'s Force, Dielectric Medium & Superposition',
+      date: 'Nov 01, 2026',
+      duration: '45 Mins',
+      score: 43,
+      totalMarks: 45,
+      percentage: '95.6%',
+      classAveragePercentage: '76.4%',
+      comparison: '+19.2% above Class Avg',
+      standing: 'Distinction',
+      accuracy: '93.3% (14 / 15 Correct)',
+      velocity: '108s / Q',
+      focusArea: {
+        topic: 'Dielectric Medium Polarization & Force Factor',
+        subtopic: 'Coulomb\'s Law in Dielectric (NCERT Section 1.10)',
+        whyMistake: 'In Question 4, you calculated the net electric field with dielectric medium as E = E₀ • κ instead of E = E₀ / κ. Dielectric polarization produces opposing bound charges on the faces of the slab, which attenuates the net electrostatic field by a factor of 1/κ.',
+        remedialAction: 'Review NCERT Section 1.10 (Pages 24–26) and solve Solved Example 1.8. Practice the 5-min dielectric drill to solidify the inverse relationship before next unit test.',
+        drillId: 'drill_12_01_dielectric',
+        masteredTopics: [
+          'Vector Form of Coulomb\'s Law & Principle of Superposition (100% Mastered)',
+          'Electric Flux through Arbitrary Closed Gaussian Surfaces (100% Mastered)',
+          'Electric Dipole in Uniform Field & Torque Calculation (100% Mastered)'
+        ]
+      },
+      topicBreakdown: [
+        { topic: 'Coulomb\'s Law', studentScore: 100, classAvg: 82 },
+        { topic: 'Electric Field Lines', studentScore: 100, classAvg: 78 },
+        { topic: 'Gauss\'s Law & Flux', studentScore: 100, classAvg: 75 },
+        { topic: 'Dielectric Polarization', studentScore: 66.7, classAvg: 58 },
+        { topic: 'Dipole Potential', studentScore: 100, classAvg: 80 }
+      ],
+      accuracyBreakdown: { correct: 14, wrong: 1, unattempted: 0 }
+    },
+    {
+      id: 'test_12_02',
+      code: 'Test 02',
+      title: 'Electrostatic Potential, Equipotential Surfaces & Capacitors',
+      chapter: 'Chapter 2: Electrostatic Potential and Capacitance',
+      topic: 'Equipotential Surfaces, Work Done & Capacitor Combinations',
+      date: 'Oct 24, 2026',
+      duration: '45 Mins',
+      score: 41,
+      totalMarks: 45,
+      percentage: '91.1%',
+      classAveragePercentage: '74.2%',
+      comparison: '+16.9% above Class Avg',
+      standing: 'Distinction',
+      accuracy: '86.7% (13 / 15 Correct)',
+      velocity: '115s / Q',
+      focusArea: {
+        topic: 'Capacitor Energy with Battery Disconnected vs Connected',
+        subtopic: 'Energy Density & Dielectric Slab Insertion (NCERT Section 2.15)',
+        whyMistake: 'In Question 9, when a dielectric slab is inserted after disconnecting the charging battery, charge Q remains constant so energy is U = Q² / (2C), which decreases. You mistakenly assumed the battery remained connected maintaining constant V.',
+        remedialAction: 'Practice the standard 5-variable comparison table (Q, V, C, E, U) for battery connected vs disconnected states when inserting a dielectric slab.',
+        drillId: 'drill_12_02_capacitors',
+        masteredTopics: [
+          'Work Done Moving Charge on Equipotential Surface = 0 (100% Mastered)',
+          'Series and Parallel Capacitance Combinations (100% Mastered)',
+          'Potential Energy of System of 3 Discrete Charges (100% Mastered)'
+        ]
+      },
+      topicBreakdown: [
+        { topic: 'Potential & Work', studentScore: 100, classAvg: 80 },
+        { topic: 'Equipotential Surfaces', studentScore: 100, classAvg: 79 },
+        { topic: 'Capacitor Combinations', studentScore: 100, classAvg: 76 },
+        { topic: 'Dielectric Insertion Energy', studentScore: 50, classAvg: 48 },
+        { topic: 'Van de Graaff / Shielding', studentScore: 100, classAvg: 82 }
+      ],
+      accuracyBreakdown: { correct: 13, wrong: 2, unattempted: 0 }
+    },
+    {
+      id: 'test_12_03',
+      code: 'Test 03',
+      title: 'Current Electricity, Ohm\'s Law & Kirchhoff\'s Rules',
+      chapter: 'Chapter 3: Current Electricity',
+      topic: 'Drift Velocity, Temperature Coefficient & Kirchhoff\'s Rules',
+      date: 'Oct 17, 2026',
+      duration: '45 Mins',
+      score: 38,
+      totalMarks: 45,
+      percentage: '84.4%',
+      classAveragePercentage: '71.8%',
+      comparison: '+12.6% above Class Avg',
+      standing: 'Merit Band',
+      accuracy: '80.0% (12 / 15 Correct)',
+      velocity: '124s / Q',
+      focusArea: {
+        topic: 'Kirchhoff\'s Loop Rule & Potential Drop Sign Conventions',
+        subtopic: 'Multi-Loop Mesh Analysis with Internal Cell Resistance',
+        whyMistake: 'In Question 11, traversed a 2-loop circuit across an EMF source in the direction of conventional current and added +E instead of tracking -IR drop across the internal resistance r correctly.',
+        remedialAction: 'Solve 3 multi-loop branch current numericals in NCERT Exercises 3.7 to 3.9 following the standard counter-clockwise loop convention.',
+        drillId: 'drill_12_03_kirchhoff',
+        masteredTopics: [
+          'Drift Velocity & Electron Mobility Formulation vd = eEτ/m (100% Mastered)',
+          'Temperature Coefficient of Resistance α and Thermistors (100% Mastered)',
+          'Wheatstone Bridge Null-Point Balance Condition (100% Mastered)'
+        ]
+      },
+      topicBreakdown: [
+        { topic: 'Drift Velocity & Mobility', studentScore: 100, classAvg: 76 },
+        { topic: 'Ohm\'s Law & Resistivity', studentScore: 100, classAvg: 78 },
+        { topic: 'Series-Parallel Cells', studentScore: 80, classAvg: 70 },
+        { topic: 'Kirchhoff\'s Rules', studentScore: 60, classAvg: 54 },
+        { topic: 'Wheatstone Bridge', studentScore: 100, classAvg: 75 }
+      ],
+      accuracyBreakdown: { correct: 12, wrong: 3, unattempted: 0 }
+    },
+    {
+      id: 'test_12_04',
+      code: 'Test 04',
+      title: 'Moving Charges, Biot-Savart & Ampere\'s Law',
+      chapter: 'Chapter 4: Moving Charges and Magnetism',
+      topic: 'Lorentz Force, Solenoid Edge Effects & Galvanometer',
+      date: 'Oct 10, 2026',
+      duration: '45 Mins',
+      score: 33,
+      totalMarks: 45,
+      percentage: '73.3%',
+      classAveragePercentage: '69.5%',
+      comparison: '+3.8% above Class Avg',
+      standing: 'Remedial Recommended',
+      accuracy: '66.7% (10 / 15 Correct)',
+      velocity: '138s / Q',
+      focusArea: {
+        topic: 'Ampere\'s Circuital Law & Solenoid End Effects',
+        subtopic: 'Finite vs Infinite Solenoid Magnetic Field Bend',
+        whyMistake: 'In Questions 6 & 13, applied the infinite solenoid approximation B = μ₀nI at the terminal ends of the solenoid instead of Bend = 1/2 μ₀nI, dropping 6 marks on boundary field integration.',
+        remedialAction: 'Review derivation of magnetic field along axis of circular coil and integrate boundary conditions at the terminal ends of finite solenoids.',
+        drillId: 'drill_12_04_solenoid',
+        masteredTopics: [
+          'Lorentz Magnetic Force Vector Form F = q(v × B) (100% Mastered)',
+          'Pitch and Radius of Helical Trajectory in Magnetic Field (100% Mastered)',
+          'Cyclotron Frequency Independence of Speed and Radius (100% Mastered)'
+        ]
+      },
+      topicBreakdown: [
+        { topic: 'Lorentz Force & Helical Path', studentScore: 100, classAvg: 74 },
+        { topic: 'Biot-Savart Circular Loop', studentScore: 80, classAvg: 72 },
+        { topic: 'Ampere\'s Circuital Law', studentScore: 50, classAvg: 58 },
+        { topic: 'Solenoid & Toroid Fields', studentScore: 40, classAvg: 52 },
+        { topic: 'Galvanometer Conversion', studentScore: 90, classAvg: 80 }
+      ],
+      accuracyBreakdown: { correct: 10, wrong: 4, unattempted: 1 }
+    }
+  ]
+};
+
+let studentSubtopicChartInstance = null;
+let studentAccuracyChartInstance = null;
+
+function renderStudentSmartReport() {
+  const data = STUDENT_REPORT_DATA;
+  const s = data.student;
+
+  // 1. Fill top KPI Cards
+  const kpiAssign = document.getElementById('kpiAssignmentsSubmitted');
+  if (kpiAssign) kpiAssign.innerText = `${s.assignmentsSubmitted} / ${s.assignmentsAssigned}`;
+
+  const kpiTests = document.getElementById('kpiTestsAttempted');
+  if (kpiTests) kpiTests.innerText = `${s.testsAttempted} / ${s.totalTestsScheduled}`;
+
+  const kpiScore = document.getElementById('kpiOverallScore');
+  if (kpiScore) kpiScore.innerText = s.averagePercentage;
+
+  const kpiRank = document.getElementById('kpiClassStanding');
+  if (kpiRank) kpiRank.innerText = `#${s.rank} / ${s.totalClassStudents}`;
+
+  // 2. Render Attempted Tests Table
+  const tbody = document.getElementById('studentAttemptedTestsTbody');
+  if (tbody) {
+    tbody.innerHTML = data.tests.map(t => {
+      const isTopScore = t.score >= 40;
+      return `
+        <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;">
+          <td style="padding: 12px 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="teacher-nav-badge badge-blue" style="font-weight: 800;">${escapeHtml(t.code)}</span>
+              <strong style="color: var(--text-primary); font-size: 0.88rem;">${escapeHtml(t.title)}</strong>
+            </div>
+          </td>
+          <td style="padding: 12px 14px;">
+            <div style="font-size: 0.82rem; color: var(--text-primary);">${escapeHtml(t.chapter)}</div>
+            <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(t.topic)}</div>
+          </td>
+          <td style="padding: 12px 14px; white-space: nowrap;">
+            <div style="font-size: 0.82rem; color: var(--text-primary); font-weight: 600;">${escapeHtml(t.date)}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(t.duration)}</div>
+          </td>
+          <td style="padding: 12px 14px; white-space: nowrap;">
+            <div style="font-size: 0.95rem; font-weight: 900; color: ${isTopScore ? '#059669' : '#0284c7'};">
+              ${t.score} / ${t.totalMarks}
+            </div>
+            <div style="font-size: 0.74rem; font-weight: 700; color: ${isTopScore ? '#059669' : '#0284c7'};">
+              ${t.percentage}
+            </div>
+          </td>
+          <td style="padding: 12px 14px; white-space: nowrap;">
+            <div style="font-size: 0.82rem; color: var(--text-secondary);">${t.classAveragePercentage}</div>
+            <div style="font-size: 0.72rem; color: #059669; font-weight: 700;">${escapeHtml(t.comparison)}</div>
+          </td>
+          <td style="padding: 12px 14px; white-space: nowrap;">
+            <span class="teacher-nav-badge ${isTopScore ? 'badge-green' : 'badge-amber'}">
+              ${escapeHtml(t.standing)}
+            </span>
+          </td>
+          <td style="padding: 12px 14px; text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-primary" 
+                    onclick="window.viewStudentTestReport('${t.id}')"
+                    style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #0284c7, #2563eb); border: none;">
+              <i data-lucide="bar-chart-2" style="width: 14px; height: 14px;"></i> View My Test Report
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Ensure default sub-view is 'tests'
+  switchStudentReportSubView('tests');
+  initLucideIcons();
+}
+
+function switchStudentReportSubView(view) {
+  const btnTests = document.getElementById('btnStudentSubViewTests');
+  const btnTopics = document.getElementById('btnStudentSubViewTopics');
+  const containerTests = document.getElementById('containerStudentTestsView');
+  const containerTopics = document.getElementById('containerStudentTopicsView');
+
+  if (view === 'tests') {
+    if (btnTests) btnTests.classList.add('active');
+    if (btnTopics) btnTopics.classList.remove('active');
+    if (containerTests) containerTests.style.display = 'block';
+    if (containerTopics) containerTopics.style.display = 'none';
+
+    // Show table, hide detail if switching back
+    const tableCard = document.getElementById('studentAttemptedTestsTableCard');
+    const detailCard = document.getElementById('studentIndividualTestReportDetail');
+    if (tableCard) tableCard.style.display = 'block';
+    if (detailCard) detailCard.style.display = 'none';
+  } else {
+    if (btnTests) btnTests.classList.remove('active');
+    if (btnTopics) btnTopics.classList.add('active');
+    if (containerTests) containerTests.style.display = 'none';
+    if (containerTopics) containerTopics.style.display = 'block';
+    renderStudentFocusTopics();
+  }
+  initLucideIcons();
+}
+
+function viewStudentTestReport(testId) {
+  const test = STUDENT_REPORT_DATA.tests.find(t => t.id === testId) || STUDENT_REPORT_DATA.tests[0];
+  const tableCard = document.getElementById('studentAttemptedTestsTableCard');
+  const detailCard = document.getElementById('studentIndividualTestReportDetail');
+  if (!detailCard) return;
+
+  if (tableCard) tableCard.style.display = 'none';
+  detailCard.style.display = 'block';
+
+  const testOptions = STUDENT_REPORT_DATA.tests.map(t => `
+    <option value="${t.id}" ${t.id === test.id ? 'selected' : ''}>
+      ${t.code}: ${t.title} (${t.score}/${t.totalMarks} • ${t.percentage})
+    </option>
+  `).join('');
+
+  detailCard.innerHTML = `
+    <!-- Top Action & Navigation Banner -->
+    <div style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button type="button" class="btn-secondary" onclick="window.backToAttemptedTestsList()" style="font-size:0.8rem; padding:7px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <i data-lucide="arrow-left" style="width:14px; height:14px;"></i> Back to All Attempted Tests
+        </button>
+        <div>
+          <span class="teacher-nav-badge badge-blue">${test.code} Diagnostic Dossier</span>
+          <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin:2px 0 0 0;">${escapeHtml(test.title)}</h3>
+          <p style="font-size:0.76rem; color:var(--text-secondary); margin:2px 0 0 0;">${escapeHtml(test.chapter)} &bull; ${escapeHtml(test.date)} (${test.duration})</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label for="selectStudentTestDetailSwitch" style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">Switch Test:</label>
+        <select id="selectStudentTestDetailSwitch" class="form-select" onchange="window.viewStudentTestReport(this.value)" style="font-size:0.82rem; padding:6px 12px; border-radius:8px;">
+          ${testOptions}
+        </select>
+      </div>
+    </div>
+
+    <!-- 4 KPI Cards for this test -->
+    <div class="grid-4col" style="margin-bottom:1.5rem; gap:14px;">
+      <div class="tier-kpi-card" style="border-left:4px solid #0284c7;">
+        <span style="font-size:0.74rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">My Test Score</span>
+        <div style="font-size:1.6rem; font-weight:900; color:#0284c7; margin-top:4px;">${test.score} / ${test.totalMarks}</div>
+        <p style="font-size:0.75rem; color:#059669; font-weight:700; margin:3px 0 0 0;">${test.percentage} (${test.comparison})</p>
+      </div>
+      <div class="tier-kpi-card" style="border-left:4px solid #7c3aed;">
+        <span style="font-size:0.74rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Class Average Score</span>
+        <div style="font-size:1.6rem; font-weight:900; color:#7c3aed; margin-top:4px;">${test.classAveragePercentage}</div>
+        <p style="font-size:0.75rem; color:var(--text-secondary); margin:3px 0 0 0;">Class Mean: 34.4 / 45</p>
+      </div>
+      <div class="tier-kpi-card" style="border-left:4px solid #059669;">
+        <span style="font-size:0.74rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Accuracy Rate</span>
+        <div style="font-size:1.6rem; font-weight:900; color:#059669; margin-top:4px;">${test.accuracy.split(' ')[0]}</div>
+        <p style="font-size:0.75rem; color:var(--text-secondary); margin:3px 0 0 0;">${test.accuracy.split('(')[1] ? test.accuracy.split('(')[1].replace(')', '') : 'High Accuracy'}</p>
+      </div>
+      <div class="tier-kpi-card" style="border-left:4px solid #d97706;">
+        <span style="font-size:0.74rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Solving Velocity</span>
+        <div style="font-size:1.6rem; font-weight:900; color:#d97706; margin-top:4px;">${test.velocity}</div>
+        <p style="font-size:0.75rem; color:#059669; font-weight:700; margin:3px 0 0 0;">Pacing: Optimal (&lt; 150s / Q)</p>
+      </div>
+    </div>
+
+    <!-- Charts Station -->
+    <div style="display:grid; grid-template-columns: 1.6fr 1fr; gap:16px; margin-bottom:1.5rem;">
+      <div class="report-chart-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h4 style="font-size:0.92rem; font-weight:800; color:var(--text-primary); margin:0;">
+              My Score vs Class Average across Sub-Topics
+            </h4>
+            <span style="font-size:0.72rem; color:var(--text-muted);">Shows conceptual strength and areas requiring review</span>
+          </div>
+          <span class="teacher-nav-badge badge-blue">Comparative Telemetry</span>
+        </div>
+        <div style="position:relative; height:240px; width:100%;">
+          <canvas id="chartStudentSubtopics"></canvas>
+        </div>
+      </div>
+
+      <div class="report-chart-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h4 style="font-size:0.92rem; font-weight:800; color:var(--text-primary); margin:0;">
+              Question Accuracy Breakdown
+            </h4>
+            <span style="font-size:0.72rem; color:var(--text-muted);">Attempt outcome distribution</span>
+          </div>
+          <span class="teacher-nav-badge badge-green">15 Questions</span>
+        </div>
+        <div style="position:relative; height:240px; width:100%; display:flex; align-items:center; justify-content:center;">
+          <canvas id="chartStudentAccuracyBreakdown"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE HIGHLIGHTED 'TOPIC STUDENT SHOULD FOCUS ON BASIS ON CURRENT TEST SCORE' -->
+    <div class="student-focus-topic-card critical">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+        <span style="display:inline-flex; align-items:center; gap:6px; background:#ffedd5; color:#c2410c; border:1px solid #fdba74; font-size:0.74rem; font-weight:800; padding:4px 12px; border-radius:9999px; text-transform:uppercase; letter-spacing:0.5px;">
+          <i data-lucide="target" style="width:13px; height:13px;"></i> Critical Topic to Focus On (Based on Current Test Score)
+        </span>
+        <span style="font-size:0.75rem; color:#9a3412; font-weight:700;">Diagnostic from ${escapeHtml(test.code)}</span>
+      </div>
+
+      <h4 style="font-size:1.2rem; font-weight:800; color:#9a3412; margin:0 0 6px 0;">
+        ${escapeHtml(test.focusArea.topic)}
+      </h4>
+      <div style="font-size:0.8rem; color:#c2410c; font-weight:700; margin-bottom:12px;">
+        📌 ${escapeHtml(test.focusArea.subtopic)}
+      </div>
+
+      <div style="background:#ffffff; border:1px solid #fed7aa; border-radius:10px; padding:14px 16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(15,23,42,0.03);">
+        <div style="font-size:0.8rem; font-weight:700; color:#9a3412; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+          <i data-lucide="alert-circle" style="width:15px; height:15px; color:#ea580c;"></i> Why You Lost Marks in this Topic:
+        </div>
+        <p style="font-size:0.83rem; color:#431407; margin:0; line-height:1.55;">
+          ${escapeHtml(test.focusArea.whyMistake)}
+        </p>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(255,255,255,0.7); border:1px solid #fed7aa; border-radius:10px; padding:12px 16px;">
+        <div style="flex:1; min-width:240px;">
+          <div style="font-size:0.74rem; color:#9a3412; font-weight:800; text-transform:uppercase; letter-spacing:0.4px;">
+            Recommended Action &bull; Next Revision Step:
+          </div>
+          <p style="font-size:0.82rem; color:#7c2d12; margin:2px 0 0 0; font-weight:500;">
+            ${escapeHtml(test.focusArea.remedialAction)}
+          </p>
+        </div>
+        <button type="button" class="btn-primary" 
+                onclick="window.launchRemedialPracticeDrill('${test.focusArea.drillId}')"
+                style="background:linear-gradient(135deg, #0284c7, #2563eb); font-size:0.82rem; padding:9px 18px; font-weight:700; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 2px 8px rgba(2,132,199,0.35);">
+          <i data-lucide="zap" style="width:14px; height:14px;"></i> Launch 5-Min Remedial Drill
+        </button>
+      </div>
+
+      <div style="margin-top:16px; border-top:1px solid #fed7aa; padding-top:14px;">
+        <div style="font-size:0.74rem; color:#9a3412; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px;">
+          Mastered Topics in this Test (100% Accuracy):
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${test.focusArea.masteredTopics.map(m => `
+            <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:#065f46; background:#ecfdf5; border:1px solid #a7f3d0; padding:6px 12px; border-radius:6px; font-weight:600;">
+              <i data-lucide="check-circle" style="width:14px; height:14px; color:#059669; flex-shrink:0;"></i>
+              <span>${escapeHtml(m)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  initLucideIcons();
+
+  // Render Charts with Chart.js
+  setTimeout(() => {
+    renderStudentDetailCharts(test);
+  }, 50);
+}
+
+function renderStudentDetailCharts(test) {
+  if (typeof Chart === 'undefined') return;
+
+  // 1. Subtopics Chart
+  const canvasSub = document.getElementById('chartStudentSubtopics');
+  if (canvasSub) {
+    if (studentSubtopicChartInstance) {
+      studentSubtopicChartInstance.destroy();
+    }
+    const labels = test.topicBreakdown.map(t => t.topic);
+    const studentData = test.topicBreakdown.map(t => t.studentScore);
+    const classData = test.topicBreakdown.map(t => t.classAvg);
+
+    studentSubtopicChartInstance = new Chart(canvasSub, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'My Score (%)',
+            data: studentData,
+            backgroundColor: '#0284c7',
+            borderRadius: 6
+          },
+          {
+            label: 'Class Average (%)',
+            data: classData,
+            backgroundColor: '#cbd5e1',
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { callback: v => v + '%' }
+          },
+          x: {
+            ticks: { font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Accuracy Breakdown Doughnut Chart
+  const canvasAcc = document.getElementById('chartStudentAccuracyBreakdown');
+  if (canvasAcc) {
+    if (studentAccuracyChartInstance) {
+      studentAccuracyChartInstance.destroy();
+    }
+    const acc = test.accuracyBreakdown || { correct: 14, wrong: 1, unattempted: 0 };
+    studentAccuracyChartInstance = new Chart(canvasAcc, {
+      type: 'doughnut',
+      data: {
+        labels: ['Correct', 'Incorrect / Stumble', 'Unattempted'],
+        datasets: [{
+          data: [acc.correct, acc.wrong, acc.unattempted],
+          backgroundColor: ['#10b981', '#f43f5e', '#94a3b8'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+        },
+        cutout: '68%'
+      }
+    });
+  }
+}
+
+function backToAttemptedTestsList() {
+  const tableCard = document.getElementById('studentAttemptedTestsTableCard');
+  const detailCard = document.getElementById('studentIndividualTestReportDetail');
+  if (tableCard) tableCard.style.display = 'block';
+  if (detailCard) detailCard.style.display = 'none';
+  initLucideIcons();
+}
+
+function renderStudentFocusTopics() {
+  const container = document.getElementById('containerStudentTopicsView');
+  if (!container) return;
+
+  container.innerHTML = `
+    <!-- Top Action & Diagnostic Summary -->
+    <div class="report-chart-box" style="margin-bottom:1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1rem;">
+        <div>
+          <span class="teacher-nav-badge badge-blue">AI Remedial Curriculum Roadmap</span>
+          <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin:4px 0 0 0;">
+            Priority Concepts &amp; Topics You Should Focus On
+          </h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:3px 0 0 0;">
+            Aggregated diagnostics synthesized across all 4 recent tests taken in Senior Secondary Physics.
+          </p>
+        </div>
+        <button type="button" class="btn-primary" onclick="window.launchRemedialPracticeDrill('drill_comprehensive_12')" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-size:0.82rem; padding:8px 16px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <i data-lucide="zap" style="width:14px; height:14px;"></i> Take Comprehensive 10-Q Remedial Drill
+        </button>
+      </div>
+
+      <!-- Priority Tiers -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        
+        <!-- Tier 1: High Priority (Red / Orange) -->
+        <div class="student-focus-topic-card critical" style="margin-top:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:2px 8px; border-radius:6px;">
+              🚨 High Priority Remedial &bull; Immediate Practice
+            </span>
+            <span style="font-size:0.74rem; color:#dc2626; font-weight:700;">Score: 73.3% in Test 04</span>
+          </div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:#991b1b; margin:0 0 4px 0;">
+            1. Ampere's Circuital Law &amp; Finite Solenoid End Effects
+          </h4>
+          <p style="font-size:0.82rem; color:#7f1d1d; margin:0 0 10px 0; line-height:1.5;">
+            Misconception: Applying <code>B = &mu;₀nI</code> at the edges of a solenoid. Boundary integration proves field at the ends is halved: <code>B_{end} = &frac12; &mu;₀nI</code>.
+          </p>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <span style="font-size:0.75rem; color:#991b1b; font-weight:600;">Action: Practice Solenoid Axis Integration &amp; Boundary Conditions</span>
+            <button type="button" class="btn-secondary" onclick="window.launchRemedialPracticeDrill('drill_12_04_solenoid')" style="padding:5px 12px; font-size:0.76rem; font-weight:700; color:#dc2626; border-color:#fca5a5;">
+              Practice 3 Questions &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- Tier 2: Medium Priority (Amber) -->
+        <div class="student-focus-topic-card medium" style="margin-top:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:6px;">
+              ⚠️ Medium Priority Review &bull; Revision Recommended
+            </span>
+            <span style="font-size:0.74rem; color:#b45309; font-weight:700;">Score: 84.4% in Test 03</span>
+          </div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:#92400e; margin:0 0 4px 0;">
+            2. Kirchhoff's Loop Rule Sign Conventions &amp; Internal Cell Resistance
+          </h4>
+          <p style="font-size:0.82rem; color:#78350f; margin:0 0 10px 0; line-height:1.5;">
+            Misconception: Sign traps when traversing loop in same direction as branch current across internal cell resistance <code>r</code>.
+          </p>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <span style="font-size:0.75rem; color:#92400e; font-weight:600;">Action: Solve NCERT Exercises 3.7 to 3.9 using mesh matrix method</span>
+            <button type="button" class="btn-secondary" onclick="window.launchRemedialPracticeDrill('drill_12_03_kirchhoff')" style="padding:5px 12px; font-size:0.76rem; font-weight:700; color:#b45309; border-color:#fde68a;">
+              Practice 3 Questions &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- Tier 3: Minor Review (Dielectric Medium) -->
+        <div class="student-focus-topic-card medium" style="margin-top:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:2px 8px; border-radius:6px;">
+              ⚠️ Conceptual Polish &bull; Quick Formula Check
+            </span>
+            <span style="font-size:0.74rem; color:#b45309; font-weight:700;">Score: 91.1% in Test 02</span>
+          </div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:#92400e; margin:0 0 4px 0;">
+            3. Dielectric Slab Insertion under Constant Charge vs Constant Voltage
+          </h4>
+          <p style="font-size:0.82rem; color:#78350f; margin:0 0 10px 0; line-height:1.5;">
+            Misconception: When battery is removed, charge <code>Q</code> is frozen. Insertion of dielectric slab increases capacitance, lowering potential energy <code>U = Q&sup2;/(2C)</code>.
+          </p>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <span style="font-size:0.75rem; color:#92400e; font-weight:600;">Action: Review NCERT Summary Table Section 2.15</span>
+            <button type="button" class="btn-secondary" onclick="window.launchRemedialPracticeDrill('drill_12_02_capacitors')" style="padding:5px 12px; font-size:0.76rem; font-weight:700; color:#b45309; border-color:#fde68a;">
+              Practice 3 Questions &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- Tier 4: Mastered Strengths (Green) -->
+        <div class="student-focus-topic-card mastered" style="margin-top:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; background:#dcfce7; color:#15803d; border:1px solid #86efac; padding:2px 8px; border-radius:6px;">
+              ✅ Core Strengths &bull; 100% Mastered Concepts
+            </span>
+            <span style="font-size:0.74rem; color:#15803d; font-weight:700;">Zero Errors Recorded</span>
+          </div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:#14532d; margin:0 0 8px 0;">
+            Consistent High Accuracy Concepts:
+          </h4>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <div style="font-size:0.8rem; color:#14532d; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="check" style="width:14px; height:14px; color:#16a34a;"></i>
+              <span>Coulomb's Law Vector Form &amp; Superposition</span>
+            </div>
+            <div style="font-size:0.8rem; color:#14532d; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="check" style="width:14px; height:14px; color:#16a34a;"></i>
+              <span>Equipotential Surfaces &amp; Zero Work Done</span>
+            </div>
+            <div style="font-size:0.8rem; color:#14532d; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="check" style="width:14px; height:14px; color:#16a34a;"></i>
+              <span>Drift Velocity &amp; Electron Mobility vd = eE&tau;/m</span>
+            </div>
+            <div style="font-size:0.8rem; color:#14532d; display:flex; align-items:center; gap:6px;">
+              <i data-lucide="check" style="width:14px; height:14px; color:#16a34a;"></i>
+              <span>Cyclotron Frequency Independence of Speed</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+  initLucideIcons();
+}
+
+function launchRemedialPracticeDrill(drillId) {
+  alert(`⚡ Launching targeted remedial practice drill for: ${drillId}.\nLoading adaptive questions to reinforce weak concepts.`);
+  if (typeof switchStudentTab === 'function') {
+    switchStudentTab('tabStudentActiveTest');
+  }
+}
+
+function shareStudentReportWhatsApp() {
+  const s = STUDENT_REPORT_DATA.student;
+  const msg = `*Unisole AI School - Weekly Diagnostic Report Card*\n\nScholar: ${s.name} (${s.roll})\nGrade: ${s.section}\n\n📊 Performance Summary:\n• Assignments: ${s.assignmentsSubmitted}/${s.assignmentsAssigned} Submitted (${s.assignmentCompletionRate})\n• Tests Attempted: ${s.testsAttempted}/${s.totalTestsScheduled} (100%)\n• Overall Average: ${s.averagePercentage} (${s.overallGrade})\n• Class Standing: ${s.standing} (${s.percentile})\n\n🎯 Priority Remedial Focus:\n1. Ampere's Circuital Law & Solenoid Ends\n2. Kirchhoff's Loop Rules\n\nView complete interactive telemetry & charts at:\nhttps://scholar.unisole.ai/report/${s.id}`;
+  
+  const encoded = encodeURIComponent(msg);
+  const url = `https://api.whatsapp.com/send?text=${encoded}`;
+  window.open(url, '_blank');
+}
+
+// Window Globals Export
+window.STUDENT_REPORT_DATA = STUDENT_REPORT_DATA;
+window.renderStudentSmartReport = renderStudentSmartReport;
+window.switchStudentReportSubView = switchStudentReportSubView;
+window.viewStudentTestReport = viewStudentTestReport;
+window.renderStudentDetailCharts = renderStudentDetailCharts;
+window.backToAttemptedTestsList = backToAttemptedTestsList;
+window.renderStudentFocusTopics = renderStudentFocusTopics;
+window.launchRemedialPracticeDrill = launchRemedialPracticeDrill;
+window.shareStudentReportWhatsApp = shareStudentReportWhatsApp;
+
 
 

@@ -2466,118 +2466,153 @@
       </div>
       </div>
 
-      <!-- 2. TAB: WEEKLY SMART REPORT CARD & DOSSIER -->
+      <!-- 2. TAB: WEEKLY SMART REPORT CARD & DIAGNOSTIC TELEMETRY -->
       <div class="student-tab-content" id="tabStudentSmartReport" style="display:none;">
-        <div class="glass-card" style="max-width: 900px; margin: 0 auto;">
-          <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-            <div>
-              <div class="pilot-tag" style="margin-bottom: 6px;">Unisole Academic Intelligence Document</div>
-              <h2 class="card-title" style="font-size: 1.35rem;">Weekly Diagnostic Smart Report Card</h2>
-              <p class="card-subtitle" id="smartReportSubtitle">Generated for: Aryan Sharma (Roll: 12-NM-01) &bull; Class 12th Non-Med</p>
+        <div style="max-width: 1200px; margin: 0 auto;">
+          
+          <!-- Report Header Banner -->
+          <div class="report-header-banner" style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:14px; padding:20px 24px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, rgba(2,132,199,0.15), rgba(37,99,235,0.2)); color:var(--accent-blue); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i data-lucide="award" style="width:26px; height:26px;"></i>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span class="teacher-nav-badge badge-blue">Scholar Performance Dossier</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Academic Session 2026–27</span>
+                </div>
+                <h2 style="margin:0; font-size:1.35rem; font-weight:800; color:var(--text-primary); font-family:var(--font-heading);">
+                  Weekly Diagnostic Report Card
+                </h2>
+                <p style="margin:2px 0 0 0; font-size:0.84rem; color:var(--text-secondary);">
+                  Student Scholar: <strong id="studentReportName" style="color:var(--text-primary);">Aryan Sharma (Roll #101)</strong> &bull; <span id="studentReportClass">Class 12th (Non-Medical)</span> &bull; Subject: <strong style="color:var(--accent-blue);">Physics</strong>
+                </p>
+              </div>
             </div>
-            <div style="text-align: right; display:flex; gap:8px;">
-              <button class="btn-secondary" id="btnOpenWhatsAppModal" style="font-size:0.82rem; padding:6px 14px; color:#22c55e; border-color:rgba(34,197,94,0.4); cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button type="button" class="btn-secondary" id="btnStudentWhatsAppShare" onclick="window.shareStudentReportWhatsApp()" style="font-size:0.82rem; padding:8px 14px; color:#059669; border-color:#a7f3d0; background:#ecfdf5; font-weight:700;">
                 <i data-lucide="message-square" style="width:14px; height:14px;"></i> WhatsApp to Parents
               </button>
-              <button class="btn-primary" id="btnDownloadReportPdf" onclick="window.print()" style="font-size:0.82rem; padding:6px 14px; cursor:pointer;">
-                <i data-lucide="printer" style="width:14px; height:14px;"></i> Print / Export PDF
+              <button type="button" class="btn-secondary" onclick="window.print()" style="font-size:0.82rem; padding:8px 14px; font-weight:700;">
+                <i data-lucide="printer" style="width:14px; height:14px;"></i> Print / PDF
               </button>
             </div>
           </div>
 
-          <!-- Weekly Overview Metrics -->
-          <div class="grid-4col" style="margin: 1.25rem 0;">
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Weekly Accuracy</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); margin-top: 4px;" id="smartReportAccuracy">78.4%</div>
+          <!-- TOP 4 KPI CARDS: Assignments Submitted, Tests Attempted, Cumulative Score, Section Rank -->
+          <div class="grid-4col" style="margin-bottom: 1.5rem; gap:16px;">
+            <!-- Card 1: Assignments Submitted -->
+            <div class="tier-kpi-card" style="border-top: 3px solid #0284c7;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Assignments Submitted</span>
+                <span class="teacher-nav-badge badge-blue">80% Rate</span>
+              </div>
+              <div style="font-size:1.75rem; font-weight:900; color:#0284c7; line-height:1.2;" id="kpiAssignmentsSubmitted">8 / 10</div>
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:4px 0 0 0;">
+                8 assignments submitted &bull; <span style="color:#d97706; font-weight:700;">2 pending drills</span>
+              </p>
             </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Study Hours</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-emerald); margin-top: 4px;" id="smartReportStudyHours">15.2 Hrs</div>
+
+            <!-- Card 2: Tests Attempted -->
+            <div class="tier-kpi-card" style="border-top: 3px solid #059669;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Tests Attempted</span>
+                <span class="teacher-nav-badge badge-green">100% Turnout</span>
+              </div>
+              <div style="font-size:1.75rem; font-weight:900; color:#059669; line-height:1.2;" id="kpiTestsAttempted">4 / 4</div>
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:4px 0 0 0;">
+                All 4 recorded unit tests completed
+              </p>
             </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Questions Solved</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-indigo); margin-top: 4px;" id="smartReportQuestionsSolved">68 Qs</div>
+
+            <!-- Card 3: Overall Test Performance -->
+            <div class="tier-kpi-card" style="border-top: 3px solid #7c3aed;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Overall Average Score</span>
+                <span class="teacher-nav-badge" style="background:#f5f3ff; color:#7c3aed; border-color:#ddd6fe;">Grade A</span>
+              </div>
+              <div style="font-size:1.75rem; font-weight:900; color:#7c3aed; line-height:1.2;" id="kpiOverallScore">86.1%</div>
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:4px 0 0 0;">
+                155 / 180 Total Marks &bull; <strong style="color:#059669;">+13.1% above class avg</strong>
+              </p>
             </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Avg Velocity</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-amber); margin-top: 4px;" id="smartReportVelocity">112s / Q</div>
+
+            <!-- Card 4: Class Rank & Standing -->
+            <div class="tier-kpi-card" style="border-top: 3px solid #d97706;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Class Standing</span>
+                <span class="teacher-nav-badge badge-amber">Top 8%</span>
+              </div>
+              <div style="font-size:1.75rem; font-weight:900; color:#d97706; line-height:1.2;" id="kpiClassStanding">#4 / 48</div>
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:4px 0 0 0;">
+                Rank #4 in Class 12-NonMed cohort
+              </p>
             </div>
           </div>
 
-          <!-- DIRECTIVE 1: FOR SCHOOL & HOSTEL FACULTY -->
-          <div class="report-directive-box directive-school" style="margin-bottom:1.25rem;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="school" style="color: var(--accent-indigo); width: 22px; height: 22px;"></i>
-              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
-                Directives for School &amp; Residential Hostel Faculty (Evening Prep)
-              </h3>
-            </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-              Specific academic interventions during 7:00 PM - 9:00 PM self-study hours at student hostel.
-            </p>
-
-            <div id="smartReportSchoolDirectivesList">
-              <div class="directive-item">
-                <span class="directive-num">1</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">1-on-1 Socratic Derivation Session (15 Mins)</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    During Monday evening study, conduct a short whiteboard check with Aryan on the differential equation of damped oscillations, clarifying why mechanical energy decays at rate b/m while amplitude decays at b/2m.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Er. Rajesh Kumar &bull; Target: 26 Oct 2026</span>
-                </div>
-              </div>
-
-              <div class="directive-item">
-                <span class="directive-num">2</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Remedial Practice Drill #SHM-04</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    Dispatch 5 targeted numerical problems with friction and viscous damping to reinforce energy calculations before Wednesday's section quiz.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Hostel Proctor &bull; Target: 27 Oct 2026</span>
-                </div>
-              </div>
-            </div>
+          <!-- SUB-VIEW SWITCHER PILLS -->
+          <div style="display:flex; gap:10px; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+            <button type="button" class="tier-filter-pill active" id="btnStudentSubViewTests" onclick="window.switchStudentReportSubView('tests')">
+              <i data-lucide="clipboard-list" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i>
+              Attempted Tests &amp; Reports (4)
+            </button>
+            <button type="button" class="tier-filter-pill" id="btnStudentSubViewTopics" onclick="window.switchStudentReportSubView('topics')">
+              <i data-lucide="target" style="width:14px; height:14px; display:inline-block; vertical-align:middle; margin-right:4px;"></i>
+              Topics to Focus On (AI Remedial Plan)
+            </button>
           </div>
 
-          <!-- DIRECTIVE 2: FOR PARENTS AT HOME -->
-          <div class="report-directive-box directive-parent">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="home" style="color: var(--accent-emerald); width: 22px; height: 22px;"></i>
-              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
-                Directives for Parents at Home (Weekend Support)
-              </h3>
-            </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-              Empathetic, non-technical actions to support Aryan's learning rhythm without exam stress.
-            </p>
-
-            <div id="smartReportParentDirectivesList">
-              <div class="directive-item">
-                <span class="directive-num">1</span>
+          <!-- SUB-VIEW 1: ATTEMPTED TESTS LIST & DETAIL CONTAINER -->
+          <div id="containerStudentTestsView">
+            
+            <!-- List of Attempted Tests Table / Cards -->
+            <div id="studentAttemptedTestsTableCard" class="report-chart-box" style="margin-bottom:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
                 <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">5-Minute Casual Feynman Technique Check</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    During your regular Sunday phone call or visit, casually ask Aryan: <em>'How do car shock absorbers stop a car from bouncing forever?'</em> Let him explain the physics in his own words.
+                  <h3 style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin:0;">
+                    Attempted Unit Tests &amp; Performance Telemetry
+                  </h3>
+                  <p style="font-size:0.78rem; color:var(--text-muted); margin:3px 0 0 0;">
+                    Review your score in each test, comparison against the class average, and open detailed diagnostics with charts.
                   </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Builds deep intuitive clarity without pressure</span>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-secondary); font-weight:600;">
+                  Showing 4 of 4 Completed Tests
                 </div>
               </div>
 
-              <div class="directive-item">
-                <span class="directive-num">2</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Quiet Focus Block (Sunday Morning)</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    Ensure Aryan has 45 minutes of quiet time on Sunday morning to complete the short 5-question speed recap test sent by the school platform.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Solidifies retention before Monday's new physics unit</span>
-                </div>
+              <div style="overflow-x:auto;">
+                <table class="assigned-table" style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr style="border-bottom:2px solid var(--border-subtle); text-align:left;">
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">Test Code &amp; Title</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">Chapter &amp; Topic</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">Date &amp; Duration</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">My Score</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">Class Average</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted);">Standing</th>
+                      <th style="padding:10px 14px; font-size:0.74rem; text-transform:uppercase; color:var(--text-muted); text-align:right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentAttemptedTestsTbody">
+                    <!-- Dynamic Rows Rendered by JS -->
+                  </tbody>
+                </table>
               </div>
             </div>
+
+            <!-- DETAILED INDIVIDUAL TEST REPORT STATION (Hidden initially, shown when [View My Test Report] is clicked) -->
+            <div id="studentIndividualTestReportDetail" style="display:none;">
+              <!-- Rendered dynamically by window.viewStudentTestReport(testId) -->
+            </div>
+
           </div>
+
+          <!-- SUB-VIEW 2: TOPICS TO FOCUS ON (AI REMEDIAL PLAN) -->
+          <div id="containerStudentTopicsView" style="display:none;">
+            <!-- Rendered dynamically by window.renderStudentFocusTopics() -->
+          </div>
+
         </div>
       </div>
 
