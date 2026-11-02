@@ -293,6 +293,9 @@
       document.querySelectorAll('.sub-tab-btn, .drawer-tab-btn').forEach(function(b) {
         b.classList.toggle('active', b.getAttribute('data-tab') === targetTabId);
       });
+      document.querySelectorAll('#drawerSectionTeacherWorkspaces .drawer-nav-card').forEach(function(b) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === targetTabId);
+      });
 
       // 3. Tab contents
       document.querySelectorAll('.teacher-tab-content').forEach(function(t) {
@@ -502,8 +505,8 @@
       </button>
     </div>
 
-    <!-- Active Faculty Profile Card -->
-    <div class="drawer-faculty-card" onclick="openFacultyClassSwitcherModal()" style="cursor:pointer;" title="Click to view profile & switch teaching class">
+    <!-- 1A. ACTIVE FACULTY PROFILE CARD (TEACHER ONLY) -->
+    <div class="drawer-faculty-card" id="drawerTeacherProfileCard" onclick="openFacultyClassSwitcherModal()" style="cursor:pointer;" title="Click to view profile & switch teaching class">
       <div style="display:flex; align-items:center; gap:10px;">
         <div class="drawer-faculty-avatar" id="drawerFacultyAvatar">
           <i data-lucide="user-check" style="width:18px; height:18px; color:var(--accent-blue);"></i>
@@ -527,11 +530,36 @@
       </div>
     </div>
 
-    <!-- ALL WORKSPACE TABS (Clean Scoped Navigation) -->
-    <div class="drawer-section">
+    <!-- 1B. ACTIVE STUDENT SCHOLAR CARD (STUDENT ONLY) -->
+    <div class="drawer-faculty-card" id="drawerStudentProfileCard" style="display:none; background:#ffffff; border:1px solid var(--border-subtle); box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:38px; height:38px; border-radius:8px; background:rgba(2,132,199,0.12); color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">
+          🎓
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+            <strong style="font-size:0.88rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-primary);">Aryan Sharma</strong>
+            <span style="font-size:0.68rem; font-weight:700; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:1px 6px; border-radius:4px;">Class 12th</span>
+          </div>
+          <span style="font-size:0.72rem; color:var(--text-secondary); display:block;">Class 12th Non-Med &bull; Roll #101</span>
+          <span style="font-size:0.7rem; color:var(--text-muted); display:block; margin-top:2px;">Scholar ID: SCH-2026-101</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid var(--border-subtle); font-size:0.74rem;">
+        <button type="button" class="btn-drawer-switch" onclick="event.stopPropagation(); closeSidebarDrawer(); openRoleGatewayModal();" style="color:#0284c7; border-color:rgba(2,132,199,0.3); background:rgba(2,132,199,0.08); font-weight:700;" title="Switch portal role">
+          <i data-lucide="repeat" style="width:12px; height:12px;"></i> Switch Portal ⇄
+        </button>
+        <button type="button" class="btn-drawer-switch" onclick="event.stopPropagation(); window.handleStudentSignOut();" style="color:#fb7185; border-color:rgba(251,113,133,0.3); background:rgba(251,113,133,0.08);" title="Sign out from student portal">
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+    <!-- 2A. TEACHER WORKSPACE TABS (TEACHER ONLY) -->
+    <div class="drawer-section" id="drawerSectionTeacherWorkspaces">
       <div class="drawer-section-title">
         <i data-lucide="layout-grid" style="width:13px; height:13px;"></i>
-        <span>Workspace Tabs</span>
+        <span>Teacher Workspace Tabs</span>
       </div>
       <div class="drawer-nav-list">
         <!-- 1. Create Test & Paper (Unified Studio) -->
@@ -578,8 +606,87 @@
       </div>
     </div>
 
-    <!-- ACTIVE CLASS SCOPE (DIRECT SWITCHER IN DRAWER) -->
-    <div class="drawer-section">
+    <!-- 2B. STUDENT WORKSPACE TABS (STUDENT ONLY - CARDS FROM IMAGE 1) -->
+    <div class="drawer-section" id="drawerSectionStudentWorkspaces" style="display:none;">
+      <div class="drawer-section-title">
+        <i data-lucide="layout-grid" style="width:13px; height:13px;"></i>
+        <span>Student Workspace Tabs</span>
+      </div>
+      <div class="drawer-nav-list">
+        <!-- 1. Take Test / Practice -->
+        <button type="button" class="drawer-nav-card drawer-student-card active" data-tab="tabStudentActiveTest" onclick="window.selectStudentDrawerTab('tabStudentActiveTest')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(56,189,248,0.15); color:#0284c7;">
+              <i data-lucide="edit-3" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Take Test / Practice</strong>
+              <span class="drawer-nav-card-sub">Unit Tests &amp; NTA Exam Simulator</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-blue">Active Test</span>
+        </button>
+
+        <!-- 2. Weekly Report Card -->
+        <button type="button" class="drawer-nav-card drawer-student-card" data-tab="tabStudentSmartReport" onclick="window.selectStudentDrawerTab('tabStudentSmartReport')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(124,58,237,0.15); color:#7c3aed;">
+              <i data-lucide="award" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Weekly Report Card</strong>
+              <span class="drawer-nav-card-sub">Diagnostic Dossier, Charts &amp; Focus Topics</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge" style="background:#f5f3ff; color:#7c3aed; border-color:#ddd6fe;">Dossier</span>
+        </button>
+
+        <!-- 3. Record of Previous Tests -->
+        <button type="button" class="drawer-nav-card drawer-student-card" data-tab="tabStudentPreviousTests" onclick="window.selectStudentDrawerTab('tabStudentPreviousTests')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(16,185,129,0.15); color:#059669;">
+              <i data-lucide="history" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Record of Previous Tests</strong>
+              <span class="drawer-nav-card-sub">4 Completed Tests &amp; Step Solutions</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-green">4 Completed</span>
+        </button>
+
+        <!-- 4. Personalized Assignments -->
+        <button type="button" class="drawer-nav-card drawer-student-card" data-tab="tabStudentRemedial" onclick="window.selectStudentDrawerTab('tabStudentRemedial')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(217,119,6,0.15); color:#d97706;">
+              <i data-lucide="target" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Personalized Assignments</strong>
+              <span class="drawer-nav-card-sub">Post-Test Drills &amp; Weak Concept Practice</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-amber">Drills</span>
+        </button>
+
+        <!-- 5. AI Voice Smartboard -->
+        <button type="button" class="drawer-nav-card drawer-student-card" data-tab="tabStudentSmartboard" onclick="window.selectStudentDrawerTab('tabStudentSmartboard')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(6,182,212,0.15); color:#0891b2;">
+              <i data-lucide="presentation" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">AI Voice Smartboard</strong>
+              <span class="drawer-nav-card-sub">Interactive Voice Tutor &amp; Canvas</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge" style="background:#ecfeff; color:#0891b2; border-color:#a5f3fc;">Live Tutor</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. ACTIVE CLASS SCOPE (TEACHER ONLY - HIDDEN FOR STUDENTS) -->
+    <div class="drawer-section" id="drawerSectionTeacherClassScope">
       <div class="drawer-section-title">
         <i data-lucide="graduation-cap" style="width:13px; height:13px;"></i>
         <span>Active Class &amp; Grade Scope</span>
@@ -674,8 +781,8 @@
       </div>
     </div>
 
-    <!-- CLASS & STUDENT ACTIONS -->
-    <div class="drawer-section">
+    <!-- CLASS & STUDENT ACTIONS (TEACHER ONLY) -->
+    <div class="drawer-section" id="drawerSectionTeacherActions">
       <div class="drawer-section-title">
         <i data-lucide="sliders" style="width:13px; height:13px;"></i>
         <span>Class &amp; Student Actions</span>
@@ -694,9 +801,9 @@
 
     <!-- SIGN OUT (as requested by user) -->
     <div class="drawer-footer">
-      <button type="button" class="btn-drawer-signout" id="btnDrawerSignOut" onclick="handleTeacherSignOut()">
+      <button type="button" class="btn-drawer-signout" id="btnDrawerSignOut" onclick="window.handleDrawerSignOut()">
         <i data-lucide="log-out" style="width:16px; height:16px;"></i>
-        <span>Sign Out</span>
+        <span id="btnDrawerSignOutLabel">Sign Out</span>
       </button>
     </div>
   </aside>

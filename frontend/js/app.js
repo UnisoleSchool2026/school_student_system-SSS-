@@ -549,6 +549,9 @@ window.switchStudentTab = function(tabId) {
   document.querySelectorAll('.student-nav-pill').forEach(pill => {
     pill.classList.toggle('active', pill.id === `studentPill${tabId.replace('tabStudent', '')}`);
   });
+  document.querySelectorAll('.drawer-student-card').forEach(card => {
+    card.classList.toggle('active', card.getAttribute('data-tab') === tabId);
+  });
   document.querySelectorAll('.student-tab-content').forEach(content => {
     const isTarget = content.id === tabId;
     content.style.display = isTarget ? 'block' : 'none';
@@ -562,6 +565,31 @@ window.switchStudentTab = function(tabId) {
     }
   }
   initLucideIcons();
+};
+
+window.selectStudentDrawerTab = function(tabId) {
+  if (typeof closeSidebarDrawer === 'function') {
+    closeSidebarDrawer();
+  }
+  window.switchStudentTab(tabId);
+};
+
+window.handleStudentSignOut = function() {
+  if (typeof closeSidebarDrawer === 'function') {
+    closeSidebarDrawer();
+  }
+  window.openRoleGatewayModal();
+};
+
+window.handleDrawerSignOut = function() {
+  if (typeof closeSidebarDrawer === 'function') {
+    closeSidebarDrawer();
+  }
+  if (state.activeRole === 'student') {
+    window.openRoleGatewayModal();
+  } else {
+    handleTeacherSignOut();
+  }
 };
 
 function switchPortalRole(role) {
@@ -602,6 +630,15 @@ function switchPortalRole(role) {
   const headerRoleBadge = document.getElementById('headerRoleBadge');
   const drawerPortalViews = document.getElementById('drawerSectionPortalViews');
 
+  // Role-Scoped Drawer Sections
+  const drawerTeacherProfile = document.getElementById('drawerTeacherProfileCard');
+  const drawerStudentProfile = document.getElementById('drawerStudentProfileCard');
+  const drawerTeacherWorkspaces = document.getElementById('drawerSectionTeacherWorkspaces');
+  const drawerStudentWorkspaces = document.getElementById('drawerSectionStudentWorkspaces');
+  const drawerTeacherClassScope = document.getElementById('drawerSectionTeacherClassScope');
+  const drawerTeacherActions = document.getElementById('drawerSectionTeacherActions');
+  const drawerSignOutLabel = document.getElementById('btnDrawerSignOutLabel');
+
   if (normalizedRole === 'student') {
     document.body.classList.remove('role-teacher');
     if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
@@ -612,16 +649,30 @@ function switchPortalRole(role) {
     }
     if (drawerPortalViews) drawerPortalViews.style.display = 'block';
 
+    // Show student drawer elements, hide teacher drawer elements
+    if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'none';
+    if (drawerStudentProfile) drawerStudentProfile.style.display = 'block';
+    if (drawerTeacherWorkspaces) drawerTeacherWorkspaces.style.display = 'none';
+    if (drawerStudentWorkspaces) drawerStudentWorkspaces.style.display = 'block';
+    if (drawerTeacherClassScope) drawerTeacherClassScope.style.display = 'none';
+    if (drawerTeacherActions) drawerTeacherActions.style.display = 'none';
+    if (drawerSignOutLabel) drawerSignOutLabel.innerText = 'Exit Student Portal';
+
+    const currentTab = state.activeStudentTab || 'tabStudentActiveTest';
+    document.querySelectorAll('.drawer-student-card').forEach(card => {
+      card.classList.toggle('active', card.getAttribute('data-tab') === currentTab);
+    });
+
     if (headerTitle) headerTitle.innerText = 'Student Learning Portal • Adaptive Tests & Smartboard';
     if (facultyName) facultyName.innerText = 'Aryan Sharma';
     if (facultyTag) {
-      facultyTag.innerText = 'Student (Class 11A)';
+      facultyTag.innerText = 'Student (Class 12A)';
       facultyTag.style.background = 'rgba(16, 185, 129, 0.2)';
       facultyTag.style.color = '#34d399';
     }
     if (roleDot) roleDot.style.background = '#10b981';
     if (drawerName) drawerName.innerText = 'Aryan Sharma';
-    if (drawerRole) drawerRole.innerText = 'Class 11 Science • Roll #101';
+    if (drawerRole) drawerRole.innerText = 'Class 12th Non-Med • Roll #101';
     if (drawerSubject) drawerSubject.innerText = 'Stream: Senior Secondary Non-Medical';
 
     renderStudentQuestion();
@@ -635,6 +686,14 @@ function switchPortalRole(role) {
       headerRoleBadge.title = 'Current Active Portal. Click to switch.';
     }
     if (drawerPortalViews) drawerPortalViews.style.display = 'block';
+
+    if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'block';
+    if (drawerStudentProfile) drawerStudentProfile.style.display = 'none';
+    if (drawerTeacherWorkspaces) drawerTeacherWorkspaces.style.display = 'block';
+    if (drawerStudentWorkspaces) drawerStudentWorkspaces.style.display = 'none';
+    if (drawerTeacherClassScope) drawerTeacherClassScope.style.display = 'block';
+    if (drawerTeacherActions) drawerTeacherActions.style.display = 'none';
+    if (drawerSignOutLabel) drawerSignOutLabel.innerText = 'Exit Leadership Portal';
 
     if (headerTitle) headerTitle.innerText = 'Principal Executive Portal • School Intelligence & Analytics';
     if (facultyName) facultyName.innerText = 'Dr. Anita Chandel';
@@ -658,6 +717,20 @@ function switchPortalRole(role) {
       headerRoleBadge.title = 'Faculty Profile (Role-Locked)';
     }
     if (drawerPortalViews) drawerPortalViews.style.display = 'none';
+
+    // Show teacher drawer elements, hide student drawer elements
+    if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'block';
+    if (drawerStudentProfile) drawerStudentProfile.style.display = 'none';
+    if (drawerTeacherWorkspaces) drawerTeacherWorkspaces.style.display = 'block';
+    if (drawerStudentWorkspaces) drawerStudentWorkspaces.style.display = 'none';
+    if (drawerTeacherClassScope) drawerTeacherClassScope.style.display = 'block';
+    if (drawerTeacherActions) drawerTeacherActions.style.display = 'block';
+    if (drawerSignOutLabel) drawerSignOutLabel.innerText = 'Sign Out (Teacher)';
+
+    const currentTab = state.activeTeacherTab || 'tabTeacherCreateTestAndPaper';
+    document.querySelectorAll('#drawerSectionTeacherWorkspaces .drawer-nav-card').forEach(card => {
+      card.classList.toggle('active', card.getAttribute('data-tab') === currentTab);
+    });
 
     const activeTeacher = teacherBuilderState.activeTeacher || {
       name: 'Dr. Vikram Sharma',
