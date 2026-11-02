@@ -485,49 +485,21 @@
         <span>Workspace Tabs</span>
       </div>
       <div class="drawer-nav-list">
-        <!-- 1. Create Paper (Unit Tests) -->
-        <button type="button" class="drawer-nav-card active" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
+        <!-- 1. Create Test & Paper (Unified Studio) -->
+        <button type="button" class="drawer-nav-card active" data-tab="tabTeacherCreateTestAndPaper" onclick="switchTeacherTab('tabTeacherCreateTestAndPaper')">
           <div class="drawer-nav-card-left">
             <div class="drawer-nav-card-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;">
               <i data-lucide="file-plus-2" style="width:17px; height:17px;"></i>
             </div>
             <div class="drawer-nav-card-text">
-              <strong class="drawer-nav-card-title">Create Paper</strong>
-              <span class="drawer-nav-card-sub">Unit Tests &amp; Quizzes (15–45 Min)</span>
+              <strong class="drawer-nav-card-title">Create Test &amp; Paper</strong>
+              <span class="drawer-nav-card-sub">Unit Tests, Board Papers &amp; Conduct Test</span>
             </div>
           </div>
-          <span class="drawer-nav-card-badge teacher-nav-badge badge-blue">Unit Tests</span>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-blue">3 Modes</span>
         </button>
 
-        <!-- 2. Full Board Papers (CBSE & HP) -->
-        <button type="button" class="drawer-nav-card" data-tab="tabTeacherBoardPaper" onclick="switchTeacherTab('tabTeacherBoardPaper')">
-          <div class="drawer-nav-card-left">
-            <div class="drawer-nav-card-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">
-              <i data-lucide="scroll" style="width:17px; height:17px;"></i>
-            </div>
-            <div class="drawer-nav-card-text">
-              <strong class="drawer-nav-card-title">Full Board Papers</strong>
-              <span class="drawer-nav-card-sub">CBSE &amp; HP Board Studio (Full Syllabus)</span>
-            </div>
-          </div>
-          <span class="drawer-nav-card-badge teacher-nav-badge badge-amber">CBSE &amp; HP</span>
-        </button>
-
-        <!-- 3. Take & Conduct Test -->
-        <button type="button" class="drawer-nav-card" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
-          <div class="drawer-nav-card-left">
-            <div class="drawer-nav-card-icon" style="background:rgba(52,211,153,0.15); color:#34d399;">
-              <i data-lucide="play-circle" style="width:17px; height:17px;"></i>
-            </div>
-            <div class="drawer-nav-card-text">
-              <strong class="drawer-nav-card-title">Take / Conduct Test</strong>
-              <span class="drawer-nav-card-sub">Live Assessments &amp; Submissions</span>
-            </div>
-          </div>
-          <span class="drawer-nav-card-badge teacher-nav-badge badge-green">Active Tests</span>
-        </button>
-
-        <!-- 4. Classes & Students -->
+        <!-- 2. Classes & Students -->
         <button type="button" class="drawer-nav-card" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
           <div class="drawer-nav-card-left">
             <div class="drawer-nav-card-icon" style="background:rgba(168,85,247,0.15); color:#c084fc;">
@@ -541,7 +513,7 @@
           <span class="drawer-nav-card-badge teacher-nav-badge">Roster</span>
         </button>
 
-        <!-- 5. Question Bank & PYQs -->
+        <!-- 3. Question Bank & PYQs -->
         <button type="button" class="drawer-nav-card" data-tab="tabQuestionBank" onclick="switchTeacherTab('tabQuestionBank')">
           <div class="drawer-nav-card-left">
             <div class="drawer-nav-card-icon" style="background:rgba(6,182,212,0.15); color:#22d3ee;">
@@ -743,7 +715,7 @@
             <span style="font-size:0.76rem; color:#94a3b8; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Active Workspace:</span>
             <span class="active-workspace-pill" id="activeWorkspacePill" style="display:inline-flex; align-items:center; gap:8px; background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; font-size:0.84rem; font-weight:700; padding:5px 12px; border-radius:8px;">
               <i data-lucide="file-plus-2" id="activeWorkspaceIcon" style="width:15px; height:15px; color:#38bdf8;"></i>
-              <span id="activeWorkspaceLabel">Create Paper (Unit Tests)</span>
+              <span id="activeWorkspaceLabel">Create Test &amp; Paper</span>
             </span>
           </div>
         </div>
@@ -807,9 +779,9 @@
       </div>
 
       <!-- ====================================================================
-           1. TAB: CREATE PAPER (UN-NOISY, CASCADING DROPDOWNS, POLISHED)
+           1. TAB: CREATE TEST & PAPER (UNIFIED STUDIO - 3 MODES VIA DROPDOWN)
            ==================================================================== -->
-      <div class="teacher-tab-content active" id="tabTeacherCreatePaper" style="display:block;">
+      <div class="teacher-tab-content active" id="tabTeacherCreateTestAndPaper" style="display:block;">
         
         <!-- Welcome Strip for Faculty -->
         <div class="stream-compact-strip" id="teacherWelcomeStrip" style="margin-bottom:1.25rem;">
@@ -828,6 +800,34 @@
           </div>
         </div>
 
+        <!-- ASSESSMENT & PAPER MODE SELECTOR (Dropdown per user request) -->
+        <div class="paper-mode-selection-strip" id="paperModeSelectionStrip" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 12px 18px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; color: #38bdf8;">
+              <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div>
+              <label for="selectPaperModeDropdown" style="font-size: 0.74rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 2px;">
+                Choose Assessment &amp; Paper Type:
+              </label>
+              <span style="font-size: 0.88rem; color: #f8fafc; font-weight: 700;" id="paperModeActiveLabel">
+                Mode 1: Create Paper &amp; Unit Tests (15–45 Min)
+              </span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <select id="selectPaperModeDropdown" onchange="switchPaperCreationMode(this.value)" class="form-select" style="min-width: 320px; padding: 9px 14px; font-size: 0.88rem; font-weight: 700; background: #0f172a; color: #38bdf8; border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(56,189,248,0.2);">
+              <option value="unit_test" selected>1. Create Paper / Unit Test (15–45 Min)</option>
+              <option value="board_paper">2. Full Board Paper (CBSE &amp; HP Board Studio)</option>
+              <option value="take_test">3. Take &amp; Conduct Test (Live Assessments)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submode 1: Unit Test & Chapter Quiz Builder -->
+        <div class="test-paper-submode" id="subModeUnitTest" style="display: block;">
+        
         <!-- Fast Test Creator Form (Un-noisy, Cascading Dropdowns) -->
         <div class="test-creator-container" style="margin-bottom: 1.5rem;">
           <div class="test-creator-form-card" style="width:100%;">
@@ -946,13 +946,11 @@
             </form>
           </div>
         </div>
+        </div>
+        <!-- End of Submode 1 (Unit Test) -->
 
-      </div>
-
-      <!-- ====================================================================
-           2. TAB: FULL-LENGTH BOARD QUESTION PAPER STUDIO (CBSE & HPBOSE)
-           ==================================================================== -->
-      <div class="teacher-tab-content" id="tabTeacherBoardPaper" style="display:none;">
+        <!-- Submode 2: Full-Length Board Question Paper Studio -->
+        <div class="test-paper-submode" id="subModeBoardPaper" style="display: none;">
         
         <!-- Studio Control Header Card -->
         <div class="teacher-studio-ctrl-card" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow-card);">
@@ -1043,13 +1041,11 @@
             <!-- Dynamically injected by renderBoardPaperStudio() -->
           </div>
         </div>
+        </div>
+        <!-- End of Submode 2 (Board Paper) -->
 
-      </div>
-
-      <!-- ====================================================================
-           3. TAB: TAKE & CONDUCT TEST (ACTIVE ASSESSMENTS & SUBMISSION MONITOR)
-           ==================================================================== -->
-      <div class="teacher-tab-content" id="tabTeacherTakeTest" style="display:none;">
+        <!-- Submode 3: Take & Conduct Test -->
+        <div class="test-paper-submode" id="subModeTakeTest" style="display: none;">
         
         <!-- Live Active Test Station Card -->
         <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 14px; padding: 18px 22px;">
@@ -1133,11 +1129,18 @@
             </div>
           </div>
         </div>
+        <!-- End of Submode 3 (Take Test) -->
 
       </div>
+      <!-- End of tabTeacherCreateTestAndPaper -->
+
+      <!-- Hidden compatibility anchors for legacy DOM query selectors -->
+      <div id="tabTeacherCreatePaper" style="display:none !important;"></div>
+      <div id="tabTeacherBoardPaper" style="display:none !important;"></div>
+      <div id="tabTeacherTakeTest" style="display:none !important;"></div>
 
       <!-- ====================================================================
-           3. TAB: CLASSES & STUDENTS (CREATE CLASS, ADD STUDENTS, ROSTER)
+           2. TAB: CLASSES & STUDENTS (CREATE CLASS, ADD STUDENTS, ROSTER)
            ==================================================================== -->
       <div class="teacher-tab-content" id="tabTeacherClasses" style="display:none;">
         

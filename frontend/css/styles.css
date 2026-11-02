@@ -5122,6 +5122,26 @@ button:active,
   pointer-events: none !important;
 }
 
+/* Unified Test & Paper Studio Mode Selector */
+.paper-mode-selection-strip {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+.test-paper-submode {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
 /* Clean Active Workspace Indicator Strip */
 .teacher-workspace-indicator-strip {
   display: flex;

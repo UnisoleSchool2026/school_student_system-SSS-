@@ -99,7 +99,7 @@ function setupGlobalModalDismissal() {
 // Application State
 const state = {
   activeRole: 'teacher',
-  activeTeacherTab: 'tabGenerator',
+  activeTeacherTab: 'tabTeacherCreateTestAndPaper',
   activeStudentMode: 'JEE_NEET',
   theme: 'dark',
   testDraft: [],
@@ -525,7 +525,7 @@ window.submitGatewayTeacherLogin = function(event) {
   } catch (e) {}
 
   window.closeRoleGatewayModal();
-  state.activeTeacherTab = 'tabTeacherCreatePaper';
+  state.activeTeacherTab = 'tabTeacherCreateTestAndPaper';
   switchPortalRole('teacher');
 
   const banner = document.createElement('div');
@@ -669,8 +669,9 @@ function switchPortalRole(role) {
       phone: '98160 10001'
     };
 
-    const currentTeacherTab = state.activeTeacherTab || 'tabTeacherCreatePaper';
+    const currentTeacherTab = state.activeTeacherTab || 'tabTeacherCreateTestAndPaper';
     const teacherTabTitles = {
+      'tabTeacherCreateTestAndPaper': `Teacher Portal • Create Test & Paper (${activeTeacher.subjectName})`,
       'tabTeacherCreatePaper': `Teacher Portal • Create Paper (${activeTeacher.subjectName})`,
       'tabTeacherTakeTest': 'Teacher Portal • Take & Conduct Class Tests',
       'tabTeacherClasses': 'Teacher Portal • Classes & Student Rosters',
@@ -743,7 +744,56 @@ window.filterSyllabusTrack = function(track) {
   }
 };
 
+function switchPaperCreationMode(mode) {
+  state.activePaperCreationMode = mode;
+  const dropdown = document.getElementById('selectPaperModeDropdown');
+  if (dropdown && dropdown.value !== mode) {
+    dropdown.value = mode;
+  }
+  const label = document.getElementById('paperModeActiveLabel');
+  
+  const subUnitTest = document.getElementById('subModeUnitTest');
+  const subBoardPaper = document.getElementById('subModeBoardPaper');
+  const subTakeTest = document.getElementById('subModeTakeTest');
+
+  if (subUnitTest) subUnitTest.style.display = (mode === 'unit_test') ? 'block' : 'none';
+  if (subBoardPaper) subBoardPaper.style.display = (mode === 'board_paper') ? 'block' : 'none';
+  if (subTakeTest) subTakeTest.style.display = (mode === 'take_test') ? 'block' : 'none';
+
+  if (mode === 'unit_test') {
+    if (label) label.innerText = 'Mode 1 of 3: Create Paper / Unit Tests & Quizzes (15–45 Min)';
+  } else if (mode === 'board_paper') {
+    if (label) label.innerText = 'Mode 2 of 3: Full Board Paper (CBSE & HP Board Studio - 33 Qs)';
+    if (typeof syncBoardPaperStudioWithTeacher === 'function') {
+      syncBoardPaperStudioWithTeacher();
+    }
+    if (!boardPaperStudioState.currentPaper) {
+      generateOrLoadBoardPaper();
+    }
+  } else if (mode === 'take_test') {
+    if (label) label.innerText = 'Mode 3 of 3: Take & Conduct Test (Live Assessments & Submissions)';
+  }
+
+  if (typeof initLucideIcons === 'function') {
+    initLucideIcons();
+  }
+}
+window.switchPaperCreationMode = switchPaperCreationMode;
+
 function switchTeacherTab(targetTabId) {
+  // Normalize individual submodes into unified tabTeacherCreateTestAndPaper
+  let submodeToActivate = null;
+  if (targetTabId === 'tabTeacherCreatePaper') {
+    targetTabId = 'tabTeacherCreateTestAndPaper';
+    submodeToActivate = 'unit_test';
+  } else if (targetTabId === 'tabTeacherBoardPaper') {
+    targetTabId = 'tabTeacherCreateTestAndPaper';
+    submodeToActivate = 'board_paper';
+  } else if (targetTabId === 'tabTeacherTakeTest') {
+    targetTabId = 'tabTeacherCreateTestAndPaper';
+    submodeToActivate = 'take_test';
+  }
+
   state.activeTeacherTab = targetTabId;
 
   // Ensure Teacher view is visible
@@ -761,9 +811,10 @@ function switchTeacherTab(targetTabId) {
 
   // Update workspace indicator strip
   const workspaceMap = {
-    'tabTeacherCreatePaper': { label: 'Create Paper (Unit Tests)', icon: 'file-plus-2', color: '#38bdf8' },
-    'tabTeacherBoardPaper': { label: 'Full Board Papers (CBSE & HP)', icon: 'scroll', color: '#f59e0b' },
-    'tabTeacherTakeTest': { label: 'Take & Conduct Test (Active Tests)', icon: 'play-circle', color: '#34d399' },
+    'tabTeacherCreateTestAndPaper': { label: 'Create Test & Paper', icon: 'file-plus-2', color: '#38bdf8' },
+    'tabTeacherCreatePaper': { label: 'Create Test & Paper', icon: 'file-plus-2', color: '#38bdf8' },
+    'tabTeacherBoardPaper': { label: 'Create Test & Paper', icon: 'scroll', color: '#f59e0b' },
+    'tabTeacherTakeTest': { label: 'Create Test & Paper', icon: 'play-circle', color: '#34d399' },
     'tabTeacherClasses': { label: 'Classes & Students Roster', icon: 'users', color: '#c084fc' },
     'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' }
   };
@@ -794,7 +845,8 @@ function switchTeacherTab(targetTabId) {
     : (activeProf ? activeProf.subjectName : 'Physics');
 
   const tabTitles = {
-    'tabTeacherCreatePaper': `Create Paper & Unit Tests • ${curSubjName}`,
+    'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • ${curSubjName}`,
+    'tabTeacherCreatePaper': `Create Test & Paper • ${curSubjName}`,
     'tabTeacherBoardPaper': `Full-Length Board Question Paper Studio (CBSE & HP) • ${curSubjName}`,
     'tabTeacherTakeTest': `Take & Conduct Test (Active Assessments) • ${curSubjName}`,
     'tabTeacherClasses': `Classes & Students Roster • ${curSubjName}`,
@@ -811,12 +863,11 @@ function switchTeacherTab(targetTabId) {
   }
 
   // Load tab-specific context
-  if (targetTabId === 'tabTeacherBoardPaper') {
-    if (typeof syncBoardPaperStudioWithTeacher === 'function') {
-      syncBoardPaperStudioWithTeacher();
-    }
-    if (!boardPaperStudioState.currentPaper) {
-      generateOrLoadBoardPaper();
+  if (targetTabId === 'tabTeacherCreateTestAndPaper') {
+    if (submodeToActivate) {
+      switchPaperCreationMode(submodeToActivate);
+    } else {
+      switchPaperCreationMode(state.activePaperCreationMode || 'unit_test');
     }
   } else if (targetTabId === 'tabGenerator') {
     if (!teacherBuilderState.currentTaxonomy) {
@@ -9043,7 +9094,7 @@ function initTeacherSession() {
 
   applyTeacherProfile(stored, false);
   if (!state.activeTeacherTab) {
-    switchTeacherTab('tabGenerator');
+    switchTeacherTab('tabTeacherCreateTestAndPaper');
   }
 }
 
