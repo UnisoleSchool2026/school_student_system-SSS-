@@ -487,7 +487,11 @@
       <div class="drawer-nav-list">
         <button type="button" class="drawer-tab-btn active" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
           <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
-          <span>Create Paper for Students</span>
+          <span>Create Paper (Unit Tests)</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherBoardPaper" onclick="switchTeacherTab('tabTeacherBoardPaper')">
+          <i data-lucide="scroll" style="width:16px; height:16px; color:#f59e0b;"></i>
+          <span>Full Board Papers (CBSE / HP)</span>
         </button>
         <button type="button" class="drawer-tab-btn" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
           <i data-lucide="clipboard-list" style="width:16px; height:16px;"></i>
@@ -683,7 +687,12 @@
         <button type="button" class="teacher-nav-pill active" id="teacherPillCreatePaper" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
           <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
           <span>Create Paper</span>
-          <span class="teacher-nav-badge badge-blue">Paper Builder</span>
+          <span class="teacher-nav-badge badge-blue">Unit Tests</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillBoardPaper" data-tab="tabTeacherBoardPaper" onclick="switchTeacherTab('tabTeacherBoardPaper')">
+          <i data-lucide="scroll" style="width:16px; height:16px; color:#f59e0b;"></i>
+          <span>Full Board Papers</span>
+          <span class="teacher-nav-badge badge-amber">CBSE &amp; HP</span>
         </button>
         <button type="button" class="teacher-nav-pill" id="teacherPillTakeTest" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
           <i data-lucide="play-circle" style="width:16px; height:16px;"></i>
@@ -873,7 +882,104 @@
       </div>
 
       <!-- ====================================================================
-           2. TAB: TAKE & CONDUCT TEST (ACTIVE ASSESSMENTS & SUBMISSION MONITOR)
+           2. TAB: FULL-LENGTH BOARD QUESTION PAPER STUDIO (CBSE & HPBOSE)
+           ==================================================================== -->
+      <div class="teacher-tab-content" id="tabTeacherBoardPaper" style="display:none;">
+        
+        <!-- Studio Control Header Card -->
+        <div class="teacher-studio-ctrl-card" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow-card);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:42px; height:42px; border-radius:10px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); display:flex; align-items:center; justify-content:center; color:#f59e0b;">
+                <i data-lucide="scroll" style="width:22px; height:22px;"></i>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-primary); letter-spacing:-0.2px;" id="studioPaperMainTitle">Full-Length Board Question Paper Studio</h3>
+                  <span class="teacher-nav-badge badge-amber" style="font-size:0.7rem; padding:2px 8px;">Entire Syllabus Coverage</span>
+                </div>
+                <span style="font-size:0.8rem; color:var(--text-secondary);" id="studioPaperSubtitle">Official 3-Hour Exam Pattern &bull; Full Syllabus &bull; CBSE &amp; HP Board (HPBOSE)</span>
+              </div>
+            </div>
+
+            <!-- BOARD TOGGLE & SUBJECT SELECTOR -->
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <!-- Board Toggle -->
+              <div style="display:inline-flex; background:rgba(15,23,42,0.8); border:1px solid var(--border-subtle); border-radius:8px; padding:3px; gap:4px;">
+                <button type="button" class="btn-paper-board-toggle active" id="btnToggleBoardCbse" onclick="changeStudioBoard('CBSE')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:#2563eb; color:#fff; transition:all 0.15s ease;">
+                  CBSE Board (70M / 80M)
+                </button>
+                <button type="button" class="btn-paper-board-toggle" id="btnToggleBoardHp" onclick="changeStudioBoard('HP_BOARD')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:transparent; color:#94a3b8; transition:all 0.15s ease;">
+                  HP Board (HPBOSE) (60M / 70M)
+                </button>
+              </div>
+
+              <!-- Subject Scope Dropdown -->
+              <select id="selectStudioSubject" class="form-select" onchange="regenerateStudioPaper()" style="font-size:0.82rem; font-weight:700; padding:7px 12px; background:#1e293b; color:#f8fafc; border:1px solid var(--border-subtle); border-radius:8px; min-width:220px;">
+                <option value="Physics" selected>Class 12 Physics (Full Syllabus &bull; 70M/60M)</option>
+                <option value="Chemistry">Class 12 Chemistry (Full Syllabus &bull; 70M/60M)</option>
+                <option value="Mathematics">Class 12 Mathematics (Full Syllabus &bull; 80M)</option>
+                <option value="Science">Class 10 Science (Full Syllabus &bull; 80M/70M)</option>
+                <option value="Mathematics10">Class 10 Mathematics (Full Syllabus &bull; 80M)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ACTION CONTROLS BAR -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:0.8rem; color:#94a3b8; display:flex; align-items:center; gap:8px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+              <span>Interactive Blueprint: Hover over questions to <strong>Swap</strong> with alternatives, <strong>Edit</strong> in-place, or <strong>Delete</strong>.</span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary" id="btnToggleMarkingScheme" onclick="togglePaperMarkingScheme()" style="font-size:0.8rem; padding:7px 14px; min-height:38px; display:inline-flex; align-items:center; gap:6px;">
+                <i data-lucide="eye" style="width:14px; height:14px;"></i>
+                <span id="labelToggleMarkingScheme">Show Marking Scheme</span>
+              </button>
+
+              <button type="button" class="btn-secondary" onclick="openAddCustomQuestionModal()" style="font-size:0.8rem; padding:7px 14px; min-height:38px; border-color:rgba(52,211,153,0.4); color:#34d399; display:inline-flex; align-items:center; gap:6px;">
+                <i data-lucide="plus-circle" style="width:14px; height:14px;"></i>
+                <span>Add Custom Question</span>
+              </button>
+
+              <button type="button" class="btn-secondary" onclick="regenerateStudioPaper()" style="font-size:0.8rem; padding:7px 14px; min-height:38px; display:inline-flex; align-items:center; gap:6px;" title="Regenerate paper with fresh PYQ mix">
+                <i data-lucide="refresh-cw" style="width:14px; height:14px;"></i>
+                <span>Regenerate Paper</span>
+              </button>
+
+              <button type="button" class="btn-primary" onclick="printBoardQuestionPaper()" style="background:linear-gradient(135deg, #10b981, #059669); font-size:0.82rem; padding:7px 18px; font-weight:800; min-height:38px; display:inline-flex; align-items:center; gap:6px; border:none; border-radius:8px; color:#fff; cursor:pointer;" title="Print clean exam paper">
+                <i data-lucide="printer" style="width:15px; height:15px;"></i>
+                <span>Print / Export PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENTIRE SYLLABUS COVERAGE BANNER -->
+        <div style="background:linear-gradient(135deg, rgba(37,99,235,0.12), rgba(15,23,42,0.85)); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i data-lucide="book-open" style="width:18px; height:18px; color:#38bdf8;"></i>
+            <div style="font-size:0.82rem; color:#cbd5e1; line-height:1.4;">
+              <strong style="color:#f8fafc;">Full Syllabus Comprehensive Exam:</strong> Synthesizes questions across all NCERT units according to the official Board unit-wise weightage distribution.
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.15); padding:3px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3);">
+            Official Question Blueprint Active
+          </div>
+        </div>
+
+        <!-- STUDIO PAPER CANVAS CONTAINER -->
+        <div class="board-paper-studio-body" style="background:#0b1120; border-radius:12px; padding:1.5rem; overflow-x:auto;">
+          <div class="board-paper-sheet" id="boardPaperPrintCanvas">
+            <!-- Dynamically injected by renderBoardPaperStudio() -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ====================================================================
+           3. TAB: TAKE & CONDUCT TEST (ACTIVE ASSESSMENTS & SUBMISSION MONITOR)
            ==================================================================== -->
       <div class="teacher-tab-content" id="tabTeacherTakeTest" style="display:none;">
         
@@ -3571,72 +3677,7 @@ _Unisole AI School Scholar Assistant_</div>
   <!-- ========================================================================
        MODAL: FULL-LENGTH BOARD QUESTION PAPER STUDIO & CUSTOMIZER
        ======================================================================== -->
-  <div class="board-paper-studio-overlay" id="modalBoardPaperStudio" style="display: none;">
-    <!-- STUDIO NAVBAR -->
-    <header class="board-paper-studio-navbar">
-      <div style="display: flex; align-items: center; gap: 14px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
-            <i data-lucide="scroll" style="width: 18px; height: 18px;"></i>
-          </div>
-          <div>
-            <strong style="font-size: 0.95rem; color: #fff; display: block;" id="studioPaperMainTitle">Board Question Paper Studio</strong>
-            <span style="font-size: 0.72rem; color: #94a3b8;" id="studioPaperSubtitle">Official Pattern &bull; Full 3-Hour Paper</span>
-          </div>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
-          <!-- Board Selector Toggle -->
-          <div style="display: inline-flex; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 2px;">
-            <button type="button" class="btn-paper-board-toggle active" id="btnToggleBoardCbse" onclick="changeStudioBoard('CBSE')" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; background: #2563eb; color: #fff;">CBSE Board</button>
-            <button type="button" class="btn-paper-board-toggle" id="btnToggleBoardHp" onclick="changeStudioBoard('HP_BOARD')" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; background: transparent; color: #94a3b8;">HP Board (HPBOSE)</button>
-          </div>
-
-          <!-- Subject Selector -->
-          <select id="selectStudioSubject" class="form-select" onchange="regenerateStudioPaper()" style="font-size: 0.8rem; font-weight: 700; padding: 5px 10px; background: #1e293b; color: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 6px;">
-            <option value="Physics">Class 12 Physics (70M / 60M)</option>
-            <option value="Chemistry">Class 12 Chemistry (70M / 60M)</option>
-            <option value="Mathematics">Class 12 Mathematics (80M)</option>
-            <option value="Science">Class 10 Science (80M / 70M)</option>
-            <option value="Mathematics10">Class 10 Mathematics (80M)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- NAVBAR ACTIONS -->
-      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <!-- Toggle Solution / Marking Scheme -->
-        <button type="button" class="btn-secondary" id="btnToggleMarkingScheme" onclick="togglePaperMarkingScheme()" style="font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;" title="Toggle Step Rubric & Marking Scheme View">
-          <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
-          <span id="labelToggleMarkingScheme">Show Marking Scheme</span>
-        </button>
-
-        <!-- Add Custom Question Button -->
-        <button type="button" class="btn-secondary" onclick="openAddCustomQuestionModal()" style="font-size: 0.78rem; padding: 6px 12px; border-color: rgba(52, 211, 153, 0.4); color: #34d399; display: inline-flex; align-items: center; gap: 6px;" title="Add teacher custom question to this paper">
-          <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i>
-          <span>Add Question</span>
-        </button>
-
-        <!-- Print Question Paper -->
-        <button type="button" class="btn-primary" onclick="printBoardQuestionPaper()" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.78rem; padding: 6px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 6px; color: #fff; cursor: pointer;" title="Print clean exam paper">
-          <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
-          <span>Print Paper</span>
-        </button>
-
-        <!-- Close Button -->
-        <button type="button" onclick="closeBoardPaperStudio()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;" title="Close Studio" aria-label="Close Studio">
-          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- STUDIO CANVAS CONTAINER -->
-    <main class="board-paper-studio-body" id="studioPaperScrollBody">
-      <div class="board-paper-sheet" id="boardPaperPrintCanvas">
-        <!-- Paper content dynamically injected by renderBoardPaperStudio() -->
-      </div>
-    </main>
-  </div>
+  <!-- Note: Full-length Board Paper Studio is permanently housed in dedicated teacher tab #tabTeacherBoardPaper -->
 
   <!-- MODAL: ADD CUSTOM QUESTION (TEACHER INPUT) -->
   <div class="drilldown-modal-backdrop" id="modalAddCustomPaperQuestion" role="dialog" aria-modal="true" style="display: none; z-index: 100050;" onclick="if (event.target === this) closeAddCustomQuestionModal();">

@@ -321,6 +321,13 @@ function normalizeLatexText(raw) {
 function renderLatexString(rawText) {
   if (!rawText || typeof rawText !== 'string') return '';
 
+  const mathPlaceholders = [];
+  function storeMath(html) {
+    const key = `___KATEX_BLOCK_${mathPlaceholders.length}___`;
+    mathPlaceholders.push(html);
+    return key;
+  }
+
   // 0. Smart LaTeX normalizer (repairs un-delimited math/Greek/symbols)
   let content = normalizeLatexText(rawText);
 
@@ -337,10 +344,10 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(match);
     if (window.katex) {
       try {
-        return window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false });
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
       } catch (e) {}
     }
-    return `<div class="katex-display-fallback">${cleanTex}</div>`;
+    return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
   });
 
   // 4. Render Display Math: $$...$$
@@ -348,10 +355,10 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false });
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
       } catch (e) {}
     }
-    return `<div class="katex-display-fallback">${cleanTex}</div>`;
+    return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
   });
 
   // 5. Render Display Math: \[...\]
@@ -359,10 +366,10 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false });
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
       } catch (e) {}
     }
-    return `<div class="katex-display-fallback">${cleanTex}</div>`;
+    return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
   });
 
   // 6. Render Inline Math: \(...\)
@@ -370,10 +377,10 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false });
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false }));
       } catch (e) {}
     }
-    return `<span class="katex-inline-fallback">${cleanTex}</span>`;
+    return storeMath(`<span class="katex-inline-fallback">${cleanTex}</span>`);
   });
 
   // 7. Render Inline Math: $...$
@@ -385,7 +392,7 @@ function renderLatexString(rawText) {
         rendered = window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false });
       } catch (e) {}
     }
-    return `${prefix}${rendered}`;
+    return `${prefix}${storeMath(rendered)}`;
   });
 
   // 8. Post-processing text outside rendered math:
@@ -393,9 +400,14 @@ function renderLatexString(rawText) {
   content = content.replace(/\\(\s*[\r\n]+)/g, '$1');
   content = content.replace(/([:;,])\s*\\\s*/g, '$1 ');
 
-  // Format line breaks
+  // Format line breaks safely only in text portions
   content = content.replace(/\n\s*\n/g, '<br/><br/>');
   content = content.replace(/\n/g, '<br/>');
+
+  // 9. Restore preserved KaTeX blocks with pristine untouched SVG paths
+  mathPlaceholders.forEach((html, i) => {
+    content = content.replace(`___KATEX_BLOCK_${i}___`, () => html);
+  });
 
   return content;
 }
@@ -764,10 +776,14 @@ function switchTeacherTab(targetTabId) {
     : (activeProf ? activeProf.subjectName : 'Physics');
 
   const tabTitles = {
-    'tabTeacherSyllabus': 'Teacher Portal • Senior Physics Curriculum & Syllabus',
+    'tabTeacherCreatePaper': `Create Paper & Unit Tests • ${curSubjName}`,
+    'tabTeacherBoardPaper': `Full-Length Board Question Paper Studio (CBSE & HP) • ${curSubjName}`,
+    'tabTeacherTakeTest': `Take & Conduct Test (Active Assessments) • ${curSubjName}`,
+    'tabTeacherClasses': `Classes & Students Roster • ${curSubjName}`,
+    'tabTeacherWeakConcepts': `Weak Concepts Diagnostic & What to Teach • ${curSubjName}`,
+    'tabTeacherSyllabus': `Teacher Portal • Senior ${curSubjName} Curriculum`,
     'tabGenerator': 'Teacher Portal • Create & Assign Tests',
     'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
-    'tabTeacherWeakConcepts': 'Teacher Portal • Weak Concepts Diagnostic & What to Teach in Class',
     'tabQuestionBank': `Question Bank & PYQ Repository • ${curSubjName}`,
     'tabStudents': `Students & Smart Cards • ${curSubjName}`,
     'tabSmartReports': `Weekly Smart Report • ${curSubjName}`,
@@ -778,7 +794,14 @@ function switchTeacherTab(targetTabId) {
   }
 
   // Load tab-specific context
-  if (targetTabId === 'tabGenerator') {
+  if (targetTabId === 'tabTeacherBoardPaper') {
+    if (typeof syncBoardPaperStudioWithTeacher === 'function') {
+      syncBoardPaperStudioWithTeacher();
+    }
+    if (!boardPaperStudioState.currentPaper) {
+      generateOrLoadBoardPaper();
+    }
+  } else if (targetTabId === 'tabGenerator') {
     if (!teacherBuilderState.currentTaxonomy) {
       setupTeacherTestBuilder();
     }
@@ -12711,28 +12734,48 @@ const boardPaperStudioState = {
   alternativesList: []
 };
 
+function syncBoardPaperStudioWithTeacher() {
+  const activeTeacher = teacherBuilderState.activeTeacher;
+  const subSelect = document.getElementById('selectStudioSubject');
+  if (!activeTeacher) return;
+
+  const subjKey = activeTeacher.subjectKey || 'PHYSICS';
+  if (subjKey === 'PHYSICS') {
+    boardPaperStudioState.subject = 'Physics';
+    boardPaperStudioState.grade = '12';
+    if (subSelect) subSelect.value = 'Physics';
+  } else if (subjKey === 'CHEMISTRY') {
+    boardPaperStudioState.subject = 'Chemistry';
+    boardPaperStudioState.grade = '12';
+    if (subSelect) subSelect.value = 'Chemistry';
+  } else if (subjKey === 'MATHEMATICS') {
+    boardPaperStudioState.subject = 'Mathematics';
+    boardPaperStudioState.grade = '12';
+    if (subSelect) subSelect.value = 'Mathematics';
+  } else if (subjKey === 'CLASS10_SCIENCE') {
+    boardPaperStudioState.subject = 'Science';
+    boardPaperStudioState.grade = '10';
+    if (subSelect) subSelect.value = 'Science';
+  } else if (subjKey === 'CLASS10_MATHEMATICS') {
+    boardPaperStudioState.subject = 'Mathematics';
+    boardPaperStudioState.grade = '10';
+    if (subSelect) subSelect.value = 'Mathematics10';
+  }
+  updateBoardToggleUI();
+}
+
 async function openBoardPaperStudio(preferredBoard = null, preferredGrade = null, preferredSubject = null) {
   if (preferredBoard) boardPaperStudioState.board = preferredBoard;
   if (preferredGrade) boardPaperStudioState.grade = preferredGrade;
   if (preferredSubject) boardPaperStudioState.subject = preferredSubject;
 
-  const modal = document.getElementById('modalBoardPaperStudio');
-  if (modal) {
-    modal.style.display = 'flex';
-  }
-
-  // Update UI toggles
+  switchTeacherTab('tabTeacherBoardPaper');
   updateBoardToggleUI();
-
-  // Load or generate paper
   await generateOrLoadBoardPaper();
 }
 
 function closeBoardPaperStudio() {
-  const modal = document.getElementById('modalBoardPaperStudio');
-  if (modal) {
-    modal.style.display = 'none';
-  }
+  switchTeacherTab('tabTeacherCreatePaper');
 }
 
 function updateBoardToggleUI() {
@@ -13542,6 +13585,9 @@ window.openEditQuestionModal = openEditQuestionModal;
 window.closeEditQuestionModal = closeEditQuestionModal;
 window.submitEditPaperQuestion = submitEditPaperQuestion;
 window.deletePaperQuestionFromUI = deletePaperQuestionFromUI;
+window.printBoardQuestionPaper = printBoardQuestionPaper;
+window.syncBoardPaperStudioWithTeacher = syncBoardPaperStudioWithTeacher;
+window.boardPaperStudioState = boardPaperStudioState;
 window.printBoardQuestionPaper = printBoardQuestionPaper;
 
 // ============================================================================

@@ -4436,6 +4436,9 @@ button:active,
     overflow: visible !important;
   }
   .board-paper-studio-navbar,
+  .teacher-studio-ctrl-card,
+  .teacher-portal-nav,
+  .drawer-nav-list,
   .paper-q-teacher-tools,
   .btn-paper-tool,
   #btnToggleMarkingScheme,
@@ -5078,6 +5081,11 @@ button:active,
 .teacher-nav-badge.badge-rose {
   background: rgba(244, 63, 94, 0.2);
   color: #fb7185;
+}
+
+.teacher-nav-badge.badge-amber {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
 }
 
 /* Weak Concepts Diagnostic Dashboard */
