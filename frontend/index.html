@@ -316,78 +316,124 @@
         </p>
       </div>
 
-      <div class="role-gateway-grid">
+      <div class="role-gateway-grid" style="grid-template-columns: 1.6fr 1fr; gap: 18px;">
         
-        <!-- 1. Principal Login Card -->
-        <div class="role-gateway-card card-principal" onclick="loginWithRole('director')">
+        <!-- 1. Dedicated Faculty / Teacher Login Card -->
+        <div class="role-gateway-card card-teacher" style="cursor: default; border: 1.5px solid rgba(56, 189, 248, 0.45); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));">
           <div>
-            <span class="role-card-badge">Executive Leadership</span>
-            <div class="role-card-avatar" style="background:rgba(168, 85, 247, 0.2); color:#c084fc;">
-              🏛️
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <span class="role-card-badge" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8;">
+                👨‍🏫 Faculty Workspace &bull; Sign-In
+              </span>
+              <span style="font-size:0.72rem; color:#94a3b8; font-weight:600;">Academic Session 2026–27</span>
             </div>
-            <h3 class="role-card-title">The Principal</h3>
-            <div class="role-card-name">Dr. Anita Chandel &bull; Director</div>
-            <p class="role-card-desc">
-              Strategic oversight across the school: 14-day pilot adoption analytics, class cohort velocity, hostel evening prep directives, and faculty syllabus audits.
+            
+            <h3 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0 0 4px 0;">Teacher Portal Sign-In</h3>
+            <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 14px 0; line-height:1.4;">
+              Sign in with your registered phone number, name, and subject expertise to access your classes, create test papers, and conduct assessments.
             </p>
-            <ul class="role-card-features">
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> 14-Day Pilot Intelligence Dashboard</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Class 11 Academic Cohort Analytics</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Hostel Evening Prep &amp; Parent Directives</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#c084fc;"></i> Cross-Department Syllabus Audit</li>
-            </ul>
+
+            <form id="formGatewayTeacherLogin" onsubmit="event.preventDefault(); window.submitGatewayTeacherLogin(event);" style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div>
+                  <label for="inputGatewayTeacherPhone" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
+                    Mobile Number *
+                  </label>
+                  <input type="tel" id="inputGatewayTeacherPhone" value="98160 10001" placeholder="e.g. 98160 10001" required pattern="[0-9\s+-]{10,15}" class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
+                </div>
+
+                <div>
+                  <label for="inputGatewayTeacherName" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
+                    Faculty Full Name *
+                  </label>
+                  <input type="text" id="inputGatewayTeacherName" value="Dr. Vikram Sharma" placeholder="e.g. Dr. Vikram Sharma" required class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
+                </div>
+              </div>
+
+              <div>
+                <label for="selectGatewayTeacherSubject" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
+                  Subject Expert Of (Dropdown) *
+                </label>
+                <select id="selectGatewayTeacherSubject" required class="form-select" style="width:100%; padding:9px 12px; font-size:0.86rem; font-weight:700; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56, 189, 248, 0.45); color:#38bdf8; border-radius:8px;">
+                  <option value="PHYSICS" selected>⚡ Physics (Senior Secondary JEE / NEET / CBSE)</option>
+                  <option value="CHEMISTRY">🧪 Chemistry (Senior Secondary NEET / JEE / Boards)</option>
+                  <option value="MATHEMATICS">📐 Mathematics (Senior Secondary JEE / Boards)</option>
+                  <option value="BIOLOGY">🧬 Biology (Senior Secondary NEET UG / Boards)</option>
+                  <option value="CLASS10_MATHEMATICS">🔢 Class 10th Mathematics (CBSE &amp; HP Board)</option>
+                  <option value="CLASS10_SCIENCE">🔬 Class 10th Science (Physics, Chemistry, Biology)</option>
+                  <option value="COMPUTER_SCIENCE">💻 Computer Science &amp; Informatics</option>
+                </select>
+              </div>
+
+              <!-- Quick Faculty Select Pills -->
+              <div>
+                <span style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+                  Or 1-Click Quick Select Registered Faculty:
+                </span>
+                <div class="faculty-quick-pills">
+                  <button type="button" class="faculty-quick-pill active" onclick="window.fillGatewayFaculty('Dr. Vikram Sharma', '98160 10001', 'PHYSICS')">
+                    👨‍🏫 Dr. Vikram Sharma &bull; Physics
+                  </button>
+                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Prof. Sunita Rao', '98160 10002', 'CHEMISTRY')">
+                    👩‍🏫 Prof. Sunita Rao &bull; Chemistry
+                  </button>
+                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Mrs. Meenakshi Sharma', '98160 10010', 'CLASS10_MATHEMATICS')">
+                    👩‍🏫 Mrs. Meenakshi &bull; Class 10 Maths
+                  </button>
+                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Er. Rakesh Thakur', '98160 10011', 'CLASS10_SCIENCE')">
+                    👨‍🏫 Er. Rakesh &bull; Class 10 Science
+                  </button>
+                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Dr. Ananya Mukherjee', '98160 10003', 'BIOLOGY')">
+                    👩‍⚕️ Dr. Ananya &bull; Biology
+                  </button>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">
+                <span style="font-size:0.74rem; color:#94a3b8;">
+                  🔒 Role-locked: Teacher creates papers, conducts tests &amp; manages classes.
+                </span>
+                <button type="submit" class="btn-role-login" style="width:auto; padding:10px 22px; background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; min-height:44px;">
+                  <span>Sign In as Faculty</span> <i data-lucide="arrow-right" style="width:15px; height:15px;"></i>
+                </button>
+              </div>
+            </form>
           </div>
-          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('director');">
-            <span>Enter Principal Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
-          </button>
         </div>
 
-        <!-- 2. Teacher Login Card -->
-        <div class="role-gateway-card card-teacher" onclick="loginWithRole('teacher')">
-          <div>
-            <span class="role-card-badge">Educator &bull; Senior Faculty</span>
-            <div class="role-card-avatar" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8;">
-              👨‍🏫
+        <!-- 2. Companion Student & Principal Cards (Right Column) -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <!-- Student Card -->
+          <div class="role-gateway-card card-student" onclick="loginWithRole('student')" style="margin:0; padding:18px;">
+            <div>
+              <span class="role-card-badge" style="background:rgba(16, 185, 129, 0.2); color:#34d399;">Student Scholar</span>
+              <div class="role-card-avatar" style="background:rgba(16, 185, 129, 0.2); color:#34d399; width:38px; height:38px; font-size:1.2rem; margin-bottom:8px;">🎓</div>
+              <h4 style="font-size:1rem; font-weight:800; color:#f8fafc; margin:0 0 2px 0;">Student Portal</h4>
+              <div style="font-size:0.8rem; color:#34d399; font-weight:700;">Aryan Sharma &bull; Class 11A</div>
+              <p style="font-size:0.75rem; color:#94a3b8; margin:4px 0 10px 0; line-height:1.35;">
+                Active assignments, weekly smart report card, previous test records, and AI voice tutor.
+              </p>
             </div>
-            <h3 class="role-card-title">Senior Faculty</h3>
-            <div class="role-card-name">Dr. Vikram Sharma &bull; Dept. of Physics</div>
-            <p class="role-card-desc">
-              Dedicated curriculum syllabus workspace: monitor Class 11 &amp; 12 Physics chapters, lecture progress, topic coverage, and laboratory practicals.
-            </p>
-            <ul class="role-card-features">
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> Dedicated Physics Syllabus Tracker</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> 10 Master Units &amp; Granular Topics</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> Lecture Tracking (88/155 Delivered)</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#38bdf8;"></i> NCERT &amp; Competitive Exam Roadmap</li>
-            </ul>
+            <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('student');" style="padding:8px 14px; font-size:0.82rem; min-height:38px;">
+              <span>Enter Student Portal</span> <i data-lucide="arrow-right" style="width:13px; height:13px;"></i>
+            </button>
           </div>
-          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('teacher');">
-            <span>Enter Teacher Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
-          </button>
-        </div>
 
-        <!-- 3. Student Login Card -->
-        <div class="role-gateway-card card-student" onclick="loginWithRole('student')">
-          <div>
-            <span class="role-card-badge">Student Scholar</span>
-            <div class="role-card-avatar" style="background:rgba(16, 185, 129, 0.2); color:#34d399;">
-              🎓
+          <!-- Principal Card -->
+          <div class="role-gateway-card card-principal" onclick="loginWithRole('director')" style="margin:0; padding:18px;">
+            <div>
+              <span class="role-card-badge" style="background:rgba(168, 85, 247, 0.2); color:#c084fc;">Executive Leadership</span>
+              <div class="role-card-avatar" style="background:rgba(168, 85, 247, 0.2); color:#c084fc; width:38px; height:38px; font-size:1.2rem; margin-bottom:8px;">🏛️</div>
+              <h4 style="font-size:1rem; font-weight:800; color:#f8fafc; margin:0 0 2px 0;">Principal Portal</h4>
+              <div style="font-size:0.8rem; color:#c084fc; font-weight:700;">Dr. Anita Chandel &bull; Director</div>
+              <p style="font-size:0.75rem; color:#94a3b8; margin:4px 0 10px 0; line-height:1.35;">
+                School governance, 14-day pilot intelligence, class velocity, and syllabus audits.
+              </p>
             </div>
-            <h3 class="role-card-title">Student Portal</h3>
-            <div class="role-card-name">Aryan Sharma &bull; Class 11 (Roll #101)</div>
-            <p class="role-card-desc">
-              Interactive learning environment: take active faculty assignments, practice on NTA standard 30-question palette, and learn on AI voice smartboard.
-            </p>
-            <ul class="role-card-features">
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Active Assigned Tests &amp; Quizzes</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> NTA 30-Question Exam Simulator</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Dr. Vikram Live AI Voice Whiteboard</li>
-              <li><i data-lucide="check" style="width:13px; height:13px; color:#34d399;"></i> Personalized Remedial Practice Cards</li>
-            </ul>
+            <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('director');" style="padding:8px 14px; font-size:0.82rem; min-height:38px;">
+              <span>Enter Principal Portal</span> <i data-lucide="arrow-right" style="width:13px; height:13px;"></i>
+            </button>
           </div>
-          <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('student');">
-            <span>Enter Student Portal</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
-          </button>
         </div>
 
       </div>
@@ -611,14 +657,18 @@
     </div>
 
     <div class="header-right">
-      <div class="header-faculty-chip" id="headerRoleBadge" onclick="openRoleGatewayModal()" title="Current Active Portal. Click to switch.">
+      <div class="header-faculty-chip" id="headerRoleBadge" onclick="window.handleRoleBadgeClick()" title="Current Active Portal">
         <span class="faculty-indicator-dot" id="headerRoleDot"></span>
         <span id="headerFacultyName">Dr. Vikram Sharma</span>
         <span class="header-faculty-tag" id="headerFacultyTag">Teacher</span>
       </div>
-      <button type="button" class="btn-role-switch" id="btnHeaderSwitchRole" onclick="openRoleGatewayModal()" title="Switch Portal (Principal / Teacher / Student)">
+      <button type="button" class="btn-role-switch" id="btnHeaderSwitchRole" onclick="openRoleGatewayModal()" title="Switch Portal (Principal / Student)">
         <i data-lucide="repeat" style="width:14px; height:14px;"></i>
         <span>Switch Portal</span>
+      </button>
+      <button type="button" class="btn-teacher-signout" id="btnTeacherHeaderSignOut" onclick="window.handleTeacherSignOut()" style="display:none;" title="Sign out of Teacher Portal">
+        <i data-lucide="log-out" style="width:14px; height:14px;"></i>
+        <span>Sign Out</span>
       </button>
       <button class="btn-icon" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle Light/Dark Theme">
         <i data-lucide="sun" id="themeIcon" style="width:17px; height:17px;"></i>
@@ -638,25 +688,25 @@
       
       <!-- TEACHER PORTAL SUB-NAVIGATION BAR (WCAG 2.2 AA compliant, Token-based) -->
       <div class="teacher-portal-nav" id="teacherPortalNav">
-        <button type="button" class="teacher-nav-pill active" id="teacherPillSyllabus" data-tab="tabTeacherSyllabus" onclick="switchTeacherTab('tabTeacherSyllabus')">
-          <i data-lucide="book-open" style="width:16px; height:16px;"></i>
-          <span>Senior Physics Syllabus</span>
-          <span class="teacher-nav-badge">10 Units</span>
-        </button>
-        <button type="button" class="teacher-nav-pill" id="teacherPillGenerator" data-tab="tabGenerator" onclick="switchTeacherTab('tabGenerator')">
+        <button type="button" class="teacher-nav-pill active" id="teacherPillCreatePaper" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
           <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
-          <span>Create &amp; Assign Tests</span>
-          <span class="teacher-nav-badge badge-blue">Test Creator</span>
+          <span>Create Paper</span>
+          <span class="teacher-nav-badge badge-blue">Paper Builder</span>
         </button>
-        <button type="button" class="teacher-nav-pill" id="teacherPillAnalytics" data-tab="tabClassAnalytics" onclick="switchTeacherTab('tabClassAnalytics')">
-          <i data-lucide="bar-chart-3" style="width:16px; height:16px;"></i>
-          <span>Overall Class Performance</span>
-          <span class="teacher-nav-badge badge-green">74.2% Avg</span>
+        <button type="button" class="teacher-nav-pill" id="teacherPillTakeTest" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
+          <i data-lucide="play-circle" style="width:16px; height:16px;"></i>
+          <span>Take / Conduct Test</span>
+          <span class="teacher-nav-badge badge-green">Active Tests</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillClasses" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
+          <i data-lucide="users" style="width:16px; height:16px;"></i>
+          <span>Classes &amp; Students</span>
+          <span class="teacher-nav-badge">Roster &amp; Sections</span>
         </button>
         <button type="button" class="teacher-nav-pill" id="teacherPillWeakConcepts" data-tab="tabTeacherWeakConcepts" onclick="switchTeacherTab('tabTeacherWeakConcepts')">
           <i data-lucide="target" style="width:16px; height:16px;"></i>
-          <span>Weak Concepts to Teach</span>
-          <span class="teacher-nav-badge badge-rose">4 Priority Blind Spots</span>
+          <span>What to Teach Next</span>
+          <span class="teacher-nav-badge badge-rose">Weak Concepts (4)</span>
         </button>
       </div>
 
@@ -683,9 +733,305 @@
       </div>
 
       <!-- ====================================================================
-           PRIMARY TEACHER PORTAL: SYLLABUS & CURRICULUM MANAGEMENT
+           1. TAB: CREATE PAPER (UN-NOISY, CASCADING DROPDOWNS, POLISHED)
            ==================================================================== -->
-      <div class="teacher-tab-content active" id="tabTeacherSyllabus" style="display:block;">
+      <div class="teacher-tab-content active" id="tabTeacherCreatePaper" style="display:block;">
+        
+        <!-- Welcome Strip for Faculty -->
+        <div class="stream-compact-strip" id="teacherWelcomeStrip" style="margin-bottom:1.25rem;">
+          <div class="stream-strip-left" style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div class="stream-faculty-strip-chip" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); padding:5px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+              <span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+              <span id="stripTeacherName" style="font-weight:700; color:var(--text-primary); font-size:0.88rem;">Dr. Vikram Sharma</span>
+              <span id="stripTeacherDept" style="background:rgba(56,189,248,0.18); color:var(--accent-blue); padding:1px 8px; border-radius:10px; font-size:0.74rem; font-weight:700;">Physics Expert</span>
+            </div>
+            <span class="stream-strip-divider">&bull;</span>
+            <span class="stream-strip-label" style="color:var(--text-muted); font-size:0.8rem;">Active Scope:</span>
+            <span class="stream-active-badge" id="stripTeacherClassScope" style="font-weight:700; color:#38bdf8; background:rgba(56,189,248,0.12); padding:2px 8px; border-radius:6px; font-size:0.8rem;">Class 12-A &bull; Senior Physics (48 Students)</span>
+          </div>
+          <div style="font-size:0.75rem; color:#94a3b8;">
+            📝 Assessment &amp; Examination Studio
+          </div>
+        </div>
+
+        <!-- Fast Test Creator Form (Un-noisy, Cascading Dropdowns) -->
+        <div class="test-creator-container" style="margin-bottom: 1.5rem;">
+          <div class="test-creator-form-card" style="width:100%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:8px;">
+              <div>
+                <h3 style="font-size:1.2rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="file-plus-2" style="width:20px; height:20px; color:#38bdf8;"></i> Create New Paper for Students
+                </h3>
+                <p style="font-size:0.82rem; color:#94a3b8; margin:3px 0 0 0;">
+                  Select class, chapter, and particular topic from the dropdown to assemble targeted assessments.
+                </p>
+              </div>
+              <span class="pilot-tag" style="background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3); font-size:0.76rem; padding:4px 10px;">
+                Official Board &amp; NTA Schema
+              </span>
+            </div>
+
+            <form id="formTeacherPaperBuilder" onsubmit="event.preventDefault(); window.createTeacherPaper(event);">
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.25rem;">
+                
+                <!-- Left Column: Curriculum & Topics (DROPDOWNS ONLY, NO LIST NOISE) -->
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperClass">Target Class Section *</label>
+                    <select class="form-select" id="selectPaperClass" onchange="window.handlePaperClassChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
+                      <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
+                      <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
+                      <option value="12-Med">Class 12-Med &bull; Senior Medical (38 Students)</option>
+                      <option value="10-Science-A">Class 10-Science &bull; Section A (45 Students)</option>
+                    </select>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperSubject">Academic Subject *</label>
+                    <select class="form-select" id="selectPaperSubject" onchange="window.handlePaperSubjectChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <option value="PHYSICS" selected>Physics</option>
+                      <option value="CHEMISTRY">Chemistry</option>
+                      <option value="MATHEMATICS">Mathematics</option>
+                      <option value="BIOLOGY">Biology</option>
+                      <option value="CLASS10_SCIENCE">Class 10th Science</option>
+                      <option value="CLASS10_MATHEMATICS">Class 10th Mathematics</option>
+                    </select>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperChapter">Select Chapter / Unit *</label>
+                    <select class="form-select" id="selectPaperChapter" onchange="window.handlePaperChapterChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <!-- Populated dynamically based on class and subject -->
+                    </select>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperTopic" style="color:#38bdf8; font-weight:700;">
+                      Select Particular Topic / Concept (Dropdown) *
+                    </label>
+                    <select class="form-select" id="selectPaperTopic" onchange="window.handlePaperTopicChange(this.value)" style="width:100%; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56, 189, 248, 0.5); color:#38bdf8; padding:10px 12px; border-radius:8px; font-size:0.88rem; font-weight:600;">
+                      <!-- Populated dynamically: Clean dropdown of specific topics, NO LIST NOISE -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Right Column: Exam Format & Settings -->
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="inputPaperTitle">Assessment Title *</label>
+                    <input type="text" id="inputPaperTitle" class="form-input" value="Class 12-A &bull; Unit Test: Pure Rolling on Incline" placeholder="e.g. Unit Test: Moment of Inertia" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;" required>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperFormat">Format &amp; Duration *</label>
+                    <select class="form-select" id="selectPaperFormat" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <option value="QUIZ_15">⚡ 15-Min Quick Quiz (5 Qs &bull; 20 Marks)</option>
+                      <option value="UNIT_45" selected>📝 45-Min Unit Test (15 Qs &bull; 45 Marks)</option>
+                      <option value="TERM_90">⏳ 90-Min Mid-Term Assessment (20 Qs &bull; 60 Marks)</option>
+                      <option value="MOCK_180">🎯 180-Min Full Board / NTA Mock (30 Qs &bull; 100 Marks)</option>
+                    </select>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperDifficulty">Difficulty Standard *</label>
+                    <select class="form-select" id="selectPaperDifficulty" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <option value="BOARD">CBSE / HP Board Standard (NCERT Step-by-Step)</option>
+                      <option value="BALANCED" selected>Balanced Track (60% Board + 40% JEE Main)</option>
+                      <option value="ADVANCED">Challenger Track (JEE Advanced / Olympiad)</option>
+                    </select>
+                  </div>
+
+                  <div class="test-form-group">
+                    <label class="test-form-label" for="selectPaperQuestionTypes">Question Type Mix *</label>
+                    <select class="form-select" id="selectPaperQuestionTypes" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                      <option value="MIXED" selected>Standard Balanced (MCQs + Short Answer + Derivation)</option>
+                      <option value="OBJECTIVE">100% Objective (NTA Style MCQs &amp; Assertion-Reason)</option>
+                      <option value="SUBJECTIVE">Subjective Derivations &amp; Numerical Problems</option>
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Action Bar -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:12px;">
+                <div style="font-size:0.8rem; color:#94a3b8;">
+                  Auto-generates questions with authentic step marking rubrics and solutions.
+                </div>
+                <div style="display:flex; gap:10px;">
+                  <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" style="padding:10px 18px; font-size:0.85rem; font-weight:700; border-radius:8px; cursor:pointer; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
+                    <i data-lucide="printer" style="width:15px; height:15px;"></i> Preview &amp; Print Paper
+                  </button>
+                  <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 22px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff; min-height:44px;">
+                    <i data-lucide="send" style="width:16px; height:16px;"></i>
+                    <span>Create &amp; Assign to Students</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ====================================================================
+           2. TAB: TAKE & CONDUCT TEST (ACTIVE ASSESSMENTS & SUBMISSION MONITOR)
+           ==================================================================== -->
+      <div class="teacher-tab-content" id="tabTeacherTakeTest" style="display:none;">
+        
+        <!-- Live Active Test Station Card -->
+        <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 14px; padding: 18px 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 700; margin-bottom: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite;"></span>
+                LIVE TEST IN PROGRESS
+              </div>
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0 0 4px 0;" id="liveTestTitle">
+                Class 12-A &bull; Diagnostic Test: Rotational Dynamics &amp; Torque
+              </h3>
+              <p style="font-size: 0.82rem; color: #cbd5e1; margin: 0;">
+                Assigned to Class 12-A &bull; 45 Minutes &bull; 15 Questions &bull; 45 Total Marks
+              </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div style="text-align: right;">
+                <div style="font-size: 1.45rem; font-weight: 800; color: #38bdf8;" id="liveTestSubmissionsCounter">44 / 48</div>
+                <div style="font-size: 0.72rem; color: #94a3b8;">Students Submitted (91.7%)</div>
+              </div>
+              <button type="button" class="btn-primary" onclick="window.finalizeCurrentTest()" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.85rem; padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 8px; color: #fff; cursor: pointer; min-height: 44px;">
+                <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> End Test &amp; Finalize Scores
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned Tests Table -->
+        <div class="assigned-tests-table-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h4 style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="layers" style="width:16px; height:16px; color:#38bdf8;"></i> All Scheduled &amp; Assigned Tests
+              </h4>
+              <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+                Monitor test turn-ins, launch live exam sessions for students, or inspect class grade sheets.
+              </p>
+            </div>
+            <button type="button" class="btn-secondary" onclick="switchTeacherTab('tabTeacherCreatePaper')" style="font-size:0.8rem; padding:7px 14px; min-height:38px; display:inline-flex; align-items:center; gap:6px;">
+              <i data-lucide="plus" style="width:14px; height:14px;"></i> Create Another Paper
+            </button>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="assigned-table" id="tableClassAssignedTests">
+              <thead>
+                <tr>
+                  <th>Test Title &amp; Topic</th>
+                  <th>Target Class</th>
+                  <th>Duration</th>
+                  <th>Submissions</th>
+                  <th>Class Avg</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAssignedTests">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ====================================================================
+           3. TAB: CLASSES & STUDENTS (CREATE CLASS, ADD STUDENTS, ROSTER)
+           ==================================================================== -->
+      <div class="teacher-tab-content" id="tabTeacherClasses" style="display:none;">
+        
+        <!-- Header Bar with Class Selector & Quick Creation Buttons -->
+        <div class="classes-header-bar">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <label for="selectTeacherActiveRosterClass" style="font-size:0.85rem; font-weight:700; color:#cbd5e1;">Active Class Section:</label>
+            <select id="selectTeacherActiveRosterClass" class="form-select" onchange="window.handleTeacherClassSelect(this.value)" style="padding:8px 14px; font-size:0.85rem; font-weight:700; background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; border-radius:8px;">
+              <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
+              <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
+              <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
+              <option value="12-Med">Class 12-Med &bull; Senior Medical (38 Students)</option>
+              <option value="10-Science-A">Class 10-Science &bull; Section A (45 Students)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn-primary" onclick="window.openCreateClassModal()" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
+              <i data-lucide="folder-plus" style="width:15px; height:15px;"></i> Create New Class
+            </button>
+            <button type="button" class="btn-primary" onclick="window.openAddStudentModal()" style="background:linear-gradient(135deg, #10b981, #059669); font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
+              <i data-lucide="user-plus" style="width:15px; height:15px;"></i> Add Student to Class
+            </button>
+          </div>
+        </div>
+
+        <!-- Class KPI Strip -->
+        <div class="class-stats-grid">
+          <div class="class-stat-card">
+            <div class="class-stat-val" id="statClassEnrolled">48 Students</div>
+            <div class="class-stat-lbl">Total Enrolled Scholars</div>
+          </div>
+          <div class="class-stat-card">
+            <div class="class-stat-val" style="color:#34d399;" id="statClassAttendance">94.8%</div>
+            <div class="class-stat-lbl">Active Test Attendance</div>
+          </div>
+          <div class="class-stat-card">
+            <div class="class-stat-val" style="color:#38bdf8;" id="statClassAverage">74.2%</div>
+            <div class="class-stat-lbl">Class Performance Average</div>
+          </div>
+          <div class="class-stat-card">
+            <div class="class-stat-val" style="color:#c084fc;">2026–2027</div>
+            <div class="class-stat-lbl">Academic Term Session</div>
+          </div>
+        </div>
+
+        <!-- Student Roster Table -->
+        <div class="roster-table-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h4 style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin:0;" id="rosterTitle">
+                Class 12-A Student Roster
+              </h4>
+              <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+                Students enrolled under this section with contact details and current standing.
+              </p>
+            </div>
+            <input type="text" id="inputFilterRoster" oninput="window.filterClassRoster(this.value)" placeholder="Search student or roll #..." style="padding:7px 12px; font-size:0.82rem; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; min-width:220px;">
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="assigned-table" id="tableClassRoster">
+              <thead>
+                <tr>
+                  <th>Roll #</th>
+                  <th>Student Name</th>
+                  <th>Contact Phone</th>
+                  <th>Parent Contact</th>
+                  <th>Test Turn-in</th>
+                  <th>Current Score</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyClassRoster">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Preserved Hidden Syllabus & Generator Containers for Compatibility -->
+      <div class="teacher-tab-content" id="tabTeacherSyllabus" style="display:none !important;">
         <div class="teacher-syllabus-view">
           
           <!-- Syllabus Hero Banner -->
@@ -1433,120 +1779,8 @@
         </div>
       </div>
 
-      <!-- TAB 4: WEEKLY DUAL SMART REPORT CARDS -->
-      <div class="teacher-tab-content" id="tabSmartReports" style="display:none;">
-        <div class="glass-card" style="max-width: 900px; margin: 0 auto;">
-          <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
-            <div>
-              <div class="pilot-tag" style="margin-bottom: 6px;">Unisole Academic Intelligence Document</div>
-              <h2 class="card-title" style="font-size: 1.35rem;">Weekly Diagnostic Smart Report Card</h2>
-              <p class="card-subtitle" id="smartReportSubtitle">Generated for: Aryan Sharma (Roll: 12-NM-01) &bull; Class 12th Non-Med</p>
-            </div>
-            <div style="text-align: right; display:flex; gap:8px;">
-              <button class="btn-secondary" id="btnOpenWhatsAppModal" style="font-size:0.82rem; padding:6px 14px; color:#22c55e; border-color:rgba(34,197,94,0.4); cursor:pointer;">
-                <i data-lucide="message-square" style="width:14px; height:14px;"></i> WhatsApp to Parents
-              </button>
-              <button class="btn-primary" id="btnDownloadReportPdf" onclick="window.print()" style="font-size:0.82rem; padding:6px 14px; cursor:pointer;">
-                <i data-lucide="printer" style="width:14px; height:14px;"></i> Print / Export PDF
-              </button>
-            </div>
-          </div>
-
-          <!-- Weekly Overview Metrics -->
-          <div class="grid-4col" style="margin: 1.25rem 0;">
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Weekly Accuracy</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); margin-top: 4px;" id="smartReportAccuracy">78.4%</div>
-            </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Study Hours</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-emerald); margin-top: 4px;" id="smartReportStudyHours">15.2 Hrs</div>
-            </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Questions Solved</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-indigo); margin-top: 4px;" id="smartReportQuestionsSolved">68 Qs</div>
-            </div>
-            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Avg Velocity</span>
-              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-amber); margin-top: 4px;" id="smartReportVelocity">112s / Q</div>
-            </div>
-          </div>
-
-          <!-- DIRECTIVE 1: FOR SCHOOL & HOSTEL FACULTY -->
-          <div class="report-directive-box directive-school">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="school" style="color: var(--accent-indigo); width: 22px; height: 22px;"></i>
-              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
-                Directives for School & Residential Hostel Faculty (Evening Prep)
-              </h3>
-            </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-              Specific academic interventions during 7:00 PM - 9:00 PM self-study hours at student hostel.
-            </p>
-
-            <div id="smartReportSchoolDirectivesList">
-              <div class="directive-item">
-                <span class="directive-num">1</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">1-on-1 Socratic Derivation Session (15 Mins)</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    During Monday evening study, conduct a short whiteboard check with Aryan on the differential equation of damped oscillations ($\frac{d^2x}{dt^2} + \frac{b}{m}\frac{dx}{dt} + \omega_0^2x = 0$), clarifying why mechanical energy decays at rate $\frac{b}{m}$ while amplitude decays at $\frac{b}{2m}$.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Er. Rajesh Kumar &bull; Target: 26 Oct 2026</span>
-                </div>
-              </div>
-
-              <div class="directive-item">
-                <span class="directive-num">2</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Remedial Practice Drill #SHM-04</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    Dispatch 5 targeted numerical problems with friction and viscous damping to reinforce energy calculations before Wednesday's section quiz.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Hostel Proctor &bull; Target: 27 Oct 2026</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- DIRECTIVE 2: FOR PARENTS AT HOME -->
-          <div class="report-directive-box directive-parent">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="home" style="color: var(--accent-emerald); width: 22px; height: 22px;"></i>
-              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
-                Directives for Parents at Home (Weekend Support)
-              </h3>
-            </div>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-              Empathetic, non-technical actions to support Aryan's learning rhythm without exam stress.
-            </p>
-
-            <div id="smartReportParentDirectivesList">
-              <div class="directive-item">
-                <span class="directive-num">1</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">5-Minute Casual Feynman Technique Check</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    During your regular Sunday phone call or visit, casually ask Aryan: <em>"How do car shock absorbers stop a car from bouncing forever?"</em> Let him explain the physics in his own words. Explaining to parents builds deep intuitive clarity!
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Builds conceptual mastery without pressure</span>
-                </div>
-              </div>
-
-              <div class="directive-item">
-                <span class="directive-num">2</span>
-                <div>
-                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Quiet Focus Block (Sunday Morning)</strong>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                    Ensure Aryan has 45 minutes of quiet time on Sunday morning to complete the short 5-question speed recap test sent by the school platform.
-                  </p>
-                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Solidifies retention before Monday's new physics unit</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Preserved Hidden Tab for Selectors -->
+      <div id="tabSmartReports" style="display:none !important;"></div>
 
       <!-- TAB 1: CLASS DASHBOARD & PROGRESS CHARTS -->
       <div class="teacher-tab-content" id="tabClassAnalytics" style="display:none;">
@@ -2107,187 +2341,46 @@
         </div>
       </div>
 
-      <!-- TAB 2: STUDENTS ROSTER & SMART CARDS -->
-      <div class="teacher-tab-content" id="tabStudents" style="display:none;">
-        <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 58, 138, 0.2), rgba(15, 23, 42, 0.6)); border: 1px solid rgba(59, 130, 246, 0.3);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span class="pilot-tag" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">
-                  <i data-lucide="users" style="width:12px; height:12px; display:inline-block; vertical-align:middle;"></i>
-                  Enrolled Students
-                </span>
-                <span class="pilot-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">Class 10-A (32 Students)</span>
-              </div>
-              <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">
-                Student Performance & Smart Cards
-              </h2>
-              <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                Click on any student to view their test time breakdown, conceptual vs formula mistakes, and generate parent WhatsApp updates.
-              </p>
-            </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="text" id="searchStudentInput" placeholder="Search student or roll #..." style="background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; min-width: 240px;">
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-card">
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="tabStudentsRosterTable">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); text-align: left;">
-                  <th style="padding: 10px 8px;">Roll #</th>
-                  <th style="padding: 10px 8px;">Student Name</th>
-                  <th style="padding: 10px 8px;">Score & %</th>
-                  <th style="padding: 10px 8px;">Time Taken</th>
-                  <th style="padding: 10px 8px;">Mistakes</th>
-                  <th style="padding: 10px 8px;">Primary Error Category</th>
-                  <th style="padding: 10px 8px; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="tabStudentsRosterTableBody">
-                <!-- Dynamically populated via app.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- INDIVIDUAL STUDENT TEST DRILL-DOWN MODAL -->
-      <div class="drilldown-modal-backdrop" id="modalStudentDrilldown" role="dialog" aria-modal="true" aria-labelledby="drilldownStudentName">
-        <div class="drilldown-modal-content">
-          <!-- Modal Header -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
-            <div>
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                <span class="pilot-tag" id="drilldownStudentRoll">Roll: --</span>
-                <span class="speed-badge optimal" id="drilldownStudentTargetExam">CBSE</span>
-              </div>
-              <h2 id="drilldownStudentName" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--text-primary);">
-                Student Name
-              </h2>
-              <p id="drilldownTestTitle" style="font-size: 0.85rem; color: var(--text-secondary);">
-                Test Title
-              </p>
-            </div>
-            <button class="btn-icon" id="btnCloseStudentDrilldown" type="button" onclick="closeStudentDrilldown()" title="Close Drilldown" aria-label="Close Drilldown Modal" style="background: rgba(255,255,255,0.06); border-radius: 50%; cursor: pointer;">
-              <i data-lucide="x" style="width:20px; height:20px;"></i>
-            </button>
-          </div>
-
-          <!-- Smart Card Short Summary Card -->
-          <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.6)); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 1.15rem; margin-bottom: 1.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-              <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="credit-card" style="width:14px; height:14px;"></i> Smart Card Short Summary (Test Result)
-              </span>
-              <div style="display:flex; gap:6px;">
-                <span class="pilot-tag" id="drilldownScoreBadge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">--%</span>
-                <span class="pilot-tag" id="drilldownTimeBadge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">--</span>
-              </div>
-            </div>
-            <p id="drilldownSummaryText" style="font-size: 0.92rem; color: var(--text-primary); line-height: 1.5; font-weight: 500; margin-bottom: 10px;">
-              Summary loading...
-            </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; font-size: 0.8rem;">
-              <div style="background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px;">
-                <strong style="color: #fbbf24;"><i data-lucide="user-check" style="width:12px; height:12px; vertical-align:middle;"></i> Teacher Directive:</strong>
-                <span id="drilldownTeacherAction" style="color: var(--text-secondary); display: block; margin-top: 2px;">--</span>
-              </div>
-              <div style="background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="color: #34d399;"><i data-lucide="message-circle" style="width:12px; height:12px; vertical-align:middle;"></i> Parent WhatsApp Snippet:</strong>
-                  <button type="button" class="btn-secondary" id="btnDrilldownSendWhatsApp" style="font-size:0.68rem; padding:2px 8px; color:#22c55e; border-color:rgba(34,197,94,0.4); cursor:pointer;">
-                    <i data-lucide="send" style="width:10px; height:10px;"></i> Send WhatsApp
-                  </button>
-                </div>
-                <span id="drilldownParentSnippet" style="color: var(--text-secondary); display: block; margin-top: 4px;">--</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Student Drill-Down Visual Progress Charts (3 Visual Analytics) -->
-          <div class="student-modal-charts-grid" style="margin-bottom: 1.25rem;">
-            <!-- Student Time vs Benchmark -->
-            <div class="chart-card" style="background: rgba(0,0,0,0.25);">
-              <div class="chart-header" style="margin-bottom:0.5rem;">
-                <div class="chart-title-group">
-                  <h4><i data-lucide="timer" style="width:15px; height:15px; color:#38bdf8;"></i> Time Spent per Question vs Benchmark</h4>
-                  <p>Student's solving velocity (Seconds)</p>
-                </div>
-              </div>
-              <div class="chart-wrapper" style="height: 180px;">
-                <canvas id="chartStudentDrilldownTime"></canvas>
-              </div>
-            </div>
-
-            <!-- Student Mistake Types -->
-            <div class="chart-card" style="background: rgba(0,0,0,0.25);">
-              <div class="chart-header" style="margin-bottom:0.5rem;">
-                <div class="chart-title-group">
-                  <h4><i data-lucide="pie-chart" style="width:15px; height:15px; color:#fb7185;"></i> Mistake Type Breakdown</h4>
-                  <p>Classification of student's errors</p>
-                </div>
-              </div>
-              <div class="chart-wrapper" style="height: 180px;">
-                <canvas id="chartStudentDrilldownMistakes"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chart 3: Concept Mastery Across Topics -->
-          <div class="chart-card" style="background: rgba(0,0,0,0.25); margin-bottom: 1.25rem;">
-            <div class="chart-header" style="margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
-              <div class="chart-title-group">
-                <h4><i data-lucide="award" style="width:15px; height:15px; color:#10b981;"></i> Subject Concept Mastery &amp; Retention Breakdown</h4>
-                <p>Accuracy rates across key syllabus subtopics</p>
-              </div>
-              <span class="speed-badge optimal" id="drilldownMasterySummaryBadge">Mastery Overview</span>
-            </div>
-            <div class="chart-wrapper" style="height: 160px;">
-              <canvas id="chartStudentDrilldownMastery"></canvas>
-            </div>
-          </div>
-
-          <!-- Direct Remedial Action Callout -->
-          <div style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(219, 39, 119, 0.15)); border: 1px solid rgba(124, 58, 237, 0.35); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <strong style="color: #c084fc; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i> Personalized Remedial Assignment Ready
-              </strong>
-              <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 3px 0 0 0;">
-                Tailored "Write That Formula" interactive drills and practice questions for concepts missed by this student.
-              </p>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" class="btn-primary" onclick="openStudentRemedialFromModal()" style="font-size: 0.85rem; padding: 8px 18px; background: linear-gradient(135deg, #7c3aed, #db2777); font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);">
-                <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Open Personalized Remedial Drill
-              </button>
-              <button type="button" class="btn-secondary" onclick="downloadCurrentDrilldownDocx()" style="font-size: 0.85rem; padding: 8px 16px; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download Plain DOCX
-              </button>
-            </div>
-          </div>
-
-          <!-- Question-by-Question Timing & Mistake Analysis -->
-          <div>
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px;">
-              <i data-lucide="help-circle" style="width:18px; height:18px; color: var(--accent-blue);"></i> Question-by-Question Timing & Mistake Diagnostics
-            </h3>
-            <div id="drilldownQuestionsList" style="display: flex; flex-direction: column; gap: 1rem;">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Preserved Hidden Tab for Selectors -->
+      <div id="tabStudents" style="display:none !important;"></div>
     </section>
 
     <!-- ======================================================================
          2. STUDENT ADAPTIVE VIEW (3 LEARNING MODES + QUIZ ENGINE)
          ====================================================================== -->
     <section class="view-section" id="studentView">
-      <!-- Active Assigned Tests Selector Banner -->
+      <!-- STUDENT PORTAL SUB-NAVIGATION BAR (DESIGN_PRINCIPLES.md Compliant) -->
+      <div class="student-portal-nav" id="studentPortalNav">
+        <button type="button" class="student-nav-pill active" id="studentPillActiveTest" onclick="window.switchStudentTab('tabStudentActiveTest')">
+          <i data-lucide="edit-3" style="width:15px; height:15px;"></i>
+          <span>Take Test / Practice</span>
+          <span class="student-nav-badge badge-cyan">Active Test</span>
+        </button>
+        <button type="button" class="student-nav-pill" id="studentPillSmartReport" onclick="window.switchStudentTab('tabStudentSmartReport')">
+          <i data-lucide="award" style="width:15px; height:15px;"></i>
+          <span>Weekly Report Card</span>
+          <span class="student-nav-badge badge-purple">Dossier</span>
+        </button>
+        <button type="button" class="student-nav-pill" id="studentPillPreviousTests" onclick="window.switchStudentTab('tabStudentPreviousTests')">
+          <i data-lucide="history" style="width:15px; height:15px;"></i>
+          <span>Record of Previous Tests</span>
+          <span class="student-nav-badge badge-green">4 Completed</span>
+        </button>
+        <button type="button" class="student-nav-pill" id="studentPillRemedial" onclick="window.switchStudentTab('tabStudentRemedial')">
+          <i data-lucide="target" style="width:15px; height:15px;"></i>
+          <span>Personalized Assignments</span>
+          <span class="student-nav-badge badge-amber">Post-Test Drills</span>
+        </button>
+        <button type="button" class="student-nav-pill" id="studentPillSmartboard" onclick="window.switchStudentTab('tabStudentSmartboard')">
+          <i data-lucide="presentation" style="width:15px; height:15px;"></i>
+          <span>AI Voice Smartboard</span>
+          <span class="student-nav-badge badge-cyan">Live Tutor</span>
+        </button>
+      </div>
+
+      <!-- 1. TAB: TAKE ACTIVE TEST & EXAM SIMULATOR -->
+      <div class="student-tab-content active" id="tabStudentActiveTest" style="display:block;">
+<!-- Active Assigned Tests Selector Banner -->
       <div class="glass-card" style="margin-bottom: 1.25rem; padding: 12px 18px; border-left: 4px solid var(--accent-cyan); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" id="assignedTestSelectorBanner">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
@@ -2444,7 +2537,307 @@
         </div>
 
       </div>
-    </section>
+      </div>
+
+      <!-- 2. TAB: WEEKLY SMART REPORT CARD & DOSSIER -->
+      <div class="student-tab-content" id="tabStudentSmartReport" style="display:none;">
+        <div class="glass-card" style="max-width: 900px; margin: 0 auto;">
+          <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+            <div>
+              <div class="pilot-tag" style="margin-bottom: 6px;">Unisole Academic Intelligence Document</div>
+              <h2 class="card-title" style="font-size: 1.35rem;">Weekly Diagnostic Smart Report Card</h2>
+              <p class="card-subtitle" id="smartReportSubtitle">Generated for: Aryan Sharma (Roll: 12-NM-01) &bull; Class 12th Non-Med</p>
+            </div>
+            <div style="text-align: right; display:flex; gap:8px;">
+              <button class="btn-secondary" id="btnOpenWhatsAppModal" style="font-size:0.82rem; padding:6px 14px; color:#22c55e; border-color:rgba(34,197,94,0.4); cursor:pointer;">
+                <i data-lucide="message-square" style="width:14px; height:14px;"></i> WhatsApp to Parents
+              </button>
+              <button class="btn-primary" id="btnDownloadReportPdf" onclick="window.print()" style="font-size:0.82rem; padding:6px 14px; cursor:pointer;">
+                <i data-lucide="printer" style="width:14px; height:14px;"></i> Print / Export PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Weekly Overview Metrics -->
+          <div class="grid-4col" style="margin: 1.25rem 0;">
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Weekly Accuracy</span>
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); margin-top: 4px;" id="smartReportAccuracy">78.4%</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Study Hours</span>
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-emerald); margin-top: 4px;" id="smartReportStudyHours">15.2 Hrs</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Questions Solved</span>
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-indigo); margin-top: 4px;" id="smartReportQuestionsSolved">68 Qs</div>
+            </div>
+            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Avg Velocity</span>
+              <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-amber); margin-top: 4px;" id="smartReportVelocity">112s / Q</div>
+            </div>
+          </div>
+
+          <!-- DIRECTIVE 1: FOR SCHOOL & HOSTEL FACULTY -->
+          <div class="report-directive-box directive-school" style="margin-bottom:1.25rem;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="school" style="color: var(--accent-indigo); width: 22px; height: 22px;"></i>
+              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
+                Directives for School &amp; Residential Hostel Faculty (Evening Prep)
+              </h3>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Specific academic interventions during 7:00 PM - 9:00 PM self-study hours at student hostel.
+            </p>
+
+            <div id="smartReportSchoolDirectivesList">
+              <div class="directive-item">
+                <span class="directive-num">1</span>
+                <div>
+                  <strong style="color: var(--text-primary); font-size: 0.88rem;">1-on-1 Socratic Derivation Session (15 Mins)</strong>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                    During Monday evening study, conduct a short whiteboard check with Aryan on the differential equation of damped oscillations, clarifying why mechanical energy decays at rate b/m while amplitude decays at b/2m.
+                  </p>
+                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Er. Rajesh Kumar &bull; Target: 26 Oct 2026</span>
+                </div>
+              </div>
+
+              <div class="directive-item">
+                <span class="directive-num">2</span>
+                <div>
+                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Remedial Practice Drill #SHM-04</strong>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                    Dispatch 5 targeted numerical problems with friction and viscous damping to reinforce energy calculations before Wednesday's section quiz.
+                  </p>
+                  <span style="font-size: 0.72rem; color: var(--accent-indigo); font-weight: 600;">Assigned To: Hostel Proctor &bull; Target: 27 Oct 2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DIRECTIVE 2: FOR PARENTS AT HOME -->
+          <div class="report-directive-box directive-parent">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="home" style="color: var(--accent-emerald); width: 22px; height: 22px;"></i>
+              <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">
+                Directives for Parents at Home (Weekend Support)
+              </h3>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+              Empathetic, non-technical actions to support Aryan's learning rhythm without exam stress.
+            </p>
+
+            <div id="smartReportParentDirectivesList">
+              <div class="directive-item">
+                <span class="directive-num">1</span>
+                <div>
+                  <strong style="color: var(--text-primary); font-size: 0.88rem;">5-Minute Casual Feynman Technique Check</strong>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                    During your regular Sunday phone call or visit, casually ask Aryan: <em>'How do car shock absorbers stop a car from bouncing forever?'</em> Let him explain the physics in his own words.
+                  </p>
+                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Builds deep intuitive clarity without pressure</span>
+                </div>
+              </div>
+
+              <div class="directive-item">
+                <span class="directive-num">2</span>
+                <div>
+                  <strong style="color: var(--text-primary); font-size: 0.88rem;">Quiet Focus Block (Sunday Morning)</strong>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                    Ensure Aryan has 45 minutes of quiet time on Sunday morning to complete the short 5-question speed recap test sent by the school platform.
+                  </p>
+                  <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 600;">Purpose: Solidifies retention before Monday's new physics unit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. TAB: RECORD OF PREVIOUS TESTS -->
+      <div class="student-tab-content" id="tabStudentPreviousTests" style="display:none;">
+        <div class="glass-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="history" style="width:18px; height:18px; color:#34d399;"></i> Record of Previous Tests
+              </h3>
+              <p style="font-size:0.8rem; color:#94a3b8; margin:3px 0 0 0;">
+                Complete history of your submissions, scored percentages, and step solutions review.
+              </p>
+            </div>
+            <span class="pilot-tag" style="background:rgba(52,211,153,0.15); color:#34d399; border-color:rgba(52,211,153,0.3);">
+              Aryan Sharma &bull; Roll 12-NM-01
+            </span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="assigned-table">
+              <thead>
+                <tr>
+                  <th>Test Title &amp; Topic</th>
+                  <th>Date Taken</th>
+                  <th>Duration</th>
+                  <th>Score / Marks</th>
+                  <th>Percentage</th>
+                  <th>Standing</th>
+                  <th style="text-align:right;">Solutions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="font-weight:700; color:#f8fafc;">Rotational Dynamics Unit Assessment</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">15 Questions &bull; Torque &amp; Pure Rolling</div>
+                  </td>
+                  <td>Yesterday</td>
+                  <td>41 mins</td>
+                  <td><strong style="color:#38bdf8;">33 / 45</strong></td>
+                  <td><span class="status-badge" style="background:rgba(56,189,248,0.18); color:#38bdf8;">73.3%</span></td>
+                  <td><span style="color:#34d399; font-weight:700;">Merit Band</span></td>
+                  <td style="text-align:right;">
+                    <button type="button" class="btn-secondary" onclick="alert('Detailed step solutions loaded: contact point P is at instantaneous rest with zero relative sliding.')" style="padding:6px 12px; font-size:0.75rem;">
+                      Review Solutions
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700; color:#f8fafc;">Current Electricity &amp; Ohm's Law Diagnostic</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">10 Questions &bull; Microscopic Drift Velocity</div>
+                  </td>
+                  <td>Oct 28, 2026</td>
+                  <td>28 mins</td>
+                  <td><strong style="color:#34d399;">24 / 30</strong></td>
+                  <td><span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399;">80.0%</span></td>
+                  <td><span style="color:#34d399; font-weight:700;">Distinction</span></td>
+                  <td style="text-align:right;">
+                    <button type="button" class="btn-secondary" onclick="alert('Reviewed Ohm law derivation and temperature coefficient graph.')" style="padding:6px 12px; font-size:0.75rem;">
+                      Review Solutions
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700; color:#f8fafc;">Ray Optics &amp; Cartesian Sign Conventions</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">8 Questions &bull; Thin Lens &amp; Spherical Mirrors</div>
+                  </td>
+                  <td>Oct 24, 2026</td>
+                  <td>19 mins</td>
+                  <td><strong style="color:#fbbf24;">16 / 24</strong></td>
+                  <td><span class="status-badge" style="background:rgba(245,158,11,0.18); color:#fbbf24;">66.7%</span></td>
+                  <td><span style="color:#fbbf24; font-weight:700;">Passing Band</span></td>
+                  <td style="text-align:right;">
+                    <button type="button" class="btn-secondary" onclick="alert('Reviewing Cartesian sign conventions: focal length f is negative for concave mirror.')" style="padding:6px 12px; font-size:0.75rem;">
+                      Review Solutions
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700; color:#f8fafc;">Simple Harmonic Motion (SHM) Mock</div>
+                    <div style="font-size:0.7rem; color:#94a3b8;">15 Questions &bull; Differential Equation &amp; Energy</div>
+                  </td>
+                  <td>Oct 19, 2026</td>
+                  <td>43 mins</td>
+                  <td><strong style="color:#34d399;">38 / 45</strong></td>
+                  <td><span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399;">84.4%</span></td>
+                  <td><span style="color:#34d399; font-weight:700;">Distinction</span></td>
+                  <td style="text-align:right;">
+                    <button type="button" class="btn-secondary" onclick="alert('Reviewed SHM differential equation solutions and kinetic energy curves.')" style="padding:6px 12px; font-size:0.75rem;">
+                      Review Solutions
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. TAB: PERSONALIZED ASSIGNMENTS AFTER QUIZ/TEST -->
+      <div class="student-tab-content" id="tabStudentRemedial" style="display:none;">
+        <div class="glass-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="target" style="width:18px; height:18px; color:#f59e0b;"></i> Personalized Remedial Assignments
+              </h3>
+              <p style="font-size:0.8rem; color:#94a3b8; margin:3px 0 0 0;">
+                Targeted practice generated automatically from concepts where you made errors in recent tests.
+              </p>
+            </div>
+            <span class="pilot-tag" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3);">
+              2 Active Drill Sheets
+            </span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.25rem;">
+            <!-- Drill Card 1 -->
+            <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="status-badge" style="background:rgba(245,158,11,0.18); color:#fbbf24;">Formula Drill</span>
+                <span style="font-size:0.72rem; color:#94a3b8;">Assigned by Dr. Vikram</span>
+              </div>
+              <h4 style="font-size:0.98rem; font-weight:700; color:#f8fafc; margin:0 0 6px 0;">
+                Damped Frequency &amp; Quality Factor Drill
+              </h4>
+              <p style="font-size:0.78rem; color:#cbd5e1; margin:0 0 10px 0; line-height:1.4;">
+                Clarify the difference between angular natural frequency omega_0 and damped angular frequency omega_d = sqrt(omega_0^2 - gamma^2).
+              </p>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.74rem; color:#38bdf8; font-weight:600;">5 Questions &bull; 15 Mins</span>
+                <button type="button" class="btn-primary" onclick="alert('Launching Formula Drill: Damped Oscillations')" style="padding:7px 14px; font-size:0.8rem; background:linear-gradient(135deg, #f59e0b, #d97706);">
+                  Start Drill
+                </button>
+              </div>
+            </div>
+
+            <!-- Drill Card 2 -->
+            <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(56,189,248,0.35); border-radius:12px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="status-badge" style="background:rgba(56,189,248,0.18); color:#38bdf8;">Numerical Worksheet</span>
+                <span style="font-size:0.72rem; color:#94a3b8;">Assigned by Dr. Vikram</span>
+              </div>
+              <h4 style="font-size:0.98rem; font-weight:700; color:#f8fafc; margin:0 0 6px 0;">
+                Pure Rolling on Incline: Static Friction Boundary
+              </h4>
+              <p style="font-size:0.78rem; color:#cbd5e1; margin:0 0 10px 0; line-height:1.4;">
+                Solve 3 step derivations proving work done by static friction is zero and finding linear acceleration a = (g sin theta) / (1 + I/MR^2).
+              </p>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.74rem; color:#34d399; font-weight:600;">3 Derivations &bull; 20 Mins</span>
+                <button type="button" class="btn-primary" onclick="alert('Launching Numerical Derivation Worksheet: Pure Rolling')" style="padding:7px 14px; font-size:0.8rem; background:linear-gradient(135deg, #0284c7, #2563eb);">
+                  Start Drill
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TAB: AI VOICE SMARTBOARD TUTOR -->
+      <div class="student-tab-content" id="tabStudentSmartboard" style="display:none;">
+        <div class="glass-card" style="padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <h3 style="font-size:1.1rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="presentation" style="width:18px; height:18px; color:#38bdf8;"></i> Dr. Vikram Live AI Smartboard Session
+              </h3>
+              <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+                Synchronized whiteboard visual diagram and step mathematical derivation.
+              </p>
+            </div>
+            <button type="button" class="btn-secondary" onclick="document.getElementById('studentWbIframe').src = document.getElementById('studentWbIframe').src;" style="font-size:0.78rem; padding:6px 12px;">
+              <i data-lucide="refresh-cw" style="width:13px; height:13px;"></i> Refresh Board
+            </button>
+          </div>
+          <div style="height: 600px; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.3);">
+            <iframe id="studentWbIframe" src="/whiteboard.html" style="width:100%; height:100%; border:none;"></iframe>
+          </div>
+        </div>
+      </div>
+</section>
 
     <!-- ======================================================================
          3. LEADERSHIP & PILOT INTELLIGENCE VIEW (DIRECTOR/PRINCIPAL)

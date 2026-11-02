@@ -262,21 +262,21 @@ const BOARD_LAYOUT = {
   COL_LEFT_X: 50,
   COL_LEFT_W: 680,
   HEADER_Y: 50,
-  HEADER_H: 175,
-  DIAGRAM_Y: 245,
-  DIAGRAM_H: 495,
-  TIP_Y: 755,
-  TIP_H: 115,
+  HEADER_H: 150,
+  DIAGRAM_Y: 220,
+  DIAGRAM_H: 570,
+  TIP_Y: 800,
+  TIP_H: 0,
 
   // Right Column: Step-by-Step Mathematical Derivation & Concept Focus
   COL_RIGHT_X: 760,
   COL_RIGHT_W: 800,
   STEP1_Y: 50,
-  STEP1_H: 175,
-  STEP2_Y: 245,
-  STEP2_H: 185,
-  STEP3_Y: 450,
-  STEP3_H: 185,
+  STEP1_H: 220,
+  STEP2_Y: 290,
+  STEP2_H: 240,
+  STEP3_Y: 550,
+  STEP3_H: 240,
   FINAL_Y: 655,
   FINAL_H: 130,
   DOUBT_Y: 805,
@@ -557,25 +557,24 @@ const WhiteboardController = {
     const rx = BOARD_LAYOUT.COL_RIGHT_X;
     const rw = BOARD_LAYOUT.COL_RIGHT_W;
 
-    // Helper to strip any numbered prefixes like "1. ", "Step 1: "
-    const cleanSectionTitle = (t, fallback) => (t || fallback).replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '').trim().toUpperCase();
+    // Helper to format clean, non-numbered headers
+    const cleanSectionTitle = (t, fallback) => (t || fallback)
+      .replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '')
+      .replace(/^(governing principles & physical setup|free-body force & torque equations)/i, 'Force & Torque Equations')
+      .replace(/^(mathematical derivation & substitution|torque & linear force substitution)/i, 'Derivation & Substitution')
+      .replace(/^(evaluated result & physical takeaway|moment of inertia & final acceleration)/i, 'Evaluation & Final Result')
+      .trim().toUpperCase();
 
-    // 1. Governing Principles & Physical Setup (Top Card)
+    // 1. Governing Principles / Equations (Top Card - Clean Math Only)
     const s1 = sol.step1 || {
-      title: 'Governing Principles & Physical Setup',
-      formula: 'State given physical quantities and fundamental law.',
-      explanation: 'Establish foundational governing relation.'
+      title: 'Force & Torque Equations',
+      formula: 'Down Incline: M·g·sin θ - f_s = M·a\nTorque: τ = f_s·R = I·α\nRolling Constraint: a = α·R ⇒ α = a/R'
     };
     const s1CleanF = formatMathForWhiteboard(s1.formula || '');
-    const s1CleanE = formatMathForWhiteboard(s1.explanation || '');
-    const s1Note = s1.teacherNote || s1.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s1.teacherNote || s1.spokenScript)}"` : '';
     const s1Text = [
-      cleanSectionTitle(s1.title, 'Governing Principles & Physical Setup'),
+      cleanSectionTitle(s1.title, 'FORCE & TORQUE EQUATIONS'),
       '',
-      s1CleanF,
-      '',
-      `• ${s1CleanE}`,
-      s1Note ? `\n${s1Note}` : ''
+      s1CleanF
     ].filter(Boolean).join('\n');
 
     safeCreateShape({
@@ -585,7 +584,7 @@ const WhiteboardController = {
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 225,
+        h: 220,
         color: 'yellow',
         fill: 'semi',
         size: 's',
@@ -593,32 +592,26 @@ const WhiteboardController = {
       }
     });
 
-    // 2. Mathematical Derivation & Working (Middle Card)
+    // 2. Mathematical Derivation & Substitution (Middle Card - Clean Math Only)
     const s2 = sol.step2 || {
-      title: 'Mathematical Derivation & Substitution',
-      formula: 'Substitute known values and simplify algebraically.',
-      explanation: 'Step-by-step resolution preserving SI units.'
+      title: 'Derivation & Substitution',
+      formula: '1) f_s = (I / R²) · a\n2) M·g·sin θ - (I / R²)·a = M·a\n3) a = (g·sin θ) / [1 + I / (M·R²)]'
     };
     const s2CleanF = formatMathForWhiteboard(s2.formula || '');
-    const s2CleanE = formatMathForWhiteboard(s2.explanation || '');
-    const s2Note = s2.teacherNote || s2.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s2.teacherNote || s2.spokenScript)}"` : '';
     const s2Text = [
-      cleanSectionTitle(s2.title, 'Mathematical Derivation & Substitution'),
+      cleanSectionTitle(s2.title, 'DERIVATION & SUBSTITUTION'),
       '',
-      s2CleanF,
-      '',
-      `• ${s2CleanE}`,
-      s2Note ? `\n${s2Note}` : ''
+      s2CleanF
     ].filter(Boolean).join('\n');
 
     safeCreateShape({
       type: 'geo',
       x: rx,
-      y: 295,
+      y: 290,
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 285,
+        h: 240,
         color: 'light-blue',
         fill: 'semi',
         size: 's',
@@ -626,32 +619,26 @@ const WhiteboardController = {
       }
     });
 
-    // 3. Evaluated Result & Exam Takeaway (Bottom Hero Card)
+    // 3. Evaluated Result & Final Answer (Bottom Card - Clean Math Only)
     const s3 = sol.step3 || {
-      title: 'Evaluated Result & Physical Takeaway',
-      formula: 'Calculated value with proper units.',
-      explanation: 'Physical check confirms calculated magnitude.'
+      title: 'Evaluation & Final Result',
+      formula: '• For Solid Sphere: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (g·sin θ) / (7/5)\n• Final Expression: a = (5/7)·g·sin θ ≈ 0.714·g·sin θ'
     };
     const s3CleanF = formatMathForWhiteboard(s3.formula || '');
-    const s3CleanE = formatMathForWhiteboard(s3.explanation || '');
-    const s3Note = s3.teacherNote || s3.spokenScript ? `👨‍🏫 Teacher: "${formatMathForWhiteboard(s3.teacherNote || s3.spokenScript)}"` : '';
     const s3Text = [
-      cleanSectionTitle(s3.title, 'Evaluated Result & Physical Takeaway'),
+      cleanSectionTitle(s3.title, 'EVALUATION & FINAL RESULT'),
       '',
-      s3CleanF,
-      '',
-      `Key Takeaway: ${s3CleanE}`,
-      s3Note ? `\n${s3Note}` : ''
+      s3CleanF
     ].filter(Boolean).join('\n');
 
     safeCreateShape({
       type: 'geo',
       x: rx,
-      y: 600,
+      y: 550,
       props: {
         geo: 'rectangle',
         w: rw,
-        h: 260,
+        h: 240,
         color: 'green',
         fill: 'semi',
         size: 's',
@@ -927,10 +914,10 @@ const WhiteboardController = {
       });
       safeCreateShape({
         type: 'text',
-        x: lx + 30,
-        y: dy + 395,
+        x: lx + 270,
+        y: dy + 250,
         props: {
-          richText: toRichText('CONTACT POINT P: Instantaneous Center of Zero Velocity (v_p = 0)\nPure Rolling Constraint: a_cm = α·R  |  Work done by static friction W_fs = 0'),
+          richText: toRichText('Contact P (v = 0)'),
           size: 's',
           color: 'yellow'
         }
@@ -1467,34 +1454,7 @@ const WhiteboardController = {
         }
       });
 
-      // Bottom Note
-      safeCreateShape({
-        type: 'text',
-        x: lx + 25,
-        y: dy + 348,
-        props: {
-          richText: toRichText('Systematic Problem-Solving: Clear boundary definitions guarantee full marks in CBSE/JEE exams'),
-          size: 's',
-          color: 'yellow'
-        }
-      });
     }
-
-    // Teacher Exam Tip Box placed at bottom of Left Column (Zero Overlap with diagram)
-    safeCreateShape({
-      type: 'geo',
-      x: lx,
-      y: BOARD_LAYOUT.TIP_Y,
-      props: {
-        geo: 'rectangle',
-        w: BOARD_LAYOUT.COL_LEFT_W,
-        h: BOARD_LAYOUT.TIP_H,
-        color: 'yellow',
-        fill: 'semi',
-        size: 's',
-        richText: toRichText(`TEACHER EXAM TIP & COMMON PITFALL:\n${formatMathForWhiteboard(params.tip || 'Verify unit dimensions, coordinate signs, and physical boundary conditions!')}`)
-      }
-    });
 
     this.zoomFit();
   },

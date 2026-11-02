@@ -458,9 +458,101 @@ window.loginWithRole = function(role) {
   switchPortalRole(role);
 };
 
+window.handleRoleBadgeClick = function() {
+  if (state.activeRole === 'teacher') {
+    const banner = document.createElement('div');
+    banner.className = 'role-switch-toast';
+    banner.innerHTML = `<i data-lucide="lock" style="width:16px; height:16px; color:#38bdf8;"></i> <span><strong>Faculty Portal Locked:</strong> Role switching is disabled in teacher mode. Click 'Sign Out' in top right to exit.</span>`;
+    document.body.appendChild(banner);
+    initLucideIcons();
+    setTimeout(() => banner.remove(), 3500);
+    return;
+  }
+  window.openRoleGatewayModal();
+};
+
+window.fillGatewayFaculty = function(name, phone, subject) {
+  const nameInput = document.getElementById('inputGatewayTeacherName');
+  const phoneInput = document.getElementById('inputGatewayTeacherPhone');
+  const subjSelect = document.getElementById('selectGatewayTeacherSubject');
+  if (nameInput) nameInput.value = name;
+  if (phoneInput) phoneInput.value = phone;
+  if (subjSelect) subjSelect.value = subject;
+
+  document.querySelectorAll('.faculty-quick-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.textContent.includes(name.split(' ')[1] || name));
+  });
+};
+
+window.submitGatewayTeacherLogin = function(event) {
+  if (event) event.preventDefault();
+  const name = document.getElementById('inputGatewayTeacherName')?.value?.trim() || 'Dr. Vikram Sharma';
+  const phone = document.getElementById('inputGatewayTeacherPhone')?.value?.trim() || '98160 10001';
+  const subjectKey = document.getElementById('selectGatewayTeacherSubject')?.value || 'PHYSICS';
+
+  const subjectNames = {
+    PHYSICS: 'Physics',
+    CHEMISTRY: 'Chemistry',
+    MATHEMATICS: 'Mathematics',
+    BIOLOGY: 'Biology',
+    CLASS10_MATHEMATICS: 'Class 10th Mathematics',
+    CLASS10_SCIENCE: 'Class 10th Science',
+    COMPUTER_SCIENCE: 'Computer Science'
+  };
+
+  teacherBuilderState.activeTeacher = {
+    name,
+    phone,
+    subjectKey,
+    subjectName: subjectNames[subjectKey] || 'Physics'
+  };
+
+  try {
+    localStorage.setItem('haps_teacher_profile', JSON.stringify(teacherBuilderState.activeTeacher));
+    localStorage.setItem('haps_active_role', 'teacher');
+  } catch (e) {}
+
+  window.closeRoleGatewayModal();
+  state.activeTeacherTab = 'tabTeacherCreatePaper';
+  switchPortalRole('teacher');
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(name)}</strong> (${subjectNames[subjectKey] || 'Physics'} Expert). Role locked to Teacher Portal.</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
 window.handleTeacherSignOut = function() {
   closeSidebarDrawer();
+  try {
+    localStorage.removeItem('haps_active_role');
+  } catch(e) {}
+  document.body.classList.remove('role-teacher');
+  const switchRoleBtn = document.getElementById('btnHeaderSwitchRole');
+  if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
+  const teacherSignOutBtn = document.getElementById('btnTeacherHeaderSignOut');
+  if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'none';
   window.openRoleGatewayModal();
+};
+
+window.switchStudentTab = function(tabId) {
+  state.activeStudentTab = tabId;
+  document.querySelectorAll('.student-nav-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.id === `studentPill${tabId.replace('tabStudent', '')}`);
+  });
+  document.querySelectorAll('.student-tab-content').forEach(content => {
+    const isTarget = content.id === tabId;
+    content.style.display = isTarget ? 'block' : 'none';
+    content.classList.toggle('active', isTarget);
+  });
+  if (tabId === 'tabStudentSmartReport') {
+    if (window.loadAndRenderSmartReport) {
+      window.loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
+    }
+  }
+  initLucideIcons();
 };
 
 function switchPortalRole(role) {
@@ -496,7 +588,21 @@ function switchPortalRole(role) {
   const drawerRole = document.getElementById('drawerFacultyRole');
   const drawerSubject = document.getElementById('drawerFacultySubject');
 
+  const switchRoleBtn = document.getElementById('btnHeaderSwitchRole');
+  const teacherSignOutBtn = document.getElementById('btnTeacherHeaderSignOut');
+  const headerRoleBadge = document.getElementById('headerRoleBadge');
+  const drawerPortalViews = document.getElementById('drawerSectionPortalViews');
+
   if (normalizedRole === 'student') {
+    document.body.classList.remove('role-teacher');
+    if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
+    if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'none';
+    if (headerRoleBadge) {
+      headerRoleBadge.style.cursor = 'pointer';
+      headerRoleBadge.title = 'Current Active Portal. Click to switch.';
+    }
+    if (drawerPortalViews) drawerPortalViews.style.display = 'block';
+
     if (headerTitle) headerTitle.innerText = 'Student Learning Portal • Adaptive Tests & Smartboard';
     if (facultyName) facultyName.innerText = 'Aryan Sharma';
     if (facultyTag) {
@@ -512,6 +618,15 @@ function switchPortalRole(role) {
     renderStudentQuestion();
 
   } else if (normalizedRole === 'director') {
+    document.body.classList.remove('role-teacher');
+    if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
+    if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'none';
+    if (headerRoleBadge) {
+      headerRoleBadge.style.cursor = 'pointer';
+      headerRoleBadge.title = 'Current Active Portal. Click to switch.';
+    }
+    if (drawerPortalViews) drawerPortalViews.style.display = 'block';
+
     if (headerTitle) headerTitle.innerText = 'Principal Executive Portal • School Intelligence & Analytics';
     if (facultyName) facultyName.innerText = 'Dr. Anita Chandel';
     if (facultyTag) {
@@ -525,31 +640,62 @@ function switchPortalRole(role) {
     if (drawerSubject) drawerSubject.innerText = 'Scope: Institutional Oversight & Directives';
 
   } else {
-    // Teacher Role
-    const currentTeacherTab = state.activeTeacherTab || 'tabTeacherSyllabus';
+    // Teacher Role (STRICT ROLE LOCK APPLIED)
+    document.body.classList.add('role-teacher');
+    if (switchRoleBtn) switchRoleBtn.style.display = 'none';
+    if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'inline-flex';
+    if (headerRoleBadge) {
+      headerRoleBadge.style.cursor = 'default';
+      headerRoleBadge.title = 'Faculty Profile (Role-Locked)';
+    }
+    if (drawerPortalViews) drawerPortalViews.style.display = 'none';
+
+    const activeTeacher = teacherBuilderState.activeTeacher || {
+      name: 'Dr. Vikram Sharma',
+      subjectName: 'Physics',
+      subjectKey: 'PHYSICS',
+      phone: '98160 10001'
+    };
+
+    const currentTeacherTab = state.activeTeacherTab || 'tabTeacherCreatePaper';
     const teacherTabTitles = {
+      'tabTeacherCreatePaper': `Teacher Portal • Create Paper (${activeTeacher.subjectName})`,
+      'tabTeacherTakeTest': 'Teacher Portal • Take & Conduct Class Tests',
+      'tabTeacherClasses': 'Teacher Portal • Classes & Student Rosters',
+      'tabTeacherWeakConcepts': 'Teacher Portal • What to Teach Next (Weak Concepts)',
       'tabTeacherSyllabus': 'Teacher Portal • Senior Physics Curriculum & Syllabus',
       'tabGenerator': 'Teacher Portal • Create & Assign Tests',
-      'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
-      'tabTeacherWeakConcepts': 'Teacher Portal • Weak Concepts Diagnostic & What to Teach in Class'
+      'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics'
     };
-    if (headerTitle) headerTitle.innerText = teacherTabTitles[currentTeacherTab] || 'Teacher Portal • Senior Physics Curriculum & Syllabus';
-    if (facultyName) facultyName.innerText = 'Dr. Vikram Sharma';
+
+    if (headerTitle) headerTitle.innerText = teacherTabTitles[currentTeacherTab] || `Teacher Portal • Create Paper (${activeTeacher.subjectName})`;
+    if (facultyName) facultyName.innerText = activeTeacher.name;
     if (facultyTag) {
-      facultyTag.innerText = 'Senior Faculty (Physics)';
+      facultyTag.innerText = `Faculty • ${activeTeacher.subjectName}`;
       facultyTag.style.background = 'rgba(56, 189, 248, 0.2)';
       facultyTag.style.color = '#38bdf8';
     }
     if (roleDot) roleDot.style.background = '#38bdf8';
-    if (drawerName) drawerName.innerText = 'Dr. Vikram Sharma';
-    if (drawerRole) drawerRole.innerText = 'Senior Physics Faculty • HOD';
-    if (drawerSubject) drawerSubject.innerText = 'Department: Physics (Classes 11 & 12)';
+    if (drawerName) drawerName.innerText = activeTeacher.name;
+    if (drawerRole) drawerRole.innerText = `${activeTeacher.subjectName} Faculty • HOD`;
+    if (drawerSubject) drawerSubject.innerText = `Department: ${activeTeacher.subjectName}`;
 
-    // Render teacher syllabus
-    if (window.renderTeacherSyllabusChapters) {
-      window.renderTeacherSyllabusChapters('11', 'ALL');
+    const stripName = document.getElementById('stripTeacherName');
+    if (stripName) stripName.innerText = activeTeacher.name;
+    const stripDept = document.getElementById('stripTeacherDept');
+    if (stripDept) stripDept.innerText = `${activeTeacher.subjectName} Expert`;
+
+    // Initialize Paper Creator dropdowns & Classes
+    if (window.initPaperBuilderDropdowns) {
+      window.initPaperBuilderDropdowns();
     }
-    
+    if (window.renderClassRoster) {
+      window.renderClassRoster(teacherBuilderState.selectedClassId || '12-NonMed');
+    }
+    if (window.renderAssignedTestsTable) {
+      window.renderAssignedTestsTable();
+    }
+
     document.querySelectorAll('.teacher-tab-content').forEach(t => {
       const isTarget = t.id === currentTeacherTab;
       t.style.display = isTarget ? 'block' : 'none';
@@ -704,6 +850,729 @@ function setupThemeToggle() {
 // -----------------------------------------------------------------------------
 // 2. AI LATEX QUESTION STUDIO & MULTI-LLM INFERENCE
 // -----------------------------------------------------------------------------
+
+// =============================================================================
+// TEACHER PORTAL: PAPER CREATOR, CLASS CONDUCTOR, ROSTERS & DROPDOWNS
+// =============================================================================
+const CURRICULUM_CHAPTER_TOPICS = {
+  PHYSICS: {
+    'System of Particles & Rotational Motion': [
+      'Pure Rolling of Solid Sphere on Incline',
+      'Torque and Angular Momentum Conservation',
+      'Moment of Inertia of Symmetrical Bodies',
+      'Center of Mass of Two-Particle System',
+      'Kinetic Energy of Rolling Bodies'
+    ],
+    'Current Electricity': [
+      'Drift Velocity & Microscopic Deduction of Ohm\'s Law',
+      'Kirchhoff\'s Voltage and Current Laws (Loop Analysis)',
+      'Wheatstone Bridge and Potentiometer Balancing',
+      'Temperature Dependence of Resistivity & Relaxation Time',
+      'Internal Resistance & Terminal Potential Difference'
+    ],
+    'Ray Optics & Optical Instruments': [
+      'Refraction at Spherical Surfaces & Lens Maker\'s Formula',
+      'Total Internal Reflection and Optical Fibres',
+      'Compound Microscope & Astronomical Telescope',
+      'Prism Dispersion and Angle of Minimum Deviation'
+    ],
+    'Oscillations & Waves': [
+      'Damped & Driven Oscillations (Resonance & Q-Factor)',
+      'Simple Harmonic Motion Restoring Force & Phase',
+      'Doppler Effect in Acoustic Waves',
+      'Standing Waves in Open & Closed Organ Pipes'
+    ],
+    'Electrostatics & Capacitance': [
+      'Gauss\'s Law Applications (Spherical & Planar Symmetries)',
+      'Electric Potential and Dipole Field Work Done',
+      'Parallel Plate Capacitor with Dielectric Slab',
+      'Energy Density in Electrostatic Field'
+    ],
+    'Magnetic Effects of Current': [
+      'Biot-Savart Law and Circular Loop Magnetic Field',
+      'Ampere\'s Circuital Law Applications',
+      'Moving Coil Galvanometer Sensitivity & Conversion',
+      'Lorentz Force & Cyclotron Motion'
+    ]
+  },
+  CHEMISTRY: {
+    'Chemical Kinetics': [
+      'Rate Law & Arrhenius Activation Energy Equation',
+      'First Order Integrated Rate Law & Half-Life',
+      'Collision Theory and Activated Complex',
+      'Pseudo-First Order Reactions'
+    ],
+    'Electrochemistry': [
+      'Nernst Equation & Cell Potential Calculations',
+      'Kohlrausch\'s Law of Independent Migration',
+      'Faraday\'s Laws of Electrolysis',
+      'Fuel Cells and Prevention of Corrosion'
+    ],
+    'Solutions': [
+      'Raoult\'s Law & Colligative Properties',
+      'Elevation in Boiling Point & Depression in Freezing Point',
+      'Osmotic Pressure & Van\'t Hoff Factor (i)',
+      'Ideal vs Non-Ideal Solutions'
+    ],
+    'Coordination Compounds': [
+      'Crystal Field Theory (CFT) & d-Orbital Splitting',
+      'IUPAC Nomenclature of Mononuclear Complexes',
+      'Werner\'s Coordination Theory',
+      'Geometrical & Optical Isomerism'
+    ]
+  },
+  MATHEMATICS: {
+    'Calculus & Derivatives': [
+      'Chain Rule & Implicit Differentiation',
+      'Maxima & Minima Applications (Word Problems)',
+      'Rolle\'s and Lagrange\'s Mean Value Theorems',
+      'Tangents and Normals to Parametric Curves'
+    ],
+    'Integrals & Differential Equations': [
+      'Integration by Parts & Partial Fractions',
+      'Definite Integrals Symmetric Properties',
+      'Linear Differential Equations (Integrating Factor)',
+      'Area Under Curve (Parabola & Ellipse)'
+    ],
+    'Vectors & 3D Geometry': [
+      'Scalar & Vector Triple Product',
+      'Shortest Distance Between Skew Lines',
+      'Plane and Line Intersection Equations',
+      'Direction Cosines and Ratios'
+    ],
+    'Matrices & Determinants': [
+      'Matrix Inversion using Adjoint Method',
+      'Cramer\'s Rule for System of Linear Equations',
+      'Determinant Row-Column Elementary Operations'
+    ]
+  },
+  BIOLOGY: {
+    'Genetics & Molecular Basis': [
+      'DNA Replication Semiconservative Mechanism',
+      'Transcription and Translation in Eukaryotes',
+      'Mendelian Dihybrid Cross & Gene Mapping',
+      'Lac Operon Regulation'
+    ],
+    'Human Physiology': [
+      'Action Potential & Synaptic Transmission',
+      'Cardiac Cycle, Regulation & ECG Waves',
+      'Counter-Current Mechanism in Nephron Henle\'s Loop',
+      'Sliding Filament Theory of Muscle Contraction'
+    ],
+    'Biotechnology & Applications': [
+      'Recombinant DNA Technology Tools & Vectors',
+      'PCR (Polymerase Chain Reaction) Amplification',
+      'Bt Cotton and RNA Interference Applications'
+    ]
+  },
+  CLASS10_SCIENCE: {
+    'Chemical Reactions & Equations': [
+      'Balancing Chemical Redox Reactions',
+      'Types of Reactions: Combination, Decomposition, Displacement',
+      'Oxidation, Reduction, Corrosion & Rancidity'
+    ],
+    'Acids, Bases and Salts': [
+      'pH Scale & Importance in Everyday Life',
+      'Chlor-Alkali Process (NaOH, Cl2, H2)',
+      'Bleaching Powder, Baking Soda, Washing Soda, Plaster of Paris'
+    ],
+    'Light - Reflection and Refraction': [
+      'Spherical Mirror Formula & Magnification Sign Conventions',
+      'Refraction through Rectangular Glass Slab & Refractive Index',
+      'Convex & Concave Lens Image Ray Tracing & Power of Lens'
+    ],
+    'Electricity': [
+      'Ohm\'s Law Verification & V-I Graphs',
+      'Equivalent Resistance of Series and Parallel Circuits',
+      'Joule\'s Law of Heating & Electrical Power (kWh)'
+    ]
+  },
+  CLASS10_MATHEMATICS: {
+    'Quadratic Equations & Arithmetic Progressions': [
+      'Roots of Quadratic Equations (Quadratic Formula & Factorization)',
+      'Discriminant and Nature of Real/Imaginary Roots',
+      'nth Term and Sum of First n Terms of an AP'
+    ],
+    'Triangles & Coordinate Geometry': [
+      'Basic Proportionality Theorem (Thales Theorem)',
+      'Criteria for Similarity of Triangles (AAA, SSS, SAS)',
+      'Distance Formula, Section Formula & Centroid'
+    ],
+    'Trigonometry & Applications': [
+      'Trigonometric Ratios of Specific Angles (30°, 45°, 60°)',
+      'Fundamental Trigonometric Identities (sin²θ + cos²θ = 1)',
+      'Heights and Distances (Angle of Elevation & Depression)'
+    ]
+  },
+  COMPUTER_SCIENCE: {
+    'Python Programming & Data Structures': [
+      'Functions, Parameter Passing & Scope',
+      'File Handling (Text, Binary & CSV Files)',
+      'Stack Implementation using Python Lists'
+    ],
+    'Computer Networks & SQL': [
+      'Network Devices, Topologies & Protocols',
+      'SQL Aggregate Functions & Group By Clauses',
+      'SQL Joins (Equi-Join & Natural Join)'
+    ]
+  }
+};
+
+const CLASS_ROSTERS = {
+  '12-NonMed': {
+    name: 'Class 12-A',
+    stream: 'Senior Secondary Non-Medical',
+    subject: 'Physics',
+    enrolled: 48,
+    attendance: '95.8%',
+    average: '76.4%',
+    students: [
+      { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', parent: '98160 55012', turnIn: 'Submitted (09:42 AM)', score: '88%', status: 'Active' },
+      { roll: '102', name: 'Priya Verma', phone: '98160 55021', parent: '98160 55022', turnIn: 'Submitted (09:44 AM)', score: '93%', status: 'Active' },
+      { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', parent: '98160 55032', turnIn: 'Submitted (09:50 AM)', score: '64%', status: 'Remedial' },
+      { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', parent: '98160 55042', turnIn: 'Submitted (09:38 AM)', score: '82%', status: 'Active' },
+      { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', parent: '98160 55052', turnIn: 'Submitted (09:55 AM)', score: '53%', status: 'Focus Needed' },
+      { roll: '106', name: 'Divya Rana', phone: '98160 55061', parent: '98160 55062', turnIn: 'Submitted (09:41 AM)', score: '87%', status: 'Active' },
+      { roll: '107', name: 'Aman Kapoor', phone: '98160 55071', parent: '98160 55072', turnIn: 'Pending Turn-in', score: '--', status: 'In-Progress' },
+      { roll: '108', name: 'Simran Kaur', phone: '98160 55081', parent: '98160 55082', turnIn: 'Pending Turn-in', score: '--', status: 'In-Progress' },
+      { roll: '109', name: 'Karan Singhal', phone: '98160 55091', parent: '98160 55092', turnIn: 'Submitted (09:47 AM)', score: '79%', status: 'Active' },
+      { roll: '110', name: 'Ritu Sen', phone: '98160 55101', parent: '98160 55102', turnIn: 'Submitted (09:46 AM)', score: '91%', status: 'Active' }
+    ]
+  },
+  '11-NonMed': {
+    name: 'Class 11-NonMed',
+    stream: 'Class 11th Non-Medical',
+    subject: 'Physics',
+    enrolled: 42,
+    attendance: '92.4%',
+    average: '71.8%',
+    students: [
+      { roll: '201', name: 'Aditya Gupta', phone: '98161 44001', parent: '98161 44002', turnIn: 'Submitted', score: '74%', status: 'Active' },
+      { roll: '202', name: 'Sneha Bisht', phone: '98161 44003', parent: '98161 44004', turnIn: 'Submitted', score: '89%', status: 'Active' },
+      { roll: '203', name: 'Manish Rawat', phone: '98161 44005', parent: '98161 44006', turnIn: 'Submitted', score: '62%', status: 'Remedial' },
+      { roll: '204', name: 'Kavita Joshi', phone: '98161 44007', parent: '98161 44008', turnIn: 'Submitted', score: '80%', status: 'Active' }
+    ]
+  },
+  '11-Med': {
+    name: 'Class 11-Med',
+    stream: 'Class 11th Medical',
+    subject: 'Biology & Physics',
+    enrolled: 40,
+    attendance: '94.0%',
+    average: '78.2%',
+    students: [
+      { roll: '301', name: 'Tanya Dogra', phone: '98162 33001', parent: '98162 33002', turnIn: 'Submitted', score: '91%', status: 'Active' },
+      { roll: '302', name: 'Rahul Chawla', phone: '98162 33003', parent: '98162 33004', turnIn: 'Submitted', score: '76%', status: 'Active' },
+      { roll: '303', name: 'Megha Sharma', phone: '98162 33005', parent: '98162 33006', turnIn: 'Submitted', score: '84%', status: 'Active' }
+    ]
+  },
+  '12-Med': {
+    name: 'Class 12-Med',
+    stream: 'Senior Medical',
+    subject: 'Biology & Chemistry',
+    enrolled: 38,
+    attendance: '96.2%',
+    average: '81.5%',
+    students: [
+      { roll: '401', name: 'Nikhil Sethi', phone: '98163 22001', parent: '98163 22002', turnIn: 'Submitted', score: '85%', status: 'Active' },
+      { roll: '402', name: 'Palak Gulati', phone: '98163 22003', parent: '98163 22004', turnIn: 'Submitted', score: '94%', status: 'Active' }
+    ]
+  },
+  '10-Science-A': {
+    name: 'Class 10-Science (Sec A)',
+    stream: 'Secondary Foundation',
+    subject: 'Science',
+    enrolled: 45,
+    attendance: '97.1%',
+    average: '83.0%',
+    students: [
+      { roll: '501', name: 'Arjun Sood', phone: '98164 11001', parent: '98164 11002', turnIn: 'Submitted', score: '88%', status: 'Active' },
+      { roll: '502', name: 'Bhavna Negi', phone: '98164 11003', parent: '98164 11004', turnIn: 'Submitted', score: '90%', status: 'Active' }
+    ]
+  }
+};
+
+const assignedTestsState = [
+  {
+    id: 'test_live_rotational',
+    title: 'Class 12-A • Diagnostic Test: Rotational Dynamics & Torque',
+    targetClass: 'Class 12-A',
+    subject: 'Physics',
+    topic: 'Pure Rolling of Solid Sphere on Incline',
+    duration: '45 Mins',
+    submitted: '44 / 48',
+    submittedCount: 44,
+    totalCount: 48,
+    avg: '76.4%',
+    status: 'LIVE',
+    statusBadge: '<span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399; border:1px solid rgba(52,211,153,0.4);"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>In Progress</span>'
+  },
+  {
+    id: 'test_past_drift',
+    title: 'Class 12-A • Unit Quiz: Microscopic Drift & Ohm\'s Law',
+    targetClass: 'Class 12-A',
+    subject: 'Physics',
+    topic: 'Drift Velocity & Microscopic Deduction of Ohm\'s Law',
+    duration: '20 Mins',
+    submitted: '48 / 48',
+    submittedCount: 48,
+    totalCount: 48,
+    avg: '82.5%',
+    status: 'COMPLETED',
+    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
+  },
+  {
+    id: 'test_past_kinematics',
+    title: 'Class 11-NonMed • Weekly Test: Kinematics & Projectiles',
+    targetClass: 'Class 11-NonMed',
+    subject: 'Physics',
+    topic: 'Projectile Motion & Parabolic Trajectory',
+    duration: '40 Mins',
+    submitted: '41 / 42',
+    submittedCount: 41,
+    totalCount: 42,
+    avg: '71.8%',
+    status: 'COMPLETED',
+    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
+  },
+  {
+    id: 'test_upcoming_optics',
+    title: 'Class 12-A • Pre-Board Mock: Ray Optics & Wave Optics',
+    targetClass: 'Class 12-A',
+    subject: 'Physics',
+    topic: 'Lens Maker\'s Formula & Optical Instruments',
+    duration: '90 Mins',
+    submitted: '0 / 48',
+    submittedCount: 0,
+    totalCount: 48,
+    avg: '--',
+    status: 'SCHEDULED',
+    statusBadge: '<span class="status-badge" style="background:rgba(234,179,8,0.15); color:#fbbf24;">Scheduled (Tomorrow)</span>'
+  }
+];
+
+window.initPaperBuilderDropdowns = function() {
+  const activeTeacher = teacherBuilderState.activeTeacher || {
+    name: 'Dr. Vikram Sharma',
+    subjectKey: 'PHYSICS',
+    subjectName: 'Physics'
+  };
+
+  const subjSelect = document.getElementById('selectPaperSubject');
+  if (subjSelect) {
+    if (activeTeacher.subjectKey && subjSelect.querySelector(`option[value="${activeTeacher.subjectKey}"]`)) {
+      subjSelect.value = activeTeacher.subjectKey;
+    }
+  }
+
+  const curSubj = subjSelect ? subjSelect.value : (activeTeacher.subjectKey || 'PHYSICS');
+  window.populatePaperChapters(curSubj);
+};
+
+window.populatePaperChapters = function(subjectKey) {
+  const chapterSelect = document.getElementById('selectPaperChapter');
+  if (!chapterSelect) return;
+  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapterNames = Object.keys(chapters);
+
+  chapterSelect.innerHTML = chapterNames.map((ch, idx) => 
+    `<option value="${escapeHtml(ch)}" ${idx === 0 ? 'selected' : ''}>${escapeHtml(ch)}</option>`
+  ).join('');
+
+  if (chapterNames.length > 0) {
+    window.populatePaperTopics(subjectKey, chapterNames[0]);
+  }
+};
+
+window.populatePaperTopics = function(subjectKey, chapterName) {
+  const topicSelect = document.getElementById('selectPaperTopic');
+  if (!topicSelect) return;
+  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const topics = chapters[chapterName] || ['Standard Conceptual & Numerical Problems'];
+
+  topicSelect.innerHTML = topics.map((t, idx) => 
+    `<option value="${escapeHtml(t)}" ${idx === 0 ? 'selected' : ''}>🎯 ${escapeHtml(t)}</option>`
+  ).join('');
+
+  if (topics.length > 0) {
+    window.updatePaperDefaultTitle(topics[0]);
+  }
+};
+
+window.updatePaperDefaultTitle = function(topicName) {
+  const titleInput = document.getElementById('inputPaperTitle');
+  const classSelect = document.getElementById('selectPaperClass');
+  const className = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A';
+  if (titleInput) {
+    titleInput.value = `${className} • Unit Assessment: ${topicName || 'Curriculum Focus'}`;
+  }
+};
+
+window.handlePaperClassChange = function(classId) {
+  teacherBuilderState.selectedClassId = classId;
+  const scopeEl = document.getElementById('stripTeacherClassScope');
+  const classSelect = document.getElementById('selectPaperClass');
+  if (scopeEl && classSelect) {
+    scopeEl.innerText = classSelect.options[classSelect.selectedIndex]?.text || classId;
+  }
+  const topicSelect = document.getElementById('selectPaperTopic');
+  window.updatePaperDefaultTitle(topicSelect ? topicSelect.value : '');
+};
+
+window.handlePaperSubjectChange = function(subjectKey) {
+  window.populatePaperChapters(subjectKey);
+};
+
+window.handlePaperChapterChange = function(chapterName) {
+  const subjSelect = document.getElementById('selectPaperSubject');
+  const subjectKey = subjSelect ? subjSelect.value : 'PHYSICS';
+  window.populatePaperTopics(subjectKey, chapterName);
+};
+
+window.handlePaperTopicChange = function(topicName) {
+  window.updatePaperDefaultTitle(topicName);
+};
+
+window.createTeacherPaper = function(event) {
+  if (event) event.preventDefault();
+  const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
+  const classSelect = document.getElementById('selectPaperClass');
+  const targetClass = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A';
+  const subjSelect = document.getElementById('selectPaperSubject');
+  const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
+  const topicSelect = document.getElementById('selectPaperTopic');
+  const topic = topicSelect ? topicSelect.value : 'Target Concept';
+  const formatSelect = document.getElementById('selectPaperFormat');
+  const duration = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text?.split('•')[0]?.replace(/^[^\w]*/, '').trim() || '45 Mins' : '45 Mins';
+
+  const newTest = {
+    id: `test_${Date.now()}`,
+    title,
+    targetClass,
+    subject,
+    topic,
+    duration,
+    submitted: '0 / 48',
+    submittedCount: 0,
+    totalCount: 48,
+    avg: '--',
+    status: 'LIVE',
+    statusBadge: '<span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399; border:1px solid rgba(52,211,153,0.4);"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>Active</span>'
+  };
+
+  assignedTestsState.unshift(newTest);
+  window.renderAssignedTestsTable();
+
+  // Update live card
+  const liveTitle = document.getElementById('liveTestTitle');
+  if (liveTitle) liveTitle.innerText = `${targetClass} • ${title}`;
+  const liveCounter = document.getElementById('liveTestSubmissionsCounter');
+  if (liveCounter) liveCounter.innerText = `0 / 48`;
+
+  // Show Toast
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Paper Assigned:</strong> "${escapeHtml(title)}" created for ${escapeHtml(targetClass)}. Switched to live test station.</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+
+  // Switch to Take Test tab to monitor
+  switchTeacherTab('tabTeacherTakeTest');
+};
+
+window.previewTeacherPaper = function() {
+  const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
+  const subjSelect = document.getElementById('selectPaperSubject');
+  const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
+  const topicSelect = document.getElementById('selectPaperTopic');
+  const topic = topicSelect ? topicSelect.value : 'Target Concept';
+  const formatSelect = document.getElementById('selectPaperFormat');
+  const formatText = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text : '45-Min Unit Test';
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups to view and print the test paper preview.');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Print Assessment: ${escapeHtml(title)}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+        .inst { font-size: 0.85rem; background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-bottom: 20px; }
+        .q-box { margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
+        .marks { float: right; font-weight: bold; color: #2563eb; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="no-print" style="text-align:right; margin-bottom:15px;">
+        <button onclick="window.print()" style="padding:8px 16px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🖨️ Print Paper</button>
+      </div>
+      <div class="header">
+        <h2 style="margin:0;">UNISOLE SCHOLAR SECONDARY SCHOOL</h2>
+        <h3 style="margin:4px 0; color:#334155;">${escapeHtml(title)}</h3>
+        <p style="margin:4px 0; font-size:0.9rem;">Subject: <strong>${escapeHtml(subject)}</strong> &bull; Topic: <strong>${escapeHtml(topic)}</strong> &bull; ${escapeHtml(formatText)}</p>
+      </div>
+      <div class="inst">
+        <strong>General Instructions:</strong>
+        <ol style="margin:6px 0 0 16px; padding:0;">
+          <li>All questions are compulsory. Internal choices are provided in Section C.</li>
+          <li>Write clear step-by-step mathematical working with appropriate SI units.</li>
+          <li>Neat diagrams must be drawn wherever specified.</li>
+        </ol>
+      </div>
+      <div class="q-box">
+        <span class="marks">[3 Marks]</span>
+        <strong>Q1.</strong> A solid sphere of mass M and radius R rolls down without slipping along an inclined plane of inclination &theta;. Set up the governing equations of motion and derive the expression for linear acceleration of its center of mass.
+      </div>
+      <div class="q-box">
+        <span class="marks">[2 Marks]</span>
+        <strong>Q2.</strong> Explain why the work done by static friction during pure rolling without slipping is zero, even though static friction is indispensable for rolling.
+      </div>
+      <div class="q-box">
+        <span class="marks">[4 Marks]</span>
+        <strong>Q3.</strong> A cylinder and a solid sphere of equal mass and radius are released from rest from the top of an inclined plane. Determine which object reaches the bottom first and calculate the ratio of their final linear velocities.
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
+
+window.finalizeCurrentTest = function() {
+  const liveCounter = document.getElementById('liveTestSubmissionsCounter');
+  if (liveCounter) liveCounter.innerText = '48 / 48 (100%)';
+  if (assignedTestsState[0]) {
+    assignedTestsState[0].submitted = '48 / 48';
+    assignedTestsState[0].status = 'COMPLETED';
+    assignedTestsState[0].statusBadge = '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>';
+  }
+  window.renderAssignedTestsTable();
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Test Finalized:</strong> All 48 student submissions graded. Grade cards synchronized to Student Portal.</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
+window.renderAssignedTestsTable = function() {
+  const tbody = document.getElementById('tbodyAssignedTests');
+  if (!tbody) return;
+
+  tbody.innerHTML = assignedTestsState.map(t => `
+    <tr>
+      <td>
+        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(t.title)}</strong>
+        <span style="color:#94a3b8; font-size:0.75rem;">Topic: ${escapeHtml(t.topic)}</span>
+      </td>
+      <td><span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:0.78rem;">${escapeHtml(t.targetClass)}</span></td>
+      <td style="font-size:0.82rem; color:#cbd5e1;">${escapeHtml(t.duration)}</td>
+      <td style="font-weight:700; color:#38bdf8; font-size:0.82rem;">${escapeHtml(t.submitted)}</td>
+      <td style="font-weight:700; color:${t.avg.startsWith('-') ? '#94a3b8' : '#34d399'}; font-size:0.82rem;">${escapeHtml(t.avg)}</td>
+      <td>${t.statusBadge}</td>
+      <td style="text-align:right;">
+        <div style="display:inline-flex; gap:6px;">
+          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
+            <i data-lucide="printer" style="width:13px; height:13px;"></i>
+          </button>
+          <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
+            Roster
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  initLucideIcons();
+};
+
+window.handleTeacherClassSelect = function(classId) {
+  teacherBuilderState.selectedClassId = classId;
+  window.renderClassRoster(classId);
+};
+
+window.renderClassRoster = function(classId = '12-NonMed') {
+  const data = CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed'];
+  teacherBuilderState.selectedClassId = classId;
+
+  const sel = document.getElementById('selectTeacherActiveRosterClass');
+  if (sel && sel.value !== classId) sel.value = classId;
+
+  const rTitle = document.getElementById('rosterTitle');
+  if (rTitle) rTitle.innerText = `${data.name} Student Roster (${data.stream})`;
+
+  const statEnrolled = document.getElementById('statClassEnrolled');
+  if (statEnrolled) statEnrolled.innerText = `${data.enrolled} Students`;
+  const statAttendance = document.getElementById('statClassAttendance');
+  if (statAttendance) statAttendance.innerText = data.attendance;
+  const statAvg = document.getElementById('statClassAverage');
+  if (statAvg) statAvg.innerText = data.average;
+
+  const tbody = document.getElementById('tbodyClassRoster');
+  if (!tbody) return;
+
+  tbody.innerHTML = data.students.map(s => `
+    <tr class="roster-row" data-search="${escapeHtml(s.name.toLowerCase())} ${s.roll}">
+      <td style="font-weight:700; color:#38bdf8;">#${escapeHtml(s.roll)}</td>
+      <td>
+        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(s.name)}</strong>
+        <span style="color:#94a3b8; font-size:0.72rem;">Scholar ID: SCH-2026-${escapeHtml(s.roll)}</span>
+      </td>
+      <td style="font-size:0.8rem; color:#cbd5e1;">${escapeHtml(s.phone)}</td>
+      <td style="font-size:0.8rem; color:#94a3b8;">${escapeHtml(s.parent)}</td>
+      <td style="font-size:0.8rem;">
+        <span style="color:${s.turnIn.includes('Pending') ? '#fbbf24' : '#34d399'}; font-weight:600;">
+          ${escapeHtml(s.turnIn)}
+        </span>
+      </td>
+      <td style="font-weight:800; font-size:0.84rem; color:${s.score.startsWith('-') ? '#94a3b8' : (parseInt(s.score) >= 80 ? '#34d399' : (parseInt(s.score) >= 60 ? '#38bdf8' : '#fb7185'))};">
+        ${escapeHtml(s.score)}
+      </td>
+      <td>
+        <span class="status-badge" style="background:${s.status === 'Active' ? 'rgba(52,211,153,0.15)' : (s.status === 'Remedial' ? 'rgba(251,191,36,0.15)' : 'rgba(251,113,133,0.15)')}; color:${s.status === 'Active' ? '#34d399' : (s.status === 'Remedial' ? '#fbbf24' : '#fb7185')};">
+          ${escapeHtml(s.status)}
+        </span>
+      </td>
+      <td style="text-align:right;">
+        <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.parent)}')" title="Send SMS Notice to Parent" style="padding:4px 8px; font-size:0.72rem;">
+          <i data-lucide="message-square" style="width:13px; height:13px;"></i> Notice
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  initLucideIcons();
+};
+
+window.filterClassRoster = function(query = '') {
+  const q = query.trim().toLowerCase();
+  document.querySelectorAll('.roster-row').forEach(row => {
+    const searchStr = row.getAttribute('data-search') || '';
+    row.style.display = searchStr.includes(q) ? '' : 'none';
+  });
+};
+
+window.notifyStudentParent = function(studentName, parentPhone) {
+  alert(`SMS Notification dispatched to parent (${parentPhone}) for scholar ${studentName}. Attendance and test records shared.`);
+};
+
+window.openCreateClassModal = function() {
+  const modal = document.getElementById('modalCreateClass');
+  if (modal) {
+    modal.style.display = 'flex';
+    initLucideIcons();
+  }
+};
+
+window.closeCreateClassModal = function() {
+  const modal = document.getElementById('modalCreateClass');
+  if (modal) modal.style.display = 'none';
+};
+
+window.submitCreateClass = function(event) {
+  if (event) event.preventDefault();
+  const name = document.getElementById('inputNewClassName')?.value?.trim() || 'New Class Section';
+  const sectionCode = document.getElementById('inputNewClassSection')?.value?.trim() || `SEC-${Date.now().toString().slice(-4)}`;
+
+  CLASS_ROSTERS[sectionCode] = {
+    name,
+    stream: 'Senior Secondary Section',
+    subject: teacherBuilderState.activeTeacher?.subjectName || 'Physics',
+    enrolled: 0,
+    attendance: '100%',
+    average: '--',
+    students: []
+  };
+
+  const sel1 = document.getElementById('selectTeacherActiveRosterClass');
+  if (sel1) {
+    const opt = document.createElement('option');
+    opt.value = sectionCode;
+    opt.textContent = `${name} (0 Students)`;
+    sel1.appendChild(opt);
+    sel1.value = sectionCode;
+  }
+  const sel2 = document.getElementById('selectPaperClass');
+  if (sel2) {
+    const opt = document.createElement('option');
+    opt.value = sectionCode;
+    opt.textContent = `${name} (0 Students)`;
+    sel2.appendChild(opt);
+  }
+
+  window.closeCreateClassModal();
+  window.renderClassRoster(sectionCode);
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Created new class section: <strong>${escapeHtml(name)}</strong></span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 3500);
+};
+
+window.openAddStudentModal = function() {
+  const modal = document.getElementById('modalAddStudentToClass');
+  if (modal) {
+    modal.style.display = 'flex';
+    initLucideIcons();
+  }
+};
+
+window.closeAddStudentModal = function() {
+  const modal = document.getElementById('modalAddStudentToClass');
+  if (modal) modal.style.display = 'none';
+};
+
+window.submitAddStudentToClass = function(event) {
+  if (event) event.preventDefault();
+  const name = document.getElementById('inputNewStudentName')?.value?.trim() || 'New Student';
+  const roll = document.getElementById('inputNewStudentRoll')?.value?.trim() || String(Math.floor(Math.random() * 800 + 100));
+  const classId = teacherBuilderState.selectedClassId || '12-NonMed';
+
+  if (!CLASS_ROSTERS[classId]) {
+    CLASS_ROSTERS[classId] = {
+      name: classId,
+      stream: 'Secondary Stream',
+      subject: 'Physics',
+      enrolled: 0,
+      attendance: '100%',
+      average: '--',
+      students: []
+    };
+  }
+
+  const newStudent = {
+    roll,
+    name,
+    phone: '98160 99001',
+    parent: '98160 99002',
+    turnIn: 'Enrolled Today',
+    score: '--',
+    status: 'Active'
+  };
+
+  CLASS_ROSTERS[classId].students.unshift(newStudent);
+  CLASS_ROSTERS[classId].enrolled = CLASS_ROSTERS[classId].students.length;
+
+  window.closeAddStudentModal();
+  window.renderClassRoster(classId);
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="user-check" style="width:16px; height:16px; color:#34d399;"></i> <span>Enrolled <strong>${escapeHtml(name)}</strong> (Roll #${escapeHtml(roll)}) to roster.</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 3500);
+};
+
+
 function setupAiGenerator() {
   const btnGenerate = document.getElementById('btnGenerateQuestion');
   const btnAddToTest = document.getElementById('btnAddToClassTest');
@@ -9537,7 +10406,7 @@ function buildLocalSmartboardPlan(qId) {
     diagramType = 'rolling_incline';
     diagTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
     step1Title = 'Free-Body Force & Torque Equations';
-    step1Formula = '• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R';
+    step1Formula = 'Down Incline:   M·g·sin θ - f_s = M·a\nTorque about C: τ = f_s · R = I · α\nPure Rolling:   a = α · R  ⇒  α = a / R';
     step1Exp = 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.';
 
     step2Title = 'Torque & Linear Force Substitution';
@@ -9545,7 +10414,7 @@ function buildLocalSmartboardPlan(qId) {
     step2Exp = 'This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).';
 
     step3Title = 'Moment of Inertia & Final Acceleration';
-    step3Working = '• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
+    step3Working = 'Solid Sphere:   I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\nAcceleration:   a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\nFinal Result:   a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
     step3Exp = 'A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.';
     tipText = 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.';
   } else if (textForDetection.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
@@ -11738,7 +12607,7 @@ const TEACHER_REMEDIAL_PLANS = {
     solution: {
       step1: {
         title: "Free-Body Force & Torque Equations",
-        formula: "• Linear Motion (down incline):  M·g·sin θ - f_s = M·a\n• Torque equation about center: τ = f_s · R = I · α\n• Pure Rolling Constraint:       a = α · R  ⇒  α = a / R",
+        formula: "Down Incline:   M·g·sin θ - f_s = M·a\nTorque about C: τ = f_s · R = I · α\nPure Rolling:   a = α · R  ⇒  α = a / R",
         explanation: "Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.",
         spokenScript: "Pehle stated physical parameters aur primary governing relation note karte hain."
       },
@@ -11750,7 +12619,7 @@ const TEACHER_REMEDIAL_PLANS = {
       },
       step3: {
         title: "Moment of Inertia & Final Acceleration",
-        formula: "• For Solid Sphere:  I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\n• Acceleration:      a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\n• Final Expression:  a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ",
+        formula: "Solid Sphere:   I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\nAcceleration:   a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\nFinal Result:   a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ",
         explanation: "A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.",
         spokenScript: "Aur yeh raha final verified result with proper SI units aur physical significance."
       }

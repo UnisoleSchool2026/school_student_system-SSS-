@@ -488,7 +488,8 @@
 
       fbCtx.fillStyle = stepNum === 1 ? '#eab308' : stepNum === 2 ? '#38bdf8' : '#a855f7';
       fbCtx.font = 'bold 13px sans-serif';
-      fbCtx.fillText(`Step ${stepNum}: ${title}`, 75, fbYOffset + 24);
+      const cleanStepTitle = (title || '').replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '').trim();
+      fbCtx.fillText(cleanStepTitle || 'Mathematical Derivation', 75, fbYOffset + 24);
 
       fbCtx.fillStyle = '#f8fafc';
       fbCtx.font = '13px monospace';
@@ -624,22 +625,6 @@
       fbCtx.strokeRect(90, 335, 460, 80);
       fbCtx.fillStyle = '#c084fc';
       fbCtx.fillText('CORE GOVERNING LAW & BOUNDARY CONDITIONS', 110, 370);
-
-      // 3. Teacher Tip Box
-      fbCtx.fillStyle = 'rgba(234, 179, 8, 0.15)';
-      fbCtx.strokeStyle = '#eab308';
-      fbCtx.lineWidth = 1.5;
-      fbCtx.roundRect ? fbCtx.roundRect(50, 490, 560, 75, 8) : fbCtx.rect(50, 490, 560, 75);
-      fbCtx.fill();
-      fbCtx.stroke();
-
-      fbCtx.fillStyle = '#eab308';
-      fbCtx.font = 'bold 11px sans-serif';
-      fbCtx.fillText('TEACHER EXAM TIP & COMMON PITFALL:', 65, 512);
-      fbCtx.fillStyle = '#fef08a';
-      fbCtx.font = '12px sans-serif';
-      const cleanTip = (payload?.examTip || diag.tip || 'Verify unit dimensions, coordinate signs, and physical boundary conditions!').replace(/\$+/g, '');
-      fbCtx.fillText(cleanTip.slice(0, 85), 65, 535);
 
       // Helper to strip any numbered prefixes like "1. ", "Step 1: "
       const cleanCardTitle = (t, fallback) => (t || fallback).replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '').trim().toUpperCase();
