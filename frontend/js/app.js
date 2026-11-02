@@ -1282,6 +1282,7 @@ const assignedTestsState = [
     statusBadge: '<span class="status-badge" style="background:rgba(251,191,36,0.15); color:#fbbf24;">Scheduled (Friday)</span>'
   }
 ];
+window.assignedTestsState = assignedTestsState;
 
 let assignedTestsFilterQuery = '';
 let assignedTestsStatusFilter = 'ALL';
@@ -1383,7 +1384,7 @@ window.renderAssignedTestsTable = function() {
       <td>${t.statusBadge}</td>
       <td style="text-align:right;">
         <div style="display:inline-flex; gap:6px;">
-          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
+          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper('${t.id}')" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
             <i data-lucide="printer" style="width:13px; height:13px;"></i>
           </button>
           <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
@@ -2120,29 +2121,74 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
   }
 };
 
-window.previewTeacherPaper = function() {
-  const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
-  const subjSelect = document.getElementById('selectPaperSubject');
-  const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
-  const chSelect = document.getElementById('selectPaperChapter');
-  const chapter = chSelect ? chSelect.value : 'System of Particles & Rotational Motion';
-  const topicSelect = document.getElementById('selectPaperTopic');
-  const topic = topicSelect ? topicSelect.value : 'Pure Rolling of Solid Sphere on Incline';
-  const formatSelect = document.getElementById('selectPaperFormat');
-  const formatVal = formatSelect ? formatSelect.value : 'UNIT_45';
-  const formatText = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text : '📝 45-Min Unit Exam (15 Qs • 45 Marks)';
-  const classSelect = document.getElementById('selectPaperClass');
-  const className = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text || 'Class 12-A') : 'Class 12-A';
+window.previewTeacherPaper = function(testId) {
+  let title = 'Class 12-A • Unit Assessment: Electric Charges and Fields';
+  let subject = 'Physics';
+  let chapter = 'Chapter 1: Electric Charges and Fields';
+  let topic = 'Electric Charge & Properties (Additivity, Conservation, Quantization)';
+  let formatVal = 'UNIT_45';
+  let duration = '45 Mins';
+  let className = 'Class 12-A';
+
+  let foundTest = null;
+  if (testId && typeof testId === 'string') {
+    foundTest = assignedTestsState.find(t => t.id === testId);
+  }
+
+  if (foundTest) {
+    title = foundTest.title || 'Class Unit Test';
+    subject = foundTest.subject || 'Physics';
+    topic = foundTest.topic || 'Target Curriculum Focus';
+    chapter = foundTest.chapter || (foundTest.topic ? foundTest.topic : 'Chapter 1: Electric Charges and Fields');
+    duration = foundTest.duration || '45 Mins';
+    className = foundTest.targetClass || 'Class 12-A';
+    if (duration.includes('15')) formatVal = 'QUIZ_15';
+    else if (duration.includes('90')) formatVal = 'TERM_90';
+    else if (duration.includes('180')) formatVal = 'MOCK_180';
+    else formatVal = 'UNIT_45';
+  } else {
+    const titleInput = document.getElementById('inputPaperTitle') || document.getElementById('inputTeacherTestTitle');
+    if (titleInput && titleInput.value.trim()) {
+      title = titleInput.value.trim();
+    }
+
+    const subjSelect = document.getElementById('selectPaperSubject');
+    if (subjSelect && subjSelect.options[subjSelect.selectedIndex]) {
+      subject = subjSelect.options[subjSelect.selectedIndex].text;
+    } else {
+      subject = teacherBuilderState.activeTeacher?.subjectName || 'Physics';
+    }
+
+    const chSelect = document.getElementById('selectPaperChapter') || document.getElementById('selectGenChapter');
+    if (chSelect && chSelect.value) {
+      chapter = chSelect.value;
+    }
+
+    const topicSelect = document.getElementById('selectPaperTopic') || document.getElementById('selectGenTopic');
+    if (topicSelect && topicSelect.value) {
+      topic = topicSelect.value;
+    }
+
+    const formatSelect = document.getElementById('selectPaperFormat') || document.getElementById('selectTeacherTestType');
+    if (formatSelect) {
+      formatVal = formatSelect.value || 'UNIT_45';
+      const optText = formatSelect.options[formatSelect.selectedIndex]?.text || '';
+      if (formatVal === 'QUIZ_15' || optText.includes('15-Min')) duration = '15 Minutes';
+      else if (formatVal === 'UNIT_45' || optText.includes('45-Min')) duration = '45 Minutes';
+      else if (formatVal === 'TERM_90' || optText.includes('90-Min')) duration = '90 Minutes';
+      else if (formatVal === 'MOCK_180' || optText.includes('180-Min')) duration = '180 Minutes (3 Hours)';
+      else duration = '45 Minutes';
+    }
+
+    const classSelect = document.getElementById('selectPaperClass') || document.getElementById('selectTakeTestClass');
+    if (classSelect && classSelect.options[classSelect.selectedIndex]) {
+      className = classSelect.options[classSelect.selectedIndex].text?.split('•')[0]?.trim() || 'Class 12-A';
+    }
+  }
 
   const questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
   const totalQuestions = questions.length;
   const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
-
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow popups to view and print the test paper preview.');
-    return;
-  }
 
   // Group by Section
   const sections = {};
@@ -2164,7 +2210,7 @@ window.previewTeacherPaper = function() {
   Object.keys(sections).forEach(secKey => {
     const secQs = sections[secKey];
     questionsHtml += `
-      <div style="margin: 22px 0 12px 0; background: #f1f5f9; padding: 8px 14px; border-radius: 6px; border-left: 4px solid #0284c7; font-weight: 800; font-size: 0.88rem; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+      <div style="margin: 24px 0 14px 0; background: #f1f5f9; padding: 10px 16px; border-radius: 6px; border-left: 4px solid #0284c7; font-weight: 800; font-size: 0.88rem; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
         ${secTitles[secKey] || `SECTION ${secKey}`} (${secQs.length} Questions)
       </div>
     `;
@@ -2173,16 +2219,16 @@ window.previewTeacherPaper = function() {
       let optHtml = '';
       if (q.options && q.options.length > 0) {
         optHtml = `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 0.88rem; color: #334155;">
-            ${q.options.map(opt => `<div style="padding: 4px 8px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 4px;">${opt}</div>`).join('')}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.88rem; color: #334155;">
+            ${q.options.map(opt => `<div style="padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">${opt}</div>`).join('')}
           </div>
         `;
       }
 
       questionsHtml += `
-        <div class="q-box" style="margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
-          <span class="marks" style="float: right; font-weight: bold; color: #0284c7; font-size: 0.85rem;">[${q.marks} Mark${q.marks > 1 ? 's' : ''}]</span>
-          <div style="font-size: 0.94rem; line-height: 1.6; color: #0f172a;">
+        <div class="q-box" style="margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
+          <span class="marks" style="float: right; font-weight: 800; color: #0284c7; font-size: 0.85rem;">[${q.marks} Mark${q.marks > 1 ? 's' : ''}]</span>
+          <div style="font-size: 0.95rem; line-height: 1.6; color: #0f172a;">
             <strong>Q${q.num}.</strong> ${q.question}
           </div>
           ${optHtml}
@@ -2191,70 +2237,108 @@ window.previewTeacherPaper = function() {
     });
   });
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Examination Paper: ${escapeHtml(title)}</title>
-      <meta charset="utf-8">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 36px 40px; color: #0f172a; max-width: 860px; margin: 0 auto; background: #fff; }
-        .header { text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
-        .sub-header { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; color: #334155; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 8px; }
-        .inst { font-size: 0.82rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; margin-bottom: 20px; color: #475569; }
-        .q-box { page-break-inside: avoid; }
-        .marks { float: right; font-weight: bold; color: #0369a1; }
-        @media print {
-          .no-print { display: none !important; }
-          body { padding: 15px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px;">
-        <div style="font-weight: 600; font-size: 0.9rem;">
-          Verified Official Blueprint: <strong>${totalQuestions} Questions</strong> &bull; Total: <strong>${totalMarks} Marks</strong>
-        </div>
-        <div style="display: flex; gap: 10px;">
-          <button onclick="window.print()" style="padding: 8px 18px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            🖨️ Print / Save as PDF
-          </button>
-        </div>
-      </div>
+  let sectionInstructions = '';
+  if (sections['A'] && sections['A'].length > 0) {
+    sectionInstructions += `<li>Section A contains ${sections['A'].length} objective multiple choice questions of 1 mark each.</li>`;
+  }
+  if (sections['B'] && sections['B'].length > 0) {
+    sectionInstructions += `<li>Section B contains ${sections['B'].length} short conceptual questions of 2 marks each. Answer concisely in 30–50 words.</li>`;
+  }
+  if (sections['C'] && sections['C'].length > 0) {
+    sectionInstructions += `<li>Section C contains ${sections['C'].length} long derivation and numerical problems of 6 marks each. Clear step-by-step working with appropriate SI units is mandatory.</li>`;
+  }
 
-      <div class="header">
-        <h2 style="margin: 0; font-size: 1.35rem; letter-spacing: 0.5px; color: #0f172a;">UNISOLE SCHOLAR SECONDARY SCHOOL</h2>
-        <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Department of ${escapeHtml(subject)} &bull; Senior Secondary Academic Assessment</p>
-        <h3 style="margin: 8px 0 4px 0; color: #1e3a8a; font-size: 1.15rem;">${escapeHtml(title)}</h3>
-        <div class="sub-header">
-          <span>Target Cohort: <strong>${escapeHtml(className)}</strong></span>
-          <span>Chapter: <strong>${escapeHtml(chapter)}</strong></span>
-          <span>Max Marks: <strong>${totalMarks}</strong></span>
-          <span>Time Allowed: <strong>${escapeHtml(duration)}</strong></span>
-        </div>
-      </div>
+  const fullPaperHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Examination Paper: ${escapeHtml(title)}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="if(window.renderMathInElement)renderMathInElement(document.body);"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 36px 40px; color: #0f172a; max-width: 860px; margin: 0 auto; background: #fff; line-height: 1.5; }
+    .header { text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
+    .sub-header { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; color: #334155; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 8px; flex-wrap: wrap; gap: 8px; }
+    .inst { font-size: 0.82rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; color: #475569; }
+    .q-box { page-break-inside: avoid; }
+    .marks { float: right; font-weight: bold; color: #0369a1; }
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+    <div style="font-weight: 600; font-size: 0.9rem;">
+      Verified Official Blueprint: <strong>${totalQuestions} Questions</strong> &bull; Total: <strong>${totalMarks} Marks</strong> &bull; Duration: <strong>${escapeHtml(duration)}</strong>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="window.print()" style="padding: 9px 20px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.88rem;">
+        🖨️ Print / Save as PDF
+      </button>
+    </div>
+  </div>
 
-      <div class="inst">
-        <strong>General Instructions:</strong>
-        <ol style="margin: 6px 0 0 16px; padding: 0; line-height: 1.5;">
-          <li>All questions are compulsory. Total <strong>${totalQuestions} questions</strong> evaluating fundamental conceptual depth, formula derivation, and mathematical problem-solving.</li>
-          <li>Section A contains ${sections['A'] ? sections['A'].length : 5} multiple choice questions of 1 mark each.</li>
-          <li>Section B contains ${sections['B'] ? sections['B'].length : 5} short conceptual questions of 2 marks each. Answer in 30-50 words.</li>
-          <li>Section C contains ${sections['C'] ? sections['C'].length : 5} long derivation and numerical problems of 6 marks each. Clear step-by-step working with appropriate SI units is mandatory.</li>
-          <li>Use of physical calculators is prohibited. Take g = 9.8 m/s² (or 10 m/s² where specified).</li>
-        </ol>
-      </div>
+  <div class="header">
+    <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: 0.5px; color: #0f172a;">UNISOLE SCHOLAR SECONDARY SCHOOL</h2>
+    <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Department of ${escapeHtml(subject)} &bull; Senior Secondary Academic Assessment (2026–27)</p>
+    <h3 style="margin: 10px 0 6px 0; color: #1e3a8a; font-size: 1.2rem;">${escapeHtml(title)}</h3>
+    <div class="sub-header">
+      <span>Target Cohort: <strong>${escapeHtml(className)}</strong></span>
+      <span>Chapter: <strong>${escapeHtml(chapter)}</strong></span>
+      <span>Max Marks: <strong>${totalMarks}</strong></span>
+      <span>Time Allowed: <strong>${escapeHtml(duration)}</strong></span>
+    </div>
+  </div>
 
-      <!-- ALL QUESTIONS (15 QUESTIONS FOR 45 MIN) -->
-      ${questionsHtml}
+  <div class="inst">
+    <strong style="color:#0f172a;">General Instructions:</strong>
+    <ol style="margin: 6px 0 0 16px; padding: 0; line-height: 1.6;">
+      <li>All questions are compulsory. Total <strong>${totalQuestions} questions</strong> evaluating fundamental conceptual depth, formula derivation, and mathematical problem-solving.</li>
+      ${sectionInstructions}
+      <li>Physical calculators and smart devices are strictly prohibited. Standard physical constants: $g = 9.8\\text{ m/s}^2$, $c = 3\\times 10^8\\text{ m/s}$, $e = 1.6\\times 10^{-19}\\text{ C}$, $\\varepsilon_0 = 8.854\\times 10^{-12}\\text{ C}^2\\text{N}^{-1}\\text{m}^{-2}$.</li>
+    </ol>
+  </div>
 
-      <div style="margin-top: 24px; padding-top: 14px; border-top: 2px solid #0f172a; text-align: center; font-size: 0.78rem; color: #64748b;">
-        &bull; End of Examination Paper &bull; Evaluated according to official CBSE / State Board Step-Marking Scheme &bull;
-      </div>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
+  ${questionsHtml}
+
+  <div style="margin-top: 30px; padding-top: 14px; border-top: 2px solid #0f172a; text-align: center; font-size: 0.78rem; color: #64748b;">
+    &bull; End of Examination Paper &bull; Evaluated according to official CBSE / State Board Step-Marking Scheme &bull;
+  </div>
+</body>
+</html>`;
+
+  try {
+    const printWindow = window.open('', '_blank');
+    if (printWindow && !printWindow.closed) {
+      printWindow.document.open();
+      printWindow.document.write(fullPaperHtml);
+      printWindow.document.close();
+      return;
+    }
+  } catch (winErr) {
+    console.warn('Direct window.open failed, attempting fallback blob link:', winErr);
+  }
+
+  // Fallback: If popups are blocked by browser, open via Blob URL
+  try {
+    const blob = new Blob([fullPaperHtml], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const tempLink = document.createElement('a');
+    tempLink.href = blobUrl;
+    tempLink.target = '_blank';
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    setTimeout(() => {
+      document.body.removeChild(tempLink);
+      URL.revokeObjectURL(blobUrl);
+    }, 15000);
+  } catch (e) {
+    alert('Pop-up blocked. Please enable pop-ups in your browser to view the exam paper preview.');
+  }
 };
 
 window.finalizeCurrentTest = function() {

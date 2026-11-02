@@ -1222,14 +1222,19 @@
                 </div>
               </div>
 
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:10px;">
                 <div style="font-size:0.75rem; color:#94a3b8;">
                   Target Cohort: <strong>Enrolled Class Scholars</strong>
                 </div>
-                <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 20px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff;">
-                  <i data-lucide="send" style="width:16px; height:16px;"></i>
-                  <span>Generate &amp; Assign to Class</span>
-                </button>
+                <div style="display:flex; gap:10px;">
+                  <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" style="padding:10px 16px; font-size:0.85rem; font-weight:700; border-radius:8px; cursor:pointer; min-height:42px; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); color:#f8fafc;">
+                    <i data-lucide="printer" style="width:15px; height:15px;"></i> Preview &amp; Print Paper
+                  </button>
+                  <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 20px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff; min-height:42px;">
+                    <i data-lucide="send" style="width:16px; height:16px;"></i>
+                    <span>Generate &amp; Assign to Class</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
