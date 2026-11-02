@@ -755,10 +755,30 @@ function switchTeacherTab(targetTabId) {
     pill.classList.toggle('active', pill.getAttribute('data-tab') === targetTabId);
   });
 
-  // Update active state across sub-tab and drawer buttons
-  document.querySelectorAll('.sub-tab-btn, .drawer-tab-btn').forEach(btn => {
+  // Update active state across sub-tab and drawer buttons / cards
+  document.querySelectorAll('.sub-tab-btn, .drawer-tab-btn, .drawer-nav-card').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTabId);
   });
+
+  // Update workspace indicator strip
+  const workspaceMap = {
+    'tabTeacherCreatePaper': { label: 'Create Paper (Unit Tests)', icon: 'file-plus-2', color: '#38bdf8' },
+    'tabTeacherBoardPaper': { label: 'Full Board Papers (CBSE & HP)', icon: 'scroll', color: '#f59e0b' },
+    'tabTeacherTakeTest': { label: 'Take & Conduct Test (Active Tests)', icon: 'play-circle', color: '#34d399' },
+    'tabTeacherClasses': { label: 'Classes & Students Roster', icon: 'users', color: '#c084fc' },
+    'tabTeacherWeakConcepts': { label: 'What to Teach Next (Weak Concepts)', icon: 'target', color: '#fb7185' },
+    'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' }
+  };
+  const ws = workspaceMap[targetTabId];
+  if (ws) {
+    const lbl = document.getElementById('activeWorkspaceLabel');
+    if (lbl) lbl.innerText = ws.label;
+    const ico = document.getElementById('activeWorkspaceIcon');
+    if (ico) {
+      ico.setAttribute('data-lucide', ws.icon);
+      ico.style.color = ws.color;
+    }
+  }
 
   // Toggle tab content display
   document.querySelectorAll('.teacher-tab-content').forEach(tab => {

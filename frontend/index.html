@@ -485,29 +485,88 @@
         <span>Workspace Tabs</span>
       </div>
       <div class="drawer-nav-list">
-        <button type="button" class="drawer-tab-btn active" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
-          <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
-          <span>Create Paper (Unit Tests)</span>
+        <!-- 1. Create Paper (Unit Tests) -->
+        <button type="button" class="drawer-nav-card active" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;">
+              <i data-lucide="file-plus-2" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Create Paper</strong>
+              <span class="drawer-nav-card-sub">Unit Tests &amp; Quizzes (15–45 Min)</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-blue">Unit Tests</span>
         </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherBoardPaper" onclick="switchTeacherTab('tabTeacherBoardPaper')">
-          <i data-lucide="scroll" style="width:16px; height:16px; color:#f59e0b;"></i>
-          <span>Full Board Papers (CBSE / HP)</span>
+
+        <!-- 2. Full Board Papers (CBSE & HP) -->
+        <button type="button" class="drawer-nav-card" data-tab="tabTeacherBoardPaper" onclick="switchTeacherTab('tabTeacherBoardPaper')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">
+              <i data-lucide="scroll" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Full Board Papers</strong>
+              <span class="drawer-nav-card-sub">CBSE &amp; HP Board Studio (Full Syllabus)</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-amber">CBSE &amp; HP</span>
         </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
-          <i data-lucide="clipboard-list" style="width:16px; height:16px;"></i>
-          <span>Take &amp; Conduct Test</span>
+
+        <!-- 3. Take & Conduct Test -->
+        <button type="button" class="drawer-nav-card" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(52,211,153,0.15); color:#34d399;">
+              <i data-lucide="play-circle" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Take / Conduct Test</strong>
+              <span class="drawer-nav-card-sub">Live Assessments &amp; Submissions</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-green">Active Tests</span>
         </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
-          <i data-lucide="users" style="width:16px; height:16px;"></i>
-          <span>Classes &amp; Students Roster</span>
+
+        <!-- 4. Classes & Students -->
+        <button type="button" class="drawer-nav-card" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(168,85,247,0.15); color:#c084fc;">
+              <i data-lucide="users" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Classes &amp; Students</strong>
+              <span class="drawer-nav-card-sub">Roster &amp; Section Performance</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge">Roster</span>
         </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherWeakConcepts" onclick="switchTeacherTab('tabTeacherWeakConcepts')">
-          <i data-lucide="target" style="width:16px; height:16px;"></i>
-          <span>What to Teach Next (Weak Concepts)</span>
+
+        <!-- 5. What to Teach Next -->
+        <button type="button" class="drawer-nav-card" data-tab="tabTeacherWeakConcepts" onclick="switchTeacherTab('tabTeacherWeakConcepts')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(244,63,94,0.15); color:#fb7185;">
+              <i data-lucide="target" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">What to Teach Next</strong>
+              <span class="drawer-nav-card-sub">Weak Concepts Diagnostic Radar</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge badge-rose">Weak Concepts (4)</span>
         </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabQuestionBank" onclick="switchTeacherTab('tabQuestionBank')">
-          <i data-lucide="database" style="width:16px; height:16px;"></i>
-          <span>Question Bank &amp; PYQs</span>
+
+        <!-- 6. Question Bank & PYQs -->
+        <button type="button" class="drawer-nav-card" data-tab="tabQuestionBank" onclick="switchTeacherTab('tabQuestionBank')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(6,182,212,0.15); color:#22d3ee;">
+              <i data-lucide="database" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Question Bank &amp; PYQs</strong>
+              <span class="drawer-nav-card-sub">438+ Curated Questions &amp; PYQs</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge" style="background:rgba(6,182,212,0.2); color:#22d3ee;">438 Qs</span>
         </button>
       </div>
     </div>
@@ -682,8 +741,36 @@
          ====================================================================== -->
     <section class="view-section active" id="teacherView">
       
-      <!-- TEACHER PORTAL SUB-NAVIGATION BAR (WCAG 2.2 AA compliant, Token-based) -->
-      <div class="teacher-portal-nav" id="teacherPortalNav">
+      <!-- ACTIVE WORKSPACE HEADER STRIP (Clean, Un-noisy, No Horizontal Scrollbar) -->
+      <div class="teacher-workspace-indicator-strip" id="teacherWorkspaceStrip">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <button type="button" class="btn-side-menu-pill" onclick="toggleSidebarDrawer(event)" title="Click to open side tab menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <span>Side Tab Menu (☰)</span>
+          </button>
+          <span style="color:#475569;">&bull;</span>
+          <div style="display:inline-flex; align-items:center; gap:8px;">
+            <span style="font-size:0.76rem; color:#94a3b8; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Active Workspace:</span>
+            <span class="active-workspace-pill" id="activeWorkspacePill" style="display:inline-flex; align-items:center; gap:8px; background:rgba(30,41,59,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; font-size:0.84rem; font-weight:700; padding:5px 12px; border-radius:8px;">
+              <i data-lucide="file-plus-2" id="activeWorkspaceIcon" style="width:15px; height:15px; color:#38bdf8;"></i>
+              <span id="activeWorkspaceLabel">Create Paper (Unit Tests)</span>
+            </span>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:0.75rem; color:#64748b;">
+            💡 Click <strong>☰ in left corner</strong> or <strong>Side Tab Menu</strong> to switch
+          </span>
+        </div>
+      </div>
+
+      <!-- Retired horizontal pill strip kept for DOM selector compatibility -->
+      <div class="teacher-portal-nav" id="teacherPortalNav" style="display:none !important;">
         <button type="button" class="teacher-nav-pill active" id="teacherPillCreatePaper" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
           <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
           <span>Create Paper</span>
