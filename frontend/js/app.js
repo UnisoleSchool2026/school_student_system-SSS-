@@ -923,10 +923,12 @@ function switchTeacherTab(targetTabId) {
   // Update header title
   const headerTitle = document.getElementById('headerNavTitle');
   const activeProf = teacherBuilderState.activeTeacher;
-  const isC10 = String(teacherBuilderState.selectedClassId || '').startsWith('10') || teacherBuilderState.teacherSubjectKey?.startsWith('CLASS10_');
+  const profSubj = (activeProf?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
+  const isC10 = (curGrade === '10' || String(teacherBuilderState.selectedClassId || '').startsWith('10'));
   const curSubjName = isC10
-    ? (teacherBuilderState.selectedSubjectKey === 'CLASS10_SCIENCE' ? 'Class 10th Science' : 'Class 10th Mathematics')
-    : (activeProf ? activeProf.subjectName : 'Physics');
+    ? (profSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
+    : `Class ${curGrade}th ${activeProf?.subjectName || 'Physics'}`;
 
   const tabTitles = {
     'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • ${curSubjName}`,
@@ -1466,6 +1468,7 @@ const FACULTY_SUBJECT_CLASSES = {
   PHYSICS: [
     { id: '12-NonMed', name: 'Class 12-A • Senior Physics (48 Students)' },
     { id: '11-NonMed', name: 'Class 11-NonMed • Physics (42 Students)' },
+    { id: '10-Science-A', name: 'Class 10-Science • Foundation (45 Students)' },
     { id: '11-Med', name: 'Class 11-Med • Physics (40 Students)' },
     { id: '12-Med', name: 'Class 12-Med • Senior Medical Physics (38 Students)' }
   ],
@@ -1767,6 +1770,9 @@ window.initPaperBuilderDropdowns = function() {
 function getChaptersForSubject(subjectKey, grade) {
   const g = String(grade || teacherBuilderState.activeGrade || (teacherBuilderState.selectedClassId?.startsWith('11') ? '11' : (teacherBuilderState.selectedClassId?.startsWith('10') ? '10' : '12')));
   if (subjectKey === 'PHYSICS') {
+    if (g === '10') {
+      return CURRICULUM_CHAPTER_TOPICS.CLASS10_SCIENCE || {};
+    }
     return g === '11' ? (CURRICULUM_CHAPTER_TOPICS.PHYSICS_11 || CURRICULUM_CHAPTER_TOPICS.PHYSICS) : CURRICULUM_CHAPTER_TOPICS.PHYSICS;
   }
   return CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
@@ -9581,8 +9587,9 @@ function updateTeacherClassScopeUI() {
   if (pillsContainer) {
     const isClass10 = currentClass.grade === '10' || currentClass.id === '10-Science-A';
     if (isClass10) {
+      const pSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
       if (!teacherBuilderState.selectedSubjectKey || !teacherBuilderState.selectedSubjectKey.startsWith('CLASS10_')) {
-        teacherBuilderState.selectedSubjectKey = 'CLASS10_MATHEMATICS';
+        teacherBuilderState.selectedSubjectKey = (pSubj === 'MATHEMATICS' || pSubj === 'CLASS10_MATHEMATICS') ? 'CLASS10_MATHEMATICS' : 'CLASS10_SCIENCE';
       }
       pillsContainer.innerHTML = `
         <button type="button" 
@@ -11199,7 +11206,9 @@ function renderFacultyClassSwitcherCards() {
   const container = document.getElementById('containerFacultyClassCards');
   if (!container) return;
 
-  const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+  const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  const subjKey = (profSubj === 'CLASS10_MATHEMATICS' || profSubj === 'MATHEMATICS') ? 'MATHEMATICS'
+    : ((profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE' || profSubj === 'PHYSICS') ? 'PHYSICS' : profSubj);
   const currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
   const currentGrade = String(teacherBuilderState.activeGrade || (currentClassId.startsWith('11') ? '11' : (currentClassId.startsWith('10') ? '10' : '12')));
 
@@ -11222,6 +11231,14 @@ function renderFacultyClassSwitcherCards() {
         stream: 'Class 11th Senior Secondary • CBSE & HP Foundation',
         stats: '14 NCERT Chapters • 42 Students Enrolled',
         badge: 'Class 11 + Foundation'
+      },
+      {
+        id: '10-Science-A',
+        grade: '10',
+        title: 'Class 10th Science & Physics Foundation',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '13 NCERT Chapters • 45 Students Enrolled',
+        badge: 'Class 10 Foundation'
       }
     ];
   } else if (subjKey === 'CHEMISTRY') {
@@ -11241,6 +11258,14 @@ function renderFacultyClassSwitcherCards() {
         stream: 'Class 11th Senior Secondary • Foundation',
         stats: '10 NCERT Chapters • 42 Students Enrolled',
         badge: 'Class 11 Foundation'
+      },
+      {
+        id: '10-Science-A',
+        grade: '10',
+        title: 'Class 10th Science & Chemistry Foundation',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '13 NCERT Chapters • 45 Students Enrolled',
+        badge: 'Class 10 Foundation'
       }
     ];
   } else if (subjKey === 'BIOLOGY') {
@@ -11260,6 +11285,14 @@ function renderFacultyClassSwitcherCards() {
         stream: 'Class 11th Senior Secondary • NEET Foundation',
         stats: '13 NCERT Chapters • 40 Students Enrolled',
         badge: 'Class 11 Medical'
+      },
+      {
+        id: '10-Science-A',
+        grade: '10',
+        title: 'Class 10th Science & Biology Foundation',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '13 NCERT Chapters • 45 Students Enrolled',
+        badge: 'Class 10 Foundation'
       }
     ];
   } else if (subjKey === 'MATHEMATICS') {
@@ -11279,6 +11312,14 @@ function renderFacultyClassSwitcherCards() {
         stream: 'Class 11th Senior Secondary • JEE Foundation',
         stats: '13 NCERT Chapters • 42 Students Enrolled',
         badge: 'Class 11 Foundation'
+      },
+      {
+        id: '10-Maths-A',
+        grade: '10',
+        title: 'Class 10th Mathematics Foundation (Section A)',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '14 NCERT Chapters • 44 Students Enrolled',
+        badge: 'Class 10 Foundation'
       }
     ];
   } else if (subjKey === 'CLASS10_SCIENCE' || subjKey === 'SCIENCE') {
@@ -11568,10 +11609,25 @@ async function switchFacultyClassScope(classId) {
     name: activeGrade === '11' ? 'Class 11-NonMed • Physics (42 Students)' : (isClass10 ? 'Class 10-A • Foundation (45 Students)' : 'Class 12-A • Senior Physics (48 Students)')
   });
 
-  // 1. Update Header class badge
+  // 1. Update Header class badge and title
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
   if (headerClassBadge) {
     headerClassBadge.innerText = `Class ${activeGrade}th ▼`;
+  }
+  const headerNavTitle = document.getElementById('headerNavTitle');
+  if (headerNavTitle && state.activeTeacherTab) {
+    const pSubj = (teacherBuilderState.activeTeacher?.subjectKey || 'PHYSICS').toUpperCase();
+    const curSubjName = isClass10
+      ? (pSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
+      : `Class ${activeGrade}th ${teacherBuilderState.activeTeacher?.subjectName || 'Physics'}`;
+    const tabTitles = {
+      'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • ${curSubjName}`,
+      'tabTeacherClasses': `Class Progress & Test Telemetry • ${curSubjName}`,
+      'tabQuestionBank': `Question Bank & PYQ Repository • ${curSubjName}`
+    };
+    if (tabTitles[state.activeTeacherTab]) {
+      headerNavTitle.innerText = tabTitles[state.activeTeacherTab];
+    }
   }
 
   // 2. Update Drawer badges and dropdown
@@ -12268,27 +12324,24 @@ function formatIntuitiveSteps(q) {
 }
 
 async function loadQuestionBankView(forceReload = false) {
-  const curClassId = teacherBuilderState.selectedClassId || '';
-  const currentClass = (teacherBuilderState.classes || []).find(c => c.id === curClassId);
-  const isClass10 = curClassId === '10-Science-A' 
-    || currentClass?.grade === '10' 
-    || String(curClassId).startsWith('10')
-    || (teacherBuilderState.teacherSubjectKey || '').startsWith('CLASS10_') 
-    || teacherBuilderState.activeTeacher?.grade === '10';
+  const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
+  const isClass10 = (curGrade === '10' || String(teacherBuilderState.selectedClassId || '').startsWith('10'));
 
-  let activeSubj = (teacherBuilderState.selectedSubjectKey || teacherBuilderState.teacherSubjectKey || '').toUpperCase();
+  // Ensure base teacher subject is ALWAYS preserved and never mutated
+  teacherBuilderState.teacherSubjectKey = profSubj;
+
+  let activeSubj = profSubj;
   if (isClass10) {
-    if (!activeSubj.startsWith('CLASS10_')) {
-      activeSubj = (activeSubj === 'SCIENCE' || activeSubj === 'BIOLOGY') ? 'CLASS10_SCIENCE' : 'CLASS10_MATHEMATICS';
-      teacherBuilderState.selectedSubjectKey = activeSubj;
-      teacherBuilderState.teacherSubjectKey = activeSubj;
+    if (profSubj === 'MATHEMATICS' || profSubj === 'CLASS10_MATHEMATICS') {
+      activeSubj = 'CLASS10_MATHEMATICS';
+    } else {
+      activeSubj = 'CLASS10_SCIENCE';
     }
+    teacherBuilderState.selectedSubjectKey = activeSubj;
   } else {
-    if (activeSubj.startsWith('CLASS10_')) {
-      activeSubj = activeSubj === 'CLASS10_SCIENCE' ? 'PHYSICS' : 'MATHEMATICS';
-      teacherBuilderState.selectedSubjectKey = activeSubj;
-      teacherBuilderState.teacherSubjectKey = activeSubj;
-    }
+    activeSubj = (profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE') ? 'PHYSICS' : (profSubj === 'CLASS10_MATHEMATICS' ? 'MATHEMATICS' : profSubj);
+    teacherBuilderState.selectedSubjectKey = activeSubj;
   }
 
   const headerTitle = document.getElementById('qbHeaderTitle');
@@ -12302,7 +12355,7 @@ async function loadQuestionBankView(forceReload = false) {
 
   if (isClass10) {
     if (activeSubj === 'CLASS10_SCIENCE') {
-      if (headerTitle) headerTitle.innerText = 'Class 10th Science Question Bank';
+      if (headerTitle) headerTitle.innerText = 'Class 10th Science & Foundation Question Bank';
       if (headerSubtitle) headerSubtitle.innerText = 'Curated Board PYQs (2018-2024), NCERT Examples & Exercises';
       if (badgeText) badgeText.innerText = 'Class 10th Foundation • CBSE & HP Board';
     } else {
@@ -12311,24 +12364,24 @@ async function loadQuestionBankView(forceReload = false) {
       if (badgeText) badgeText.innerText = 'Class 10th Foundation • CBSE & HP Board';
     }
   } else {
-    const sName = teacherBuilderState.activeTeacher?.subjectName || activeSubj;
-    if (headerTitle) headerTitle.innerText = `${sName} Question Bank & PYQ Repository`;
-    if (headerSubtitle) headerSubtitle.innerText = 'Senior Secondary (+1 & +2) Curated Questions • JEE / NEET / CBSE Boards';
-    if (badgeText) badgeText.innerText = `Senior Secondary Track • Department of ${sName}`;
+    const sName = teacherBuilderState.activeTeacher?.subjectName || (activeSubj.charAt(0) + activeSubj.slice(1).toLowerCase());
+    if (headerTitle) headerTitle.innerText = `Class ${curGrade}th ${sName} Question Bank & PYQ Repository`;
+    if (headerSubtitle) headerSubtitle.innerText = `Class ${curGrade}th Senior Secondary • Authentic NCERT Chapters • CBSE, HP Board & Competitive PYQs`;
+    if (badgeText) badgeText.innerText = `Class ${curGrade}th Senior Secondary • Department of ${sName}`;
   }
 
   if (subjectSelect) {
     if (isClass10) {
       subjectSelect.innerHTML = `
-        <option value="CLASS10_MATHEMATICS" ${activeSubj === 'CLASS10_MATHEMATICS' ? 'selected' : ''}>Mathematics (Class 10th • 438 Qs)</option>
         <option value="CLASS10_SCIENCE" ${activeSubj === 'CLASS10_SCIENCE' ? 'selected' : ''}>Science (Class 10th Foundation)</option>
+        <option value="CLASS10_MATHEMATICS" ${activeSubj === 'CLASS10_MATHEMATICS' ? 'selected' : ''}>Mathematics (Class 10th Foundation)</option>
       `;
     } else {
       subjectSelect.innerHTML = `
-        <option value="PHYSICS" ${activeSubj === 'PHYSICS' ? 'selected' : ''}>Physics (Senior Secondary)</option>
-        <option value="CHEMISTRY" ${activeSubj === 'CHEMISTRY' ? 'selected' : ''}>Chemistry (Senior Secondary)</option>
-        <option value="MATHEMATICS" ${activeSubj === 'MATHEMATICS' ? 'selected' : ''}>Mathematics (Senior Secondary)</option>
-        <option value="BIOLOGY" ${activeSubj === 'BIOLOGY' ? 'selected' : ''}>Biology (Senior Secondary / NEET)</option>
+        <option value="PHYSICS" ${activeSubj === 'PHYSICS' ? 'selected' : ''}>Physics (Class ${curGrade}th Senior Secondary)</option>
+        <option value="CHEMISTRY" ${activeSubj === 'CHEMISTRY' ? 'selected' : ''}>Chemistry (Class ${curGrade}th Senior Secondary)</option>
+        <option value="MATHEMATICS" ${activeSubj === 'MATHEMATICS' ? 'selected' : ''}>Mathematics (Class ${curGrade}th Senior Secondary)</option>
+        <option value="BIOLOGY" ${activeSubj === 'BIOLOGY' ? 'selected' : ''}>Biology (Class ${curGrade}th Senior Secondary)</option>
       `;
     }
   }
@@ -12337,7 +12390,7 @@ async function loadQuestionBankView(forceReload = false) {
     const taxSubj = teacherBuilderState.currentTaxonomy?.subjectKey || teacherBuilderState.currentTaxonomy?.subject;
     if (!teacherBuilderState.currentTaxonomy || taxSubj !== activeSubj) {
       try {
-        const gradeParam = activeSubj === 'PHYSICS' ? '12' : 'ALL';
+        const gradeParam = activeSubj === 'PHYSICS' ? curGrade : 'ALL';
         const taxRes = await fetch(`${getApiBaseUrl()}/api/curriculum/taxonomy/${activeSubj}?grade=${gradeParam}`);
         if (taxRes.ok) {
           teacherBuilderState.currentTaxonomy = await taxRes.json();
@@ -12353,19 +12406,20 @@ async function loadQuestionBankView(forceReload = false) {
     if (isClass10 && activeSubj === 'CLASS10_MATHEMATICS') {
       chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
         CLASS10_MATH_CHAPTERS.map(c => `<option value="${c.num}">Ch ${c.num}: ${c.name}</option>`).join('');
+    } else if (isClass10 && activeSubj === 'CLASS10_SCIENCE') {
+      const sciChapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.CLASS10_SCIENCE || {});
+      chapterSelect.innerHTML = `<option value="ALL">All ${sciChapters.length} Chapters</option>` +
+        sciChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\s*\d+\s*:\s*/i, '')}</option>`).join('');
+    } else if (activeSubj === 'PHYSICS') {
+      const phyChapters = Object.keys(getChaptersForSubject('PHYSICS', curGrade));
+      chapterSelect.innerHTML = `<option value="ALL">All ${phyChapters.length} Chapters</option>` +
+        phyChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\s*\d+\s*:\s*/i, '')}</option>`).join('');
     } else if (teacherBuilderState.currentTaxonomy?.chapters) {
       let chs = teacherBuilderState.currentTaxonomy.chapters;
-      if (activeSubj === 'PHYSICS') {
-        const targetGrade = String(teacherBuilderState.activeGrade || '12');
-        const filtered = chs.filter(c => String(c.grade) === targetGrade);
-        if (filtered.length > 0) chs = filtered;
-      }
+      const filtered = chs.filter(c => String(c.grade) === curGrade);
+      if (filtered.length > 0) chs = filtered;
       chapterSelect.innerHTML = `<option value="ALL">All ${chs.length} Chapters</option>` +
         chs.map(c => `<option value="${c.chapterNumber || c.id}">Ch ${c.chapterNumber || ''}: ${c.chapterName || c.title}</option>`).join('');
-    } else if (activeSubj === 'PHYSICS') {
-      const phyChapters = Object.keys(getChaptersForSubject('PHYSICS', teacherBuilderState.activeGrade));
-      chapterSelect.innerHTML = `<option value="ALL">All ${phyChapters.length} Chapters</option>` +
-        phyChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\\s*\\d+\\s*:\\s*/i, '')}</option>`).join('');
     }
     const isValidVal = Array.from(chapterSelect.options).some(o => o.value === curVal);
     chapterSelect.value = isValidVal ? curVal : 'ALL';
@@ -12373,7 +12427,7 @@ async function loadQuestionBankView(forceReload = false) {
 
   populateQbChapterPills(chapterSelect?.value || 'ALL');
 
-  if (state.questionBankData.length > 0 && state.currentQbSubjectKey === activeSubj && !forceReload) {
+  if (state.questionBankData.length > 0 && state.currentQbSubjectKey === activeSubj && state.currentQbGrade === curGrade && !forceReload) {
     filterQuestionBankCards();
     return;
   }
@@ -12416,12 +12470,14 @@ async function loadQuestionBankView(forceReload = false) {
       const data = await res.json();
       state.questionBankData = data.questions || [];
       state.currentQbSubjectKey = activeSubj;
+      state.currentQbGrade = curGrade;
     } else if (isClass10 && activeSubj === 'CLASS10_MATHEMATICS') {
       const fallbackRes = await fetch('https://haps-ai-scholar-assistant.vercel.app/api/questions/class10-math-bank?limit=450');
       if (fallbackRes.ok) {
         const fbData = await fallbackRes.json();
         state.questionBankData = fbData.questions || [];
         state.currentQbSubjectKey = activeSubj;
+        state.currentQbGrade = curGrade;
       } else {
         throw new Error(`API returned ${res?.status || fallbackRes.status}`);
       }
@@ -12438,9 +12494,6 @@ async function loadQuestionBankView(forceReload = false) {
 
 function handleQbSubjectChange(subjKey) {
   teacherBuilderState.selectedSubjectKey = subjKey;
-  if (subjKey.startsWith('CLASS10_')) {
-    teacherBuilderState.teacherSubjectKey = subjKey;
-  }
   loadQuestionBankView(true);
 }
 
