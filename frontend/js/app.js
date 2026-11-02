@@ -472,12 +472,7 @@ window.loginWithRole = function(role) {
 
 window.handleRoleBadgeClick = function() {
   if (state.activeRole === 'teacher') {
-    const banner = document.createElement('div');
-    banner.className = 'role-switch-toast';
-    banner.innerHTML = `<i data-lucide="lock" style="width:16px; height:16px; color:#38bdf8;"></i> <span><strong>Faculty Portal Locked:</strong> Role switching is disabled in teacher mode. Click 'Sign Out' in top right to exit.</span>`;
-    document.body.appendChild(banner);
-    initLucideIcons();
-    setTimeout(() => banner.remove(), 3500);
+    window.openFacultyClassSwitcherModal();
     return;
   }
   window.openRoleGatewayModal();
@@ -1059,6 +1054,114 @@ const CURRICULUM_CHAPTER_TOPICS = {
       'Junction Transistors & Digital Logic Gates (NOT, AND, OR, NAND, NOR Truth Tables)'
     ]
   },
+  PHYSICS_11: {
+    'Chapter 1: Units and Measurements': [
+      'SI Units & Fundamental vs Derived Units',
+      'Dimensional Analysis & Formulas of Physical Quantities',
+      'Principle of Homogeneity & Equation Correctness Checks',
+      'Conversion of Units Across Coordinate/Unit Systems',
+      'Errors in Measurement (Absolute, Relative, Percentage & Combinations)'
+    ],
+    'Chapter 2: Motion in a Straight Line': [
+      'Position, Path Length, Displacement & Instantaneous Velocity',
+      'Calculus Derivation of Kinematic Equations (v = u + at, s = ut + 1/2 at², v² = u² + 2as)',
+      'Motion Under Gravity (Free Fall Kinematics)',
+      'Stopping Distance and Reaction Time Analysis',
+      'Position-Time and Velocity-Time Graph Interpretation'
+    ],
+    'Chapter 3: Motion in a Plane': [
+      'Scalars & Vectors: Resolution in Cartesian Plane',
+      'Vector Addition, Subtraction & Dot/Cross Products',
+      'Projectile Motion (Maximum Height, Time of Flight, Horizontal Range)',
+      'Uniform Circular Motion & Centripetal Acceleration (a = v²/r)'
+    ],
+    'Chapter 4: Laws of Motion': [
+      'Newton\'s Laws of Motion & Momentum Conservation',
+      'Impulse-Momentum Theorem & Dynamic Problem Solving',
+      'Static, Limiting & Kinetic Friction (Coefficients of Friction)',
+      'Banking of Circular Roads & Maximum Safe Speed',
+      'Free Body Diagrams (Pulleys, Connected Masses & Inclined Planes)'
+    ],
+    'Chapter 5: Work, Energy and Power': [
+      'Work Done by Constant & Variable Force (Integral Formulation)',
+      'Work-Energy Theorem for Variable Force',
+      'Potential Energy of a Spring & Conservation of Mechanical Energy',
+      'Conservative vs Non-Conservative Forces',
+      'Elastic and Inelastic Collisions in One & Two Dimensions',
+      'Power: Instantaneous & Average Power (P = F · v)'
+    ],
+    'Chapter 6: System of Particles and Rotational Motion': [
+      'Center of Mass of Two-Particle and Rigid Body Systems',
+      'Linear Momentum Conservation for System of Particles',
+      'Torque and Angular Momentum Conservation Law',
+      'Moment of Inertia: Radius of Gyration & Standard Geometries',
+      'Parallel and Perpendicular Axes Theorems & Applications',
+      'Kinematics & Dynamics of Rolling Motion without Slipping'
+    ],
+    'Chapter 7: Gravitation': [
+      'Newton\'s Universal Law of Gravitation & Gravitational Constant G',
+      'Acceleration due to Gravity (g) with Altitude and Depth Variation',
+      'Gravitational Potential & Gravitational Potential Energy',
+      'Escape Velocity (v_e = √(2gR)) Derivation',
+      'Orbital Velocity & Orbital Period of Earth Satellites',
+      'Kepler\'s Three Laws of Planetary Motion'
+    ],
+    'Chapter 8: Mechanical Properties of Solids': [
+      'Stress-Strain Relationship & Hooke\'s Law',
+      'Stress-Strain Curve (Elastic Limit, Yield Point, Tensile Strength)',
+      'Young\'s Modulus, Bulk Modulus and Shear Modulus of Rigidity',
+      'Poisson\'s Ratio & Elastic Potential Energy Stored in Stretched Wire'
+    ],
+    'Chapter 9: Mechanical Properties of Fluids': [
+      'Fluid Pressure, Pascal\'s Law & Hydraulic Lift Principle',
+      'Variation of Pressure with Depth & Atmospheric Pressure',
+      'Streamline vs Turbulent Flow & Equation of Continuity',
+      'Bernoulli\'s Theorem & Applications (Venturi Meter, Torricelli\'s Law)',
+      'Viscosity, Poiseuille\'s Formula & Stokes\' Law (Terminal Velocity)',
+      'Surface Tension, Surface Energy, Angle of Contact & Capillary Rise'
+    ],
+    'Chapter 10: Thermal Properties of Matter': [
+      'Temperature & Heat: Thermal Expansion of Solids, Liquids & Gases',
+      'Specific Heat Capacity, Molar Heat Capacity & Calorimetry',
+      'Latent Heat of Fusion & Vaporization',
+      'Heat Transfer: Conduction, Convection and Radiation',
+      'Thermal Conductivity Coefficient & Newton\'s Law of Cooling',
+      'Wien\'s Displacement Law & Stefan-Boltzmann Law'
+    ],
+    'Chapter 11: Thermodynamics': [
+      'Thermal Equilibrium & Zeroth Law of Thermodynamics',
+      'First Law of Thermodynamics (ΔQ = ΔU + ΔW) & State Functions',
+      'Isothermal, Adiabatic, Isobaric & Isochoric Thermodynamic Processes',
+      'Mayer\'s Relation (C_p - C_v = R) for Ideal Gas',
+      'Second Law of Thermodynamics (Kelvin-Planck & Clausius Statements)',
+      'Reversible & Irreversible Cycles (Carnot Engine Efficiency)'
+    ],
+    'Chapter 12: Kinetic Theory': [
+      'Molecular Nature of Matter & Ideal Gas Equation of State',
+      'Kinetic Interpretation of Temperature & Pressure of Ideal Gas (P = 1/3 ρ v_rms²)',
+      'Root-Mean-Square Speed (v_rms) & Kinetic Energy per Molecule',
+      'Degrees of Freedom & Law of Equipartition of Energy',
+      'Specific Heat Capacities of Monatomic, Diatomic & Polyatomic Gases',
+      'Mean Free Path (λ) Expression and Dependencies'
+    ],
+    'Chapter 13: Oscillations': [
+      'Periodic vs Oscillatory Motion & Simple Harmonic Motion (SHM)',
+      'SHM Displacement, Velocity, Acceleration & Phase (x = A sin(ωt + φ))',
+      'Kinetic & Potential Energy in Simple Harmonic Motion',
+      'Simple Pendulum: Expression for Time Period (T = 2π√(L/g))',
+      'Spring-Mass System Oscillations in Horizontal & Vertical Configurations',
+      'Free, Damped & Forced Oscillations & Resonance Phenomena'
+    ],
+    'Chapter 14: Waves': [
+      'Transverse and Longitudinal Waves: Wavelength, Frequency & Speed',
+      'Speed of Transverse Waves on Stretched String (v = √(T/μ))',
+      'Speed of Sound in Gases: Newton\'s Formula & Laplace\'s Correction',
+      'Superposition Principle: Reflection of Waves at Rigid and Free Boundaries',
+      'Standing (Stationary) Waves in Stretched Strings & Normal Modes',
+      'Organ Pipes: Closed and Open Resonant Air Columns',
+      'Beats Formation (Beat Frequency f_b = |f₁ - f₂|) & Applications'
+    ]
+  },
     CHEMISTRY: {
     'Chemical Kinetics': [
       'Rate Law & Arrhenius Activation Energy Equation',
@@ -1510,37 +1613,55 @@ window.initPaperBuilderDropdowns = function() {
   // 2. Lock Class Dropdown strictly to classes assigned to this subject (No Class 10 for Physics teacher)
   const classSelect = document.getElementById('selectPaperClass');
   const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
+  const currentClassId = teacherBuilderState.selectedClassId || allowedClasses[0].id;
   if (classSelect) {
     classSelect.innerHTML = allowedClasses.map((c, i) =>
-      `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${c.name}</option>`
+      `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${c.name}</option>`
     ).join('');
-    teacherBuilderState.selectedClassId = allowedClasses[0].id;
+    classSelect.value = currentClassId;
   }
+  teacherBuilderState.selectedClassId = currentClassId;
+  const activeClassObj = allowedClasses.find(c => c.id === currentClassId) || allowedClasses[0];
 
   // 3. Update Roster Class Dropdown
   const rosterClassSelect = document.getElementById('selectTeacherActiveRosterClass');
   if (rosterClassSelect) {
     rosterClassSelect.innerHTML = allowedClasses.map((c, i) =>
-      `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${c.name}</option>`
+      `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${c.name}</option>`
     ).join('');
+    rosterClassSelect.value = currentClassId;
   }
 
-  // 4. Update teacher strips
+  // 4. Update teacher strips & locked display
   const stripName = document.getElementById('stripTeacherName');
   if (stripName) stripName.innerText = activeTeacher.name || activeTeacher.full_name;
   const stripDept = document.getElementById('stripTeacherDept');
   if (stripDept) stripDept.innerText = `${subjName} Expert`;
   const scopeEl = document.getElementById('stripTeacherClassScope');
-  if (scopeEl && allowedClasses[0]) scopeEl.innerText = allowedClasses[0].name;
+  if (scopeEl) scopeEl.innerText = activeClassObj.name;
+  const lockedText = document.getElementById('lockedTargetClassText');
+  if (lockedText) lockedText.innerText = activeClassObj.name;
+  const headerClassBadge = document.getElementById('headerFacultyClassBadge');
+  if (headerClassBadge) headerClassBadge.innerText = `Class ${teacherBuilderState.activeGrade || '12'}th ▼`;
+  const drawerClassBadge = document.getElementById('drawerFacultyActiveBadge');
+  if (drawerClassBadge) drawerClassBadge.innerText = `Class ${teacherBuilderState.activeGrade || '12'}th`;
 
   window.populatePaperChapters(subjKey);
   window.populateGenChapters(subjKey);
 };
 
+function getChaptersForSubject(subjectKey, grade) {
+  const g = String(grade || teacherBuilderState.activeGrade || (teacherBuilderState.selectedClassId?.startsWith('11') ? '11' : (teacherBuilderState.selectedClassId?.startsWith('10') ? '10' : '12')));
+  if (subjectKey === 'PHYSICS') {
+    return g === '11' ? (CURRICULUM_CHAPTER_TOPICS.PHYSICS_11 || CURRICULUM_CHAPTER_TOPICS.PHYSICS) : CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  }
+  return CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+}
+
 window.populateGenChapters = function(subjectKey) {
   const chapterSelect = document.getElementById('selectGenChapter');
   if (!chapterSelect) return;
-  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapters = getChaptersForSubject(subjectKey, teacherBuilderState.activeGrade);
   const chapterNames = Object.keys(chapters);
   chapterSelect.innerHTML = chapterNames.map((ch, idx) =>
     `<option value="${escapeHtml(ch)}" ${idx === 0 ? 'selected' : ''}>${escapeHtml(ch)}</option>`
@@ -1554,7 +1675,7 @@ window.handleGenChapterChange = function(chName) {
   const subjKey = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
   const topicSelect = document.getElementById('selectGenTopic');
   if (!topicSelect) return;
-  const chapters = CURRICULUM_CHAPTER_TOPICS[subjKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapters = getChaptersForSubject(subjKey, teacherBuilderState.activeGrade);
   let topics = chapters[chName];
   if (!topics) {
     const cleanCh = (chName || '').toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
@@ -1577,15 +1698,17 @@ window.handleGenChapterChange = function(chName) {
 
 window.handleGenTopicChange = function(tName) {
   const titleInput = document.getElementById('inputTeacherTestTitle');
+  const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
+  const className = lockedText ? lockedText.split('•')[0]?.trim() : (teacherBuilderState.activeGrade === '11' ? 'Class 11-NonMed' : 'Class 12-A');
   if (titleInput && tName) {
-    titleInput.value = `Class 12-A • Unit Assessment: ${tName}`;
+    titleInput.value = `${className} • Unit Assessment: ${tName}`;
   }
 };
 
 window.populatePaperChapters = function(subjectKey) {
   const chapterSelect = document.getElementById('selectPaperChapter');
   if (!chapterSelect) return;
-  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapters = getChaptersForSubject(subjectKey, teacherBuilderState.activeGrade);
   const chapterNames = Object.keys(chapters);
 
   chapterSelect.innerHTML = chapterNames.map((ch, idx) => 
@@ -1600,7 +1723,7 @@ window.populatePaperChapters = function(subjectKey) {
 window.populatePaperTopics = function(subjectKey, chapterName) {
   const topicSelect = document.getElementById('selectPaperTopic');
   if (!topicSelect) return;
-  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapters = getChaptersForSubject(subjectKey, teacherBuilderState.activeGrade);
   let topics = chapters[chapterName];
   if (!topics) {
     const cleanCh = (chapterName || '').toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
@@ -1626,7 +1749,8 @@ window.populatePaperTopics = function(subjectKey, chapterName) {
 window.updatePaperDefaultTitle = function(topicName) {
   const titleInput = document.getElementById('inputPaperTitle');
   const classSelect = document.getElementById('selectPaperClass');
-  const className = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A';
+  const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
+  const className = lockedText ? lockedText.split('•')[0]?.trim() : (classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A');
   if (titleInput) {
     titleInput.value = `${className} • Unit Assessment: ${topicName || 'Curriculum Focus'}`;
   }
@@ -1660,8 +1784,9 @@ window.handlePaperTopicChange = function(topicName) {
 window.createTeacherPaper = function(event) {
   if (event) event.preventDefault();
   const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
+  const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
   const classSelect = document.getElementById('selectPaperClass');
-  const targetClass = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A';
+  const targetClass = lockedText ? lockedText.split('•')[0]?.trim() : (classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A');
   const subjSelect = document.getElementById('selectPaperSubject');
   const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
   const topicSelect = document.getElementById('selectPaperTopic');
@@ -7993,7 +8118,8 @@ window.loadClassAnalytics = loadClassAnalytics;
 // -----------------------------------------------------------------------------
 const teacherBuilderState = {
   classes: [],
-  selectedClassId: '11-NonMed',
+  selectedClassId: '12-NonMed',
+  activeGrade: '12',
   teacherSubjectKey: 'PHYSICS',
   selectedSubjectKey: 'PHYSICS',
   currentTaxonomy: null,
@@ -9261,9 +9387,11 @@ function submitCustomTeacherLogin(event) {
 
 function applyTeacherProfile(prof, notify = false) {
   const isClass10 = prof.defaultClass?.startsWith('10') || prof.grade === '10' || prof.subjectKey?.startsWith('CLASS10');
+  const defaultGrade = isClass10 ? '10' : (prof.defaultClass?.startsWith('11') ? '11' : '12');
   teacherBuilderState.teacherSubjectKey = prof.subjectKey;
   teacherBuilderState.selectedSubjectKey = prof.subjectKey;
-  teacherBuilderState.selectedClassId = prof.defaultClass || (isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '11-Med' : '11-NonMed'));
+  teacherBuilderState.activeGrade = defaultGrade;
+  teacherBuilderState.selectedClassId = prof.defaultClass || (isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed'));
   teacherBuilderState.targetStream = prof.targetStream || (isClass10 ? 'CBSE_CLASS_10' : (prof.subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE'));
   teacherBuilderState.activeTeacher = prof;
 
@@ -9302,6 +9430,8 @@ function applyTeacherProfile(prof, notify = false) {
   if (headerFacultyName) headerFacultyName.innerText = prof.name || prof.full_name;
   const headerFacultyTag = document.getElementById('headerFacultyTag');
   if (headerFacultyTag) headerFacultyTag.innerText = prof.subjectName;
+  const headerClassBadge = document.getElementById('headerFacultyClassBadge');
+  if (headerClassBadge) headerClassBadge.innerText = `Class ${defaultGrade}th ▼`;
 
   const headerTitle = document.getElementById('headerNavTitle');
   if (headerTitle && (!state.activeRole || state.activeRole === 'teacher')) {
@@ -9321,10 +9451,28 @@ function applyTeacherProfile(prof, notify = false) {
   const drawerRole = document.getElementById('drawerFacultyRole');
   const drawerSubj = document.getElementById('drawerFacultySubject');
   const drawerPhone = document.getElementById('drawerFacultyPhone');
+  const drawerActiveBadge = document.getElementById('drawerFacultyActiveBadge');
   if (drawerName) drawerName.innerText = prof.name || prof.full_name;
   if (drawerRole) drawerRole.innerText = prof.designation;
   if (drawerSubj) drawerSubj.innerText = `Department: ${prof.subjectName}`;
   if (drawerPhone) drawerPhone.innerText = prof.phone ? `Phone: ${prof.phone}` : '';
+  if (drawerActiveBadge) drawerActiveBadge.innerText = `Class ${defaultGrade}th`;
+
+  // Find class details
+  const allowedClasses = FACULTY_SUBJECT_CLASSES[prof.subjectKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
+  const activeClassObj = allowedClasses.find(c => c.id === teacherBuilderState.selectedClassId) || allowedClasses[0];
+
+  const stripScope = document.getElementById('stripTeacherClassScope');
+  if (stripScope) stripScope.innerText = activeClassObj.name;
+  const lockedText = document.getElementById('lockedTargetClassText');
+  if (lockedText) lockedText.innerText = activeClassObj.name;
+
+  const selectPaperClass = document.getElementById('selectPaperClass');
+  if (selectPaperClass) selectPaperClass.value = teacherBuilderState.selectedClassId;
+  const drawerSelectClass = document.getElementById('drawerSelectClassScope');
+  if (drawerSelectClass) drawerSelectClass.value = teacherBuilderState.selectedClassId;
+  const selectRosterClass = document.getElementById('selectTeacherActiveRosterClass');
+  if (selectRosterClass) selectRosterClass.value = teacherBuilderState.selectedClassId;
 
   updateStreamSelectionUI(prof.targetStream || (isClass10 ? 'CBSE_CLASS_10' : (prof.subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE')));
 
@@ -9334,17 +9482,29 @@ function applyTeacherProfile(prof, notify = false) {
   // 2. Reload class analytics strictly scoped to teacher subject
   loadClassAnalytics();
 
-  // 3. Reload curriculum chapters strictly for teacher subject
-  const defaultGrade = isClass10 ? '10' : (prof.defaultClass?.startsWith('11') ? '11' : '12');
+  // 3. Reload curriculum chapters strictly for teacher subject and active grade
   loadCurriculumForClassAndSubject(prof.subjectKey, defaultGrade);
 
-  // 4. Reload question bank if active or prefetch
+  // 4. Update paper builder chapters & topics dropdown
+  if (typeof populatePaperChapters === 'function') {
+    populatePaperChapters(prof.subjectKey);
+  }
+  if (typeof populateGenChapters === 'function') {
+    populateGenChapters(prof.subjectKey);
+  }
+
+  // 5. Render roster for active class
+  if (typeof window.renderClassRoster === 'function') {
+    window.renderClassRoster(teacherBuilderState.selectedClassId);
+  }
+
+  // 6. Reload question bank if active or prefetch
   if (state.activeTeacherTab === 'tabQuestionBank') {
     loadQuestionBankView();
   }
 
   if (notify) {
-    alert(`Signed in as ${prof.name || prof.full_name} (${prof.designation}). Dashboard scoped strictly to Department of ${prof.subjectName}.`);
+    showScopeSwitchToast(defaultGrade, prof.subjectKey);
   }
 }
 
@@ -9744,61 +9904,392 @@ function selectDrawerStream(stream) {
   closeSidebarDrawer();
 }
 
-function handleDrawerClassChange(classId) {
-  const isClass10 = String(classId).startsWith('10');
-  
-  if (isClass10) {
-    if (!teacherBuilderState.classes.some(c => c.id === '10-Science-A' || c.grade === '10')) {
-      teacherBuilderState.classes.unshift({
-        id: '10-Science-A',
-        key: '10-Science-A',
-        name: 'Class 10th (Section A)',
-        grade: '10',
-        section: '10-Science-A',
-        stream: 'FOUNDATION',
-        badge: 'CBSE & HP Board Foundation',
-        defaultSubject: 'CLASS10_MATHEMATICS',
-        subjects: [
-          { key: 'CLASS10_MATHEMATICS', name: 'Mathematics', grade: '10', icon: 'calculator' },
-          { key: 'CLASS10_SCIENCE', name: 'Science', grade: '10', icon: 'atom' }
-        ],
-        students: [
-          { id: '10-A-01', name: 'Rohit Verma', roll: '10-A-01' },
-          { id: '10-A-02', name: 'Aditya Chauhan', roll: '10-A-02' },
-          { id: '10-A-03', name: 'Tanvi Sood', roll: '10-A-03' },
-          { id: '10-A-04', name: 'Nikhil Rana', roll: '10-A-04' }
-        ]
-      });
-      const classSelect = document.getElementById('selectTeacherClassScope');
-      if (classSelect) {
-        classSelect.innerHTML = teacherBuilderState.classes.map(c => `
-          <option value="${c.id}" ${c.id === classId ? 'selected' : ''}>
-            ${c.name} &bull; ${c.badge || (c.stream ? c.stream.replace('_', ' ') : 'General')}
-          </option>
-        `).join('');
+function openFacultyClassSwitcherModal() {
+  const modal = document.getElementById('modalFacultyClassSwitcher');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  const prof = teacherBuilderState.activeTeacher || {
+    name: 'Dr. Vikram Sharma',
+    designation: 'Senior Physics Faculty & HOD',
+    phone: '98160 10001',
+    subjectKey: 'PHYSICS',
+    subjectName: 'Physics'
+  };
+
+  const nameEl = document.getElementById('switcherModalFacultyName');
+  const deptEl = document.getElementById('switcherModalFacultyDept');
+  const phoneEl = document.getElementById('switcherModalFacultyPhone');
+
+  if (nameEl) nameEl.innerText = prof.name || prof.full_name;
+  if (deptEl) deptEl.innerHTML = `${prof.designation || 'Faculty'} &bull; Department of ${prof.subjectName || 'Physics'}`;
+  if (phoneEl) phoneEl.innerText = prof.phone ? `Registered Phone: ${prof.phone}` : 'Registered Faculty';
+
+  renderFacultyClassSwitcherCards();
+  initLucideIcons();
+}
+
+function closeFacultyClassSwitcherModal() {
+  const modal = document.getElementById('modalFacultyClassSwitcher');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderFacultyClassSwitcherCards() {
+  const container = document.getElementById('containerFacultyClassCards');
+  if (!container) return;
+
+  const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+  const currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
+  const currentGrade = String(teacherBuilderState.activeGrade || (currentClassId.startsWith('11') ? '11' : (currentClassId.startsWith('10') ? '10' : '12')));
+
+  let classCards = [];
+
+  if (subjKey === 'PHYSICS') {
+    classCards = [
+      {
+        id: '12-NonMed',
+        grade: '12',
+        title: 'Class 12th Physics (Non-Medical & Medical)',
+        stream: 'Senior Secondary • CBSE & HP Board / JEE Main',
+        stats: '14 NCERT Chapters • 48 Students Enrolled',
+        badge: 'CBSE & HP Board + JEE'
+      },
+      {
+        id: '11-NonMed',
+        grade: '11',
+        title: 'Class 11th Physics (Non-Medical & Medical)',
+        stream: 'Class 11th Senior Secondary • CBSE & HP Foundation',
+        stats: '14 NCERT Chapters • 42 Students Enrolled',
+        badge: 'Class 11 + Foundation'
       }
-    }
-    if (!teacherBuilderState.selectedSubjectKey || !teacherBuilderState.selectedSubjectKey.startsWith('CLASS10_')) {
-      teacherBuilderState.selectedSubjectKey = 'CLASS10_MATHEMATICS';
-    }
+    ];
+  } else if (subjKey === 'CHEMISTRY') {
+    classCards = [
+      {
+        id: '12-NonMed',
+        grade: '12',
+        title: 'Class 12th Chemistry (Senior Batch)',
+        stream: 'Senior Secondary • CBSE & HP Board / NEET & JEE',
+        stats: '10 NCERT Chapters • 48 Students Enrolled',
+        badge: 'CBSE & HP Board'
+      },
+      {
+        id: '11-NonMed',
+        grade: '11',
+        title: 'Class 11th Chemistry (Junior Batch)',
+        stream: 'Class 11th Senior Secondary • Foundation',
+        stats: '10 NCERT Chapters • 42 Students Enrolled',
+        badge: 'Class 11 Foundation'
+      }
+    ];
+  } else if (subjKey === 'BIOLOGY') {
+    classCards = [
+      {
+        id: '12-Med',
+        grade: '12',
+        title: 'Class 12th Biology (Senior Medical)',
+        stream: 'Senior Secondary • CBSE & HP Board / NEET UG',
+        stats: '13 NCERT Chapters • 38 Students Enrolled',
+        badge: 'NEET UG + Boards'
+      },
+      {
+        id: '11-Med',
+        grade: '11',
+        title: 'Class 11th Biology (Junior Medical)',
+        stream: 'Class 11th Senior Secondary • NEET Foundation',
+        stats: '13 NCERT Chapters • 40 Students Enrolled',
+        badge: 'Class 11 Medical'
+      }
+    ];
+  } else if (subjKey === 'MATHEMATICS') {
+    classCards = [
+      {
+        id: '12-NonMed',
+        grade: '12',
+        title: 'Class 12th Mathematics (Senior Secondary)',
+        stream: 'Senior Secondary • CBSE & HP Board / JEE Main',
+        stats: '13 NCERT Chapters • 48 Students Enrolled',
+        badge: 'CBSE & HP Board + JEE'
+      },
+      {
+        id: '11-NonMed',
+        grade: '11',
+        title: 'Class 11th Mathematics (Junior Secondary)',
+        stream: 'Class 11th Senior Secondary • JEE Foundation',
+        stats: '13 NCERT Chapters • 42 Students Enrolled',
+        badge: 'Class 11 Foundation'
+      }
+    ];
+  } else if (subjKey === 'CLASS10_SCIENCE' || subjKey === 'SCIENCE') {
+    classCards = [
+      {
+        id: '10-Science-A',
+        grade: '10',
+        title: 'Class 10th Science — Section A',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '13 NCERT Chapters • 45 Students Enrolled',
+        badge: 'Section A • Board Track'
+      },
+      {
+        id: '10-Science-B',
+        grade: '10',
+        title: 'Class 10th Science — Section B',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '13 NCERT Chapters • 43 Students Enrolled',
+        badge: 'Section B • Board Track'
+      }
+    ];
+  } else {
+    classCards = [
+      {
+        id: '10-Maths-A',
+        grade: '10',
+        title: 'Class 10th Mathematics — Section A',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '14 NCERT Chapters • 44 Students Enrolled',
+        badge: 'Section A • Board Track'
+      },
+      {
+        id: '10-Maths-B',
+        grade: '10',
+        title: 'Class 10th Mathematics — Section B',
+        stream: 'Secondary Board Track • CBSE & HPBOSE',
+        stats: '14 NCERT Chapters • 42 Students Enrolled',
+        badge: 'Section B • Board Track'
+      }
+    ];
   }
 
+  container.innerHTML = classCards.map(c => {
+    const isActive = (c.grade === currentGrade) || (c.id === currentClassId);
+    return `
+      <div class="faculty-class-choice-card ${isActive ? 'active-scope' : ''}" 
+           onclick="switchFacultyClassScope('${c.id}')"
+           style="
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             gap: 12px;
+             padding: 14px 16px;
+             border-radius: 10px;
+             cursor: pointer;
+             transition: all 0.2s ease;
+             background: ${isActive ? 'rgba(56, 189, 248, 0.12)' : 'rgba(30, 41, 59, 0.6)'};
+             border: ${isActive ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)'};
+             box-shadow: ${isActive ? '0 0 16px rgba(56, 189, 248, 0.2)' : 'none'};
+           ">
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+          <div style="
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: ${isActive ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.06)'};
+            color: ${isActive ? '#38bdf8' : '#94a3b8'};
+            font-size: 0.95rem;
+            font-weight: 800;
+            flex-shrink: 0;
+          ">
+            +${c.grade}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="color: #f8fafc; font-size: 0.92rem;">${c.title}</strong>
+              <span style="font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 1px 6px; border-radius: 4px;">${c.badge}</span>
+            </div>
+            <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: #94a3b8;">${c.stream}</p>
+            <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #64748b;">📚 ${c.stats}</p>
+          </div>
+        </div>
+
+        <div style="flex-shrink: 0;">
+          ${isActive ? `
+            <span style="
+              display: inline-flex;
+              align-items: center;
+              gap: 5px;
+              background: #0284c7;
+              color: #ffffff;
+              padding: 4px 10px;
+              border-radius: 6px;
+              font-size: 0.75rem;
+              font-weight: 800;
+              letter-spacing: 0.5px;
+            ">
+              <i data-lucide="check" style="width: 14px; height: 14px;"></i> ACTIVE NOW
+            </span>
+          ` : `
+            <button type="button" class="btn-secondary" 
+                    onclick="event.stopPropagation(); switchFacultyClassScope('${c.id}')"
+                    style="padding: 6px 12px; font-size: 0.78rem; font-weight: 700; color: #38bdf8; border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.06);">
+              Switch Scope ⇄
+            </button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  initLucideIcons();
+}
+
+async function switchFacultyClassScope(classId) {
+  if (!classId) return;
+  closeFacultyClassSwitcherModal();
+  const isClass10 = String(classId).startsWith('10');
+  const isClass11 = String(classId).startsWith('11');
+  const activeGrade = isClass10 ? '10' : (isClass11 ? '11' : '12');
+
   teacherBuilderState.selectedClassId = classId;
-  const mainClassSelect = document.getElementById('selectTeacherClassScope');
-  if (mainClassSelect) mainClassSelect.value = classId;
+  teacherBuilderState.activeGrade = activeGrade;
+
+  const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+  const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
+  const currentClassInfo = allowedClasses.find(c => c.id === classId) || {
+    id: classId,
+    name: activeGrade === '11' ? 'Class 11-NonMed • Physics (42 Students)' : (isClass10 ? 'Class 10-A • Foundation (45 Students)' : 'Class 12-A • Senior Physics (48 Students)')
+  };
+
+  // 1. Update Header class badge
+  const headerClassBadge = document.getElementById('headerFacultyClassBadge');
+  if (headerClassBadge) {
+    headerClassBadge.innerText = `Class ${activeGrade}th ▼`;
+  }
+
+  // 2. Update Drawer badges and dropdown
+  const drawerActiveBadge = document.getElementById('drawerFacultyActiveBadge');
+  if (drawerActiveBadge) {
+    drawerActiveBadge.innerText = `Class ${activeGrade}th`;
+  }
   const drawerSelect = document.getElementById('drawerSelectClassScope');
-  if (drawerSelect) drawerSelect.value = classId;
+  if (drawerSelect) {
+    drawerSelect.value = classId;
+  }
 
-  const stream = isClass10 ? 'BOARD' : (classId.includes('Med') && !classId.includes('NonMed') ? 'NEET' : (classId.includes('NonMed') ? 'JEE' : 'BOARD'));
+  // 3. Update Welcome strip active scope
+  const stripScope = document.getElementById('stripTeacherClassScope');
+  if (stripScope) {
+    stripScope.innerText = currentClassInfo.name;
+  }
 
-  updateStreamSelectionUI(stream);
-  updateTeacherClassScopeUI();
+  // 4. Update locked paper creator class indicator
+  const lockedClassText = document.getElementById('lockedTargetClassText');
+  if (lockedClassText) {
+    lockedClassText.innerText = currentClassInfo.name;
+  }
+  const paperClassSelect = document.getElementById('selectPaperClass');
+  if (paperClassSelect) {
+    paperClassSelect.value = classId;
+  }
 
+  // 5. Update Roster Class dropdown
+  const rosterClassSelect = document.getElementById('selectTeacherActiveRosterClass');
+  if (rosterClassSelect) {
+    rosterClassSelect.value = classId;
+  }
+
+  // 6. Refresh modal cards if open
+  renderFacultyClassSwitcherCards();
+
+  // 7. Re-populate Paper chapters & Quick Gen chapters according to new active grade
+  window.populatePaperChapters(subjKey);
+  window.populateGenChapters(subjKey);
+
+  // 8. Fetch authentic backend taxonomy database for this grade
+  try {
+    const taxUrl = `${getApiBaseUrl()}/api/curriculum/taxonomy/${subjKey}?grade=${activeGrade}`;
+    const taxRes = await fetch(taxUrl);
+    if (taxRes.ok) {
+      teacherBuilderState.currentTaxonomy = await taxRes.json();
+    }
+  } catch (err) {
+    console.warn('[SWITCH SCOPE] Taxonomy fetch error:', err);
+  }
+
+  // 9. Fetch authentic enrolled students for this grade & subject
+  try {
+    const stuUrl = `${getApiBaseUrl()}/api/curriculum/students?subject=${subjKey}&grade=${activeGrade}`;
+    const stuRes = await fetch(stuUrl);
+    if (stuRes.ok) {
+      const stuData = await stuRes.json();
+      teacherBuilderState.currentStudents = stuData.students || [];
+    }
+  } catch (err) {
+    console.warn('[SWITCH SCOPE] Students fetch error:', err);
+  }
+
+  // 10. Update Roster view if function is available
+  if (typeof window.renderClassRoster === 'function') {
+    window.renderClassRoster(classId);
+  }
+
+  // 11. Update Question Bank & PYQs view
+  if (typeof populateQbChapterPills === 'function') {
+    populateQbChapterPills('ALL');
+  }
   if (state.activeTeacherTab === 'tabQuestionBank') {
     loadQuestionBankView(true);
   }
+
+  // 12. Close modal
+  closeFacultyClassSwitcherModal();
+
+  // 13. Toast notification
+  showScopeSwitchToast(activeGrade, subjKey);
+}
+
+function showScopeSwitchToast(grade, subjKey) {
+  const existing = document.getElementById('facultyScopeToast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'facultyScopeToast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    border: 1px solid #38bdf8;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    border-radius: 10px;
+    padding: 12px 18px;
+    color: #f8fafc;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.86rem;
+    animation: fadeIn 0.25s ease-out;
+  `;
+  toast.innerHTML = `
+    <div style="width:28px; height:28px; border-radius:50%; background:rgba(56,189,248,0.2); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+      <i data-lucide="check-circle-2" style="width:16px; height:16px;"></i>
+    </div>
+    <div>
+      <strong style="display:block; color:#38bdf8;">Class ${grade}th Scope Active</strong>
+      <span style="font-size:0.75rem; color:#94a3b8;">Loaded 14 NCERT chapters, questions & students database.</span>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  initLucideIcons();
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => toast.remove(), 400);
+  }, 3200);
+}
+
+function handleDrawerClassChange(classId) {
+  switchFacultyClassScope(classId);
+  closeSidebarDrawer();
 }
 window.handleDrawerClassChange = handleDrawerClassChange;
+window.openFacultyClassSwitcherModal = openFacultyClassSwitcherModal;
+window.closeFacultyClassSwitcherModal = closeFacultyClassSwitcherModal;
+window.renderFacultyClassSwitcherCards = renderFacultyClassSwitcherCards;
+window.switchFacultyClassScope = switchFacultyClassScope;
 
 function handleTeacherSignOut() {
   if (!confirm('Sign out from Unisole AI School Faculty Portal?')) {
@@ -9942,8 +10433,9 @@ function populateQbChapterPills(activeVal = 'ALL') {
     subjectDisplayName = teacherBuilderState.currentTaxonomy.subjectName || activeSubj;
     let chList = teacherBuilderState.currentTaxonomy.chapters;
     if (activeSubj === 'PHYSICS') {
-      const g12 = chList.filter(c => String(c.grade) === '12');
-      if (g12.length > 0) chList = g12;
+      const targetGrade = String(teacherBuilderState.activeGrade || '12');
+      const filtered = chList.filter(c => String(c.grade) === targetGrade);
+      if (filtered.length > 0) chList = filtered;
     }
     chapters = chList.map(c => ({
       num: c.chapterNumber || c.id,
@@ -9952,7 +10444,7 @@ function populateQbChapterPills(activeVal = 'ALL') {
       count: null
     }));
   } else if (activeSubj === 'PHYSICS') {
-    const phyChapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.PHYSICS);
+    const phyChapters = Object.keys(getChaptersForSubject('PHYSICS', teacherBuilderState.activeGrade));
     chapters = phyChapters.map((ch, idx) => ({
       num: idx + 1,
       name: ch,
@@ -10452,16 +10944,17 @@ async function loadQuestionBankView(forceReload = false) {
       const curVal = chapterSelect.value || 'ALL';
       let chs = teacherBuilderState.currentTaxonomy.chapters;
       if (activeSubj === 'PHYSICS') {
-        const g12 = chs.filter(c => String(c.grade) === '12');
-        if (g12.length > 0) chs = g12;
+        const targetGrade = String(teacherBuilderState.activeGrade || '12');
+        const filtered = chs.filter(c => String(c.grade) === targetGrade);
+        if (filtered.length > 0) chs = filtered;
       }
-      chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
+      chapterSelect.innerHTML = `<option value="ALL">All ${chs.length} Chapters</option>` +
         chs.map(c => `<option value="${c.chapterNumber || c.id}">Ch ${c.chapterNumber || ''}: ${c.chapterName || c.title}</option>`).join('');
       chapterSelect.value = curVal;
     } else if (activeSubj === 'PHYSICS') {
       const curVal = chapterSelect.value || 'ALL';
-      const phyChapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.PHYSICS);
-      chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
+      const phyChapters = Object.keys(getChaptersForSubject('PHYSICS', teacherBuilderState.activeGrade));
+      chapterSelect.innerHTML = `<option value="ALL">All ${phyChapters.length} Chapters</option>` +
         phyChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\\s*\\d+\\s*:\\s*/i, '')}</option>`).join('');
       chapterSelect.value = curVal;
     }
@@ -10583,7 +11076,7 @@ window.handleQbChapterChange = function(chapterVal) {
     topicSelect.innerHTML = `<option value="ALL">All Topics in Chapter</option>`;
   } else {
     let topics = [];
-    const chaptersObj = CURRICULUM_CHAPTER_TOPICS[activeSubj] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+    const chaptersObj = getChaptersForSubject(activeSubj, teacherBuilderState.activeGrade);
     const chNames = Object.keys(chaptersObj);
     const chIndex = parseInt(chapterVal, 10) - 1;
     if (!isNaN(chIndex) && chIndex >= 0 && chIndex < chNames.length) {

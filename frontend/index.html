@@ -447,7 +447,7 @@
   <aside class="sidebar-nav-drawer" id="sidebarNavDrawer" aria-label="Main Navigation Menu">
     <div class="drawer-header">
       <div class="drawer-brand">
-        <div class="brand-logo-badge" style="width:34px; height:34px; font-size:0.85rem;">UNISOLE</div>
+        <div class="brand-logo-badge" style="width:34px; height:34px; font-size:1.05rem; font-weight:800; border-radius:8px; flex-shrink:0;">U</div>
         <div>
           <div style="font-family:var(--font-heading); font-weight:700; font-size:0.92rem; color:var(--text-primary); line-height:1.2;">Unisole AI School</div>
           <div style="font-size:0.7rem; color:var(--accent-cyan); font-weight:500;">Scholar Assistant</div>
@@ -459,20 +459,25 @@
     </div>
 
     <!-- Active Faculty Profile Card -->
-    <div class="drawer-faculty-card">
+    <div class="drawer-faculty-card" onclick="openFacultyClassSwitcherModal()" style="cursor:pointer;" title="Click to view profile & switch teaching class">
       <div style="display:flex; align-items:center; gap:10px;">
         <div class="drawer-faculty-avatar" id="drawerFacultyAvatar">
           <i data-lucide="user-check" style="width:18px; height:18px; color:var(--accent-blue);"></i>
         </div>
         <div style="flex:1; min-width:0;">
-          <strong id="drawerFacultyName" style="font-size:0.88rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Dr. Vikram Sharma</strong>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+            <strong id="drawerFacultyName" style="font-size:0.88rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Dr. Vikram Sharma</strong>
+            <span id="drawerFacultyActiveBadge" style="font-size:0.68rem; font-weight:700; background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); padding:1px 6px; border-radius:4px;">Class 12th</span>
+          </div>
           <span id="drawerFacultyRole" style="font-size:0.72rem; color:var(--text-secondary); display:block;">Senior Physics Faculty</span>
           <span id="drawerFacultyPhone" style="font-size:0.7rem; color:var(--text-muted); display:block; margin-top:2px;">Phone: 98160 10001</span>
         </div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); font-size:0.74rem;">
-        <span style="color:var(--accent-emerald); font-weight:600;" id="drawerFacultySubject">Department: Physics</span>
-        <button type="button" class="btn-drawer-switch" onclick="closeSidebarDrawer(); window.handleTeacherSignOut();" style="color:#fb7185; border-color:rgba(251,113,133,0.3); background:rgba(251,113,133,0.08);" title="Sign out from faculty portal">
+        <button type="button" class="btn-drawer-switch" onclick="event.stopPropagation(); openFacultyClassSwitcherModal();" style="color:#38bdf8; border-color:rgba(56,189,248,0.3); background:rgba(56,189,248,0.08); font-weight:700;" title="Switch teaching class">
+          <i data-lucide="repeat" style="width:12px; height:12px;"></i> Switch Class ⇄
+        </button>
+        <button type="button" class="btn-drawer-switch" onclick="event.stopPropagation(); closeSidebarDrawer(); window.handleTeacherSignOut();" style="color:#fb7185; border-color:rgba(251,113,133,0.3); background:rgba(251,113,133,0.08);" title="Sign out from faculty portal">
           Sign Out
         </button>
       </div>
@@ -670,10 +675,13 @@
     </div>
 
     <div class="header-right">
-      <div class="header-faculty-chip" id="headerRoleBadge" onclick="window.handleRoleBadgeClick()" title="Current Active Portal">
+      <div class="header-faculty-chip" id="headerRoleBadge" onclick="window.openFacultyClassSwitcherModal()" title="Click to view profile & switch teaching class" style="cursor: pointer;">
         <span class="faculty-indicator-dot" id="headerRoleDot"></span>
         <span id="headerFacultyName">Dr. Vikram Sharma</span>
-        <span class="header-faculty-tag" id="headerFacultyTag">Teacher</span>
+        <span class="header-faculty-tag" id="headerFacultyTag">Physics</span>
+        <span class="header-faculty-class-pill" id="headerFacultyClassBadge" style="background:rgba(56,189,248,0.2); color:#38bdf8; font-size:0.72rem; font-weight:700; padding:2px 7px; border-radius:6px; margin-left:4px; border:1px solid rgba(56,189,248,0.4);">
+          Class 12th ▼
+        </span>
       </div>
       <button type="button" class="btn-role-switch" id="btnHeaderSwitchRole" onclick="openRoleGatewayModal()" title="Switch Portal (Principal / Student)">
         <i data-lucide="repeat" style="width:14px; height:14px;"></i>
@@ -851,8 +859,18 @@
                 <!-- Left Column: Curriculum & Topics (DROPDOWNS ONLY, NO LIST NOISE) -->
                 <div style="display:flex; flex-direction:column; gap:12px;">
                   <div class="test-form-group">
-                    <label class="test-form-label" for="selectPaperClass">Target Class Section *</label>
-                    <select class="form-select" id="selectPaperClass" onchange="window.handlePaperClassChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <label class="test-form-label">Target Class Section (Locked to Faculty Profile)</label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.35); border-radius:8px;">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+                        <strong style="font-size:0.86rem; color:#f8fafc;" id="lockedTargetClassText">Class 12-A &bull; Senior Physics (48 Students)</strong>
+                      </div>
+                      <button type="button" onclick="openFacultyClassSwitcherModal()" class="btn-change-scope-link" style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:4px; cursor:pointer;" title="Click to switch active teaching class in your profile">
+                        Switch in Profile ⇄
+                      </button>
+                    </div>
+                    <!-- Preserved select element for internal script compatibility -->
+                    <select class="form-select" id="selectPaperClass" style="display:none !important;">
                       <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
                       <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
                       <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
@@ -2646,7 +2664,7 @@
       <div class="glass-card" style="margin-bottom: 1.5rem;">
         <div class="card-header">
           <div class="card-title-group">
-            <div class="brand-logo-badge" style="width:36px; height:36px; font-size:0.85rem;">UNISOLE</div>
+            <div class="brand-logo-badge" style="width:36px; height:36px; font-size:1.05rem; font-weight:800; border-radius:8px; flex-shrink:0;">U</div>
             <div>
               <h2 class="card-title">14-Day Pilot Intelligence Dashboard</h2>
               <p class="card-subtitle">Prepared for: The Director & Principal, Unisole AI School</p>
@@ -3042,6 +3060,62 @@ _Unisole AI School Scholar Assistant_</div>
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal: Faculty Profile & Active Class Switcher -->
+  <div class="modal-overlay" id="modalFacultyClassSwitcher" style="display: none; z-index: 10000;">
+    <div class="modal-card" style="max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center;">
+            <i data-lucide="user-check" style="width:20px; height:20px;"></i>
+          </div>
+          <div>
+            <strong style="font-size:1.05rem; display:block;">Faculty Profile &amp; Class Scope</strong>
+            <p style="font-size:0.74rem; margin:0; opacity:0.9;">Unisole AI School &bull; Academic Portal</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeFacultyClassSwitcherModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;" aria-label="Close">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+
+      <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px;">
+        
+        <!-- Faculty Info Card -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <strong style="font-size: 1.02rem; color: var(--text-primary); display: block;" id="switcherModalFacultyName">Dr. Vikram Sharma</strong>
+            <span style="font-size: 0.78rem; color: #38bdf8; font-weight: 600;" id="switcherModalFacultyDept">Senior Physics Faculty &bull; HOD</span>
+            <span style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-top: 2px;" id="switcherModalFacultyPhone">Registered Phone: 98160 10001</span>
+          </div>
+          <button type="button" onclick="closeFacultyClassSwitcherModal(); handleTeacherSignOut();" class="btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; color: #fb7185; border-color: rgba(251,113,133,0.3); background: rgba(251,113,133,0.08); font-weight:600;">
+            <i data-lucide="log-out" style="width:13px; height:13px;"></i> Sign Out
+          </button>
+        </div>
+
+        <!-- Class Switcher Directives -->
+        <div>
+          <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
+            Assigned Teaching Classes (Click to Switch Scope):
+          </label>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+            Selecting a class loads that grade's authentic 14 NCERT chapters, questions, and students across the entire portal.
+          </p>
+
+          <div id="containerFacultyClassCards" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Rendered dynamically by renderFacultyClassSwitcherCards() -->
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+          <button type="button" class="btn-primary" onclick="closeFacultyClassSwitcherModal()" style="font-size: 0.85rem; padding: 8px 18px; font-weight:700;">
+            Done &bull; Keep Current Scope
+          </button>
+        </div>
+
+      </div>
     </div>
   </div>
 
