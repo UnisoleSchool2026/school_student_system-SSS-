@@ -286,6 +286,10 @@
 
       closeSidebarDrawer();
 
+      if (targetTabId === 'tabQuestionBank' && typeof window.loadQuestionBankView === 'function') {
+        window.loadQuestionBankView(false);
+      }
+
       if (window.handleTabActivated) {
         window.handleTabActivated(targetTabId);
       }
@@ -1147,10 +1151,13 @@
             </div>
           </div>
         </div>
-        <!-- End of Submode 3 (Take Test) -->
+        <!-- End of assigned-tests-table-card -->
 
       </div>
-      <!-- End of tabTeacherCreateTestAndPaper -->
+      <!-- End of subModeTakeTest -->
+
+    </div>
+    <!-- End of tabTeacherCreateTestAndPaper -->
 
       <!-- Hidden compatibility anchors for legacy DOM query selectors -->
       <div id="tabTeacherCreatePaper" style="display:none !important;"></div>
@@ -3097,9 +3104,14 @@ _Unisole AI School Scholar Assistant_</div>
 
         <!-- Class Switcher Directives -->
         <div>
-          <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
-            Assigned Teaching Classes (Click to Switch Scope):
-          </label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+              Assigned Teaching Classes (Click to Switch Scope):
+            </label>
+            <button type="button" onclick="closeFacultyClassSwitcherModal(); openCreateClassModal();" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; color: #38bdf8; border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.08); font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+              <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> Create New Class
+            </button>
+          </div>
           <p style="font-size: 0.76rem; color: var(--text-secondary); margin: 0 0 10px 0;">
             Selecting a class loads that grade's authentic 14 NCERT chapters, questions, and students across the entire portal.
           </p>

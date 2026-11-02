@@ -2656,47 +2656,6 @@ window.closeCreateClassModal = function() {
   if (modal) modal.style.display = 'none';
 };
 
-window.submitCreateClass = function(event) {
-  if (event) event.preventDefault();
-  const name = document.getElementById('inputNewClassName')?.value?.trim() || 'New Class Section';
-  const sectionCode = document.getElementById('inputNewClassSection')?.value?.trim() || `SEC-${Date.now().toString().slice(-4)}`;
-
-  CLASS_ROSTERS[sectionCode] = {
-    name,
-    stream: 'Senior Secondary Section',
-    subject: teacherBuilderState.activeTeacher?.subjectName || 'Physics',
-    enrolled: 0,
-    attendance: '100%',
-    average: '--',
-    students: []
-  };
-
-  const sel1 = document.getElementById('selectTeacherActiveRosterClass');
-  if (sel1) {
-    const opt = document.createElement('option');
-    opt.value = sectionCode;
-    opt.textContent = `${name} (0 Students)`;
-    sel1.appendChild(opt);
-    sel1.value = sectionCode;
-  }
-  const sel2 = document.getElementById('selectPaperClass');
-  if (sel2) {
-    const opt = document.createElement('option');
-    opt.value = sectionCode;
-    opt.textContent = `${name} (0 Students)`;
-    sel2.appendChild(opt);
-  }
-
-  window.closeCreateClassModal();
-  window.renderClassRoster(sectionCode);
-
-  const banner = document.createElement('div');
-  banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Created new class section: <strong>${escapeHtml(name)}</strong></span>`;
-  document.body.appendChild(banner);
-  initLucideIcons();
-  setTimeout(() => banner.remove(), 3500);
-};
 
 window.openAddStudentModal = function() {
   const modal = document.getElementById('modalAddStudentToClass');
@@ -9546,27 +9505,122 @@ async function submitCreateClass(event) {
     initLucideIcons();
   }
 
+  const activeSubjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/curriculum/classes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, grade, section, stream })
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      closeCreateClassModal();
-      await loadTeacherClassesList();
-      teacherBuilderState.selectedClassId = section;
-      const classSelect = document.getElementById('selectTeacherClassScope');
-      if (classSelect) classSelect.value = section;
-      updateTeacherClassScopeUI();
-      alert(`Class "${name}" (${section}) created successfully and added to database.`);
-    } else {
-      alert(`Class Creation Notice: ${data.error || 'Could not create class.'}`);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/curriculum/classes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, grade, section, stream })
+      });
+      await res.json().catch(() => ({}));
+    } catch (apiErr) {
+      console.warn('API class creation fetch warning (proceeding with local persistent state):', apiErr);
     }
+
+    // 1. Save to persistent custom classes store in localStorage
+    const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    const newClassItem = {
+      id: section,
+      name: name,
+      grade: String(grade),
+      section: section,
+      stream: stream,
+      subjectKey: activeSubjKey,
+      students: [],
+      createdAt: Date.now()
+    };
+    const existingIdx = customClasses.findIndex(c => c.id === section || c.section === section);
+    if (existingIdx >= 0) {
+      customClasses[existingIdx] = newClassItem;
+    } else {
+      customClasses.push(newClassItem);
+    }
+    localStorage.setItem('haps_teacher_custom_classes', JSON.stringify(customClasses));
+
+    // 2. Add to CLASS_ROSTERS so Roster and Gradebook render without error
+    if (!CLASS_ROSTERS[section]) {
+      CLASS_ROSTERS[section] = {
+        name: name,
+        stream: stream.replace(/_/g, ' '),
+        subject: teacherBuilderState.activeTeacher?.subjectName || 'Physics',
+        enrolled: 0,
+        attendance: '100%',
+        average: '--',
+        students: []
+      };
+    }
+
+    // 3. Add to FACULTY_SUBJECT_CLASSES
+    if (!FACULTY_SUBJECT_CLASSES[activeSubjKey]) {
+      FACULTY_SUBJECT_CLASSES[activeSubjKey] = [];
+    }
+    if (!FACULTY_SUBJECT_CLASSES[activeSubjKey].some(c => c.id === section)) {
+      FACULTY_SUBJECT_CLASSES[activeSubjKey].push({
+        id: section,
+        name: `${name} (${section})`
+      });
+    }
+
+    // 4. Update teacherBuilderState.classes
+    if (!teacherBuilderState.classes) teacherBuilderState.classes = [];
+    if (!teacherBuilderState.classes.some(c => c.id === section)) {
+      teacherBuilderState.classes.push({
+        id: section,
+        key: section,
+        name: name,
+        grade: String(grade),
+        section: section,
+        stream: stream,
+        students: []
+      });
+    }
+
+    // 5. Close modal
+    closeCreateClassModal();
+
+    // 6. Reload backend class list if available
+    try {
+      await loadTeacherClassesList();
+    } catch (e) {}
+
+    // 7. Immediately switch faculty active scope to the newly created class
+    await switchFacultyClassScope(section);
+
+    // 8. Update dropdowns
+    const rosterSelect = document.getElementById('selectTeacherActiveRosterClass');
+    if (rosterSelect && !Array.from(rosterSelect.options).some(o => o.value === section)) {
+      const opt = document.createElement('option');
+      opt.value = section;
+      opt.textContent = `${name} (0 Students)`;
+      rosterSelect.appendChild(opt);
+      rosterSelect.value = section;
+    }
+
+    const drawerSelect = document.getElementById('drawerSelectClassScope');
+    if (drawerSelect && !Array.from(drawerSelect.options).some(o => o.value === section)) {
+      const opt = document.createElement('option');
+      opt.value = section;
+      opt.textContent = `${name} (Section ${section})`;
+      drawerSelect.appendChild(opt);
+      drawerSelect.value = section;
+    }
+
+    // 9. Re-render profile modal cards
+    renderFacultyClassSwitcherCards();
+
+    // 10. Success Notification Toast
+    const toast = document.createElement('div');
+    toast.className = 'role-switch-toast';
+    toast.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Class Section <strong>${escapeHtml(name)}</strong> created &amp; added to your profile!</span>`;
+    document.body.appendChild(toast);
+    initLucideIcons();
+    setTimeout(() => toast.remove(), 4000);
+
   } catch (err) {
     console.error('Error creating class:', err);
-    alert('Failed to connect to backend server. Please verify backend is running.');
+    alert('Could not complete class creation. Please check console for details.');
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
@@ -10060,8 +10114,49 @@ function renderFacultyClassSwitcherCards() {
     ];
   }
 
+  // Dynamically load any custom or teacher-created classes from localStorage
+  try {
+    const customList = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    customList.forEach(c => {
+      const cid = c.id || c.section;
+      if (!classCards.some(existing => existing.id === cid)) {
+        const g = String(c.grade || (cid.includes('11') ? '11' : (cid.includes('10') ? '10' : '12')));
+        const enrolledCount = c.students?.length || (CLASS_ROSTERS[cid]?.students?.length) || 0;
+        classCards.push({
+          id: cid,
+          grade: g,
+          title: c.name || `Class ${g}th (${c.section || cid})`,
+          stream: `${(c.stream || 'SENIOR_SECONDARY').replace(/_/g, ' ')} • Faculty Section`,
+          stats: `${enrolledCount} Students Enrolled • Custom Section`,
+          badge: `Section ${c.section || cid}`,
+          isCustom: true
+        });
+      }
+    });
+  } catch (e) {
+    console.warn('Failed to parse custom classes from localStorage:', e);
+  }
+
+  // Also include any classes stored in teacherBuilderState.classes not yet in classCards
+  (teacherBuilderState.classes || []).forEach(c => {
+    const cid = c.id || c.section || c.key;
+    if (cid && !classCards.some(existing => existing.id === cid)) {
+      const g = String(c.grade || (cid.includes('11') ? '11' : (cid.includes('10') ? '10' : '12')));
+      const enrolledCount = c.students?.length || (CLASS_ROSTERS[cid]?.students?.length) || 0;
+      classCards.push({
+        id: cid,
+        grade: g,
+        title: c.name || `Class ${g}th (${c.section || cid})`,
+        stream: `${(c.stream || 'GENERAL').replace(/_/g, ' ')} • Faculty Section`,
+        stats: `${enrolledCount} Students Enrolled • Custom Section`,
+        badge: `Section ${c.section || cid}`,
+        isCustom: true
+      });
+    }
+  });
+
   container.innerHTML = classCards.map(c => {
-    const isActive = (c.grade === currentGrade) || (c.id === currentClassId);
+    const isActive = (c.id === currentClassId);
     return `
       <div class="faculty-class-choice-card ${isActive ? 'active-scope' : ''}" 
            onclick="switchFacultyClassScope('${c.id}')"
@@ -10098,6 +10193,7 @@ function renderFacultyClassSwitcherCards() {
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <strong style="color: #f8fafc; font-size: 0.92rem;">${c.title}</strong>
               <span style="font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 1px 6px; border-radius: 4px;">${c.badge}</span>
+              ${c.isCustom ? `<span style="font-size: 0.68rem; background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Created Class</span>` : ''}
             </div>
             <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: #94a3b8;">${c.stream}</p>
             <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #64748b;">📚 ${c.stats}</p>
@@ -10138,19 +10234,37 @@ function renderFacultyClassSwitcherCards() {
 async function switchFacultyClassScope(classId) {
   if (!classId) return;
   closeFacultyClassSwitcherModal();
-  const isClass10 = String(classId).startsWith('10');
-  const isClass11 = String(classId).startsWith('11');
-  const activeGrade = isClass10 ? '10' : (isClass11 ? '11' : '12');
+
+  // Find class from custom classes or builder classes or fallback
+  const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+  const foundCustom = customClasses.find(c => c.id === classId || c.section === classId);
+  const foundInBuilder = (teacherBuilderState.classes || []).find(c => c.id === classId || c.section === classId);
+  const classObj = foundCustom || foundInBuilder;
+
+  let activeGrade = '12';
+  if (classObj?.grade) {
+    activeGrade = String(classObj.grade);
+  } else if (String(classId).startsWith('10')) {
+    activeGrade = '10';
+  } else if (String(classId).startsWith('11')) {
+    activeGrade = '11';
+  }
+
+  const isClass10 = activeGrade === '10';
+  const isClass11 = activeGrade === '11';
 
   teacherBuilderState.selectedClassId = classId;
   teacherBuilderState.activeGrade = activeGrade;
 
   const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
   const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
-  const currentClassInfo = allowedClasses.find(c => c.id === classId) || {
+  const currentClassInfo = classObj ? {
+    id: classId,
+    name: classObj.name ? `${classObj.name} (${classObj.section || classId})` : `Class ${activeGrade}th Section ${classId}`
+  } : (allowedClasses.find(c => c.id === classId) || {
     id: classId,
     name: activeGrade === '11' ? 'Class 11-NonMed • Physics (42 Students)' : (isClass10 ? 'Class 10-A • Foundation (45 Students)' : 'Class 12-A • Senior Physics (48 Students)')
-  };
+  });
 
   // 1. Update Header class badge
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
@@ -10933,15 +11047,11 @@ async function loadQuestionBankView(forceReload = false) {
   }
 
   if (chapterSelect) {
+    const curVal = chapterSelect.value || 'ALL';
     if (isClass10 && activeSubj === 'CLASS10_MATHEMATICS') {
-      const curVal = chapterSelect.value || 'ALL';
       chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
         CLASS10_MATH_CHAPTERS.map(c => `<option value="${c.num}">Ch ${c.num}: ${c.name}</option>`).join('');
-      if (curVal !== 'ALL' && CLASS10_MATH_CHAPTERS.some(c => String(c.num) === curVal)) {
-        chapterSelect.value = curVal;
-      }
     } else if (teacherBuilderState.currentTaxonomy?.chapters) {
-      const curVal = chapterSelect.value || 'ALL';
       let chs = teacherBuilderState.currentTaxonomy.chapters;
       if (activeSubj === 'PHYSICS') {
         const targetGrade = String(teacherBuilderState.activeGrade || '12');
@@ -10950,14 +11060,13 @@ async function loadQuestionBankView(forceReload = false) {
       }
       chapterSelect.innerHTML = `<option value="ALL">All ${chs.length} Chapters</option>` +
         chs.map(c => `<option value="${c.chapterNumber || c.id}">Ch ${c.chapterNumber || ''}: ${c.chapterName || c.title}</option>`).join('');
-      chapterSelect.value = curVal;
     } else if (activeSubj === 'PHYSICS') {
-      const curVal = chapterSelect.value || 'ALL';
       const phyChapters = Object.keys(getChaptersForSubject('PHYSICS', teacherBuilderState.activeGrade));
       chapterSelect.innerHTML = `<option value="ALL">All ${phyChapters.length} Chapters</option>` +
         phyChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\\s*\\d+\\s*:\\s*/i, '')}</option>`).join('');
-      chapterSelect.value = curVal;
     }
+    const isValidVal = Array.from(chapterSelect.options).some(o => o.value === curVal);
+    chapterSelect.value = isValidVal ? curVal : 'ALL';
   }
 
   populateQbChapterPills(chapterSelect?.value || 'ALL');
