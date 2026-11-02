@@ -674,7 +674,6 @@ function switchPortalRole(role) {
       'tabTeacherCreatePaper': `Teacher Portal • Create Paper (${activeTeacher.subjectName})`,
       'tabTeacherTakeTest': 'Teacher Portal • Take & Conduct Class Tests',
       'tabTeacherClasses': 'Teacher Portal • Classes & Student Rosters',
-      'tabTeacherWeakConcepts': 'Teacher Portal • What to Teach Next (Weak Concepts)',
       'tabTeacherSyllabus': 'Teacher Portal • Senior Physics Curriculum & Syllabus',
       'tabGenerator': 'Teacher Portal • Create & Assign Tests',
       'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics'
@@ -766,7 +765,6 @@ function switchTeacherTab(targetTabId) {
     'tabTeacherBoardPaper': { label: 'Full Board Papers (CBSE & HP)', icon: 'scroll', color: '#f59e0b' },
     'tabTeacherTakeTest': { label: 'Take & Conduct Test (Active Tests)', icon: 'play-circle', color: '#34d399' },
     'tabTeacherClasses': { label: 'Classes & Students Roster', icon: 'users', color: '#c084fc' },
-    'tabTeacherWeakConcepts': { label: 'What to Teach Next (Weak Concepts)', icon: 'target', color: '#fb7185' },
     'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' }
   };
   const ws = workspaceMap[targetTabId];
@@ -800,7 +798,6 @@ function switchTeacherTab(targetTabId) {
     'tabTeacherBoardPaper': `Full-Length Board Question Paper Studio (CBSE & HP) • ${curSubjName}`,
     'tabTeacherTakeTest': `Take & Conduct Test (Active Assessments) • ${curSubjName}`,
     'tabTeacherClasses': `Classes & Students Roster • ${curSubjName}`,
-    'tabTeacherWeakConcepts': `Weak Concepts Diagnostic & What to Teach • ${curSubjName}`,
     'tabTeacherSyllabus': `Teacher Portal • Senior ${curSubjName} Curriculum`,
     'tabGenerator': 'Teacher Portal • Create & Assign Tests',
     'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
