@@ -548,18 +548,18 @@
           <span class="drawer-nav-card-badge teacher-nav-badge badge-blue">3 Modes</span>
         </button>
 
-        <!-- 2. Classes & Students -->
+        <!-- 2. Class Progress & Tests (Recorded Tests & Telemetry) -->
         <button type="button" class="drawer-nav-card" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
           <div class="drawer-nav-card-left">
-            <div class="drawer-nav-card-icon" style="background:rgba(168,85,247,0.15); color:#c084fc;">
-              <i data-lucide="users" style="width:17px; height:17px;"></i>
+            <div class="drawer-nav-card-icon" style="background:rgba(168,85,247,0.15); color:#9333ea;">
+              <i data-lucide="bar-chart-3" style="width:17px; height:17px;"></i>
             </div>
             <div class="drawer-nav-card-text">
-              <strong class="drawer-nav-card-title">Classes &amp; Students</strong>
-              <span class="drawer-nav-card-sub">Roster &amp; Section Performance</span>
+              <strong class="drawer-nav-card-title">Class Progress &amp; Tests</strong>
+              <span class="drawer-nav-card-sub">Recorded Tests, Diagnostics &amp; Roster</span>
             </div>
           </div>
-          <span class="drawer-nav-card-badge teacher-nav-badge">Roster</span>
+          <span class="drawer-nav-card-badge teacher-nav-badge">Telemetry</span>
         </button>
 
         <!-- 3. Question Bank & PYQs -->
@@ -1205,15 +1205,17 @@
       <div id="tabTeacherTakeTest" style="display:none !important;"></div>
 
       <!-- ====================================================================
-           2. TAB: CLASSES & STUDENTS (CREATE CLASS, ADD STUDENTS, ROSTER)
+           2. TAB: CLASS PROGRESS, RECORDED TESTS & STUDENT TELEMETRY
            ==================================================================== -->
       <div class="teacher-tab-content" id="tabTeacherClasses" style="display:none;">
         
         <!-- Header Bar with Class Selector & Quick Creation Buttons -->
-        <div class="classes-header-bar">
+        <div class="classes-header-bar" style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:14px 18px; margin-bottom:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; box-shadow:var(--shadow-sm);">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <label for="selectTeacherActiveRosterClass" style="font-size:0.85rem; font-weight:700; color:var(--text-secondary);">Active Class Section:</label>
-            <select id="selectTeacherActiveRosterClass" class="form-select" onchange="window.handleTeacherClassSelect(this.value)" style="padding:8px 14px; font-size:0.85rem; font-weight:700; background:var(--bg-secondary); border:1.5px solid var(--border-focus); color:var(--text-primary); border-radius:8px; box-shadow:0 1px 3px rgba(15,23,42,0.05);">
+            <label for="selectTeacherActiveRosterClass" style="font-size:0.85rem; font-weight:700; color:var(--text-secondary); display:flex; align-items:center; gap:6px;">
+              <i data-lucide="graduation-cap" style="width:16px; height:16px; color:var(--accent-blue);"></i> Active Class Scope:
+            </label>
+            <select id="selectTeacherActiveRosterClass" class="form-select" onchange="window.handleTeacherClassSelect(this.value)" style="padding:8px 14px; font-size:0.85rem; font-weight:700; background:var(--bg-secondary); border:1.5px solid var(--border-focus); color:var(--text-primary); border-radius:8px; box-shadow:0 1px 3px rgba(15,23,42,0.05); min-width:280px;">
               <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
               <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
               <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
@@ -1223,67 +1225,127 @@
           </div>
 
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button type="button" class="btn-primary" onclick="window.openCreateClassModal()" style="font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:42px; display:inline-flex; align-items:center; gap:6px;">
-              <i data-lucide="folder-plus" style="width:15px; height:15px;"></i> Create New Class
+            <button type="button" class="btn-primary" onclick="window.switchTeacherTab('tabTeacherCreateTestAndPaper'); window.switchPaperCreationMode('take_test');" style="font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:40px; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+              <i data-lucide="play-circle" style="width:15px; height:15px;"></i> Conduct / Take Test
             </button>
-            <button type="button" class="btn-secondary" onclick="window.openAddStudentModal()" style="font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:42px; display:inline-flex; align-items:center; gap:6px; color:#059669; border-color:#a7f3d0; background:#ecfdf5;">
-              <i data-lucide="user-plus" style="width:15px; height:15px;"></i> Add Student to Class
+            <button type="button" class="btn-secondary" onclick="window.openCreateClassModal()" style="font-size:0.82rem; padding:8px 14px; font-weight:700; min-height:40px; display:inline-flex; align-items:center; gap:6px;">
+              <i data-lucide="folder-plus" style="width:15px; height:15px;"></i> Create Class
+            </button>
+            <button type="button" class="btn-secondary" onclick="window.openAddStudentModal()" style="font-size:0.82rem; padding:8px 14px; font-weight:700; min-height:40px; display:inline-flex; align-items:center; gap:6px; color:#059669; border-color:#a7f3d0; background:#ecfdf5;">
+              <i data-lucide="user-plus" style="width:15px; height:15px;"></i> Add Student
             </button>
           </div>
         </div>
 
         <!-- Class KPI Strip -->
-        <div class="class-stats-grid">
+        <div class="class-stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:1.5rem;">
           <div class="class-stat-card">
-            <div class="class-stat-val" id="statClassEnrolled">48 Students</div>
-            <div class="class-stat-lbl">Total Enrolled Scholars</div>
+            <div class="class-stat-val" id="statClassTestsRecorded" style="color:var(--accent-blue);">4 Tests</div>
+            <div class="class-stat-lbl">Conducted Tests Recorded</div>
           </div>
           <div class="class-stat-card">
-            <div class="class-stat-val" style="color:#059669;" id="statClassAttendance">94.8%</div>
-            <div class="class-stat-lbl">Active Test Attendance</div>
-          </div>
-          <div class="class-stat-card">
-            <div class="class-stat-val" style="color:var(--accent-blue);" id="statClassAverage">74.2%</div>
+            <div class="class-stat-val" style="color:#059669;" id="statClassAverage">76.4%</div>
             <div class="class-stat-lbl">Class Performance Average</div>
           </div>
           <div class="class-stat-card">
-            <div class="class-stat-val" style="color:#7c3aed;">2026–2027</div>
-            <div class="class-stat-lbl">Academic Term Session</div>
+            <div class="class-stat-val" style="color:#0284c7;" id="statClassAttendance">94.8%</div>
+            <div class="class-stat-lbl">Active Test Attendance</div>
+          </div>
+          <div class="class-stat-card">
+            <div class="class-stat-val" id="statClassEnrolled" style="color:#7c3aed;">48 Students</div>
+            <div class="class-stat-lbl">Total Enrolled Scholars</div>
           </div>
         </div>
 
-        <!-- Student Roster Table -->
-        <div class="roster-table-card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
-            <div>
-              <h4 style="font-size:1.1rem; font-weight:800; color:var(--text-primary); margin:0;" id="rosterTitle">
-                Class 12-A Student Roster
-              </h4>
-              <p style="font-size:0.78rem; color:var(--text-secondary); margin:3px 0 0 0;">
-                Students enrolled under this section with contact details and current standing.
-              </p>
-            </div>
-            <input type="text" id="inputFilterRoster" oninput="window.filterClassRoster(this.value)" placeholder="Search student or roll #..." style="padding:8px 14px; font-size:0.84rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:8px; min-width:240px;" class="form-control">
+        <!-- Sub-View Switcher Tabs -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+          <div class="progress-subtabs-strip" style="display:inline-flex; background:#f1f5f9; padding:4px; border-radius:10px; border:1px solid var(--border-subtle); gap:4px;">
+            <button type="button" class="progress-subtab-btn active" id="btnSubViewTests" onclick="window.switchClassProgressSubView('tests')" style="display:inline-flex; align-items:center; gap:8px; padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:7px; border:none; cursor:pointer; background:#ffffff; color:#1d4ed8; box-shadow:0 1px 3px rgba(15,23,42,0.08); transition:all 0.15s ease;">
+              <i data-lucide="clipboard-list" style="width:14px; height:14px;"></i> Recorded Class Tests &amp; Diagnostics
+            </button>
+            <button type="button" class="progress-subtab-btn" id="btnSubViewRoster" onclick="window.switchClassProgressSubView('roster')" style="display:inline-flex; align-items:center; gap:8px; padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:7px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.15s ease;">
+              <i data-lucide="users" style="width:14px; height:14px;"></i> Enrolled Students Directory (Roster)
+            </button>
           </div>
+        </div>
 
-          <div style="overflow-x:auto;">
-            <table class="assigned-table" id="tableClassRoster">
-              <thead>
-                <tr>
-                  <th>Roll #</th>
-                  <th>Student Name</th>
-                  <th>Contact Phone</th>
-                  <th>Parent Contact</th>
-                  <th>Test Turn-in</th>
-                  <th>Current Score</th>
-                  <th>Status</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyClassRoster">
-                <!-- Populated dynamically -->
-              </tbody>
-            </table>
+        <!-- SUB-VIEW 1: RECORDED TESTS LIST -->
+        <div id="viewRecordedClassTests">
+          <div class="roster-table-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h4 style="font-size:1.1rem; font-weight:800; color:var(--text-primary); margin:0;" id="recordedTestsListTitle">
+                  Recorded Assessments &amp; Test Telemetry
+                </h4>
+                <p style="font-size:0.78rem; color:var(--text-secondary); margin:3px 0 0 0;">
+                  Click <strong>View Test Report</strong> on any assessment to inspect class average, most failed questions, most solved questions, and tier charts.
+                </p>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="inputFilterTests" oninput="window.filterRecordedTests(this.value)" placeholder="Search test title or topic..." style="padding:8px 14px; font-size:0.84rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:8px; min-width:260px;" class="form-control">
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="assigned-table" id="tableRecordedTests">
+                <thead>
+                  <tr>
+                    <th>Test Code</th>
+                    <th>Assessment Title &amp; Topic</th>
+                    <th>Duration &amp; Marks</th>
+                    <th>Students Attempted</th>
+                    <th>Class Average</th>
+                    <th>Performance Split</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyRecordedTests">
+                  <!-- Populated dynamically by window.renderRecordedTestsTable() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 2: DETAILED TEST DIAGNOSTIC REPORT (EXACT USER REQUIREMENT) -->
+        <div id="viewTestReportDetail" style="display:none;">
+          <!-- Content rendered dynamically by window.renderTestReportDetail(testId) -->
+        </div>
+
+        <!-- SUB-VIEW 3: ENROLLED STUDENTS ROSTER -->
+        <div id="viewEnrolledStudentsRoster" style="display:none;">
+          <div class="roster-table-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h4 style="font-size:1.1rem; font-weight:800; color:var(--text-primary); margin:0;" id="rosterTitle">
+                  Class Student Roster
+                </h4>
+                <p style="font-size:0.78rem; color:var(--text-secondary); margin:3px 0 0 0;">
+                  Students enrolled under this section with contact details and current standing.
+                </p>
+              </div>
+              <input type="text" id="inputFilterRoster" oninput="window.filterClassRoster(this.value)" placeholder="Search student or roll #..." style="padding:8px 14px; font-size:0.84rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:8px; min-width:240px;" class="form-control">
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="assigned-table" id="tableClassRoster">
+                <thead>
+                  <tr>
+                    <th>Roll #</th>
+                    <th>Student Name</th>
+                    <th>Contact Phone</th>
+                    <th>Parent Contact</th>
+                    <th>Test Turn-in</th>
+                    <th>Current Score</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyClassRoster">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 

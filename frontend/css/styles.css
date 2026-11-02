@@ -5450,6 +5450,111 @@ button:active,
   color: #fbbf24;
 }
 
+/* ==========================================================================
+   CLASS PROGRESS, RECORDED TESTS & TEST TELEMETRY
+   ========================================================================== */
+.progress-subtab-btn {
+  transition: all 0.15s ease;
+}
+.progress-subtab-btn:hover {
+  color: #1d4ed8 !important;
+}
+.progress-subtab-btn.active {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme="dark"] .progress-subtabs-strip {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+[data-theme="dark"] .progress-subtab-btn.active {
+  background: rgba(15, 23, 42, 0.9) !important;
+  color: #38bdf8 !important;
+}
+
+/* Diagnostic Highlight Cards */
+.diagnostic-highlight-card {
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+.diagnostic-highlight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+.diagnostic-failed-card {
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+  border-left: 6px solid #e11d48;
+}
+.diagnostic-solved-card {
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-left: 6px solid #059669;
+}
+
+[data-theme="dark"] .diagnostic-failed-card {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.35);
+  border-left-color: #fb7185;
+}
+[data-theme="dark"] .diagnostic-solved-card {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  border-left-color: #34d399;
+}
+
+/* Tier Metric Cards */
+.tier-kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+.tier-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+[data-theme="dark"] .tier-kpi-card {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Report Charts Container */
+.report-chart-box {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow-card);
+}
+[data-theme="dark"] .report-chart-box {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Student Filter Badges */
+.tier-filter-pill {
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tier-filter-pill.active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
 /* Weak Concepts Diagnostic Dashboard */
 .weak-concepts-view {
   display: flex;

@@ -810,7 +810,7 @@ function switchTeacherTab(targetTabId) {
     'tabTeacherCreatePaper': { label: 'Create Test & Paper', icon: 'file-plus-2', color: '#38bdf8' },
     'tabTeacherBoardPaper': { label: 'Create Test & Paper', icon: 'scroll', color: '#f59e0b' },
     'tabTeacherTakeTest': { label: 'Create Test & Paper', icon: 'play-circle', color: '#34d399' },
-    'tabTeacherClasses': { label: 'Classes & Students Roster', icon: 'users', color: '#c084fc' },
+    'tabTeacherClasses': { label: 'Class Progress & Recorded Tests', icon: 'bar-chart-3', color: '#c084fc' },
     'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' }
   };
   const ws = workspaceMap[targetTabId];
@@ -844,7 +844,7 @@ function switchTeacherTab(targetTabId) {
     'tabTeacherCreatePaper': `Create Test & Paper • ${curSubjName}`,
     'tabTeacherBoardPaper': `Full-Length Board Question Paper Studio (CBSE & HP) • ${curSubjName}`,
     'tabTeacherTakeTest': `Take & Conduct Test (Active Assessments) • ${curSubjName}`,
-    'tabTeacherClasses': `Classes & Students Roster • ${curSubjName}`,
+    'tabTeacherClasses': `Class Progress & Test Telemetry • ${curSubjName}`,
     'tabTeacherSyllabus': `Teacher Portal • Senior ${curSubjName} Curriculum`,
     'tabGenerator': 'Teacher Portal • Create & Assign Tests',
     'tabClassAnalytics': 'Teacher Portal • Overall Class Performance & Analytics',
@@ -863,6 +863,12 @@ function switchTeacherTab(targetTabId) {
       switchPaperCreationMode(submodeToActivate);
     } else {
       switchPaperCreationMode(state.activePaperCreationMode || 'unit_test');
+    }
+  } else if (targetTabId === 'tabTeacherClasses') {
+    if (typeof window.renderClassProgressDashboard === 'function') {
+      window.renderClassProgressDashboard(teacherBuilderState.selectedClassId || '12-NonMed');
+    } else if (typeof window.renderClassRoster === 'function') {
+      window.renderClassRoster(teacherBuilderState.selectedClassId || '12-NonMed');
     }
   } else if (targetTabId === 'tabGenerator') {
     if (!teacherBuilderState.currentTaxonomy) {
@@ -2595,7 +2601,1079 @@ window.finalizeCurrentTest = function() {
 };
 window.handleTeacherClassSelect = function(classId) {
   teacherBuilderState.selectedClassId = classId;
+  if (typeof window.renderClassProgressDashboard === 'function') {
+    window.renderClassProgressDashboard(classId);
+  } else {
+    window.renderClassRoster(classId);
+  }
+};
+
+/* ==========================================================================
+   RECORDED TESTS & DIAGNOSTIC TELEMETRY DATASET
+   ========================================================================== */
+const RECORDED_CLASS_TESTS = {
+  '12-NonMed': [
+    {
+      id: 'test_12_01',
+      code: 'Test 01',
+      title: 'Electric Charges, Coulomb\'s Law & Superposition',
+      chapter: 'Chapter 1: Electric Charges and Fields',
+      topic: 'Coulomb\'s Force, Dielectric Medium & Superposition',
+      date: 'Nov 01, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 44,
+      enrolledCount: 48,
+      attemptedRate: '91.7%',
+      averageScore: 34.4,
+      averagePercentage: '76.4%',
+      highestScore: { score: 43, percentage: '95.6%', studentName: 'Aryan Sharma & Priya Verma' },
+      lowestScore: { score: 21, percentage: '46.7%', studentName: 'Sahil Mehta (Remedial Focus)' },
+      mostWrongQuestion: {
+        questionIndex: 4,
+        statement: 'Calculate the net electric field E inside a dielectric slab (dielectric constant κ = 4) placed in a uniform external field E₀ = 800 N/C.',
+        topic: 'Dielectric Polarization & Electric Field Reduction',
+        errorRate: '77.3%',
+        wrongCount: 34,
+        totalAttempted: 44,
+        dominantMistake: 'Multiplication Trap: 68% of failed students computed E = E₀ × κ = 3200 N/C instead of dividing E = E₀ / κ = 200 N/C.',
+        actionRecommendation: 'Conduct a 5-minute smart board walkthrough on polarization bound charges and the dielectric screening factor.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 1,
+        statement: 'State Coulomb\'s Law in vector form and deduce the SI base dimensions of electrostatic permittivity ε₀.',
+        topic: 'Coulomb\'s Law & Dimensional Analysis',
+        successRate: '95.5%',
+        correctCount: 42,
+        totalAttempted: 44,
+        masteryNotes: 'Rock-solid class-wide retention of inverse square law and dimensional formula [M⁻¹ L⁻³ T⁴ A²].'
+      },
+      tiers: {
+        excellent: { count: 16, percentage: '36.4%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 22, percentage: '50.0%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 6, percentage: '13.6%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Coulomb Law & Permittivity Units', accuracyRate: 95, errorRate: 5, avgSeconds: 58, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Superposition on Equilateral Triangle', accuracyRate: 86, errorRate: 14, avgSeconds: 82, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Electric Field of Dipole at Axial Point', accuracyRate: 82, errorRate: 18, avgSeconds: 78, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Field inside Dielectric Slab (κ = 4)', accuracyRate: 23, errorRate: 77, avgSeconds: 115, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Electric Flux through Cube Face', accuracyRate: 91, errorRate: 9, avgSeconds: 64, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Torque on Dipole in Uniform Field', accuracyRate: 84, errorRate: 16, avgSeconds: 72, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Work Done Rotating Dipole by 180°', accuracyRate: 75, errorRate: 25, avgSeconds: 88, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Charge Conservation & Quantization', accuracyRate: 93, errorRate: 7, avgSeconds: 52, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Field lines neutral point calculation', accuracyRate: 70, errorRate: 30, avgSeconds: 92, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Force between multiple point charges', accuracyRate: 77, errorRate: 23, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Gauss Law spherical symmetry application', accuracyRate: 68, errorRate: 32, avgSeconds: 96, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Linear charge density infinite wire', accuracyRate: 80, errorRate: 20, avgSeconds: 80, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Field due to uniformly charged sheet', accuracyRate: 73, errorRate: 27, avgSeconds: 85, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Equilibrium of suspended pith balls', accuracyRate: 59, errorRate: 41, avgSeconds: 108, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Vector form Coulomb force signs', accuracyRate: 89, errorRate: 11, avgSeconds: 66, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', score: 43, percentage: '95.6%', tier: 'Excellent', time: '38m' },
+        { roll: '102', name: 'Priya Verma', phone: '98160 55021', score: 42, percentage: '93.3%', tier: 'Excellent', time: '39m' },
+        { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', score: 40, percentage: '88.9%', tier: 'Excellent', time: '41m' },
+        { roll: '106', name: 'Divya Rana', phone: '98160 55061', score: 39, percentage: '86.7%', tier: 'Excellent', time: '42m' },
+        { roll: '110', name: 'Ritu Sen', phone: '98160 55101', score: 41, percentage: '91.1%', tier: 'Excellent', time: '40m' },
+        { roll: '109', name: 'Karan Singhal', phone: '98160 55091', score: 35, percentage: '77.8%', tier: 'Average', time: '44m' },
+        { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', score: 29, percentage: '64.4%', tier: 'Average', time: '45m' },
+        { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', score: 21, percentage: '46.7%', tier: 'Below Average', time: '45m' }
+      ]
+    },
+    {
+      id: 'test_12_02',
+      code: 'Test 02',
+      title: 'Gauss\'s Law, Electric Flux & Spherical Shells',
+      chapter: 'Chapter 1: Electric Charges and Fields',
+      topic: 'Gauss Law Integrals, Flux through Enclosures, Charged Shells',
+      date: 'Oct 28, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 46,
+      enrolledCount: 48,
+      attemptedRate: '95.8%',
+      averageScore: 32.8,
+      averagePercentage: '72.8%',
+      highestScore: { score: 44, percentage: '97.8%', studentName: 'Priya Verma' },
+      lowestScore: { score: 19, percentage: '42.2%', studentName: 'Rohit Thakur (Remedial Focus)' },
+      mostWrongQuestion: {
+        questionIndex: 8,
+        statement: 'Determine electric field E at radial distance r < R inside a uniformly charged conducting spherical shell of total charge Q.',
+        topic: 'Field Inside Conductors & Electrostatic Shielding',
+        errorRate: '71.7%',
+        wrongCount: 33,
+        totalAttempted: 46,
+        dominantMistake: 'Confused hollow conducting shell (E = 0) with non-conducting solid dielectric sphere (E ∝ r).',
+        actionRecommendation: 'Review Gaussian surface enclosing zero net charge inside conductor boundary.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 2,
+        statement: 'Calculate the total electric flux passing through a Gaussian cube enclosing a point charge q at its center.',
+        topic: 'Gauss\'s Law Fundamentals',
+        successRate: '97.8%',
+        correctCount: 45,
+        totalAttempted: 46,
+        masteryNotes: 'Flawless recall of Φ = q / ε₀ irrespective of shape or dimensions of enclosing surface.'
+      },
+      tiers: {
+        excellent: { count: 14, percentage: '30.4%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 24, percentage: '52.2%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 8, percentage: '17.4%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Flux through Plane Surface Φ = E·A', accuracyRate: 93, errorRate: 7, avgSeconds: 55, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Gauss Law Cube Center Φ = q/ε₀', accuracyRate: 98, errorRate: 2, avgSeconds: 48, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Flux through single face of cube', accuracyRate: 87, errorRate: 13, avgSeconds: 65, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Field due to infinite line charge λ', accuracyRate: 78, errorRate: 22, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Cylindrical Gaussian surface derivation', accuracyRate: 74, errorRate: 26, avgSeconds: 95, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Two parallel oppositely charged sheets', accuracyRate: 80, errorRate: 20, avgSeconds: 76, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Field outside thin spherical shell', accuracyRate: 85, errorRate: 15, avgSeconds: 70, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Field inside conducting shell (E = 0)', accuracyRate: 28, errorRate: 72, avgSeconds: 110, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Graph of E vs r for charged shell', accuracyRate: 67, errorRate: 33, avgSeconds: 92, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Electrostatic shielding application', accuracyRate: 91, errorRate: 9, avgSeconds: 60, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Surface charge density σ = Q / 4πR²', accuracyRate: 83, errorRate: 17, avgSeconds: 75, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Flux through hemispherical bowl', accuracyRate: 65, errorRate: 35, avgSeconds: 102, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Field just outside conductor E = σ/ε₀', accuracyRate: 72, errorRate: 28, avgSeconds: 86, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Charge placed at corner of cube', accuracyRate: 61, errorRate: 39, avgSeconds: 105, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Gauss Law validity condition', accuracyRate: 89, errorRate: 11, avgSeconds: 58, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '102', name: 'Priya Verma', phone: '98160 55021', score: 44, percentage: '97.8%', tier: 'Excellent', time: '36m' },
+        { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', score: 41, percentage: '91.1%', tier: 'Excellent', time: '40m' },
+        { roll: '106', name: 'Divya Rana', phone: '98160 55061', score: 38, percentage: '84.4%', tier: 'Excellent', time: '42m' },
+        { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', score: 37, percentage: '82.2%', tier: 'Excellent', time: '43m' },
+        { roll: '110', name: 'Ritu Sen', phone: '98160 55101', score: 35, percentage: '77.8%', tier: 'Average', time: '44m' },
+        { roll: '109', name: 'Karan Singhal', phone: '98160 55091', score: 31, percentage: '68.9%', tier: 'Average', time: '45m' },
+        { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', score: 24, percentage: '53.3%', tier: 'Average', time: '45m' },
+        { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', score: 19, percentage: '42.2%', tier: 'Below Average', time: '45m' }
+      ]
+    },
+    {
+      id: 'test_12_03',
+      code: 'Test 03',
+      title: 'Electrostatic Potential & Capacitors with Dielectrics',
+      chapter: 'Chapter 2: Electrostatic Potential and Capacitance',
+      topic: 'Potential Gradient, Parallel Plate Capacitor, Dielectrics',
+      date: 'Oct 24, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 45,
+      enrolledCount: 48,
+      attemptedRate: '93.8%',
+      averageScore: 35.6,
+      averagePercentage: '79.2%',
+      highestScore: { score: 45, percentage: '100%', studentName: 'Divya Rana' },
+      lowestScore: { score: 22, percentage: '48.9%', studentName: 'Sahil Mehta' },
+      mostWrongQuestion: {
+        questionIndex: 11,
+        statement: 'A parallel plate capacitor is charged and disconnected from battery. A dielectric slab (κ = 3) is inserted. Find change in stored electrostatic energy.',
+        topic: 'Capacitor Energy with Isolated Charge',
+        errorRate: '68.9%',
+        wrongCount: 31,
+        totalAttempted: 45,
+        dominantMistake: 'Students incorrectly applied U = ½ C V² assuming V remains constant, instead of U = Q² / 2C where charge Q is constant.',
+        actionRecommendation: 'Emphasize distinction: battery connected (V const) vs disconnected (Q const).'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 3,
+        statement: 'Describe the geometry of equipotential surfaces for an isolated positive point charge in space.',
+        topic: 'Equipotential Surfaces',
+        successRate: '95.6%',
+        correctCount: 43,
+        totalAttempted: 45,
+        masteryNotes: '95%+ recognized concentric spherical shells centered at the point charge.'
+      },
+      tiers: {
+        excellent: { count: 18, percentage: '40.0%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 21, percentage: '46.7%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 6, percentage: '13.3%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Potential due to point charge V = kq/r', accuracyRate: 93, errorRate: 7, avgSeconds: 52, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Relation between E and V (E = -dV/dr)', accuracyRate: 84, errorRate: 16, avgSeconds: 68, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Equipotential surfaces geometry', accuracyRate: 96, errorRate: 4, avgSeconds: 45, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Potential energy of two point charges', accuracyRate: 87, errorRate: 13, avgSeconds: 70, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Potential at equatorial point of dipole', accuracyRate: 91, errorRate: 9, avgSeconds: 55, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Parallel plate capacitance C = ε₀A/d', accuracyRate: 89, errorRate: 11, avgSeconds: 62, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Capacitors in series combination', accuracyRate: 82, errorRate: 18, avgSeconds: 78, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Capacitors in parallel combination', accuracyRate: 91, errorRate: 9, avgSeconds: 60, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Energy density in electric field ½ε₀E²', accuracyRate: 78, errorRate: 22, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Dielectric constant definition C/C₀', accuracyRate: 85, errorRate: 15, avgSeconds: 66, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Energy change with disconnected battery', accuracyRate: 31, errorRate: 69, avgSeconds: 118, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Common potential of connected capacitors', accuracyRate: 71, errorRate: 29, avgSeconds: 94, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Energy loss during charge redistribution', accuracyRate: 67, errorRate: 33, avgSeconds: 104, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Partial dielectric slab thickness t', accuracyRate: 60, errorRate: 40, avgSeconds: 108, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Van de Graaff potential principles', accuracyRate: 80, errorRate: 20, avgSeconds: 74, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '106', name: 'Divya Rana', phone: '98160 55061', score: 45, percentage: '100%', tier: 'Excellent', time: '35m' },
+        { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', score: 42, percentage: '93.3%', tier: 'Excellent', time: '38m' },
+        { roll: '102', name: 'Priya Verma', phone: '98160 55021', score: 41, percentage: '91.1%', tier: 'Excellent', time: '40m' },
+        { roll: '110', name: 'Ritu Sen', phone: '98160 55101', score: 39, percentage: '86.7%', tier: 'Excellent', time: '41m' },
+        { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', score: 38, percentage: '84.4%', tier: 'Excellent', time: '42m' },
+        { roll: '109', name: 'Karan Singhal', phone: '98160 55091', score: 34, percentage: '75.6%', tier: 'Average', time: '44m' },
+        { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', score: 28, percentage: '62.2%', tier: 'Average', time: '45m' },
+        { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', score: 22, percentage: '48.9%', tier: 'Below Average', time: '45m' }
+      ]
+    },
+    {
+      id: 'test_12_04',
+      code: 'Test 04',
+      title: 'Current Electricity, Drift Velocity & Kirchhoff\'s Laws',
+      chapter: 'Chapter 3: Current Electricity',
+      topic: 'Drift Velocity, Resistance vs Temperature, Kirchhoff Rules',
+      date: 'Oct 18, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 47,
+      enrolledCount: 48,
+      attemptedRate: '97.9%',
+      averageScore: 36.7,
+      averagePercentage: '81.5%',
+      highestScore: { score: 45, percentage: '100%', studentName: 'Aryan Sharma' },
+      lowestScore: { score: 24, percentage: '53.3%', studentName: 'Sahil Mehta' },
+      mostWrongQuestion: {
+        questionIndex: 12,
+        statement: 'Apply Kirchhoff\'s Loop Rule traversing an internal resistance r with current in direction of loop traversal.',
+        topic: 'Kirchhoff Voltage Law & Sign Conventions',
+        errorRate: '63.8%',
+        wrongCount: 30,
+        totalAttempted: 47,
+        dominantMistake: 'Sign convention blunder: wrote +Ir instead of -Ir when traversing along current direction.',
+        actionRecommendation: 'Demonstrate potential hill / drop analogy for current flow through resistors.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 1,
+        statement: 'State Ohm\'s Law and specify the SI unit and dimensional formula of electrical resistivity ρ.',
+        topic: 'Ohm\'s Law & Resistivity',
+        successRate: '97.9%',
+        correctCount: 46,
+        totalAttempted: 47,
+        masteryNotes: 'Nearly 100% correct in Ohm-meter unit [M L³ T⁻³ A⁻²].'
+      },
+      tiers: {
+        excellent: { count: 21, percentage: '44.7%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 21, percentage: '44.7%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 5, percentage: '10.6%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Ohm\'s Law & Resistivity Units', accuracyRate: 98, errorRate: 2, avgSeconds: 45, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Drift velocity formula vd = eEτ/m', accuracyRate: 85, errorRate: 15, avgSeconds: 72, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Current density relation J = n·e·vd', accuracyRate: 81, errorRate: 19, avgSeconds: 78, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Resistivity temperature coefficient α', accuracyRate: 77, errorRate: 23, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Carbon resistors color code reading', accuracyRate: 91, errorRate: 9, avgSeconds: 50, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Internal resistance and terminal voltage', accuracyRate: 79, errorRate: 21, avgSeconds: 82, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Cells in series and parallel combinations', accuracyRate: 83, errorRate: 17, avgSeconds: 76, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Kirchhoff Junction Rule (Charge Conservation)', accuracyRate: 94, errorRate: 6, avgSeconds: 52, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Wheatstone Bridge balancing condition', accuracyRate: 87, errorRate: 13, avgSeconds: 70, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Meter Bridge unknown resistance measurement', accuracyRate: 79, errorRate: 21, avgSeconds: 85, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Potentiometer comparison of two cell EMFs', accuracyRate: 70, errorRate: 30, avgSeconds: 98, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Kirchhoff Loop Rule IR sign conventions', accuracyRate: 36, errorRate: 64, avgSeconds: 114, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Electrical power and heating effect I²Rt', accuracyRate: 89, errorRate: 11, avgSeconds: 62, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Maximum power transfer theorem condition', accuracyRate: 68, errorRate: 32, avgSeconds: 102, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Semiconductor resistivity vs temperature', accuracyRate: 87, errorRate: 13, avgSeconds: 65, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', score: 45, percentage: '100%', tier: 'Excellent', time: '34m' },
+        { roll: '102', name: 'Priya Verma', phone: '98160 55021', score: 43, percentage: '95.6%', tier: 'Excellent', time: '37m' },
+        { roll: '110', name: 'Ritu Sen', phone: '98160 55101', score: 41, percentage: '91.1%', tier: 'Excellent', time: '39m' },
+        { roll: '106', name: 'Divya Rana', phone: '98160 55061', score: 40, percentage: '88.9%', tier: 'Excellent', time: '41m' },
+        { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', score: 39, percentage: '86.7%', tier: 'Excellent', time: '42m' },
+        { roll: '109', name: 'Karan Singhal', phone: '98160 55091', score: 36, percentage: '80.0%', tier: 'Excellent', time: '43m' },
+        { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', score: 30, percentage: '66.7%', tier: 'Average', time: '45m' },
+        { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', score: 24, percentage: '53.3%', tier: 'Average', time: '45m' }
+      ]
+    }
+  ],
+
+  '11-NonMed': [
+    {
+      id: 'test_11_01',
+      code: 'Test 01',
+      title: 'Units, Dimensions & Error Propagation Analysis',
+      chapter: 'Chapter 2: Units and Measurements',
+      topic: 'Dimensional Homogeneity, Power Error Propagation',
+      date: 'Nov 01, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 39,
+      enrolledCount: 42,
+      attemptedRate: '92.8%',
+      averageScore: 33.1,
+      averagePercentage: '73.5%',
+      highestScore: { score: 43, percentage: '95.6%', studentName: 'Sneha Bisht' },
+      lowestScore: { score: 18, percentage: '40.0%', studentName: 'Manish Rawat (Remedial Focus)' },
+      mostWrongQuestion: {
+        questionIndex: 6,
+        statement: 'Calculate percentage error in density ρ = M / L³ if measurement error in mass M is 1.5% and length L is 2.0%.',
+        topic: 'Error Propagation in Multi-Variable Power Formulas',
+        errorRate: '74.4%',
+        wrongCount: 29,
+        totalAttempted: 39,
+        dominantMistake: 'Students forgot the exponent 3 for length: wrote Δρ/ρ = ΔM/M + ΔL/L = 3.5%, instead of ΔM/M + 3(ΔL/L) = 7.5%.',
+        actionRecommendation: 'Reinforce the power rule ΔZ/Z = a(ΔA/A) + b(ΔB/B) with practice drills.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 2,
+        statement: 'Identify which of the following physical quantities shares identical dimensions [M L² T⁻²] with Work (Energy, Torque, Kinetic Energy).',
+        topic: 'Dimensional Formulae & Equivalences',
+        successRate: '94.9%',
+        correctCount: 37,
+        totalAttempted: 39,
+        masteryNotes: 'Excellent understanding that Work, Kinetic Energy, and Torque all share [M L² T⁻²].'
+      },
+      tiers: {
+        excellent: { count: 13, percentage: '33.3%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 20, percentage: '51.3%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 6, percentage: '15.4%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Fundamental 7 SI base units & definitions', accuracyRate: 92, errorRate: 8, avgSeconds: 48, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Dimensions of Work & Torque [M L² T⁻²]', accuracyRate: 95, errorRate: 5, avgSeconds: 42, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Principle of Dimensional Homogeneity', accuracyRate: 85, errorRate: 15, avgSeconds: 65, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Deducing formula of simple pendulum', accuracyRate: 79, errorRate: 21, avgSeconds: 88, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Conversion of Joule into Erg by dimensions', accuracyRate: 82, errorRate: 18, avgSeconds: 74, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Error propagation in density ρ = M/L³', accuracyRate: 26, errorRate: 74, avgSeconds: 116, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Significant figures counting rules', accuracyRate: 87, errorRate: 13, avgSeconds: 54, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Rounding off experimental measurements', accuracyRate: 89, errorRate: 11, avgSeconds: 50, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Least count of Vernier Calipers & errors', accuracyRate: 72, errorRate: 28, avgSeconds: 94, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Zero error correction in screw gauge', accuracyRate: 67, errorRate: 33, avgSeconds: 102, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Percentage error in kinetic energy E = ½mv²', accuracyRate: 62, errorRate: 38, avgSeconds: 106, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Dimensions of Universal Gravitational Const G', accuracyRate: 80, errorRate: 20, avgSeconds: 76, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Dimensions of Planck\'s Constant h', accuracyRate: 74, errorRate: 26, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Limitations of dimensional method', accuracyRate: 90, errorRate: 10, avgSeconds: 58, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Absolute vs Relative vs Percentage error', accuracyRate: 88, errorRate: 12, avgSeconds: 60, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '202', name: 'Sneha Bisht', phone: '98161 44003', score: 43, percentage: '95.6%', tier: 'Excellent', time: '37m' },
+        { roll: '204', name: 'Kavita Joshi', phone: '98161 44007', score: 40, percentage: '88.9%', tier: 'Excellent', time: '41m' },
+        { roll: '201', name: 'Aditya Gupta', phone: '98161 44001', score: 34, percentage: '75.6%', tier: 'Average', time: '43m' },
+        { roll: '203', name: 'Manish Rawat', phone: '98161 44005', score: 18, percentage: '40.0%', tier: 'Below Average', time: '45m' }
+      ]
+    },
+    {
+      id: 'test_11_02',
+      code: 'Test 02',
+      title: 'Motion in a Straight Line & Free Fall Kinematics',
+      chapter: 'Chapter 3: Motion in a Straight Line',
+      topic: 'Velocity-Time Graphs, Uniform Acceleration, Galileo Law',
+      date: 'Oct 26, 2026',
+      duration: '45 Mins',
+      totalMarks: 45,
+      totalQuestions: 15,
+      attemptedCount: 40,
+      enrolledCount: 42,
+      attemptedRate: '95.2%',
+      averageScore: 32.0,
+      averagePercentage: '71.2%',
+      highestScore: { score: 42, percentage: '93.3%', studentName: 'Kavita Joshi' },
+      lowestScore: { score: 19, percentage: '42.2%', studentName: 'Manish Rawat' },
+      mostWrongQuestion: {
+        questionIndex: 9,
+        statement: 'A body is dropped from rest under gravity. Find ratio of distances traversed during 1st, 2nd, and 3rd seconds of its fall.',
+        topic: 'Galileo\'s Law of Odd Numbers',
+        errorRate: '72.5%',
+        wrongCount: 29,
+        totalAttempted: 40,
+        dominantMistake: 'Students computed cumulative distances (1 : 4 : 9) instead of interval distances (1 : 3 : 5).',
+        actionRecommendation: 'Illustrate Galileo\'s odd-number theorem sn = u + ½a(2n - 1) on velocity-time curve.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 1,
+        statement: 'The slope of a displacement-time curve represents which physical quantity?',
+        topic: 'Kinematic Graphs',
+        successRate: '97.5%',
+        correctCount: 39,
+        totalAttempted: 40,
+        masteryNotes: 'Nearly 100% correct in instantaneous velocity definition.'
+      },
+      tiers: {
+        excellent: { count: 12, percentage: '30.0%', range: '36 – 45 Marks', label: 'Distinction & Advanced Mastery' },
+        average: { count: 21, percentage: '52.5%', range: '23 – 35 Marks', label: 'Solid Board Passing Grasp' },
+        belowAverage: { count: 7, percentage: '17.5%', range: '< 23 Marks', label: 'Remedial Attention Required' }
+      },
+      questionAnalytics: [
+        { questionIndex: 1, subtopic: 'Slope of x-t graph gives velocity', accuracyRate: 98, errorRate: 2, avgSeconds: 40, benchmarkSeconds: 90 },
+        { questionIndex: 2, subtopic: 'Area under v-t graph gives displacement', accuracyRate: 92, errorRate: 8, avgSeconds: 52, benchmarkSeconds: 90 },
+        { questionIndex: 3, subtopic: 'Equations of motion derivation v = u + at', accuracyRate: 88, errorRate: 12, avgSeconds: 65, benchmarkSeconds: 90 },
+        { questionIndex: 4, subtopic: 'Stopping distance formula s = u² / 2a', accuracyRate: 75, errorRate: 25, avgSeconds: 84, benchmarkSeconds: 90 },
+        { questionIndex: 5, subtopic: 'Body thrown vertically upwards maximum height', accuracyRate: 82, errorRate: 18, avgSeconds: 74, benchmarkSeconds: 90 },
+        { questionIndex: 6, subtopic: 'Time of flight for vertical projection', accuracyRate: 85, errorRate: 15, avgSeconds: 68, benchmarkSeconds: 90 },
+        { questionIndex: 7, subtopic: 'Acceleration at highest point of flight', accuracyRate: 68, errorRate: 32, avgSeconds: 90, benchmarkSeconds: 90 },
+        { questionIndex: 8, subtopic: 'Relative velocity in one dimension', accuracyRate: 73, errorRate: 27, avgSeconds: 86, benchmarkSeconds: 90 },
+        { questionIndex: 9, subtopic: 'Galileo odd numbers ratio (1:3:5)', accuracyRate: 28, errorRate: 72, avgSeconds: 114, benchmarkSeconds: 90 },
+        { questionIndex: 10, subtopic: 'Average velocity vs average speed', accuracyRate: 78, errorRate: 22, avgSeconds: 80, benchmarkSeconds: 90 },
+        { questionIndex: 11, subtopic: 'Distance covered in nth second formula', accuracyRate: 65, errorRate: 35, avgSeconds: 100, benchmarkSeconds: 90 },
+        { questionIndex: 12, subtopic: 'Reaction time calculation from ruler drop', accuracyRate: 80, errorRate: 20, avgSeconds: 78, benchmarkSeconds: 90 },
+        { questionIndex: 13, subtopic: 'Two trains approaching relative speed', accuracyRate: 70, errorRate: 30, avgSeconds: 94, benchmarkSeconds: 90 },
+        { questionIndex: 14, subtopic: 'Sign convention in free fall equations', accuracyRate: 74, errorRate: 26, avgSeconds: 88, benchmarkSeconds: 90 },
+        { questionIndex: 15, subtopic: 'Non-uniform acceleration calculus v = dx/dt', accuracyRate: 63, errorRate: 37, avgSeconds: 108, benchmarkSeconds: 90 }
+      ],
+      studentResults: [
+        { roll: '204', name: 'Kavita Joshi', phone: '98161 44007', score: 42, percentage: '93.3%', tier: 'Excellent', time: '39m' },
+        { roll: '202', name: 'Sneha Bisht', phone: '98161 44003', score: 40, percentage: '88.9%', tier: 'Excellent', time: '41m' },
+        { roll: '201', name: 'Aditya Gupta', phone: '98161 44001', score: 32, percentage: '71.1%', tier: 'Average', time: '44m' },
+        { roll: '203', name: 'Manish Rawat', phone: '98161 44005', score: 19, percentage: '42.2%', tier: 'Below Average', time: '45m' }
+      ]
+    }
+  ]
+};
+
+// Global active report chart references
+let activeReportCharts = {
+  scoreDist: null,
+  questionAccuracy: null,
+  questionTime: null
+};
+
+window.switchClassProgressSubView = function(view) {
+  const viewTests = document.getElementById('viewRecordedClassTests');
+  const viewReport = document.getElementById('viewTestReportDetail');
+  const viewRoster = document.getElementById('viewEnrolledStudentsRoster');
+
+  const btnTests = document.getElementById('btnSubViewTests');
+  const btnRoster = document.getElementById('btnSubViewRoster');
+
+  if (view === 'tests') {
+    if (viewTests) viewTests.style.display = 'block';
+    if (viewReport) viewReport.style.display = 'none';
+    if (viewRoster) viewRoster.style.display = 'none';
+
+    if (btnTests) {
+      btnTests.classList.add('active');
+      btnTests.style.background = '#ffffff';
+      btnTests.style.color = '#1d4ed8';
+    }
+    if (btnRoster) {
+      btnRoster.classList.remove('active');
+      btnRoster.style.background = 'transparent';
+      btnRoster.style.color = 'var(--text-secondary)';
+    }
+  } else if (view === 'roster') {
+    if (viewTests) viewTests.style.display = 'none';
+    if (viewReport) viewReport.style.display = 'none';
+    if (viewRoster) viewRoster.style.display = 'block';
+
+    if (btnRoster) {
+      btnRoster.classList.add('active');
+      btnRoster.style.background = '#ffffff';
+      btnRoster.style.color = '#1d4ed8';
+    }
+    if (btnTests) {
+      btnTests.classList.remove('active');
+      btnTests.style.background = 'transparent';
+      btnTests.style.color = 'var(--text-secondary)';
+    }
+  } else if (view === 'report') {
+    if (viewTests) viewTests.style.display = 'none';
+    if (viewReport) viewReport.style.display = 'block';
+    if (viewRoster) viewRoster.style.display = 'none';
+  }
+  initLucideIcons();
+};
+
+window.renderClassProgressDashboard = function(classId = '12-NonMed') {
+  teacherBuilderState.selectedClassId = classId;
+
+  const sel = document.getElementById('selectTeacherActiveRosterClass');
+  if (sel && sel.value !== classId) sel.value = classId;
+
+  // Retrieve or fallback tests
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
+  const rosterData = CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed'];
+
+  // Update Top KPI Cards
+  const statTests = document.getElementById('statClassTestsRecorded');
+  if (statTests) statTests.innerText = `${tests.length} Tests Recorded`;
+
+  const statEnrolled = document.getElementById('statClassEnrolled');
+  if (statEnrolled) statEnrolled.innerText = `${rosterData.enrolled} Students`;
+
+  const statAttendance = document.getElementById('statClassAttendance');
+  if (statAttendance) statAttendance.innerText = rosterData.attendance;
+
+  // Calculate overall average across all recorded tests
+  let totalAvg = 0;
+  tests.forEach(t => {
+    totalAvg += parseFloat(t.averagePercentage) || 75;
+  });
+  const overallAvg = tests.length > 0 ? (totalAvg / tests.length).toFixed(1) + '%' : rosterData.average;
+  const statAvg = document.getElementById('statClassAverage');
+  if (statAvg) statAvg.innerText = overallAvg;
+
+  // Render both tables
+  window.renderRecordedTestsTable(classId);
   window.renderClassRoster(classId);
+
+  // Default to tests sub-view
+  window.switchClassProgressSubView('tests');
+};
+
+window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = '') {
+  const tbody = document.getElementById('tbodyRecordedTests');
+  if (!tbody) return;
+
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
+  let filtered = tests;
+  if (filterQuery) {
+    const q = filterQuery.toLowerCase().trim();
+    filtered = tests.filter(t => 
+      t.title.toLowerCase().includes(q) ||
+      t.chapter.toLowerCase().includes(q) ||
+      t.topic.toLowerCase().includes(q) ||
+      t.code.toLowerCase().includes(q)
+    );
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No assessments found matching "${escapeHtml(filterQuery)}".</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(t => {
+    return `
+      <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;">
+        <td>
+          <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800; padding:4px 10px; border-radius:6px; font-size:0.78rem; display:inline-block;">
+            ${escapeHtml(t.code)}
+          </span>
+        </td>
+        <td>
+          <strong style="font-size:0.92rem; color:var(--text-primary); display:block;">${escapeHtml(t.title)}</strong>
+          <span style="font-size:0.76rem; color:var(--text-secondary); display:block; margin-top:2px;">
+            ${escapeHtml(t.chapter)} &bull; Topic: <span style="color:var(--text-primary); font-weight:600;">${escapeHtml(t.topic)}</span>
+          </span>
+        </td>
+        <td>
+          <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary); display:block;">${escapeHtml(t.duration)}</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">${t.totalQuestions} Questions &bull; ${t.totalMarks} Marks</span>
+        </td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <strong style="color:var(--text-primary); font-size:0.88rem;">${t.attemptedCount} / ${t.enrolledCount}</strong>
+            <span style="font-size:0.74rem; font-weight:700; color:#059669; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px;">
+              ${escapeHtml(t.attemptedRate)}
+            </span>
+          </div>
+          <div style="background:#e2e8f0; height:5px; border-radius:3px; overflow:hidden; width:110px; margin-top:5px;">
+            <div style="background:linear-gradient(90deg, #059669, #10b981); width:${t.attemptedRate}; height:100%;"></div>
+          </div>
+        </td>
+        <td>
+          <span style="font-size:0.96rem; font-weight:800; color:var(--accent-blue); display:block;">
+            ${escapeHtml(t.averagePercentage)}
+          </span>
+          <span style="font-size:0.74rem; color:var(--text-muted);">Avg: ${t.averageScore} / ${t.totalMarks} Marks</span>
+        </td>
+        <td>
+          <div style="display:inline-flex; gap:4px; font-size:0.72rem; font-weight:700;">
+            <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; padding:2px 6px; border-radius:4px;" title="Excellent (>80%)">
+              🟢 ${t.tiers.excellent.count} Exc
+            </span>
+            <span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; padding:2px 6px; border-radius:4px;" title="Average (50-80%)">
+              🔵 ${t.tiers.average.count} Avg
+            </span>
+            <span style="background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; padding:2px 6px; border-radius:4px;" title="Below Average (<50%)">
+              🔴 ${t.tiers.belowAverage.count} Below
+            </span>
+          </div>
+        </td>
+        <td style="text-align:right;">
+          <button type="button" class="btn-primary" onclick="window.viewTestReportDetail('${t.id}')" style="padding:6px 14px; font-size:0.78rem; font-weight:700; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(37,99,235,0.2); transition:all 0.15s ease;">
+            <i data-lucide="bar-chart-2" style="width:13px; height:13px;"></i> View Test Report
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  initLucideIcons();
+};
+
+window.filterRecordedTests = function(query) {
+  const classId = teacherBuilderState.selectedClassId || '12-NonMed';
+  window.renderRecordedTestsTable(classId, query);
+};
+
+window.viewTestReportDetail = function(testId) {
+  const classId = teacherBuilderState.selectedClassId || '12-NonMed';
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
+  const test = tests.find(t => t.id === testId) || tests[0];
+
+  const reportContainer = document.getElementById('viewTestReportDetail');
+  if (!reportContainer) return;
+
+  // Options for switching tests right inside the report
+  const switchTestOptions = tests.map(t => `
+    <option value="${t.id}" ${t.id === test.id ? 'selected' : ''}>
+      ${t.code}: ${t.title} (${t.averagePercentage} Avg)
+    </option>
+  `).join('');
+
+  reportContainer.innerHTML = `
+    <!-- Top Action & Navigation Banner -->
+    <div style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:var(--shadow-card);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button type="button" class="btn-secondary" onclick="window.switchClassProgressSubView('tests')" style="font-size:0.8rem; padding:7px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <i data-lucide="arrow-left" style="width:14px; height:14px;"></i> Back to All Tests
+        </button>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800; padding:2px 8px; border-radius:5px; font-size:0.75rem;">
+              ${escapeHtml(test.code)}
+            </span>
+            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-primary); letter-spacing:-0.2px;">
+              ${escapeHtml(test.title)}
+            </h3>
+          </div>
+          <span style="font-size:0.78rem; color:var(--text-secondary); margin-top:3px; display:block;">
+            ${escapeHtml(test.chapter)} &bull; Conducted: ${escapeHtml(test.date)} &bull; ${test.duration} (${test.totalQuestions} Questions &bull; ${test.totalMarks} Marks)
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:0.76rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Switch Test:</span>
+          <select class="form-select" onchange="window.viewTestReportDetail(this.value)" style="padding:6px 12px; font-size:0.8rem; font-weight:700; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:6px;">
+            ${switchTestOptions}
+          </select>
+        </div>
+        <button type="button" class="btn-secondary" onclick="window.printTestReport('${test.id}')" style="font-size:0.8rem; padding:6px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+          <i data-lucide="printer" style="width:14px; height:14px;"></i> Print Report
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. KEY KPI SUMMARY METRICS -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:1.5rem;">
+      <div class="class-stat-card" style="border-top:3px solid var(--accent-blue);">
+        <div class="class-stat-val" style="color:var(--accent-blue);">${escapeHtml(test.averagePercentage)}</div>
+        <div class="class-stat-lbl">Class Average (${test.averageScore} / ${test.totalMarks} Marks)</div>
+      </div>
+      <div class="class-stat-card" style="border-top:3px solid #059669;">
+        <div class="class-stat-val" style="color:#059669;">${test.attemptedCount} / ${test.enrolledCount}</div>
+        <div class="class-stat-lbl">Students Attempted (${test.attemptedRate} Turnout)</div>
+      </div>
+      <div class="class-stat-card" style="border-top:3px solid #10b981;">
+        <div class="class-stat-val" style="color:#10b981;">${test.highestScore.score} / ${test.totalMarks} (${test.highestScore.percentage})</div>
+        <div class="class-stat-lbl">Highest Score (${escapeHtml(test.highestScore.studentName)})</div>
+      </div>
+      <div class="class-stat-card" style="border-top:3px solid #e11d48;">
+        <div class="class-stat-val" style="color:#e11d48;">${test.lowestScore.score} / ${test.totalMarks} (${test.lowestScore.percentage})</div>
+        <div class="class-stat-lbl">Lowest Score (${escapeHtml(test.lowestScore.studentName)})</div>
+      </div>
+    </div>
+
+    <!-- 2. HIGH-IMPACT QUESTION DIAGNOSTIC CARDS (MOST WRONG vs MOST SOLVED) -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.5rem;">
+      <!-- CARD A: Question Jo Most of the Student Ne WRONG Kra Hai -->
+      <div class="diagnostic-highlight-card diagnostic-failed-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#e11d48; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="alert-triangle" style="width:15px; height:15px;"></i> Question Solved Wrong by Most Students
+          </span>
+          <span style="background:#ffe4e6; color:#e11d48; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.78rem;">
+            ${escapeHtml(test.mostWrongQuestion.errorRate)} Error Rate
+          </span>
+        </div>
+        <h4 style="margin:0 0 6px 0; font-size:0.96rem; font-weight:800; color:#881337;">
+          Q${test.mostWrongQuestion.questionIndex}: ${escapeHtml(test.mostWrongQuestion.statement)}
+        </h4>
+        <p style="font-size:0.8rem; color:#475569; margin:0 0 8px 0; line-height:1.4;">
+          <strong>Concept Focus:</strong> ${escapeHtml(test.mostWrongQuestion.topic)}
+        </p>
+        <div style="background:rgba(255,255,255,0.7); border:1px solid #fecdd3; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.78rem; color:#9f1239; line-height:1.45;">
+          <strong>⚠️ Stumble Breakdown (${test.mostWrongQuestion.wrongCount} of ${test.mostWrongQuestion.totalAttempted} Students Failed):</strong><br>
+          ${escapeHtml(test.mostWrongQuestion.dominantMistake)}
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:0.76rem; color:#0f172a; font-weight:600;">
+          <i data-lucide="lightbulb" style="width:14px; height:14px; color:#e11d48;"></i>
+          <span><strong>Teacher Action:</strong> ${escapeHtml(test.mostWrongQuestion.actionRecommendation)}</span>
+        </div>
+      </div>
+
+      <!-- CARD B: Question Jo Most of the Student Ne SHI Kra Hai -->
+      <div class="diagnostic-highlight-card diagnostic-solved-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="check-circle" style="width:15px; height:15px;"></i> Question Solved Correctly by Most Students
+          </span>
+          <span style="background:#d1fae5; color:#059669; border:1px solid #a7f3d0; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.78rem;">
+            ${escapeHtml(test.mostCorrectQuestion.successRate)} Accuracy
+          </span>
+        </div>
+        <h4 style="margin:0 0 6px 0; font-size:0.96rem; font-weight:800; color:#064e3b;">
+          Q${test.mostCorrectQuestion.questionIndex}: ${escapeHtml(test.mostCorrectQuestion.statement)}
+        </h4>
+        <p style="font-size:0.8rem; color:#475569; margin:0 0 8px 0; line-height:1.4;">
+          <strong>Concept Focus:</strong> ${escapeHtml(test.mostCorrectQuestion.topic)}
+        </p>
+        <div style="background:rgba(255,255,255,0.7); border:1px solid #a7f3d0; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.78rem; color:#065f46; line-height:1.45;">
+          <strong>✅ Mastery Insight (${test.mostCorrectQuestion.correctCount} of ${test.mostCorrectQuestion.totalAttempted} Students Correct):</strong><br>
+          ${escapeHtml(test.mostCorrectQuestion.masteryNotes)}
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; font-size:0.76rem; color:#0f172a; font-weight:600;">
+          <i data-lucide="award" style="width:14px; height:14px; color:#059669;"></i>
+          <span><strong>Teacher Action:</strong> Foundational retention is firm. Class is ready for higher-level problem extensions.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. STUDENT PERFORMANCE TIER BREAKDOWN (EXCELLENT, AVERAGE, BELOW AVERAGE) -->
+    <div style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:18px 20px; margin-bottom:1.5rem; box-shadow:var(--shadow-card);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:var(--text-primary);">
+            Class Performance Tier Breakdown
+          </h4>
+          <p style="margin:3px 0 0 0; font-size:0.78rem; color:var(--text-secondary);">
+            Student distribution across Excellent, Average, and Below Average standing in this assessment.
+          </p>
+        </div>
+        <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">
+          Total Tested: ${test.attemptedCount} Students
+        </span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+        <!-- Excellent Tier -->
+        <div class="tier-kpi-card" style="border-left:5px solid #10b981;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="color:#059669; font-size:0.95rem; display:inline-flex; align-items:center; gap:6px;">
+              🌟 Excellent (>80%)
+            </strong>
+            <span style="font-size:0.78rem; font-weight:800; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; padding:2px 8px; border-radius:6px;">
+              ${test.tiers.excellent.percentage}
+            </span>
+          </div>
+          <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">
+            ${test.tiers.excellent.count} Students
+          </div>
+          <p style="margin:0; font-size:0.76rem; color:var(--text-secondary);">
+            Score: <strong>${test.tiers.excellent.range}</strong> &bull; ${test.tiers.excellent.label}
+          </p>
+        </div>
+
+        <!-- Average Tier -->
+        <div class="tier-kpi-card" style="border-left:5px solid #2563eb;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="color:#1d4ed8; font-size:0.95rem; display:inline-flex; align-items:center; gap:6px;">
+              ⚖️ Average (50% – 80%)
+            </strong>
+            <span style="font-size:0.78rem; font-weight:800; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:2px 8px; border-radius:6px;">
+              ${test.tiers.average.percentage}
+            </span>
+          </div>
+          <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">
+            ${test.tiers.average.count} Students
+          </div>
+          <p style="margin:0; font-size:0.76rem; color:var(--text-secondary);">
+            Score: <strong>${test.tiers.average.range}</strong> &bull; ${test.tiers.average.label}
+          </p>
+        </div>
+
+        <!-- Below Average Tier -->
+        <div class="tier-kpi-card" style="border-left:5px solid #f43f5e;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="color:#e11d48; font-size:0.95rem; display:inline-flex; align-items:center; gap:6px;">
+              ⚠️ Below Average (<50%)
+            </strong>
+            <span style="font-size:0.78rem; font-weight:800; background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px;">
+              ${test.tiers.belowAverage.percentage}
+            </span>
+          </div>
+          <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">
+            ${test.tiers.belowAverage.count} Students
+          </div>
+          <p style="margin:0; font-size:0.76rem; color:var(--text-secondary);">
+            Score: <strong>${test.tiers.belowAverage.range}</strong> &bull; ${test.tiers.belowAverage.label}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. VISUAL PROGRESS CHARTS -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.5rem;">
+      <!-- Chart 1: Performance Tier Distribution -->
+      <div class="report-chart-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <i data-lucide="pie-chart" style="width:16px; height:16px; color:#10b981;"></i> Score Distribution by Tier
+            </h4>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--text-muted);">
+              Proportion of students in Excellent, Average, and Below Average brackets
+            </p>
+          </div>
+          <span style="font-size:0.75rem; font-weight:800; color:var(--accent-blue); background:#eff6ff; padding:2px 8px; border-radius:6px;">
+            Avg: ${test.averagePercentage}
+          </span>
+        </div>
+        <div style="position:relative; height:240px; width:100%;">
+          <canvas id="chartReportScoreDist"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Question-by-Question Accuracy & Error Stacked Bar -->
+      <div class="report-chart-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+              <i data-lucide="bar-chart-2" style="width:16px; height:16px; color:var(--accent-blue);"></i> Question Accuracy vs Error Rate
+            </h4>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:var(--text-muted);">
+              Green = Correct % &bull; Red = Error % across all 15 assessment questions
+            </p>
+          </div>
+          <span style="font-size:0.75rem; font-weight:700; color:#059669;">Q1 Solved Most &bull; Q${test.mostWrongQuestion.questionIndex} Most Failed</span>
+        </div>
+        <div style="position:relative; height:240px; width:100%;">
+          <canvas id="chartReportQuestionAccuracy"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. STUDENT-BY-STUDENT SCORE TABLE -->
+    <div class="roster-table-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h4 style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin:0;">
+            Student Scores &amp; Standing (${test.studentResults.length} Enrolled Tested)
+          </h4>
+          <p style="font-size:0.78rem; color:var(--text-secondary); margin:3px 0 0 0;">
+            Filter students by tier to take remedial action or send report cards to parents.
+          </p>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <div style="display:inline-flex; gap:4px;">
+            <button type="button" class="tier-filter-pill active" onclick="window.filterReportStudentTier('ALL', this)">All (${test.studentResults.length})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Excellent', this)">Excellent (${test.tiers.excellent.count})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Average', this)">Average (${test.tiers.average.count})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Below Average', this)">Below Avg (${test.tiers.belowAverage.count})</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="assigned-table" id="tableReportStudents">
+          <thead>
+            <tr>
+              <th>Roll #</th>
+              <th>Student Name</th>
+              <th>Registered Phone</th>
+              <th>Score Obtained</th>
+              <th>Percentage</th>
+              <th>Pacing / Time</th>
+              <th>Performance Tier</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyReportStudents">
+            ${test.studentResults.map(s => {
+              const isExc = (s.tier === 'Excellent');
+              const isAvg = (s.tier === 'Average');
+              const badgeClass = isExc ? 'background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;' : (isAvg ? 'background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe;' : 'background:#fff1f2; color:#e11d48; border:1px solid #fecdd3;');
+
+              return `
+                <tr class="report-student-row" data-tier="${s.tier}">
+                  <td style="font-weight:700; color:var(--accent-blue);">#${escapeHtml(s.roll)}</td>
+                  <td>
+                    <strong style="color:var(--text-primary); font-size:0.88rem; display:block;">${escapeHtml(s.name)}</strong>
+                    <span style="color:var(--text-muted); font-size:0.72rem;">Scholar ID: SCH-2026-${escapeHtml(s.roll)}</span>
+                  </td>
+                  <td style="font-size:0.82rem; color:var(--text-secondary);">${escapeHtml(s.phone)}</td>
+                  <td style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${s.score} / ${test.totalMarks}</td>
+                  <td style="font-size:0.9rem; font-weight:800; color:${isExc ? '#059669' : (isAvg ? 'var(--accent-blue)' : '#e11d48')};">${s.percentage}</td>
+                  <td style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(s.time)}</td>
+                  <td>
+                    <span style="font-size:0.74rem; font-weight:700; padding:2px 8px; border-radius:4px; display:inline-block; ${badgeClass}">
+                      ${escapeHtml(s.tier)}
+                    </span>
+                  </td>
+                  <td style="text-align:right;">
+                    <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.phone)}')" style="padding:4px 10px; font-size:0.74rem; font-weight:600;">
+                      <i data-lucide="message-square" style="width:12px; height:12px;"></i> Notice
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Switch to report subview
+  window.switchClassProgressSubView('report');
+  initLucideIcons();
+
+  // Instantiate Chart.js graphs cleanly
+  window.renderTestReportCharts(test);
+};
+
+window.renderTestReportCharts = function(test) {
+  if (!window.Chart || !test) return;
+
+  // Destroy previous charts to avoid canvas overlap
+  if (activeReportCharts.scoreDist) {
+    try { activeReportCharts.scoreDist.destroy(); } catch(e) {}
+    activeReportCharts.scoreDist = null;
+  }
+  if (activeReportCharts.questionAccuracy) {
+    try { activeReportCharts.questionAccuracy.destroy(); } catch(e) {}
+    activeReportCharts.questionAccuracy = null;
+  }
+
+  // 1. Doughnut Chart: Score Distribution
+  const canvasScore = document.getElementById('chartReportScoreDist');
+  if (canvasScore) {
+    activeReportCharts.scoreDist = new Chart(canvasScore, {
+      type: 'doughnut',
+      data: {
+        labels: [
+          `Excellent (>80%): ${test.tiers.excellent.count} Students`,
+          `Average (50–80%): ${test.tiers.average.count} Students`,
+          `Below Average (<50%): ${test.tiers.belowAverage.count} Students`
+        ],
+        datasets: [{
+          data: [
+            test.tiers.excellent.count,
+            test.tiers.average.count,
+            test.tiers.belowAverage.count
+          ],
+          backgroundColor: [
+            '#10b981', // Emerald
+            '#2563eb', // Unisole Blue
+            '#f43f5e'  // Rose
+          ],
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#475569',
+              padding: 10
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.label}`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Stacked Bar Chart: Question Accuracy vs Error
+  const canvasAcc = document.getElementById('chartReportQuestionAccuracy');
+  if (canvasAcc && test.questionAnalytics && test.questionAnalytics.length > 0) {
+    const labels = test.questionAnalytics.map(q => `Q${q.questionIndex}`);
+    const correctData = test.questionAnalytics.map(q => q.accuracyRate);
+    const errorData = test.questionAnalytics.map(q => q.errorRate);
+
+    activeReportCharts.questionAccuracy = new Chart(canvasAcc, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '% Solved Correctly',
+            data: correctData,
+            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+            borderColor: '#10b981',
+            borderWidth: 1,
+            borderRadius: 3
+          },
+          {
+            label: '% Errors / Mistakes',
+            data: errorData,
+            backgroundColor: 'rgba(244, 63, 94, 0.85)',
+            borderColor: '#f43f5e',
+            borderWidth: 1,
+            borderRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 12,
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: '#475569'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => {
+                const idx = items[0].dataIndex;
+                const q = test.questionAnalytics[idx];
+                return `Q${q.questionIndex}: ${q.subtopic}`;
+              },
+              label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11, weight: '600' }, color: '#475569' }
+          },
+          y: {
+            stacked: true,
+            max: 100,
+            grid: { color: 'rgba(15, 23, 42, 0.06)' },
+            ticks: {
+              font: { family: 'Inter', size: 10 },
+              color: '#64748b',
+              callback: (v) => `${v}%`
+            }
+          }
+        }
+      }
+    });
+  }
+};
+
+window.filterReportStudentTier = function(tier, btnEl) {
+  document.querySelectorAll('.tier-filter-pill').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  document.querySelectorAll('.report-student-row').forEach(row => {
+    if (tier === 'ALL') {
+      row.style.display = '';
+    } else {
+      const rowTier = row.getAttribute('data-tier');
+      row.style.display = (rowTier === tier) ? '' : 'none';
+    }
+  });
+};
+
+window.printTestReport = function(testId) {
+  window.print();
 };
 
 window.renderClassRoster = function(classId = '12-NonMed') {
