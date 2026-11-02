@@ -9350,7 +9350,10 @@ function applyTeacherProfile(prof, notify = false) {
   teacherBuilderState.teacherSubjectKey = prof.subjectKey;
   teacherBuilderState.selectedSubjectKey = prof.subjectKey;
   teacherBuilderState.activeGrade = defaultGrade;
-  teacherBuilderState.selectedClassId = prof.defaultClass || (isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed'));
+  const defaultClassForSubj = (prof.subjectKey === 'CLASS10_MATHEMATICS')
+    ? '10-Maths-A'
+    : (isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed'));
+  teacherBuilderState.selectedClassId = prof.defaultClass || defaultClassForSubj;
   teacherBuilderState.targetStream = prof.targetStream || (isClass10 ? 'CBSE_CLASS_10' : (prof.subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE'));
   teacherBuilderState.activeTeacher = prof;
 
@@ -10114,10 +10117,34 @@ function renderFacultyClassSwitcherCards() {
     ];
   }
 
-  // Dynamically load any custom or teacher-created classes from localStorage
+  // Set of default class IDs to prevent any duplicate or incorrect custom labeling
+  const defaultClassIds = new Set(classCards.map(c => c.id));
+
+  // Dynamically load ONLY teacher-created custom classes belonging to THIS teacher's subject
   try {
-    const customList = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
-    customList.forEach(c => {
+    let customList = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    // Clean out any legacy default class IDs accidentally stored
+    const cleanedList = customList.filter(c => {
+      const cid = c.id || c.section;
+      return cid && !defaultClassIds.has(cid);
+    });
+    if (cleanedList.length !== customList.length) {
+      localStorage.setItem('haps_teacher_custom_classes', JSON.stringify(cleanedList));
+      customList = cleanedList;
+    }
+
+    // Filter strictly to classes created for the active teacher's subject
+    customList.filter(c => {
+      if (!c.subjectKey) return false;
+      const cSubj = c.subjectKey.toUpperCase();
+      if (subjKey === 'PHYSICS') return cSubj === 'PHYSICS';
+      if (subjKey === 'CHEMISTRY') return cSubj === 'CHEMISTRY';
+      if (subjKey === 'BIOLOGY') return cSubj === 'BIOLOGY';
+      if (subjKey === 'MATHEMATICS') return cSubj === 'MATHEMATICS';
+      if (subjKey.startsWith('CLASS10_SCIENCE') || subjKey === 'SCIENCE') return cSubj.includes('SCIENCE');
+      if (subjKey.startsWith('CLASS10_')) return cSubj.includes('MATH');
+      return cSubj === subjKey;
+    }).forEach(c => {
       const cid = c.id || c.section;
       if (!classCards.some(existing => existing.id === cid)) {
         const g = String(c.grade || (cid.includes('11') ? '11' : (cid.includes('10') ? '10' : '12')));
@@ -10137,26 +10164,17 @@ function renderFacultyClassSwitcherCards() {
     console.warn('Failed to parse custom classes from localStorage:', e);
   }
 
-  // Also include any classes stored in teacherBuilderState.classes not yet in classCards
-  (teacherBuilderState.classes || []).forEach(c => {
-    const cid = c.id || c.section || c.key;
-    if (cid && !classCards.some(existing => existing.id === cid)) {
-      const g = String(c.grade || (cid.includes('11') ? '11' : (cid.includes('10') ? '10' : '12')));
-      const enrolledCount = c.students?.length || (CLASS_ROSTERS[cid]?.students?.length) || 0;
-      classCards.push({
-        id: cid,
-        grade: g,
-        title: c.name || `Class ${g}th (${c.section || cid})`,
-        stream: `${(c.stream || 'GENERAL').replace(/_/g, ' ')} • Faculty Section`,
-        stats: `${enrolledCount} Students Enrolled • Custom Section`,
-        badge: `Section ${c.section || cid}`,
-        isCustom: true
-      });
-    }
-  });
+  // Ensure active class id belongs to the current teacher's cards list
+  const hasCurrentInCards = classCards.some(c => c.id === currentClassId);
+  if (!hasCurrentInCards && classCards.length > 0) {
+    currentClassId = classCards[0].id;
+    teacherBuilderState.selectedClassId = currentClassId;
+    teacherBuilderState.activeGrade = classCards[0].grade;
+  }
+  const effectiveActiveId = teacherBuilderState.selectedClassId || classCards[0]?.id;
 
   container.innerHTML = classCards.map(c => {
-    const isActive = (c.id === currentClassId);
+    const isActive = (c.id === effectiveActiveId);
     return `
       <div class="faculty-class-choice-card ${isActive ? 'active-scope' : ''}" 
            onclick="switchFacultyClassScope('${c.id}')"
@@ -10191,16 +10209,16 @@ function renderFacultyClassSwitcherCards() {
           </div>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <strong style="color: #f8fafc; font-size: 0.92rem;">${c.title}</strong>
-              <span style="font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 1px 6px; border-radius: 4px;">${c.badge}</span>
+              <strong style="color: #f8fafc; font-size: 0.92rem;">${escapeHtml(c.title)}</strong>
+              <span style="font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 1px 6px; border-radius: 4px;">${escapeHtml(c.badge)}</span>
               ${c.isCustom ? `<span style="font-size: 0.68rem; background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Created Class</span>` : ''}
             </div>
-            <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: #94a3b8;">${c.stream}</p>
-            <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #64748b;">📚 ${c.stats}</p>
+            <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: #94a3b8;">${escapeHtml(c.stream)}</p>
+            <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #64748b;">📚 ${escapeHtml(c.stats)}</p>
           </div>
         </div>
 
-        <div style="flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
           ${isActive ? `
             <span style="
               display: inline-flex;
@@ -10208,7 +10226,7 @@ function renderFacultyClassSwitcherCards() {
               gap: 5px;
               background: #0284c7;
               color: #ffffff;
-              padding: 4px 10px;
+              padding: 5px 12px;
               border-radius: 6px;
               font-size: 0.75rem;
               font-weight: 800;
@@ -10223,6 +10241,31 @@ function renderFacultyClassSwitcherCards() {
               Switch Scope ⇄
             </button>
           `}
+
+          ${c.isCustom ? `
+            <button type="button" 
+                    class="btn-cut-class"
+                    onclick="event.stopPropagation(); deleteCustomFacultyClass('${c.id}', '${escapeHtml(c.title)}')"
+                    title="Cut / Remove this class section"
+                    aria-label="Remove Class Section"
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 32px;
+                      height: 32px;
+                      border-radius: 6px;
+                      background: rgba(239, 68, 68, 0.12);
+                      border: 1px solid rgba(239, 68, 68, 0.35);
+                      color: #f87171;
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                    "
+                    onmouseover="this.style.background='rgba(239, 68, 68, 0.28)'; this.style.borderColor='#ef4444'; this.style.color='#fca5a5';"
+                    onmouseout="this.style.background='rgba(239, 68, 68, 0.12)'; this.style.borderColor='rgba(239, 68, 68, 0.35)'; this.style.color='#f87171';">
+              <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -10230,6 +10273,72 @@ function renderFacultyClassSwitcherCards() {
 
   initLucideIcons();
 }
+
+function deleteCustomFacultyClass(classId, className) {
+  if (!confirm(`Are you sure you want to remove class section "${className || classId}" from your profile and portal?`)) {
+    return;
+  }
+
+  const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+
+  // 1. Remove from localStorage
+  try {
+    let custom = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    custom = custom.filter(c => (c.id !== classId && c.section !== classId));
+    localStorage.setItem('haps_teacher_custom_classes', JSON.stringify(custom));
+  } catch (e) {}
+
+  // 2. Remove from FACULTY_SUBJECT_CLASSES
+  if (FACULTY_SUBJECT_CLASSES[subjKey]) {
+    FACULTY_SUBJECT_CLASSES[subjKey] = FACULTY_SUBJECT_CLASSES[subjKey].filter(c => c.id !== classId);
+  }
+
+  // 3. Remove from teacherBuilderState.classes
+  if (teacherBuilderState.classes) {
+    teacherBuilderState.classes = teacherBuilderState.classes.filter(c => c.id !== classId && c.section !== classId);
+  }
+
+  // 4. Remove from CLASS_ROSTERS
+  if (CLASS_ROSTERS[classId]) {
+    delete CLASS_ROSTERS[classId];
+  }
+
+  // 5. Remove from DOM select dropdowns
+  const rosterSelect = document.getElementById('selectTeacherActiveRosterClass');
+  if (rosterSelect) {
+    const opt = Array.from(rosterSelect.options).find(o => o.value === classId);
+    if (opt) opt.remove();
+  }
+  const drawerSelect = document.getElementById('drawerSelectClassScope');
+  if (drawerSelect) {
+    const opt = Array.from(drawerSelect.options).find(o => o.value === classId);
+    if (opt) opt.remove();
+  }
+  const paperSelect = document.getElementById('selectPaperClass');
+  if (paperSelect) {
+    const opt = Array.from(paperSelect.options).find(o => o.value === classId);
+    if (opt) opt.remove();
+  }
+
+  // 6. If currently active class was deleted, switch back to default first class
+  if (teacherBuilderState.selectedClassId === classId) {
+    const defaultClassId = (subjKey.startsWith('CLASS10_SCIENCE') || subjKey === 'SCIENCE')
+      ? '10-Science-A'
+      : (subjKey.startsWith('CLASS10_') ? '10-Maths-A' : (subjKey === 'BIOLOGY' ? '12-Med' : '12-NonMed'));
+    switchFacultyClassScope(defaultClassId);
+  } else {
+    renderFacultyClassSwitcherCards();
+  }
+
+  // 7. Toast notification
+  const toast = document.createElement('div');
+  toast.className = 'role-switch-toast';
+  toast.innerHTML = `<i data-lucide="trash-2" style="width:16px; height:16px; color:#f87171;"></i> <span>Class Section <strong>${escapeHtml(className || classId)}</strong> removed.</span>`;
+  document.body.appendChild(toast);
+  initLucideIcons();
+  setTimeout(() => toast.remove(), 3500);
+}
+window.deleteCustomFacultyClass = deleteCustomFacultyClass;
 
 async function switchFacultyClassScope(classId) {
   if (!classId) return;
