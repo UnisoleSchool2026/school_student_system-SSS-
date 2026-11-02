@@ -1573,29 +1573,40 @@ window.renderAssignedTestsTable = function() {
     return;
   }
 
-  tbody.innerHTML = pageItems.map(t => `
-    <tr>
-      <td>
-        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(t.title)}</strong>
-        <span style="color:#94a3b8; font-size:0.75rem;">Topic: ${escapeHtml(t.topic)}</span>
-      </td>
-      <td><span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:0.78rem;">${escapeHtml(t.targetClass)}</span></td>
-      <td style="font-size:0.82rem; color:#cbd5e1;">${escapeHtml(t.duration)}</td>
-      <td style="font-weight:700; color:#38bdf8; font-size:0.82rem;">${escapeHtml(t.submitted)}</td>
-      <td style="font-weight:700; color:${t.avg.startsWith('-') ? '#94a3b8' : '#34d399'}; font-size:0.82rem;">${escapeHtml(t.avg)}</td>
-      <td>${t.statusBadge}</td>
-      <td style="text-align:right;">
-        <div style="display:inline-flex; gap:6px;">
-          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper('${t.id}')" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
-            <i data-lucide="printer" style="width:13px; height:13px;"></i>
-          </button>
-          <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
-            Roster
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = pageItems.map(t => {
+    let badgeHtml = t.statusBadge;
+    if (t.status === 'LIVE') {
+      badgeHtml = `<span class="status-badge status-active"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>In Progress</span>`;
+    } else if (t.status === 'COMPLETED') {
+      badgeHtml = `<span class="status-badge" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe;">Finalized</span>`;
+    } else if (t.status === 'UPCOMING' || t.status === 'SCHEDULED') {
+      badgeHtml = `<span class="status-badge status-remedial">Scheduled</span>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <strong style="color:var(--text-primary); font-size:0.88rem; display:block;">${escapeHtml(t.title)}</strong>
+          <span style="color:var(--text-muted); font-size:0.75rem;">Topic: ${escapeHtml(t.topic)}</span>
+        </td>
+        <td><span style="background:var(--bg-card-hover); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:2px 8px; border-radius:4px; font-size:0.78rem; font-weight:600;">${escapeHtml(t.targetClass)}</span></td>
+        <td style="font-size:0.82rem; color:var(--text-secondary);">${escapeHtml(t.duration)}</td>
+        <td style="font-weight:700; color:var(--accent-blue); font-size:0.84rem;">${escapeHtml(t.submitted)}</td>
+        <td style="font-weight:700; color:${t.avg.startsWith('-') || t.avg === '—' ? 'var(--text-muted)' : '#059669'}; font-size:0.84rem;">${escapeHtml(t.avg)}</td>
+        <td>${badgeHtml}</td>
+        <td style="text-align:right;">
+          <div style="display:inline-flex; gap:6px;">
+            <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper('${t.id}')" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
+              <i data-lucide="printer" style="width:13px; height:13px;"></i>
+            </button>
+            <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
+              Roster
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
   initLucideIcons();
 };
 
@@ -2607,35 +2618,50 @@ window.renderClassRoster = function(classId = '12-NonMed') {
   const tbody = document.getElementById('tbodyClassRoster');
   if (!tbody) return;
 
-  tbody.innerHTML = data.students.map(s => `
-    <tr class="roster-row" data-search="${escapeHtml(s.name.toLowerCase())} ${s.roll}">
-      <td style="font-weight:700; color:#38bdf8;">#${escapeHtml(s.roll)}</td>
-      <td>
-        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(s.name)}</strong>
-        <span style="color:#94a3b8; font-size:0.72rem;">Scholar ID: SCH-2026-${escapeHtml(s.roll)}</span>
-      </td>
-      <td style="font-size:0.8rem; color:#cbd5e1;">${escapeHtml(s.phone)}</td>
-      <td style="font-size:0.8rem; color:#94a3b8;">${escapeHtml(s.parent)}</td>
-      <td style="font-size:0.8rem;">
-        <span style="color:${s.turnIn.includes('Pending') ? '#fbbf24' : '#34d399'}; font-weight:600;">
-          ${escapeHtml(s.turnIn)}
-        </span>
-      </td>
-      <td style="font-weight:800; font-size:0.84rem; color:${s.score.startsWith('-') ? '#94a3b8' : (parseInt(s.score) >= 80 ? '#34d399' : (parseInt(s.score) >= 60 ? '#38bdf8' : '#fb7185'))};">
-        ${escapeHtml(s.score)}
-      </td>
-      <td>
-        <span class="status-badge" style="background:${s.status === 'Active' ? 'rgba(52,211,153,0.15)' : (s.status === 'Remedial' ? 'rgba(251,191,36,0.15)' : 'rgba(251,113,133,0.15)')}; color:${s.status === 'Active' ? '#34d399' : (s.status === 'Remedial' ? '#fbbf24' : '#fb7185')};">
-          ${escapeHtml(s.status)}
-        </span>
-      </td>
-      <td style="text-align:right;">
-        <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.parent)}')" title="Send SMS Notice to Parent" style="padding:4px 8px; font-size:0.72rem;">
-          <i data-lucide="message-square" style="width:13px; height:13px;"></i> Notice
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = data.students.map(s => {
+    const isSubmitted = !s.turnIn.includes('Pending');
+    const scoreVal = parseInt(s.score);
+    let scoreColor = 'var(--text-muted)';
+    if (!isNaN(scoreVal)) {
+      if (scoreVal >= 80) scoreColor = '#059669';
+      else if (scoreVal >= 60) scoreColor = 'var(--accent-blue)';
+      else scoreColor = '#e11d48';
+    }
+
+    const isActive = (s.status === 'Active');
+    const isRemedial = (s.status === 'Remedial');
+
+    return `
+      <tr class="roster-row" data-search="${escapeHtml(s.name.toLowerCase())} ${s.roll}">
+        <td style="font-weight:700; color:var(--accent-blue);">#${escapeHtml(s.roll)}</td>
+        <td>
+          <strong style="color:var(--text-primary); font-size:0.88rem; display:block;">${escapeHtml(s.name)}</strong>
+          <span style="color:var(--text-muted); font-size:0.72rem;">Scholar ID: SCH-2026-${escapeHtml(s.roll)}</span>
+        </td>
+        <td style="font-size:0.82rem; color:var(--text-secondary);">${escapeHtml(s.phone)}</td>
+        <td style="font-size:0.82rem; color:var(--text-muted);">${escapeHtml(s.parent)}</td>
+        <td style="font-size:0.82rem;">
+          <span style="color:${isSubmitted ? '#059669' : '#d97706'}; font-weight:600; display:inline-flex; align-items:center; gap:5px;">
+            <span style="width:6px; height:6px; border-radius:50%; background:${isSubmitted ? '#059669' : '#d97706'};"></span>
+            ${escapeHtml(s.turnIn)}
+          </span>
+        </td>
+        <td style="font-weight:800; font-size:0.86rem; color:${scoreColor};">
+          ${escapeHtml(s.score)}
+        </td>
+        <td>
+          <span class="status-badge ${isActive ? 'status-active' : (isRemedial ? 'status-remedial' : 'status-critical')}">
+            ${escapeHtml(s.status)}
+          </span>
+        </td>
+        <td style="text-align:right;">
+          <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.parent)}')" title="Send SMS Notice to Parent" style="padding:5px 10px; font-size:0.75rem; font-weight:600;">
+            <i data-lucide="message-square" style="width:13px; height:13px;"></i> Notice
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
   initLucideIcons();
 };
 

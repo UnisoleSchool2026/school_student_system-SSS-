@@ -1085,20 +1085,20 @@
         </div>
 
         <!-- ENTIRE SYLLABUS COVERAGE BANNER -->
-        <div style="background:linear-gradient(135deg, rgba(37,99,235,0.12), rgba(15,23,42,0.85)); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 18px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; box-shadow:var(--shadow-sm);">
           <div style="display:flex; align-items:center; gap:10px;">
-            <i data-lucide="book-open" style="width:18px; height:18px; color:#38bdf8;"></i>
-            <div style="font-size:0.82rem; color:#cbd5e1; line-height:1.4;">
-              <strong style="color:#f8fafc;">Full Syllabus Comprehensive Exam:</strong> Synthesizes questions across all NCERT units according to the official Board unit-wise weightage distribution.
+            <i data-lucide="book-open" style="width:18px; height:18px; color:var(--accent-blue);"></i>
+            <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.4;">
+              <strong style="color:var(--text-primary);">Full Syllabus Comprehensive Exam:</strong> Synthesizes questions across all NCERT units according to the official Board unit-wise weightage distribution.
             </div>
           </div>
-          <div style="font-size:0.75rem; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.15); padding:3px 10px; border-radius:6px; border:1px solid rgba(56,189,248,0.3);">
+          <div style="font-size:0.75rem; color:var(--accent-blue); font-weight:700; background:rgba(37,99,235,0.1); padding:3px 10px; border-radius:6px; border:1px solid rgba(37,99,235,0.25);">
             Official Question Blueprint Active
           </div>
         </div>
 
         <!-- STUDIO PAPER CANVAS CONTAINER -->
-        <div class="board-paper-studio-body" style="background:#0b1120; border-radius:12px; padding:1.5rem; overflow-x:auto;">
+        <div class="board-paper-studio-body" style="background:var(--bg-primary); border:1px solid var(--border-subtle); border-radius:12px; padding:1.5rem; overflow-x:auto;">
           <div class="board-paper-sheet" id="boardPaperPrintCanvas">
             <!-- Dynamically injected by renderBoardPaperStudio() -->
           </div>
@@ -1110,26 +1110,26 @@
         <div class="test-paper-submode" id="subModeTakeTest" style="display: none;">
         
         <!-- Live Active Test Station Card -->
-        <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 14px; padding: 18px 22px;">
+        <div class="glass-card" style="margin-bottom: 1.5rem; background: var(--bg-secondary); border: 1px solid #a7f3d0; border-left: 4px solid #059669; border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow-sm);">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 700; margin-bottom: 6px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 700; margin-bottom: 6px;">
                 <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 1.5s infinite;"></span>
                 LIVE TEST IN PROGRESS
               </div>
-              <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0 0 4px 0;" id="liveTestTitle">
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;" id="liveTestTitle">
                 Class 12-A &bull; Diagnostic Test: Rotational Dynamics &amp; Torque
               </h3>
-              <p style="font-size: 0.82rem; color: #cbd5e1; margin: 0;">
+              <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">
                 Assigned to Class 12-A &bull; 45 Minutes &bull; 15 Questions &bull; 45 Total Marks
               </p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
               <div style="text-align: right;">
-                <div style="font-size: 1.45rem; font-weight: 800; color: #38bdf8;" id="liveTestSubmissionsCounter">44 / 48</div>
-                <div style="font-size: 0.72rem; color: #94a3b8;">Students Submitted (91.7%)</div>
+                <div style="font-size: 1.45rem; font-weight: 800; color: var(--accent-blue);" id="liveTestSubmissionsCounter">44 / 48</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Students Submitted (91.7%)</div>
               </div>
-              <button type="button" class="btn-primary" onclick="window.finalizeCurrentTest()" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.85rem; padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 8px; color: #fff; cursor: pointer; min-height: 44px;">
+              <button type="button" class="btn-primary" onclick="window.finalizeCurrentTest()" style="background: linear-gradient(135deg, #059669, #10b981); font-size: 0.85rem; padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 8px; color: #fff; cursor: pointer; min-height: 44px;">
                 <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> End Test &amp; Finalize Scores
               </button>
             </div>
@@ -1140,15 +1140,15 @@
         <div class="assigned-tests-table-card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
             <div>
-              <h4 style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
-                <i data-lucide="layers" style="width:16px; height:16px; color:#38bdf8;"></i> All Scheduled &amp; Assigned Tests
+              <h4 style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="layers" style="width:16px; height:16px; color:var(--accent-blue);"></i> All Scheduled &amp; Assigned Tests
               </h4>
-              <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:2px 0 0 0;">
                 Monitor test turn-ins, launch live exam sessions for students, or inspect class grade sheets.
               </p>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <input type="text" id="inputSearchAssignedTests" oninput="window.filterAssignedTests(this.value)" placeholder="Search assessments by title, class, topic..." style="padding:7px 12px; font-size:0.8rem; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; min-width:240px;">
+              <input type="text" id="inputSearchAssignedTests" oninput="window.filterAssignedTests(this.value)" placeholder="Search assessments by title, class, topic..." style="padding:8px 14px; font-size:0.84rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:8px; min-width:240px;" class="form-control">
               <button type="button" class="btn-secondary" onclick="switchTeacherTab('tabTeacherCreatePaper')" style="font-size:0.8rem; padding:7px 14px; min-height:36px; display:inline-flex; align-items:center; gap:6px;">
                 <i data-lucide="plus" style="width:14px; height:14px;"></i> Create Paper
               </button>
@@ -1212,8 +1212,8 @@
         <!-- Header Bar with Class Selector & Quick Creation Buttons -->
         <div class="classes-header-bar">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <label for="selectTeacherActiveRosterClass" style="font-size:0.85rem; font-weight:700; color:#cbd5e1;">Active Class Section:</label>
-            <select id="selectTeacherActiveRosterClass" class="form-select" onchange="window.handleTeacherClassSelect(this.value)" style="padding:8px 14px; font-size:0.85rem; font-weight:700; background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; border-radius:8px;">
+            <label for="selectTeacherActiveRosterClass" style="font-size:0.85rem; font-weight:700; color:var(--text-secondary);">Active Class Section:</label>
+            <select id="selectTeacherActiveRosterClass" class="form-select" onchange="window.handleTeacherClassSelect(this.value)" style="padding:8px 14px; font-size:0.85rem; font-weight:700; background:var(--bg-secondary); border:1.5px solid var(--border-focus); color:var(--text-primary); border-radius:8px; box-shadow:0 1px 3px rgba(15,23,42,0.05);">
               <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
               <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
               <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
@@ -1223,10 +1223,10 @@
           </div>
 
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button type="button" class="btn-primary" onclick="window.openCreateClassModal()" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-primary" onclick="window.openCreateClassModal()" style="font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:42px; display:inline-flex; align-items:center; gap:6px;">
               <i data-lucide="folder-plus" style="width:15px; height:15px;"></i> Create New Class
             </button>
-            <button type="button" class="btn-primary" onclick="window.openAddStudentModal()" style="background:linear-gradient(135deg, #10b981, #059669); font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-secondary" onclick="window.openAddStudentModal()" style="font-size:0.82rem; padding:8px 16px; font-weight:700; min-height:42px; display:inline-flex; align-items:center; gap:6px; color:#059669; border-color:#a7f3d0; background:#ecfdf5;">
               <i data-lucide="user-plus" style="width:15px; height:15px;"></i> Add Student to Class
             </button>
           </div>
@@ -1239,15 +1239,15 @@
             <div class="class-stat-lbl">Total Enrolled Scholars</div>
           </div>
           <div class="class-stat-card">
-            <div class="class-stat-val" style="color:#34d399;" id="statClassAttendance">94.8%</div>
+            <div class="class-stat-val" style="color:#059669;" id="statClassAttendance">94.8%</div>
             <div class="class-stat-lbl">Active Test Attendance</div>
           </div>
           <div class="class-stat-card">
-            <div class="class-stat-val" style="color:#38bdf8;" id="statClassAverage">74.2%</div>
+            <div class="class-stat-val" style="color:var(--accent-blue);" id="statClassAverage">74.2%</div>
             <div class="class-stat-lbl">Class Performance Average</div>
           </div>
           <div class="class-stat-card">
-            <div class="class-stat-val" style="color:#c084fc;">2026–2027</div>
+            <div class="class-stat-val" style="color:#7c3aed;">2026–2027</div>
             <div class="class-stat-lbl">Academic Term Session</div>
           </div>
         </div>
@@ -1256,14 +1256,14 @@
         <div class="roster-table-card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
             <div>
-              <h4 style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin:0;" id="rosterTitle">
+              <h4 style="font-size:1.1rem; font-weight:800; color:var(--text-primary); margin:0;" id="rosterTitle">
                 Class 12-A Student Roster
               </h4>
-              <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin:3px 0 0 0;">
                 Students enrolled under this section with contact details and current standing.
               </p>
             </div>
-            <input type="text" id="inputFilterRoster" oninput="window.filterClassRoster(this.value)" placeholder="Search student or roll #..." style="padding:7px 12px; font-size:0.82rem; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; min-width:220px;">
+            <input type="text" id="inputFilterRoster" oninput="window.filterClassRoster(this.value)" placeholder="Search student or roll #..." style="padding:8px 14px; font-size:0.84rem; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:8px; min-width:240px;" class="form-control">
           </div>
 
           <div style="overflow-x:auto;">
