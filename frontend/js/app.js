@@ -9996,6 +9996,9 @@ function selectDrawerStream(stream) {
 }
 
 function openFacultyClassSwitcherModal() {
+  if (typeof closeSidebarDrawer === 'function') {
+    closeSidebarDrawer();
+  }
   const modal = document.getElementById('modalFacultyClassSwitcher');
   if (!modal) return;
   modal.style.display = 'flex';
