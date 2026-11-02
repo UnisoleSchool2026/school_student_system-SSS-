@@ -472,46 +472,38 @@
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); font-size:0.74rem;">
         <span style="color:var(--accent-emerald); font-weight:600;" id="drawerFacultySubject">Department: Physics</span>
-        <button type="button" class="btn-drawer-switch" onclick="closeSidebarDrawer(); openTeacherSignInModal();" title="Switch faculty profile">
-          Switch Faculty
+        <button type="button" class="btn-drawer-switch" onclick="closeSidebarDrawer(); window.handleTeacherSignOut();" style="color:#fb7185; border-color:rgba(251,113,133,0.3); background:rgba(251,113,133,0.08);" title="Sign out from faculty portal">
+          Sign Out
         </button>
       </div>
     </div>
 
-    <!-- ALL WORKSPACE TABS (Moved into 3-line menu as requested) -->
+    <!-- ALL WORKSPACE TABS (Clean Scoped Navigation) -->
     <div class="drawer-section">
       <div class="drawer-section-title">
         <i data-lucide="layout-grid" style="width:13px; height:13px;"></i>
         <span>Workspace Tabs</span>
       </div>
       <div class="drawer-nav-list">
-        <button type="button" class="drawer-tab-btn active" data-tab="tabGenerator" onclick="switchTeacherTab('tabGenerator')">
-          <i data-lucide="file-plus" style="width:16px; height:16px;"></i>
-          <span>Create Tests &amp; Quizzes</span>
+        <button type="button" class="drawer-tab-btn active" data-tab="tabTeacherCreatePaper" onclick="switchTeacherTab('tabTeacherCreatePaper')">
+          <i data-lucide="file-plus-2" style="width:16px; height:16px;"></i>
+          <span>Create Paper for Students</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherTakeTest" onclick="switchTeacherTab('tabTeacherTakeTest')">
+          <i data-lucide="clipboard-list" style="width:16px; height:16px;"></i>
+          <span>Take &amp; Conduct Test</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherClasses" onclick="switchTeacherTab('tabTeacherClasses')">
+          <i data-lucide="users" style="width:16px; height:16px;"></i>
+          <span>Classes &amp; Students Roster</span>
+        </button>
+        <button type="button" class="drawer-tab-btn" data-tab="tabTeacherWeakConcepts" onclick="switchTeacherTab('tabTeacherWeakConcepts')">
+          <i data-lucide="target" style="width:16px; height:16px;"></i>
+          <span>What to Teach Next (Weak Concepts)</span>
         </button>
         <button type="button" class="drawer-tab-btn" data-tab="tabQuestionBank" onclick="switchTeacherTab('tabQuestionBank')">
           <i data-lucide="database" style="width:16px; height:16px;"></i>
           <span>Question Bank &amp; PYQs</span>
-        </button>
-        <button type="button" class="drawer-tab-btn" id="btnDrawerBoardPaperStudio" onclick="closeSidebarDrawer(); openBoardPaperStudio();" style="border-left: 2px solid #f59e0b;">
-          <i data-lucide="scroll" style="width:16px; height:16px; color:#f59e0b;"></i>
-          <span>Board Paper Studio (CBSE / HP)</span>
-        </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabClassAnalytics" onclick="switchTeacherTab('tabClassAnalytics')">
-          <i data-lucide="bar-chart-3" style="width:16px; height:16px;"></i>
-          <span>Class Progress Dashboard</span>
-        </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabStudents" onclick="switchTeacherTab('tabStudents')">
-          <i data-lucide="users" style="width:16px; height:16px;"></i>
-          <span>Students &amp; Smart Cards</span>
-        </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabSmartReports" onclick="switchTeacherTab('tabSmartReports')">
-          <i data-lucide="clipboard-check" style="width:16px; height:16px;"></i>
-          <span>Weekly Smart Report</span>
-        </button>
-        <button type="button" class="drawer-tab-btn" data-tab="tabHandwritten" onclick="switchTeacherTab('tabHandwritten')">
-          <i data-lucide="scan" style="width:16px; height:16px;"></i>
-          <span>Scan Paper Sheets</span>
         </button>
       </div>
     </div>
@@ -707,6 +699,11 @@
           <i data-lucide="target" style="width:16px; height:16px;"></i>
           <span>What to Teach Next</span>
           <span class="teacher-nav-badge badge-rose">Weak Concepts (4)</span>
+        </button>
+        <button type="button" class="teacher-nav-pill" id="teacherPillQuestionBank" data-tab="tabQuestionBank" onclick="switchTeacherTab('tabQuestionBank')">
+          <i data-lucide="database" style="width:16px; height:16px;"></i>
+          <span>Question Bank &amp; PYQs</span>
+          <span class="teacher-nav-badge">438 Qs</span>
         </button>
       </div>
 
@@ -907,9 +904,9 @@
           </div>
         </div>
 
-        <!-- Assigned Tests Table -->
+        <!-- Assigned Tests Table (Scalable with Search, Filters & Pagination) -->
         <div class="assigned-tests-table-card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:10px;">
             <div>
               <h4 style="font-size:1.05rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
                 <i data-lucide="layers" style="width:16px; height:16px; color:#38bdf8;"></i> All Scheduled &amp; Assigned Tests
@@ -918,9 +915,20 @@
                 Monitor test turn-ins, launch live exam sessions for students, or inspect class grade sheets.
               </p>
             </div>
-            <button type="button" class="btn-secondary" onclick="switchTeacherTab('tabTeacherCreatePaper')" style="font-size:0.8rem; padding:7px 14px; min-height:38px; display:inline-flex; align-items:center; gap:6px;">
-              <i data-lucide="plus" style="width:14px; height:14px;"></i> Create Another Paper
-            </button>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <input type="text" id="inputSearchAssignedTests" oninput="window.filterAssignedTests(this.value)" placeholder="Search assessments by title, class, topic..." style="padding:7px 12px; font-size:0.8rem; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:6px; min-width:240px;">
+              <button type="button" class="btn-secondary" onclick="switchTeacherTab('tabTeacherCreatePaper')" style="font-size:0.8rem; padding:7px 14px; min-height:36px; display:inline-flex; align-items:center; gap:6px;">
+                <i data-lucide="plus" style="width:14px; height:14px;"></i> Create Paper
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Filter Tabs -->
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px;">
+            <button type="button" class="assigned-filter-pill active" id="btnFilterStatusAll" onclick="window.setAssignedStatusFilter('ALL')">All Tests (<span id="countFilterAll">4</span>)</button>
+            <button type="button" class="assigned-filter-pill" id="btnFilterStatusLive" onclick="window.setAssignedStatusFilter('LIVE')" style="color:#34d399;">● Live / Active (<span id="countFilterLive">1</span>)</button>
+            <button type="button" class="assigned-filter-pill" id="btnFilterStatusCompleted" onclick="window.setAssignedStatusFilter('COMPLETED')" style="color:#38bdf8;">Finalized (<span id="countFilterCompleted">2</span>)</button>
+            <button type="button" class="assigned-filter-pill" id="btnFilterStatusScheduled" onclick="window.setAssignedStatusFilter('SCHEDULED')" style="color:#fbbf24;">Scheduled (<span id="countFilterScheduled">1</span>)</button>
           </div>
 
           <div style="overflow-x:auto;">
@@ -937,9 +945,18 @@
                 </tr>
               </thead>
               <tbody id="tbodyAssignedTests">
-                <!-- Populated dynamically -->
+                <!-- Populated dynamically via app.js -->
               </tbody>
             </table>
+          </div>
+
+          <!-- Scalable Pagination Footer -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06); font-size:0.78rem; color:#94a3b8; flex-wrap:wrap; gap:8px;">
+            <span id="labelAssignedPagination">Showing 1 to 4 of 4 tests</span>
+            <div style="display:inline-flex; gap:6px;">
+              <button type="button" class="btn-secondary" id="btnAssignedPrevPage" onclick="window.prevAssignedPage()" style="padding:4px 10px; font-size:0.75rem;" disabled>◀ Previous</button>
+              <button type="button" class="btn-secondary" id="btnAssignedNextPage" onclick="window.nextAssignedPage()" style="padding:4px 10px; font-size:0.75rem;" disabled>Next ▶</button>
+            </div>
           </div>
         </div>
 
@@ -1134,45 +1151,14 @@
         <!-- COMPACT TRACK STATUS STRIP (REPLACES MESSY HORIZONTAL CARDS) -->
         <div class="stream-compact-strip" id="streamCompactStrip">
           <div class="stream-strip-left" style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div class="stream-faculty-strip-chip" onclick="openTeacherSignInModal()" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);" title="Click to view or switch educator profile">
+            <div class="stream-faculty-strip-chip" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
               <span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>
               <span id="stripFacultyName" style="font-weight:700; color:var(--text-primary); font-size:0.85rem;">Dr. Vikram Sharma</span>
               <span id="stripFacultyDept" style="background:rgba(59,130,246,0.18); color:var(--accent-blue); padding:1px 7px; border-radius:10px; font-size:0.72rem; font-weight:600;">Physics</span>
             </div>
             <span class="stream-strip-divider">&bull;</span>
             <span class="stream-strip-label">Track:</span>
-            <span class="stream-active-badge" id="badgeActiveStreamName">JEE (Main &amp; Advanced)</span>
-            <span class="stream-strip-divider">&bull;</span>
-            <span class="stream-strip-hint">Select Board, JEE, or NEET from the top-left menu (&#9776;)</span>
-          </div>
-          <button type="button" class="stream-switch-menu-trigger" onclick="toggleSidebarDrawer()" title="Change curriculum track in top-left menu">
-            <i data-lucide="menu" style="width:13px; height:13px;"></i>
-            <span>Change Track</span>
-          </button>
-        </div>
-
-        <!-- BOARD QUESTION PAPER STUDIO LAUNCHER BANNER -->
-        <div class="glass-card" style="margin-bottom: 1.25rem; background: linear-gradient(135deg, rgba(30, 58, 138, 0.45), rgba(15, 23, 42, 0.85)); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: var(--radius-md); padding: 16px 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-            <div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 700; margin-bottom: 6px;">
-                <i data-lucide="award" style="width: 12px; height: 12px;"></i> Official Board Exam Studio
-              </div>
-              <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0 0 4px 0;">
-                Full-Length Board Question Paper Generator &amp; Customizer
-              </h3>
-              <p style="font-size: 0.8rem; color: #cbd5e1; margin: 0;">
-                Generate official 3-hour examination papers in <strong>CBSE Board</strong> and <strong>HP Board (HPBOSE)</strong> formats with full question swapping, teacher custom additions, and 1-click printing.
-              </p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <button type="button" class="btn-primary" onclick="openBoardPaperStudio('CBSE')" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); font-size: 0.82rem; padding: 8px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: var(--radius-sm); color: #fff; cursor: pointer;">
-                <i data-lucide="file-text" style="width: 15px; height: 15px;"></i> Generate CBSE Paper
-              </button>
-              <button type="button" class="btn-secondary" onclick="openBoardPaperStudio('HP_BOARD')" style="border-color: rgba(245, 158, 11, 0.6); color: #fbbf24; font-size: 0.82rem; padding: 8px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.08); border-radius: var(--radius-sm); cursor: pointer;">
-                <i data-lucide="scroll" style="width: 15px; height: 15px;"></i> Generate HP Board Paper
-              </button>
-            </div>
+            <span class="stream-active-badge" id="badgeActiveStreamName">Senior Physics</span>
           </div>
         </div>
 
@@ -1190,14 +1176,14 @@
                 </p>
               </div>
               <span class="pilot-tag" style="background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3);">
-                Class 11 Science (Sec A &amp; B)
+                Department Assigned
               </span>
             </div>
 
             <form id="formTeacherCreateTest" onsubmit="event.preventDefault(); window.createTeacherAssessment(event);">
               <div class="test-form-group">
                 <label class="test-form-label">Assessment Title</label>
-                <input type="text" id="inputTeacherTestTitle" class="form-input" value="Class 11 Science • Diagnostic Test: Rotational Dynamics &amp; Torque" placeholder="e.g. Weekly Quiz: Current Electricity" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.85rem;" required>
+                <input type="text" id="inputTeacherTestTitle" class="form-input" value="Class 12-A • Unit Assessment: Pure Rolling on Incline" placeholder="e.g. Weekly Quiz: Current Electricity" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.85rem;" required>
               </div>
 
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem;">
@@ -1206,7 +1192,8 @@
                   <select class="form-select" id="selectTeacherTestType" style="width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.82rem;">
                     <option value="QUIZ_15">⚡ 15-Min Quick Quiz (5 Qs • 20 Marks)</option>
                     <option value="UNIT_45" selected>📝 45-Min Unit Exam (15 Qs • 45 Marks)</option>
-                    <option value="MOCK_180">🎯 180-Min Full NTA Mock (30 Qs • 100 Marks)</option>
+                    <option value="TERM_90">⏳ 90-Min Mid-Term (20 Qs • 60 Marks)</option>
+                    <option value="MOCK_180">🎯 180-Min Full Mock (30 Qs • 100 Marks)</option>
                   </select>
                 </div>
                 <div>
@@ -1219,22 +1206,25 @@
                 </div>
               </div>
 
-              <div class="test-form-group">
-                <label class="test-form-label">Target Syllabus Chapters &amp; Topics (Select to include)</label>
-                <div class="test-topic-chips" id="creatorTopicChips">
-                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Unit V: Rotational Motion</span>
-                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Torque &amp; Angular Momentum</span>
-                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Pure Rolling on Incline</span>
-                  <span class="test-topic-chip selected" onclick="toggleTestTopicChip(this)">Moment of Inertia</span>
-                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit X: Oscillations &amp; Waves</span>
-                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit III: Current Electricity</span>
-                  <span class="test-topic-chip" onclick="toggleTestTopicChip(this)">Unit VI: Ray Optics</span>
+              <!-- Cascading Dropdowns (No Clutter, Minimal Front) -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem;">
+                <div class="test-form-group">
+                  <label class="test-form-label" for="selectGenChapter">Select Chapter / Unit *</label>
+                  <select class="form-select" id="selectGenChapter" onchange="window.handleGenChapterChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:8px 12px; border-radius:8px; font-size:0.85rem;">
+                    <!-- Populated dynamically via subject -->
+                  </select>
+                </div>
+                <div class="test-form-group">
+                  <label class="test-form-label" for="selectGenTopic" style="color:#38bdf8; font-weight:700;">Select Topic (Dropdown) *</label>
+                  <select class="form-select" id="selectGenTopic" onchange="window.handleGenTopicChange(this.value)" style="width:100%; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56,189,248,0.5); color:#38bdf8; padding:8px 12px; border-radius:8px; font-size:0.85rem; font-weight:600;">
+                    <!-- Populated dynamically via chapter -->
+                  </select>
                 </div>
               </div>
 
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.08);">
                 <div style="font-size:0.75rem; color:#94a3b8;">
-                  Target Cohort: <strong>All 48 Enrolled Students</strong> in Class 11 Science
+                  Target Cohort: <strong>Enrolled Class Scholars</strong>
                 </div>
                 <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 20px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff;">
                   <i data-lucide="send" style="width:16px; height:16px;"></i>
@@ -1254,7 +1244,7 @@
             </div>
 
             <div style="overflow-x:auto;">
-              <table class="assigned-table" id="tableClassAssignedTests">
+              <table class="assigned-table" id="tableGenAssignedTests">
                 <thead>
                   <tr>
                     <th>Test Title</th>
@@ -1263,7 +1253,7 @@
                     <th>Status</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyAssignedTests">
+                <tbody id="tbodyGenAssignedTests">
                   <tr>
                     <td>
                       <div style="font-weight:700; color:#f8fafc;">Rotational Dynamics Unit Test</div>
@@ -1373,29 +1363,7 @@
           </div>
         </div>
 
-        <!-- CURRICULUM CHAPTERS & SUBTOPICS EXPLORER -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <h3 style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="git-branch" style="width:18px; height:18px; color: var(--accent-blue);"></i>
-              <span id="headingCurriculumSubjectTitle">Class 12 Physics &bull; Complete Chapter List</span>
-            </h3>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-              Click any chapter to view sub-topics. Generate a <strong>full chapter test</strong> or a <strong>sub-topic quiz / assignment</strong> with 1-click.
-            </p>
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn-primary" onclick="switchTeacherTab('tabQuestionBank')" style="font-size: 0.8rem; padding: 6px 14px; background: linear-gradient(135deg, #2563eb, #1d4ed8); font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-sm); border: none; cursor: pointer; color: #fff;">
-              <i data-lucide="database" style="width:14px; height:14px;"></i> Question Bank &amp; PYQs
-            </button>
-            <input type="text" id="searchChapterInput" placeholder="Filter chapters or topics..." style="background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; min-width: 220px;">
-          </div>
-        </div>
-
-        <!-- Chapters Accordion Container -->
-        <div id="testBuilderChaptersContainer" class="curriculum-accordion">
-          <!-- Dynamically populated via app.js -->
-        </div>
+<!-- Curriculum Accordion Removed for Zero-Noise UI (Direct Cascading Dropdowns Used Above) -->
 
       </div>
 
@@ -1416,117 +1384,39 @@
               </p>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="btn-secondary" onclick="loadQuestionBankView(true)" style="font-size:0.8rem; padding:7px 14px;" title="Reload from question repository">
-                <i data-lucide="refresh-cw" style="width:13px; height:13px;"></i> Refresh
-              </button>
-              <button type="button" class="btn-secondary" onclick="openChapterSolutionSheetModal()" style="font-size:0.8rem; padding:7px 14px; border-color:rgba(56,189,248,0.4); color:var(--accent-cyan);" title="Prepare an intuitive printable/exportable step-by-step solution sheet for the selected chapter">
-                <i data-lucide="file-text" style="width:13px; height:13px;"></i> Prepare Solution Sheet
-              </button>
-              <button type="button" class="btn-primary" onclick="switchTeacherTab('tabGenerator')" style="font-size:0.8rem; padding:7px 16px; background:linear-gradient(135deg, #10b981, #059669); font-weight:700;">
-                <i data-lucide="file-plus" style="width:14px; height:14px;"></i> Create Test from Syllabus
+              <button type="button" class="btn-secondary" onclick="loadQuestionBankView(true)" style="font-size:0.8rem; padding:7px 14px; min-height:38px; display:inline-flex; align-items:center; gap:6px;" title="Reload from question repository">
+                <i data-lucide="refresh-cw" style="width:13px; height:13px;"></i> Refresh Repository
               </button>
             </div>
           </div>
 
-          <!-- QUESTION ORIGIN & EXAM TRACK QUICK SELECTOR (PYQ vs NCERT vs BOARD PATTERN) -->
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; padding:6px 0; border-bottom:1px solid var(--border-subtle);">
-            <span style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
-              <i data-lucide="filter" style="width:12px; height:12px; vertical-align:middle;"></i> Question Type:
-            </span>
-            <div id="qbSourcePillsStrip" style="display:flex; gap:6px; flex-wrap:wrap;">
-              <button type="button" class="qb-source-pill active" data-source="ALL" onclick="quickFilterQbSource('ALL')">
-                All Sources
-              </button>
-              <button type="button" class="qb-source-pill" data-source="PYQ" onclick="quickFilterQbSource('PYQ')" style="border-color:rgba(245, 158, 11, 0.4); color:#fbbf24;">
-                <i data-lucide="award" style="width:12px; height:12px;"></i> Board PYQs
-              </button>
-              <button type="button" class="qb-source-pill" data-source="NCERT_EXERCISE" onclick="quickFilterQbSource('NCERT_EXERCISE')" style="border-color:rgba(16, 185, 129, 0.4); color:#34d399;">
-                <i data-lucide="book" style="width:12px; height:12px;"></i> NCERT Exercises &amp; Examples
-              </button>
-              <button type="button" class="qb-source-pill" data-source="CBSE_PATTERN" onclick="quickFilterQbSource('CBSE_PATTERN')" style="border-color:rgba(56, 189, 248, 0.4); color:#38bdf8;">
-                <i data-lucide="check-square" style="width:12px; height:12px;"></i> Standard Exam Pattern
-              </button>
-            </div>
-          </div>
-
-          <!-- QUICK CHAPTER CAROUSEL / PILL STRIP -->
-          <div style="margin-bottom:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span id="qbChapterSelectHeading" style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">
-                <i data-lucide="layers" style="width:12px; height:12px; vertical-align:middle;"></i> Quick Select Chapter:
-              </span>
-              <span id="qbChaptersCoveredCount" style="font-size:0.72rem; color:var(--text-muted);">Loading Chapters...</span>
-            </div>
-            <div id="qbChapterPillsStrip" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin;">
-              <!-- Populated dynamically via app.js -->
-            </div>
-          </div>
-
-          <!-- QUESTION BANK FILTER BAR -->
-          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 14px; display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px;">
+          <!-- CLEAN 3-DROPDOWN QUESTION SELECTOR (NO NOISE, DIRECT ACCESS) -->
+          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; align-items:center;">
             <div>
-              <label for="selectQbSubject" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Subject Discipline
+              <label for="selectQbQuestionType" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+                <i data-lucide="filter" style="width:13px; height:13px; vertical-align:middle;"></i> Question Type
               </label>
-              <select id="selectQbSubject" class="form-select" onchange="handleQbSubjectChange(this.value)" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="PHYSICS" selected>Physics (Senior Secondary)</option>
+              <select id="selectQbQuestionType" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.86rem; padding:8px 12px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:8px;">
+                <option value="ALL" selected>All Questions</option>
+                <option value="PYQ">Board PYQ (2018–2024)</option>
+                <option value="BOARD_PATTERN">Board Standard Pattern</option>
               </select>
             </div>
-
             <div>
-              <label for="selectQbChapter" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Chapter Scope
+              <label for="selectQbChapter" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+                <i data-lucide="book" style="width:13px; height:13px; vertical-align:middle;"></i> Chapter Scope
               </label>
-              <select id="selectQbChapter" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="ALL" selected>All Chapters</option>
+              <select id="selectQbChapter" class="form-select" onchange="window.handleQbChapterChange(this.value)" style="width:100%; font-size:0.86rem; padding:8px 12px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:8px;">
+                <option value="ALL">All Chapters</option>
               </select>
             </div>
-
             <div>
-              <label for="selectQbSource" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Question Origin / Source
+              <label for="selectQbTopic" style="font-size:0.75rem; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+                <i data-lucide="target" style="width:13px; height:13px; vertical-align:middle;"></i> Topic Inside Chapter
               </label>
-              <select id="selectQbSource" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="ALL" selected>All Question Sources</option>
-                <option value="PYQ">Board PYQ (2018-2024)</option>
-                <option value="NCERT_EXAMPLE">NCERT Solved Example</option>
-                <option value="NCERT_EXERCISE">NCERT In-Text Exercise</option>
-                <option value="CBSE_PATTERN">CBSE Standard/Basic Pattern</option>
+              <select id="selectQbTopic" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.86rem; padding:8px 12px; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56,189,248,0.5); color:#38bdf8; border-radius:8px; font-weight:600;">
+                <option value="ALL">All Topics in Chapter</option>
               </select>
-            </div>
-
-            <div>
-              <label for="selectQbDifficulty" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Difficulty Level
-              </label>
-              <select id="selectQbDifficulty" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="ALL" selected>All Difficulties</option>
-                <option value="EASY">Easy</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HARD">Hard</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="selectQbFormat" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Question Format
-              </label>
-              <select id="selectQbFormat" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
-                <option value="ALL" selected>All Question Formats</option>
-                <option value="VERY_SHORT_ANSWER">Very Short Answer (1-2 Marks)</option>
-                <option value="SHORT_ANSWER">Short Answer (2-3 Marks)</option>
-                <option value="LONG_ANSWER">Long Answer (5 Marks)</option>
-                <option value="MCQ_SINGLE">MCQ Single Choice</option>
-                <option value="ASSERTION_REASON">Assertion &amp; Reason</option>
-                <option value="CASE_STUDY">Case Study / Passage</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="inputQbSearch" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
-                Live Keyword / Math Search
-              </label>
-              <input type="text" id="inputQbSearch" placeholder="Search concept, theorem..." oninput="filterQuestionBankCards()" style="width:100%; font-size:0.82rem; padding:6px 10px; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:6px;">
             </div>
           </div>
         </div>

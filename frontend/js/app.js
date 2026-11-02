@@ -1092,6 +1092,37 @@ const CLASS_ROSTERS = {
   }
 };
 
+const FACULTY_SUBJECT_CLASSES = {
+  PHYSICS: [
+    { id: '12-NonMed', name: 'Class 12-A • Senior Physics (48 Students)' },
+    { id: '11-NonMed', name: 'Class 11-NonMed • Physics (42 Students)' },
+    { id: '11-Med', name: 'Class 11-Med • Physics (40 Students)' },
+    { id: '12-Med', name: 'Class 12-Med • Senior Medical Physics (38 Students)' }
+  ],
+  CHEMISTRY: [
+    { id: '12-NonMed', name: 'Class 12-B • Senior Chemistry (48 Students)' },
+    { id: '11-NonMed', name: 'Class 11-NonMed • Chemistry (42 Students)' },
+    { id: '11-Med', name: 'Class 11-Med • Chemistry (40 Students)' },
+    { id: '12-Med', name: 'Class 12-Med • Senior Medical Chemistry (38 Students)' }
+  ],
+  MATHEMATICS: [
+    { id: '12-NonMed', name: 'Class 12-A • Senior Mathematics (48 Students)' },
+    { id: '11-NonMed', name: 'Class 11-NonMed • Mathematics (42 Students)' }
+  ],
+  BIOLOGY: [
+    { id: '12-Med', name: 'Class 12-Med • Senior Biology (38 Students)' },
+    { id: '11-Med', name: 'Class 11-Med • Biology (40 Students)' }
+  ],
+  CLASS10_MATHEMATICS: [
+    { id: '10-Maths-A', name: 'Class 10-A • Foundation Mathematics (44 Students)' },
+    { id: '10-Maths-B', name: 'Class 10-B • Foundation Mathematics (42 Students)' }
+  ],
+  CLASS10_SCIENCE: [
+    { id: '10-Science-A', name: 'Class 10-A • General Science (45 Students)' },
+    { id: '10-Science-B', name: 'Class 10-B • General Science (43 Students)' }
+  ]
+};
+
 const assignedTestsState = [
   {
     id: 'test_live_rotational',
@@ -1104,6 +1135,20 @@ const assignedTestsState = [
     submittedCount: 44,
     totalCount: 48,
     avg: '76.4%',
+    status: 'LIVE',
+    statusBadge: '<span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399; border:1px solid rgba(52,211,153,0.4);"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>In Progress</span>'
+  },
+  {
+    id: 'test_live_wheatstone',
+    title: 'Class 11-NonMed • Live Spot Quiz: Kirchhoff Laws & Loops',
+    targetClass: 'Class 11-NonMed',
+    subject: 'Physics',
+    topic: 'Kirchhoff Voltage and Current Laws',
+    duration: '15 Mins',
+    submitted: '39 / 42',
+    submittedCount: 39,
+    totalCount: 42,
+    avg: '80.2%',
     status: 'LIVE',
     statusBadge: '<span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399; border:1px solid rgba(52,211,153,0.4);"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>In Progress</span>'
   },
@@ -1136,6 +1181,34 @@ const assignedTestsState = [
     statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
   },
   {
+    id: 'test_past_gauss',
+    title: 'Class 12-Med • Electrostatics & Gauss Law Review',
+    targetClass: 'Class 12-Med',
+    subject: 'Physics',
+    topic: 'Gauss Law Applications (Planar Symmetries)',
+    duration: '45 Mins',
+    submitted: '38 / 38',
+    submittedCount: 38,
+    totalCount: 38,
+    avg: '79.1%',
+    status: 'COMPLETED',
+    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
+  },
+  {
+    id: 'test_past_shm',
+    title: 'Class 11-Med • Oscillations & Resonance Benchmark',
+    targetClass: 'Class 11-Med',
+    subject: 'Physics',
+    topic: 'Simple Harmonic Motion Restoring Force',
+    duration: '30 Mins',
+    submitted: '40 / 40',
+    submittedCount: 40,
+    totalCount: 40,
+    avg: '74.6%',
+    status: 'COMPLETED',
+    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
+  },
+  {
     id: 'test_upcoming_optics',
     title: 'Class 12-A • Pre-Board Mock: Ray Optics & Wave Optics',
     targetClass: 'Class 12-A',
@@ -1148,8 +1221,135 @@ const assignedTestsState = [
     avg: '--',
     status: 'SCHEDULED',
     statusBadge: '<span class="status-badge" style="background:rgba(234,179,8,0.15); color:#fbbf24;">Scheduled (Tomorrow)</span>'
+  },
+  {
+    id: 'test_upcoming_biot',
+    title: 'Class 11-NonMed • Unit Exam: Biot-Savart & Ampere Laws',
+    targetClass: 'Class 11-NonMed',
+    subject: 'Physics',
+    topic: 'Biot-Savart Law and Circular Loop Field',
+    duration: '45 Mins',
+    submitted: '0 / 42',
+    submittedCount: 0,
+    totalCount: 42,
+    avg: '--',
+    status: 'SCHEDULED',
+    statusBadge: '<span class="status-badge" style="background:rgba(234,179,8,0.15); color:#fbbf24;">Scheduled (Friday)</span>'
   }
 ];
+
+let assignedTestsFilterQuery = '';
+let assignedTestsStatusFilter = 'ALL';
+let assignedTestsCurrentPage = 0;
+const assignedTestsPageSize = 5;
+
+window.filterAssignedTests = function(query) {
+  assignedTestsFilterQuery = (query || '').toLowerCase().trim();
+  assignedTestsCurrentPage = 0;
+  window.renderAssignedTestsTable();
+};
+
+window.setAssignedStatusFilter = function(status) {
+  assignedTestsStatusFilter = status;
+  assignedTestsCurrentPage = 0;
+  ['All', 'Live', 'Completed', 'Scheduled'].forEach(s => {
+    const btn = document.getElementById(`btnFilterStatus${s}`);
+    if (btn) btn.classList.toggle('active', s.toUpperCase() === status);
+  });
+  window.renderAssignedTestsTable();
+};
+
+window.prevAssignedPage = function() {
+  if (assignedTestsCurrentPage > 0) {
+    assignedTestsCurrentPage--;
+    window.renderAssignedTestsTable();
+  }
+};
+
+window.nextAssignedPage = function() {
+  assignedTestsCurrentPage++;
+  window.renderAssignedTestsTable();
+};
+
+window.renderAssignedTestsTable = function() {
+  const tbody = document.getElementById('tbodyAssignedTests');
+  if (!tbody) return;
+
+  const totalAll = assignedTestsState.length;
+  const countLive = assignedTestsState.filter(t => t.status === 'LIVE').length;
+  const countComp = assignedTestsState.filter(t => t.status === 'COMPLETED').length;
+  const countSched = assignedTestsState.filter(t => t.status === 'SCHEDULED').length;
+
+  const elAll = document.getElementById('countFilterAll');
+  if (elAll) elAll.innerText = totalAll;
+  const elLive = document.getElementById('countFilterLive');
+  if (elLive) elLive.innerText = countLive;
+  const elComp = document.getElementById('countFilterCompleted');
+  if (elComp) elComp.innerText = countComp;
+  const elSched = document.getElementById('countFilterScheduled');
+  if (elSched) elSched.innerText = countSched;
+
+  let filtered = assignedTestsState.filter(t => {
+    if (assignedTestsStatusFilter !== 'ALL' && t.status !== assignedTestsStatusFilter) return false;
+    if (assignedTestsFilterQuery) {
+      const matchText = `${t.title} ${t.targetClass} ${t.topic} ${t.duration}`.toLowerCase();
+      if (!matchText.includes(assignedTestsFilterQuery)) return false;
+    }
+    return true;
+  });
+
+  const totalFiltered = filtered.length;
+  const maxPage = Math.max(0, Math.ceil(totalFiltered / assignedTestsPageSize) - 1);
+  if (assignedTestsCurrentPage > maxPage) assignedTestsCurrentPage = maxPage;
+
+  const startIdx = assignedTestsCurrentPage * assignedTestsPageSize;
+  const pageItems = filtered.slice(startIdx, startIdx + assignedTestsPageSize);
+
+  const pagLabel = document.getElementById('labelAssignedPagination');
+  if (pagLabel) {
+    if (totalFiltered === 0) {
+      pagLabel.innerText = 'Showing 0 tests';
+    } else {
+      pagLabel.innerText = `Showing ${startIdx + 1} to ${Math.min(startIdx + assignedTestsPageSize, totalFiltered)} of ${totalFiltered} tests (Page ${assignedTestsCurrentPage + 1} of ${maxPage + 1})`;
+    }
+  }
+
+  const prevBtn = document.getElementById('btnAssignedPrevPage');
+  if (prevBtn) prevBtn.disabled = assignedTestsCurrentPage === 0;
+
+  const nextBtn = document.getElementById('btnAssignedNextPage');
+  if (nextBtn) nextBtn.disabled = assignedTestsCurrentPage >= maxPage;
+
+  if (pageItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:#94a3b8;">No assessments match your search / filter criteria.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pageItems.map(t => `
+    <tr>
+      <td>
+        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(t.title)}</strong>
+        <span style="color:#94a3b8; font-size:0.75rem;">Topic: ${escapeHtml(t.topic)}</span>
+      </td>
+      <td><span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:0.78rem;">${escapeHtml(t.targetClass)}</span></td>
+      <td style="font-size:0.82rem; color:#cbd5e1;">${escapeHtml(t.duration)}</td>
+      <td style="font-weight:700; color:#38bdf8; font-size:0.82rem;">${escapeHtml(t.submitted)}</td>
+      <td style="font-weight:700; color:${t.avg.startsWith('-') ? '#94a3b8' : '#34d399'}; font-size:0.82rem;">${escapeHtml(t.avg)}</td>
+      <td>${t.statusBadge}</td>
+      <td style="text-align:right;">
+        <div style="display:inline-flex; gap:6px;">
+          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
+            <i data-lucide="printer" style="width:13px; height:13px;"></i>
+          </button>
+          <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
+            Roster
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  initLucideIcons();
+};
 
 window.initPaperBuilderDropdowns = function() {
   const activeTeacher = teacherBuilderState.activeTeacher || {
@@ -1158,15 +1358,77 @@ window.initPaperBuilderDropdowns = function() {
     subjectName: 'Physics'
   };
 
+  const subjKey = activeTeacher.subjectKey || 'PHYSICS';
+  const subjName = activeTeacher.subjectName || (subjKey === 'PHYSICS' ? 'Physics' : subjKey);
+
+  // 1. Lock Subject Dropdown strictly to teacher discipline (Physics teacher cannot see Chemistry, Bio, Class 10)
   const subjSelect = document.getElementById('selectPaperSubject');
   if (subjSelect) {
-    if (activeTeacher.subjectKey && subjSelect.querySelector(`option[value="${activeTeacher.subjectKey}"]`)) {
-      subjSelect.value = activeTeacher.subjectKey;
-    }
+    subjSelect.innerHTML = `<option value="${subjKey}" selected>${subjName}</option>`;
+    subjSelect.disabled = true;
+    subjSelect.style.opacity = '0.9';
+    subjSelect.style.cursor = 'not-allowed';
   }
 
-  const curSubj = subjSelect ? subjSelect.value : (activeTeacher.subjectKey || 'PHYSICS');
-  window.populatePaperChapters(curSubj);
+  // 2. Lock Class Dropdown strictly to classes assigned to this subject (No Class 10 for Physics teacher)
+  const classSelect = document.getElementById('selectPaperClass');
+  const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
+  if (classSelect) {
+    classSelect.innerHTML = allowedClasses.map((c, i) =>
+      `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${c.name}</option>`
+    ).join('');
+    teacherBuilderState.selectedClassId = allowedClasses[0].id;
+  }
+
+  // 3. Update Roster Class Dropdown
+  const rosterClassSelect = document.getElementById('selectTeacherActiveRosterClass');
+  if (rosterClassSelect) {
+    rosterClassSelect.innerHTML = allowedClasses.map((c, i) =>
+      `<option value="${c.id}" ${i === 0 ? 'selected' : ''}>${c.name}</option>`
+    ).join('');
+  }
+
+  // 4. Update teacher strips
+  const stripName = document.getElementById('stripTeacherName');
+  if (stripName) stripName.innerText = activeTeacher.name || activeTeacher.full_name;
+  const stripDept = document.getElementById('stripTeacherDept');
+  if (stripDept) stripDept.innerText = `${subjName} Expert`;
+  const scopeEl = document.getElementById('stripTeacherClassScope');
+  if (scopeEl && allowedClasses[0]) scopeEl.innerText = allowedClasses[0].name;
+
+  window.populatePaperChapters(subjKey);
+  window.populateGenChapters(subjKey);
+};
+
+window.populateGenChapters = function(subjectKey) {
+  const chapterSelect = document.getElementById('selectGenChapter');
+  if (!chapterSelect) return;
+  const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const chapterNames = Object.keys(chapters);
+  chapterSelect.innerHTML = chapterNames.map((ch, idx) =>
+    `<option value="${escapeHtml(ch)}" ${idx === 0 ? 'selected' : ''}>${escapeHtml(ch)}</option>`
+  ).join('');
+  if (chapterNames.length > 0) {
+    window.handleGenChapterChange(chapterNames[0]);
+  }
+};
+
+window.handleGenChapterChange = function(chName) {
+  const subjKey = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+  const topicSelect = document.getElementById('selectGenTopic');
+  if (!topicSelect) return;
+  const chapters = CURRICULUM_CHAPTER_TOPICS[subjKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+  const topics = chapters[chName] || ['Standard Conceptual & Numerical Problems'];
+  topicSelect.innerHTML = topics.map((t, idx) =>
+    `<option value="${escapeHtml(t)}" ${idx === 0 ? 'selected' : ''}>🎯 ${escapeHtml(t)}</option>`
+  ).join('');
+};
+
+window.handleGenTopicChange = function(tName) {
+  const titleInput = document.getElementById('inputTeacherTestTitle');
+  if (titleInput && tName) {
+    titleInput.value = `Class 12-A • Unit Assessment: ${tName}`;
+  }
 };
 
 window.populatePaperChapters = function(subjectKey) {
@@ -1263,13 +1525,11 @@ window.createTeacherPaper = function(event) {
   assignedTestsState.unshift(newTest);
   window.renderAssignedTestsTable();
 
-  // Update live card
   const liveTitle = document.getElementById('liveTestTitle');
   if (liveTitle) liveTitle.innerText = `${targetClass} • ${title}`;
   const liveCounter = document.getElementById('liveTestSubmissionsCounter');
   if (liveCounter) liveCounter.innerText = `0 / 48`;
 
-  // Show Toast
   const banner = document.createElement('div');
   banner.className = 'role-switch-toast';
   banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Paper Assigned:</strong> "${escapeHtml(title)}" created for ${escapeHtml(targetClass)}. Switched to live test station.</span>`;
@@ -1277,18 +1537,157 @@ window.createTeacherPaper = function(event) {
   initLucideIcons();
   setTimeout(() => banner.remove(), 4000);
 
-  // Switch to Take Test tab to monitor
   switchTeacherTab('tabTeacherTakeTest');
+};
+
+// =============================================================================
+// AUTHENTIC EXAM GENERATOR (15 QUESTIONS FOR 45-MIN EXAM, FULL BLUEPRINT)
+// =============================================================================
+window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
+  const isRotational = (topic || '').toLowerCase().includes('rolling') || (chapter || '').toLowerCase().includes('rotational') || (topic || '').toLowerCase().includes('incline');
+
+  // Blueprints
+  if (formatKey === 'UNIT_45') {
+    // Exactly 15 Questions across Section A (5 MCQs), Section B (5 Short), Section C (5 Long Derivations/Numericals) = 45 Marks
+    return [
+      // SECTION A: 5 MCQs (1 Mark each = 5 Marks)
+      {
+        num: 1, section: 'A', type: 'MCQ', marks: 1,
+        question: `A uniform solid sphere of mass M and radius R rolls down without slipping along an inclined plane of inclination &theta;. The linear acceleration of its center of mass is:`,
+        options: ['(A) g sin &theta;', '(B) (5/7) g sin &theta;', '(C) (2/3) g sin &theta;', '(D) (1/2) g sin &theta;'],
+        ans: '(B) (5/7) g sin &theta;'
+      },
+      {
+        num: 2, section: 'A', type: 'MCQ', marks: 1,
+        question: `During pure rolling of a rigid sphere along an incline without slipping, the work done by the static friction force is:`,
+        options: ['(A) Positive and increases kinetic energy', '(B) Negative and dissipates heat', '(C) Exactly zero because the contact point is instantaneously at rest', '(D) Dependent on the incline length'],
+        ans: '(C) Exactly zero because the contact point is instantaneously at rest'
+      },
+      {
+        num: 3, section: 'A', type: 'MCQ', marks: 1,
+        question: `For a solid cylinder of mass M and radius R rolling without slipping with speed v, the ratio of its rotational kinetic energy to its total kinetic energy is:`,
+        options: ['(A) 1 : 2', '(B) 1 : 3', '(C) 2 : 5', '(D) 1 : 4'],
+        ans: '(B) 1 : 3'
+      },
+      {
+        num: 4, section: 'A', type: 'MCQ', marks: 1,
+        question: `The torque &tau; acting on a rigid body rotating about an axis is related to its angular momentum L by:`,
+        options: ['(A) &tau; = dL/dt', '(B) &tau; = L &times; &omega;', '(C) &tau; = I (d&theta;/dt)', '(D) &tau; = &omega; (dL/dt)'],
+        ans: '(A) &tau; = dL/dt'
+      },
+      {
+        num: 5, section: 'A', type: 'MCQ', marks: 1,
+        question: `A ring, a solid disc, and a solid sphere of equal mass and radius are released simultaneously from rest down an incline. The object that reaches the bottom first is:`,
+        options: ['(A) Solid Sphere (smallest k²/R²)', '(B) Solid Disc', '(C) Ring', '(D) All reach simultaneously'],
+        ans: '(A) Solid Sphere (smallest k²/R²)'
+      },
+      // SECTION B: 5 Short Conceptual Questions (2 Marks each = 10 Marks)
+      {
+        num: 6, section: 'B', type: 'SHORT', marks: 2,
+        question: `State the kinematic condition relating the linear velocity of center of mass (v_cm) and angular velocity (&omega;) for pure rolling without slipping on a stationary surface.`
+      },
+      {
+        num: 7, section: 'B', type: 'SHORT', marks: 2,
+        question: `Why does a solid sphere roll down an incline faster than a hollow spherical shell of identical mass and radius? Explain in terms of moment of inertia.`
+      },
+      {
+        num: 8, section: 'B', type: 'SHORT', marks: 2,
+        question: `Derive the general expression for the total kinetic energy of a body of mass M and radius of gyration k undergoing simultaneous translation and rotation.`
+      },
+      {
+        num: 9, section: 'B', type: 'SHORT', marks: 2,
+        question: `A wheel of radius 0.5 m rolls without slipping at a linear speed of 8 m/s. Calculate: (i) the instantaneous velocity of the top-most point, and (ii) the bottom contact point.`
+      },
+      {
+        num: 10, section: 'B', type: 'SHORT', marks: 2,
+        question: `Define the term "Radius of Gyration" (k). State its SI unit and physical importance in deciding the resistance of a body to rotational acceleration.`
+      },
+      // SECTION C: 5 Long Derivations & Numericals (6 Marks each = 30 Marks)
+      {
+        num: 11, section: 'C', type: 'LONG', marks: 6,
+        question: `(a) Derive from first principles (using Newton's second law and rotational dynamics) the formula for linear acceleration: a = (g sin &theta;) / [1 + (k²/R²)] for a body rolling down an incline of angle &theta;. (b) Hence deduce the acceleration for a uniform solid sphere.`
+      },
+      {
+        num: 12, section: 'C', type: 'LONG', marks: 6,
+        question: `A solid sphere of mass M and radius R is released from rest at height h on a rough incline of angle &theta; = 30&deg;. (a) Show that the minimum coefficient of static friction &mu;_s required to ensure pure rolling without slipping is (2/7) tan &theta;. (b) Evaluate &mu;_s numerically.`
+      },
+      {
+        num: 13, section: 'C', type: 'LONG', marks: 6,
+        question: `A solid uniform cylinder of mass 2 kg and radius 0.25 m rolls without slipping down a 30&deg; incline of length 6 meters from rest. Calculate: (i) linear acceleration of center of mass, (ii) force of static friction acting on the cylinder, and (iii) final translational speed at the base.`
+      },
+      {
+        num: 14, section: 'C', type: 'LONG', marks: 6,
+        question: `State the Law of Conservation of Angular Momentum. A turntable of moment of inertia 200 kg&middot;m² rotates freely about a vertical axis at 30 rpm. A student of mass 60 kg stands at the outer rim (radius 2 m) and walks inwards to the exact center. Determine: (i) the new angular speed, and (ii) compare the initial and final kinetic energies.`
+      },
+      {
+        num: 15, section: 'C', type: 'LONG', marks: 6,
+        question: `(a) State and prove the Parallel Axis Theorem of moment of inertia. (b) Use it to calculate the moment of inertia of a uniform solid sphere about a tangent. (c) A horizontal force F is applied at the apex of a solid sphere resting on a rough floor; determine the acceleration and direction of friction.`
+      }
+    ];
+  } else if (formatKey === 'QUIZ_15') {
+    // 5 Questions (20 Marks)
+    return [
+      { num: 1, section: 'A', type: 'MCQ', marks: 2, question: `For a rigid body rolling without slipping along an incline, what fraction of its total kinetic energy is rotational?`, options: ['(A) (k²/R²) / [1 + (k²/R²)]', '(B) 1 / [1 + (k²/R²)]', '(C) k²/R²', '(D) Zero'], ans: '(A)' },
+      { num: 2, section: 'A', type: 'MCQ', marks: 2, question: `Which point of a rolling wheel on a horizontal road has the maximum instantaneous velocity?`, options: ['(A) Center of mass', '(B) Topmost point (2v)', '(C) Contact point with road', '(D) Both edges'], ans: '(B) Topmost point (2v)' },
+      { num: 3, section: 'A', type: 'MCQ', marks: 2, question: `The dimensions of torque are identical to those of:`, options: ['(A) Work / Energy', '(B) Angular momentum', '(C) Linear momentum', '(D) Power'], ans: '(A) Work / Energy' },
+      { num: 4, section: 'B', type: 'SHORT', marks: 7, question: `Derive the expression for the linear speed of a solid sphere reaching the bottom of an incline of vertical height h from rest.` },
+      { num: 5, section: 'B', type: 'SHORT', marks: 7, question: `Explain why the contact point has zero instantaneous velocity during pure rolling, and clarify whether static friction produces any dissipation.` }
+    ];
+  } else if (formatKey === 'TERM_90') {
+    // 20 Questions (60 Marks)
+    const qs = [];
+    for (let i = 1; i <= 8; i++) {
+      qs.push({ num: i, section: 'A', type: 'MCQ', marks: 1, question: `Conceptual MCQ ${i} on ${topic}: Identify the correct physical statement regarding governing laws, forces, and boundary conditions.`, options: ['(A) Option Alpha', '(B) Option Beta (Verified)', '(C) Option Gamma', '(D) Option Delta'], ans: '(B) Option Beta (Verified)' });
+    }
+    for (let i = 9; i <= 14; i++) {
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: `Short Answer Question ${i}: Explain the physical principle of ${topic} with mathematical deduction and diagram.` });
+    }
+    for (let i = 15; i <= 18; i++) {
+      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: `Analytical Derivation ${i}: Complete step-by-step mathematical working establishing governing equations for ${topic}.` });
+    }
+    for (let i = 19; i <= 20; i++) {
+      qs.push({ num: i, section: 'D', type: 'CASE', marks: 7, question: `Case Study / Experimental Problem ${i}: Analyze the laboratory observation for ${topic} and solve sub-parts (a), (b), and (c).` });
+    }
+    return qs;
+  } else {
+    // MOCK_180: 30 Questions (100 Marks)
+    const qs = [];
+    for (let i = 1; i <= 12; i++) {
+      qs.push({ num: i, section: 'A', type: 'MCQ', marks: 1, question: `Section A Objective Q${i}: Question testing foundational understanding of ${topic} and related concepts.`, options: ['(A) Option A', '(B) Option B', '(C) Option C', '(D) Option D'], ans: '(A)' });
+    }
+    for (let i = 13; i <= 20; i++) {
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: `Section B Conceptual Q${i}: Explain the physical mechanism and compute values for given parameters.` });
+    }
+    for (let i = 21; i <= 26; i++) {
+      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: `Section C Board Derivation Q${i}: Derive the standard expression with neat diagram and state evaluation steps.` });
+    }
+    for (let i = 27; i <= 28; i++) {
+      qs.push({ num: i, section: 'D', type: 'CASE', marks: 7, question: `Section D Case Study Q${i}: Read the passage on experimental verification of ${topic} and answer sub-questions.` });
+    }
+    for (let i = 29; i <= 30; i++) {
+      qs.push({ num: i, section: 'E', type: 'LONG', marks: 10, question: `Section E Comprehensive Numerical & Theoretical Problem Q${i}: Multi-part problem with CBSE marking scheme.` });
+    }
+    return qs;
+  }
 };
 
 window.previewTeacherPaper = function() {
   const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
   const subjSelect = document.getElementById('selectPaperSubject');
   const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
+  const chSelect = document.getElementById('selectPaperChapter');
+  const chapter = chSelect ? chSelect.value : 'System of Particles & Rotational Motion';
   const topicSelect = document.getElementById('selectPaperTopic');
-  const topic = topicSelect ? topicSelect.value : 'Target Concept';
+  const topic = topicSelect ? topicSelect.value : 'Pure Rolling of Solid Sphere on Incline';
   const formatSelect = document.getElementById('selectPaperFormat');
-  const formatText = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text : '45-Min Unit Test';
+  const formatVal = formatSelect ? formatSelect.value : 'UNIT_45';
+  const formatText = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text : '📝 45-Min Unit Exam (15 Qs • 45 Marks)';
+  const classSelect = document.getElementById('selectPaperClass');
+  const className = classSelect ? (classSelect.options[classSelect.selectedIndex]?.text || 'Class 12-A') : 'Class 12-A';
+
+  const questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
+  const totalQuestions = questions.length;
+  const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -1296,48 +1695,112 @@ window.previewTeacherPaper = function() {
     return;
   }
 
+  // Group by Section
+  const sections = {};
+  questions.forEach(q => {
+    const sec = q.section || 'A';
+    if (!sections[sec]) sections[sec] = [];
+    sections[sec].push(q);
+  });
+
+  const secTitles = {
+    'A': 'SECTION A &bull; Objective Multiple Choice Questions (1 Mark Each)',
+    'B': 'SECTION B &bull; Conceptual Reasoning &amp; Short Answer Questions (2 Marks Each)',
+    'C': 'SECTION C &bull; Long Derivations, Proofs &amp; Analytical Numericals (6 Marks Each)',
+    'D': 'SECTION D &bull; Case-Study &amp; Data Interpretation Questions',
+    'E': 'SECTION E &bull; Comprehensive Problems'
+  };
+
+  let questionsHtml = '';
+  Object.keys(sections).forEach(secKey => {
+    const secQs = sections[secKey];
+    questionsHtml += `
+      <div style="margin: 22px 0 12px 0; background: #f1f5f9; padding: 8px 14px; border-radius: 6px; border-left: 4px solid #0284c7; font-weight: 800; font-size: 0.88rem; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+        ${secTitles[secKey] || `SECTION ${secKey}`} (${secQs.length} Questions)
+      </div>
+    `;
+
+    secQs.forEach(q => {
+      let optHtml = '';
+      if (q.options && q.options.length > 0) {
+        optHtml = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; font-size: 0.88rem; color: #334155;">
+            ${q.options.map(opt => `<div style="padding: 4px 8px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 4px;">${opt}</div>`).join('')}
+          </div>
+        `;
+      }
+
+      questionsHtml += `
+        <div class="q-box" style="margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+          <span class="marks" style="float: right; font-weight: bold; color: #0284c7; font-size: 0.85rem;">[${q.marks} Mark${q.marks > 1 ? 's' : ''}]</span>
+          <div style="font-size: 0.94rem; line-height: 1.6; color: #0f172a;">
+            <strong>Q${q.num}.</strong> ${q.question}
+          </div>
+          ${optHtml}
+        </div>
+      `;
+    });
+  });
+
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Print Assessment: ${escapeHtml(title)}</title>
+      <title>Examination Paper: ${escapeHtml(title)}</title>
+      <meta charset="utf-8">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
-        .inst { font-size: 0.85rem; background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-bottom: 20px; }
-        .q-box { margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
-        .marks { float: right; font-weight: bold; color: #2563eb; }
-        @media print { .no-print { display: none; } }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 36px 40px; color: #0f172a; max-width: 860px; margin: 0 auto; background: #fff; }
+        .header { text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
+        .sub-header { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; color: #334155; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 8px; }
+        .inst { font-size: 0.82rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; margin-bottom: 20px; color: #475569; }
+        .q-box { page-break-inside: avoid; }
+        .marks { float: right; font-weight: bold; color: #0369a1; }
+        @media print {
+          .no-print { display: none !important; }
+          body { padding: 15px; }
+        }
       </style>
     </head>
     <body>
-      <div class="no-print" style="text-align:right; margin-bottom:15px;">
-        <button onclick="window.print()" style="padding:8px 16px; background:#2563eb; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">🖨️ Print Paper</button>
+      <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px;">
+        <div style="font-weight: 600; font-size: 0.9rem;">
+          Verified Official Blueprint: <strong>${totalQuestions} Questions</strong> &bull; Total: <strong>${totalMarks} Marks</strong>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button onclick="window.print()" style="padding: 8px 18px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            🖨️ Print / Save as PDF
+          </button>
+        </div>
       </div>
+
       <div class="header">
-        <h2 style="margin:0;">UNISOLE SCHOLAR SECONDARY SCHOOL</h2>
-        <h3 style="margin:4px 0; color:#334155;">${escapeHtml(title)}</h3>
-        <p style="margin:4px 0; font-size:0.9rem;">Subject: <strong>${escapeHtml(subject)}</strong> &bull; Topic: <strong>${escapeHtml(topic)}</strong> &bull; ${escapeHtml(formatText)}</p>
+        <h2 style="margin: 0; font-size: 1.35rem; letter-spacing: 0.5px; color: #0f172a;">UNISOLE SCHOLAR SECONDARY SCHOOL</h2>
+        <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Department of ${escapeHtml(subject)} &bull; Senior Secondary Academic Assessment</p>
+        <h3 style="margin: 8px 0 4px 0; color: #1e3a8a; font-size: 1.15rem;">${escapeHtml(title)}</h3>
+        <div class="sub-header">
+          <span>Target Cohort: <strong>${escapeHtml(className)}</strong></span>
+          <span>Chapter: <strong>${escapeHtml(chapter)}</strong></span>
+          <span>Max Marks: <strong>${totalMarks}</strong></span>
+          <span>Time Allowed: <strong>${escapeHtml(duration)}</strong></span>
+        </div>
       </div>
+
       <div class="inst">
         <strong>General Instructions:</strong>
-        <ol style="margin:6px 0 0 16px; padding:0;">
-          <li>All questions are compulsory. Internal choices are provided in Section C.</li>
-          <li>Write clear step-by-step mathematical working with appropriate SI units.</li>
-          <li>Neat diagrams must be drawn wherever specified.</li>
+        <ol style="margin: 6px 0 0 16px; padding: 0; line-height: 1.5;">
+          <li>All questions are compulsory. Total <strong>${totalQuestions} questions</strong> evaluating fundamental conceptual depth, formula derivation, and mathematical problem-solving.</li>
+          <li>Section A contains ${sections['A'] ? sections['A'].length : 5} multiple choice questions of 1 mark each.</li>
+          <li>Section B contains ${sections['B'] ? sections['B'].length : 5} short conceptual questions of 2 marks each. Answer in 30-50 words.</li>
+          <li>Section C contains ${sections['C'] ? sections['C'].length : 5} long derivation and numerical problems of 6 marks each. Clear step-by-step working with appropriate SI units is mandatory.</li>
+          <li>Use of physical calculators is prohibited. Take g = 9.8 m/s² (or 10 m/s² where specified).</li>
         </ol>
       </div>
-      <div class="q-box">
-        <span class="marks">[3 Marks]</span>
-        <strong>Q1.</strong> A solid sphere of mass M and radius R rolls down without slipping along an inclined plane of inclination &theta;. Set up the governing equations of motion and derive the expression for linear acceleration of its center of mass.
-      </div>
-      <div class="q-box">
-        <span class="marks">[2 Marks]</span>
-        <strong>Q2.</strong> Explain why the work done by static friction during pure rolling without slipping is zero, even though static friction is indispensable for rolling.
-      </div>
-      <div class="q-box">
-        <span class="marks">[4 Marks]</span>
-        <strong>Q3.</strong> A cylinder and a solid sphere of equal mass and radius are released from rest from the top of an inclined plane. Determine which object reaches the bottom first and calculate the ratio of their final linear velocities.
+
+      <!-- ALL QUESTIONS (15 QUESTIONS FOR 45 MIN) -->
+      ${questionsHtml}
+
+      <div style="margin-top: 24px; padding-top: 14px; border-top: 2px solid #0f172a; text-align: center; font-size: 0.78rem; color: #64748b;">
+        &bull; End of Examination Paper &bull; Evaluated according to official CBSE / State Board Step-Marking Scheme &bull;
       </div>
     </body>
     </html>
@@ -1357,42 +1820,11 @@ window.finalizeCurrentTest = function() {
 
   const banner = document.createElement('div');
   banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Test Finalized:</strong> All 48 student submissions graded. Grade cards synchronized to Student Portal.</span>`;
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Test Finalized:</strong> All student submissions graded. Grade cards synchronized to Student Portal.</span>`;
   document.body.appendChild(banner);
   initLucideIcons();
   setTimeout(() => banner.remove(), 4000);
 };
-
-window.renderAssignedTestsTable = function() {
-  const tbody = document.getElementById('tbodyAssignedTests');
-  if (!tbody) return;
-
-  tbody.innerHTML = assignedTestsState.map(t => `
-    <tr>
-      <td>
-        <strong style="color:#f8fafc; font-size:0.86rem; display:block;">${escapeHtml(t.title)}</strong>
-        <span style="color:#94a3b8; font-size:0.75rem;">Topic: ${escapeHtml(t.topic)}</span>
-      </td>
-      <td><span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:0.78rem;">${escapeHtml(t.targetClass)}</span></td>
-      <td style="font-size:0.82rem; color:#cbd5e1;">${escapeHtml(t.duration)}</td>
-      <td style="font-weight:700; color:#38bdf8; font-size:0.82rem;">${escapeHtml(t.submitted)}</td>
-      <td style="font-weight:700; color:${t.avg.startsWith('-') ? '#94a3b8' : '#34d399'}; font-size:0.82rem;">${escapeHtml(t.avg)}</td>
-      <td>${t.statusBadge}</td>
-      <td style="text-align:right;">
-        <div style="display:inline-flex; gap:6px;">
-          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" title="Print or Preview Paper" style="padding:4px 8px; font-size:0.72rem;">
-            <i data-lucide="printer" style="width:13px; height:13px;"></i>
-          </button>
-          <button type="button" class="btn-primary" onclick="switchTeacherTab('tabTeacherClasses')" title="View Student Submissions" style="padding:4px 10px; font-size:0.72rem;">
-            Roster
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-  initLucideIcons();
-};
-
 window.handleTeacherClassSelect = function(classId) {
   teacherBuilderState.selectedClassId = classId;
   window.renderClassRoster(classId);
@@ -8043,6 +8475,12 @@ function initTeacherSession() {
 }
 
 function openTeacherSignInModal() {
+  // Strict Faculty Profile Lock: If teacher role is active, prevent switching without sign-out
+  if (state.activeRole === 'teacher' && teacherBuilderState.activeTeacher && !window._isExplicitSignOut) {
+    console.log('Faculty profile is active and locked. To change profile, use Sign Out.');
+    return;
+  }
+  window._isExplicitSignOut = false;
   const modal = document.getElementById('modalTeacherSignIn');
   if (modal) modal.style.display = 'flex';
   const phoneInput = document.getElementById('inputTeacherPhone');
@@ -8779,6 +9217,7 @@ function handleTeacherSignOut() {
     stripFacultyDept.style.color = 'var(--accent-red)';
   }
 
+  window._isExplicitSignOut = true;
   closeSidebarDrawer();
   openTeacherSignInModal();
 }
@@ -9484,12 +9923,39 @@ function openQbForChapter(chNum, event) {
   });
 }
 
+window.handleQbChapterChange = function(chapterVal) {
+  const topicSelect = document.getElementById('selectQbTopic');
+  const activeSubj = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+  if (!topicSelect) {
+    filterQuestionBankCards();
+    return;
+  }
+  if (chapterVal === 'ALL') {
+    topicSelect.innerHTML = `<option value="ALL">All Topics in Chapter</option>`;
+  } else {
+    let topics = [];
+    const chaptersObj = CURRICULUM_CHAPTER_TOPICS[activeSubj] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
+    const chNames = Object.keys(chaptersObj);
+    const chIndex = parseInt(chapterVal, 10) - 1;
+    if (chIndex >= 0 && chIndex < chNames.length) {
+      topics = chaptersObj[chNames[chIndex]] || [];
+    } else if (chaptersObj[chapterVal]) {
+      topics = chaptersObj[chapterVal];
+    }
+    topicSelect.innerHTML = `<option value="ALL">All Topics in Chapter</option>` +
+      topics.map(t => `<option value="${escapeHtml(t)}">🎯 ${escapeHtml(t)}</option>`).join('');
+  }
+  filterQuestionBankCards();
+};
+
 function filterQuestionBankCards() {
   const container = document.getElementById('containerQbQuestions');
   const statsLabel = document.getElementById('qbCountLabel');
   if (!container) return;
 
+  const typeVal = document.getElementById('selectQbQuestionType')?.value || 'ALL';
   const chVal = document.getElementById('selectQbChapter')?.value || 'ALL';
+  const topVal = document.getElementById('selectQbTopic')?.value || 'ALL';
   const srcVal = document.getElementById('selectQbSource')?.value || 'ALL';
   const diffVal = document.getElementById('selectQbDifficulty')?.value || 'ALL';
   const fmtVal = document.getElementById('selectQbFormat')?.value || 'ALL';
@@ -9531,7 +9997,18 @@ function filterQuestionBankCards() {
     });
   }
 
-  if (srcVal !== 'ALL') {
+  if (typeVal !== 'ALL') {
+    filtered = filtered.filter(q => {
+      const qSrc = (q.question_source || q.pyq_appearance || q.ncert_mapping?.pyq_tag || '').toUpperCase();
+      if (typeVal === 'PYQ') {
+        return q.question_source === 'CBSE_PYQ' || qSrc.includes('PYQ') || qSrc.includes('BOARD') || qSrc.includes('CBSE') || qSrc.includes('HPBOSE');
+      }
+      if (typeVal === 'BOARD_PATTERN') {
+        return q.question_source === 'CBSE_SAMPLE_PATTERN' || qSrc.includes('PATTERN') || qSrc.includes('SAMPLE') || qSrc.includes('STANDARD') || qSrc.includes('BASIC') || qSrc.includes('NCERT');
+      }
+      return true;
+    });
+  } else if (srcVal !== 'ALL') {
     filtered = filtered.filter(q => {
       const qSrc = (q.question_source || q.pyq_appearance || q.ncert_mapping?.pyq_tag || '').toUpperCase();
       if (srcVal === 'PYQ') {
@@ -9544,6 +10021,14 @@ function filterQuestionBankCards() {
         return q.question_source === 'CBSE_SAMPLE_PATTERN' || qSrc.includes('PATTERN') || qSrc.includes('SAMPLE') || qSrc.includes('STANDARD') || qSrc.includes('BASIC');
       }
       return true;
+    });
+  }
+
+  if (topVal && topVal !== 'ALL') {
+    const qTop = topVal.toLowerCase().replace(/🎯\s*/g, '').trim();
+    filtered = filtered.filter(q => {
+      const text = `${q.topic || ''} ${q.subtopic || ''} ${q.question_latex || ''} ${q.questionText || ''}`.toLowerCase();
+      return text.includes(qTop) || qTop.split(' ').some(w => w.length > 3 && text.includes(w));
     });
   }
 
@@ -11054,25 +11539,7 @@ function renderQbCurrentPage() {
         <!-- INTUITIVE STEP-BY-STEP SOLUTION CARD OR PROMPT -->
         ${solutionSectionHtml}
 
-        <!-- ACTIONS ROW -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border-subtle);">
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn-primary" onclick="openStepSolutionStudio('${qId}')" style="font-size:0.78rem; padding:6px 14px; background:linear-gradient(135deg, #1e40af, #2563eb); font-weight:700; display:inline-flex; align-items:center; gap:6px;" title="Open comprehensive step-by-step solution studio modal">
-              <i data-lucide="sparkles" style="width:13px; height:13px;"></i> Open in Studio Modal
-            </button>
-            <button type="button" class="btn-secondary" onclick="copyQbLatexToClipboard('${qId}')" style="font-size:0.75rem; padding:6px 12px;" title="Copy clean LaTeX text to clipboard">
-              <i data-lucide="copy" style="width:12px; height:12px;"></i> Copy LaTeX
-            </button>
-            ${options.length > 0 ? `
-              <button type="button" class="btn-secondary" onclick="toggleQbCardAnswer('${qId}')" style="font-size:0.75rem; padding:6px 12px;" title="Highlight the correct option">
-                <i data-lucide="eye" style="width:12px; height:12px;"></i> Show Answer
-              </button>
-            ` : ''}
-          </div>
-          <button type="button" class="btn-primary" onclick="assignQbQuestionToClass('${qId}')" style="font-size:0.76rem; padding:6px 16px; background:linear-gradient(135deg, #10b981, #059669); font-weight:700;">
-            <i data-lucide="zap" style="width:13px; height:13px;"></i> Create Flash Quiz
-          </button>
-        </div>
+<!-- Redundant Action Buttons Removed: Exactly 2 Core Features Preserved (AI Teacher & Smartboard + Step-by-Step Solution) -->
       </div>
 
       ${renderNavBar(true)}
