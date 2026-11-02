@@ -101,7 +101,7 @@ const state = {
   activeRole: 'teacher',
   activeTeacherTab: 'tabTeacherCreateTestAndPaper',
   activeStudentMode: 'JEE_NEET',
-  theme: 'dark',
+  theme: 'light',
   testDraft: [],
   publishedAssessments: [],
   activeAssessment: null,
@@ -920,10 +920,18 @@ function setupThemeToggle() {
   const themeIcon = document.getElementById('themeIcon');
   const htmlRoot = document.documentElement;
 
+  // Read saved theme, defaulting to 'light' (comfort eye-friendly theme)
+  const savedTheme = localStorage.getItem('haps_theme') || 'light';
+  state.theme = savedTheme;
+  htmlRoot.setAttribute('data-theme', savedTheme);
+  if (themeIcon) themeIcon.setAttribute('data-lucide', savedTheme === 'dark' ? 'sun' : 'moon');
+  initLucideIcons();
+
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       state.theme = state.theme === 'dark' ? 'light' : 'dark';
       htmlRoot.setAttribute('data-theme', state.theme);
+      localStorage.setItem('haps_theme', state.theme);
       if (themeIcon) themeIcon.setAttribute('data-lucide', state.theme === 'dark' ? 'sun' : 'moon');
       initLucideIcons();
     });
@@ -10177,20 +10185,7 @@ function renderFacultyClassSwitcherCards() {
     const isActive = (c.id === effectiveActiveId);
     return `
       <div class="faculty-class-choice-card ${isActive ? 'active-scope' : ''}" 
-           onclick="switchFacultyClassScope('${c.id}')"
-           style="
-             display: flex;
-             align-items: center;
-             justify-content: space-between;
-             gap: 12px;
-             padding: 14px 16px;
-             border-radius: 10px;
-             cursor: pointer;
-             transition: all 0.2s ease;
-             background: ${isActive ? 'rgba(56, 189, 248, 0.12)' : 'rgba(30, 41, 59, 0.6)'};
-             border: ${isActive ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)'};
-             box-shadow: ${isActive ? '0 0 16px rgba(56, 189, 248, 0.2)' : 'none'};
-           ">
+           onclick="switchFacultyClassScope('${c.id}')">
         <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
           <div style="
             width: 38px;
@@ -10199,22 +10194,23 @@ function renderFacultyClassSwitcherCards() {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: ${isActive ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.06)'};
-            color: ${isActive ? '#38bdf8' : '#94a3b8'};
+            background: ${isActive ? 'rgba(2, 132, 199, 0.15)' : 'var(--bg-card-hover)'};
+            color: ${isActive ? 'var(--accent-blue)' : 'var(--text-muted)'};
             font-size: 0.95rem;
             font-weight: 800;
             flex-shrink: 0;
+            border: 1px solid ${isActive ? 'rgba(2, 132, 199, 0.3)' : 'var(--border-subtle)'};
           ">
             +${c.grade}
           </div>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <strong style="color: #f8fafc; font-size: 0.92rem;">${escapeHtml(c.title)}</strong>
-              <span style="font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cbd5e1; padding: 1px 6px; border-radius: 4px;">${escapeHtml(c.badge)}</span>
-              ${c.isCustom ? `<span style="font-size: 0.68rem; background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Created Class</span>` : ''}
+              <strong style="color: var(--text-primary); font-size: 0.92rem;">${escapeHtml(c.title)}</strong>
+              <span style="font-size: 0.7rem; background: var(--bg-card-hover); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 1px 6px; border-radius: 4px;">${escapeHtml(c.badge)}</span>
+              ${c.isCustom ? `<span style="font-size: 0.68rem; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Created Class</span>` : ''}
             </div>
-            <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: #94a3b8;">${escapeHtml(c.stream)}</p>
-            <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: #64748b;">📚 ${escapeHtml(c.stats)}</p>
+            <p style="margin: 2px 0 0 0; font-size: 0.74rem; color: var(--text-secondary);">${escapeHtml(c.stream)}</p>
+            <p style="margin: 2px 0 0 0; font-size: 0.72rem; color: var(--text-muted);">📚 ${escapeHtml(c.stats)}</p>
           </div>
         </div>
 
@@ -10224,20 +10220,21 @@ function renderFacultyClassSwitcherCards() {
               display: inline-flex;
               align-items: center;
               gap: 5px;
-              background: #0284c7;
+              background: linear-gradient(135deg, #0284c7, #2563eb);
               color: #ffffff;
               padding: 5px 12px;
               border-radius: 6px;
               font-size: 0.75rem;
               font-weight: 800;
               letter-spacing: 0.5px;
+              box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
             ">
               <i data-lucide="check" style="width: 14px; height: 14px;"></i> ACTIVE NOW
             </span>
           ` : `
             <button type="button" class="btn-secondary" 
                     onclick="event.stopPropagation(); switchFacultyClassScope('${c.id}')"
-                    style="padding: 6px 12px; font-size: 0.78rem; font-weight: 700; color: #38bdf8; border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.06);">
+                    style="padding: 6px 12px; font-size: 0.78rem; font-weight: 700;">
               Switch Scope ⇄
             </button>
           `}

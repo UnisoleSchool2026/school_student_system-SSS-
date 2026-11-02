@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Unisole AI School Scholar Assistant: AI Academic Diagnosis, Sub-Second Telemetry & Assessment Platform (HP Board, CBSE, JEE, NEET, Olympiads).">
-  <meta name="theme-color" content="#0a0f1d">
+  <meta name="theme-color" content="#f8fafc">
   <title>Unisole AI School | Academic Diagnosis & Telemetry Platform</title>
 
   <!-- Google Fonts: Outfit & Inter -->
@@ -32,7 +32,7 @@
     #sidebarNavBackdrop {
       position: fixed !important;
       inset: 0 !important;
-      background: rgba(4, 7, 16, 0.75) !important;
+      background: rgba(15, 23, 42, 0.45) !important;
       backdrop-filter: blur(4px) !important;
       -webkit-backdrop-filter: blur(4px) !important;
       z-index: 99998 !important;
@@ -54,8 +54,8 @@
       bottom: 0 !important;
       width: 320px !important;
       max-width: 86vw !important;
-      background: #0f172a !important;
-      border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+      background: #ffffff !important;
+      border-right: 1px solid #e2e8f0 !important;
       z-index: 99999 !important;
       transform: translateX(-100%) !important;
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -63,9 +63,15 @@
       flex-direction: column !important;
       overflow-y: auto !important;
       padding: 1.25rem 1rem !important;
+      box-shadow: 12px 0 35px rgba(15, 23, 42, 0.12) !important;
+      color: #0f172a !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+    [data-theme="dark"] #sidebarNavDrawer {
+      background: #0f172a !important;
+      border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
       box-shadow: 12px 0 35px rgba(0, 0, 0, 0.6) !important;
       color: #f1f5f9 !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
     #sidebarNavDrawer.open,
     #sidebarNavDrawer.active {
@@ -76,13 +82,19 @@
       position: sticky !important;
       top: 0 !important;
       z-index: 100 !important;
-      background: #111827 !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      background: #ffffff !important;
+      border-bottom: 1px solid #e2e8f0 !important;
       padding: 0 1.25rem !important;
       height: 54px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    }
+    [data-theme="dark"] .top-navbar {
+      background: #111827 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: none !important;
     }
     .header-left {
       display: flex !important;
@@ -90,9 +102,9 @@
       gap: 14px !important;
     }
     .btn-hamburger {
-      background: transparent !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
-      color: #f1f5f9 !important;
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #1e293b !important;
       width: 36px !important;
       height: 36px !important;
       border-radius: 6px !important;
@@ -107,16 +119,25 @@
       pointer-events: auto !important;
     }
     .btn-hamburger:hover {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
+      background: #eff6ff !important;
+      border-color: #93c5fd !important;
+      color: #2563eb !important;
+    }
+    [data-theme="dark"] .btn-hamburger {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+      color: #f1f5f9 !important;
     }
     .header-main-title {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
       font-size: 1.05rem !important;
       font-weight: 700 !important;
-      color: #f8fafc !important;
+      color: #0f172a !important;
       letter-spacing: -0.01em !important;
       margin: 0 !important;
+    }
+    [data-theme="dark"] .header-main-title {
+      color: #f8fafc !important;
     }
     .header-right {
       display: flex !important;
@@ -128,17 +149,23 @@
       align-items: center !important;
       gap: 8px !important;
       padding: 6px 12px !important;
-      background: rgba(255, 255, 255, 0.04) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      background: #f8fafc !important;
+      border: 1px solid #cbd5e1 !important;
       border-radius: 6px !important;
       font-size: 0.8rem !important;
-      color: #e2e8f0 !important;
+      color: #1e293b !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
     }
     .header-faculty-chip:hover {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border-color: rgba(255, 255, 255, 0.2) !important;
+      background: #eff6ff !important;
+      border-color: #93c5fd !important;
+      color: #1d4ed8 !important;
+    }
+    [data-theme="dark"] .header-faculty-chip {
+      background: rgba(255, 255, 255, 0.04) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #e2e8f0 !important;
     }
     .faculty-indicator-dot {
       width: 8px !important;
@@ -151,10 +178,14 @@
       font-size: 0.7rem !important;
       font-weight: 700 !important;
       text-transform: uppercase !important;
-      color: #38bdf8 !important;
-      background: rgba(56, 189, 248, 0.12) !important;
+      color: #0284c7 !important;
+      background: #e0f2fe !important;
       padding: 2px 6px !important;
       border-radius: 4px !important;
+    }
+    [data-theme="dark"] .header-faculty-tag {
+      color: #38bdf8 !important;
+      background: rgba(56, 189, 248, 0.12) !important;
     }
     /* Hide cluttered horizontal banners from main view */
     #teacherSubTabs,
@@ -165,20 +196,29 @@
     }
     /* Clean workspace card */
     .teacher-scope-card {
-      background: #111827 !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
       border-radius: 8px !important;
       padding: 0.9rem 1.25rem !important;
       margin-bottom: 1.25rem !important;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    }
+    [data-theme="dark"] .teacher-scope-card {
+      background: #111827 !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
       box-shadow: none !important;
     }
     .scope-label {
-      color: #94a3b8 !important;
+      color: #64748b !important;
       font-size: 0.72rem !important;
       font-weight: 700 !important;
       text-transform: uppercase !important;
       letter-spacing: 0.05em !important;
     }
+    [data-theme="dark"] .scope-label {
+      color: #94a3b8 !important;
+    }
+  </style>
   </style>
 
   <!-- Self-contained Drawer and Tab Switching Engine (guarantees immediate responsiveness) -->
@@ -813,23 +853,23 @@
         </div>
 
         <!-- ASSESSMENT & PAPER MODE SELECTOR (Dropdown per user request) -->
-        <div class="paper-mode-selection-strip" id="paperModeSelectionStrip" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 12px; padding: 12px 18px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+        <div class="paper-mode-selection-strip" id="paperModeSelectionStrip">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; color: #38bdf8;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(2, 132, 199, 0.12); border: 1px solid rgba(2, 132, 199, 0.3); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
               <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
             </div>
             <div>
-              <label for="selectPaperModeDropdown" style="font-size: 0.74rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 2px;">
+              <label for="selectPaperModeDropdown" style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 2px;">
                 Choose Assessment &amp; Paper Type:
               </label>
-              <span style="font-size: 0.88rem; color: #f8fafc; font-weight: 700;" id="paperModeActiveLabel">
+              <span style="font-size: 0.88rem; color: var(--text-primary); font-weight: 700;" id="paperModeActiveLabel">
                 Mode 1: Create Paper &amp; Unit Tests (15–45 Min)
               </span>
             </div>
           </div>
 
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <select id="selectPaperModeDropdown" onchange="switchPaperCreationMode(this.value)" class="form-select" style="min-width: 320px; padding: 9px 14px; font-size: 0.88rem; font-weight: 700; background: #0f172a; color: #38bdf8; border: 1.5px solid rgba(56, 189, 248, 0.5); border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(56,189,248,0.2);">
+            <select id="selectPaperModeDropdown" onchange="switchPaperCreationMode(this.value)" class="form-select" style="min-width: 320px; padding: 9px 14px; font-size: 0.88rem; font-weight: 700; background: var(--bg-secondary); color: var(--text-primary); border: 1.5px solid var(--border-focus); border-radius: 8px; cursor: pointer; box-shadow: 0 0 10px rgba(37,99,235,0.12);">
               <option value="unit_test" selected>1. Create Paper / Unit Test (15–45 Min)</option>
               <option value="board_paper">2. Full Board Paper (CBSE &amp; HP Board Studio)</option>
               <option value="take_test">3. Take &amp; Conduct Test (Live Assessments)</option>
@@ -845,14 +885,14 @@
           <div class="test-creator-form-card" style="width:100%;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; gap:8px;">
               <div>
-                <h3 style="font-size:1.2rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
-                  <i data-lucide="file-plus-2" style="width:20px; height:20px; color:#38bdf8;"></i> Create New Paper for Students
+                <h3 style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="file-plus-2" style="width:20px; height:20px; color:var(--accent-blue);"></i> Create New Paper for Students
                 </h3>
-                <p style="font-size:0.82rem; color:#94a3b8; margin:3px 0 0 0;">
+                <p style="font-size:0.82rem; color:var(--text-secondary); margin:3px 0 0 0;">
                   Select class, chapter, and particular topic from the dropdown to assemble targeted assessments.
                 </p>
               </div>
-              <span class="pilot-tag" style="background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3); font-size:0.76rem; padding:4px 10px;">
+              <span class="pilot-tag" style="background:rgba(2,132,199,0.12); color:var(--accent-cyan); border-color:rgba(2,132,199,0.28); font-size:0.76rem; padding:4px 10px;">
                 Official Board &amp; NTA Schema
               </span>
             </div>
@@ -864,12 +904,12 @@
                 <div style="display:flex; flex-direction:column; gap:12px;">
                   <div class="test-form-group">
                     <label class="test-form-label">Target Class Section (Locked to Faculty Profile)</label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.35); border-radius:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:var(--bg-card-hover); border:1px solid var(--border-subtle); border-radius:8px;">
                       <div style="display:flex; align-items:center; gap:8px;">
                         <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
-                        <strong style="font-size:0.86rem; color:#f8fafc;" id="lockedTargetClassText">Class 12-A &bull; Senior Physics (48 Students)</strong>
+                        <strong style="font-size:0.86rem; color:var(--text-primary);" id="lockedTargetClassText">Class 12-A &bull; Senior Physics (48 Students)</strong>
                       </div>
-                      <button type="button" onclick="openFacultyClassSwitcherModal()" class="btn-change-scope-link" style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:4px; cursor:pointer;" title="Click to switch active teaching class in your profile">
+                      <button type="button" onclick="openFacultyClassSwitcherModal()" class="btn-change-scope-link" style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); color:var(--accent-cyan); font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:4px; cursor:pointer;" title="Click to switch active teaching class in your profile">
                         Switch in Profile ⇄
                       </button>
                     </div>
@@ -885,7 +925,7 @@
 
                   <div class="test-form-group">
                     <label class="test-form-label" for="selectPaperSubject">Academic Subject *</label>
-                    <select class="form-select" id="selectPaperSubject" onchange="window.handlePaperSubjectChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <select class="form-select" id="selectPaperSubject" onchange="window.handlePaperSubjectChange(this.value)" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="PHYSICS" selected>Physics</option>
                       <option value="CHEMISTRY">Chemistry</option>
                       <option value="MATHEMATICS">Mathematics</option>
@@ -897,16 +937,16 @@
 
                   <div class="test-form-group">
                     <label class="test-form-label" for="selectPaperChapter">Select Chapter / Unit *</label>
-                    <select class="form-select" id="selectPaperChapter" onchange="window.handlePaperChapterChange(this.value)" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <select class="form-select" id="selectPaperChapter" onchange="window.handlePaperChapterChange(this.value)" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <!-- Populated dynamically based on class and subject -->
                     </select>
                   </div>
 
                   <div class="test-form-group">
-                    <label class="test-form-label" for="selectPaperTopic" style="color:#38bdf8; font-weight:700;">
+                    <label class="test-form-label" for="selectPaperTopic" style="color:var(--accent-blue); font-weight:700;">
                       Select Particular Topic / Concept (Dropdown) *
                     </label>
-                    <select class="form-select" id="selectPaperTopic" onchange="window.handlePaperTopicChange(this.value)" style="width:100%; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56, 189, 248, 0.5); color:#38bdf8; padding:10px 12px; border-radius:8px; font-size:0.88rem; font-weight:600;">
+                    <select class="form-select" id="selectPaperTopic" onchange="window.handlePaperTopicChange(this.value)" style="width:100%; border:1.5px solid var(--border-focus); color:var(--text-primary); padding:10px 12px; border-radius:8px; font-size:0.88rem; font-weight:600;">
                       <!-- Populated dynamically: Clean dropdown of specific topics, NO LIST NOISE -->
                     </select>
                   </div>
@@ -916,12 +956,12 @@
                 <div style="display:flex; flex-direction:column; gap:12px;">
                   <div class="test-form-group">
                     <label class="test-form-label" for="inputPaperTitle">Assessment Title *</label>
-                    <input type="text" id="inputPaperTitle" class="form-input" value="Class 12-A &bull; Unit Test: Electric Charges and Fields" placeholder="e.g. Unit Test: Electric Charges and Fields" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;" required>
+                    <input type="text" id="inputPaperTitle" class="form-control" value="Class 12-A &bull; Unit Test: Electric Charges and Fields" placeholder="e.g. Unit Test: Electric Charges and Fields" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;" required>
                   </div>
 
                   <div class="test-form-group">
                     <label class="test-form-label" for="selectPaperFormat">Format &amp; Duration *</label>
-                    <select class="form-select" id="selectPaperFormat" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <select class="form-select" id="selectPaperFormat" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="QUIZ_15">⚡ 15-Min Quick Quiz (5 Qs &bull; 20 Marks)</option>
                       <option value="UNIT_45" selected>📝 45-Min Unit Test (15 Qs &bull; 45 Marks)</option>
                       <option value="TERM_90">⏳ 90-Min Mid-Term Assessment (20 Qs &bull; 60 Marks)</option>
@@ -931,7 +971,7 @@
 
                   <div class="test-form-group">
                     <label class="test-form-label" for="selectPaperDifficulty">Difficulty Standard *</label>
-                    <select class="form-select" id="selectPaperDifficulty" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <select class="form-select" id="selectPaperDifficulty" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="BOARD">CBSE / HP Board Standard (NCERT Step-by-Step)</option>
                       <option value="BALANCED" selected>Balanced Track (60% Board + 40% JEE Main)</option>
                       <option value="ADVANCED">Challenger Track (JEE Advanced / Olympiad)</option>
@@ -940,7 +980,7 @@
 
                   <div class="test-form-group">
                     <label class="test-form-label" for="selectPaperQuestionTypes">Question Type Mix *</label>
-                    <select class="form-select" id="selectPaperQuestionTypes" style="width:100%; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
+                    <select class="form-select" id="selectPaperQuestionTypes" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="MIXED" selected>Standard Balanced (MCQs + Short Answer + Derivation)</option>
                       <option value="OBJECTIVE">100% Objective (NTA Style MCQs &amp; Assertion-Reason)</option>
                       <option value="SUBJECTIVE">Subjective Derivations &amp; Numerical Problems</option>
@@ -993,17 +1033,17 @@
             <!-- BOARD TOGGLE & SUBJECT SELECTOR -->
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <!-- Board Toggle -->
-              <div style="display:inline-flex; background:rgba(15,23,42,0.8); border:1px solid var(--border-subtle); border-radius:8px; padding:3px; gap:4px;">
-                <button type="button" class="btn-paper-board-toggle active" id="btnToggleBoardCbse" onclick="changeStudioBoard('CBSE')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:#2563eb; color:#fff; transition:all 0.15s ease;">
+              <div style="display:inline-flex; background:var(--bg-card-hover); border:1px solid var(--border-subtle); border-radius:8px; padding:3px; gap:4px;">
+                <button type="button" class="btn-paper-board-toggle active" id="btnToggleBoardCbse" onclick="changeStudioBoard('CBSE')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; transition:all 0.15s ease;">
                   CBSE Board (70M / 80M)
                 </button>
-                <button type="button" class="btn-paper-board-toggle" id="btnToggleBoardHp" onclick="changeStudioBoard('HP_BOARD')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:transparent; color:#94a3b8; transition:all 0.15s ease;">
+                <button type="button" class="btn-paper-board-toggle" id="btnToggleBoardHp" onclick="changeStudioBoard('HP_BOARD')" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.15s ease;">
                   HP Board (HPBOSE) (60M / 70M)
                 </button>
               </div>
 
               <!-- Subject Scope Dropdown -->
-              <select id="selectStudioSubject" class="form-select" onchange="regenerateStudioPaper()" style="font-size:0.82rem; font-weight:700; padding:7px 12px; background:#1e293b; color:#f8fafc; border:1px solid var(--border-subtle); border-radius:8px; min-width:220px;">
+              <select id="selectStudioSubject" class="form-select" onchange="regenerateStudioPaper()" style="font-size:0.82rem; font-weight:700; padding:7px 12px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border-subtle); border-radius:8px; min-width:220px;">
                 <option value="Physics" selected>Class 12 Physics (Full Syllabus &bull; 70M/60M)</option>
                 <option value="Chemistry">Class 12 Chemistry (Full Syllabus &bull; 70M/60M)</option>
                 <option value="Mathematics">Class 12 Mathematics (Full Syllabus &bull; 80M)</option>
@@ -1618,10 +1658,10 @@
               </select>
             </div>
             <div>
-              <label for="selectQbTopic" style="font-size:0.75rem; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+              <label for="selectQbTopic" style="font-size:0.75rem; font-weight:700; color:var(--accent-blue); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
                 <i data-lucide="target" style="width:13px; height:13px; vertical-align:middle;"></i> Topic Inside Chapter
               </label>
-              <select id="selectQbTopic" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.86rem; padding:8px 12px; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56,189,248,0.5); color:#38bdf8; border-radius:8px; font-weight:600;">
+              <select id="selectQbTopic" class="form-select" onchange="filterQuestionBankCards()" style="width:100%; font-size:0.86rem; padding:8px 12px; background:var(--bg-card); color:var(--text-primary); border:1.5px solid var(--border-focus); border-radius:8px; font-weight:600;">
                 <option value="ALL">All Topics in Chapter</option>
               </select>
             </div>
@@ -3091,10 +3131,10 @@ _Unisole AI School Scholar Assistant_</div>
       <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px;">
         
         <!-- Faculty Info Card -->
-        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="background: var(--bg-card-hover); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
           <div>
             <strong style="font-size: 1.02rem; color: var(--text-primary); display: block;" id="switcherModalFacultyName">Dr. Vikram Sharma</strong>
-            <span style="font-size: 0.78rem; color: #38bdf8; font-weight: 600;" id="switcherModalFacultyDept">Senior Physics Faculty &bull; HOD</span>
+            <span style="font-size: 0.78rem; color: var(--accent-cyan); font-weight: 600;" id="switcherModalFacultyDept">Senior Physics Faculty &bull; HOD</span>
             <span style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-top: 2px;" id="switcherModalFacultyPhone">Registered Phone: 98160 10001</span>
           </div>
           <button type="button" onclick="closeFacultyClassSwitcherModal(); handleTeacherSignOut();" class="btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; color: #fb7185; border-color: rgba(251,113,133,0.3); background: rgba(251,113,133,0.08); font-weight:600;">
@@ -3105,10 +3145,10 @@ _Unisole AI School Scholar Assistant_</div>
         <!-- Class Switcher Directives -->
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-            <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
               Assigned Teaching Classes (Click to Switch Scope):
             </label>
-            <button type="button" onclick="closeFacultyClassSwitcherModal(); openCreateClassModal();" class="btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; color: #38bdf8; border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.08); font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+            <button type="button" onclick="closeFacultyClassSwitcherModal(); openCreateClassModal();" class="btn-secondary" style="padding: 5px 12px; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
               <i data-lucide="plus-circle" style="width: 13px; height: 13px;"></i> Create New Class
             </button>
           </div>
