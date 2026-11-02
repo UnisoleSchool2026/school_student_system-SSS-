@@ -856,46 +856,119 @@ function setupThemeToggle() {
 // =============================================================================
 const CURRICULUM_CHAPTER_TOPICS = {
   PHYSICS: {
-    'System of Particles & Rotational Motion': [
-      'Pure Rolling of Solid Sphere on Incline',
-      'Torque and Angular Momentum Conservation',
-      'Moment of Inertia of Symmetrical Bodies',
-      'Center of Mass of Two-Particle System',
-      'Kinetic Energy of Rolling Bodies'
+    'Chapter 1: Electric Charges and Fields': [
+      'Electric Charge & Properties (Additivity, Conservation, Quantization)',
+      'Conductors, Insulators & Methods of Charging',
+      'Coulomb\'s Law & Principle of Superposition',
+      'Electric Field & Electric Field Lines',
+      'Electric Dipole (Axial & Equatorial Fields, Torque in Uniform Field)',
+      'Electric Flux & Gauss\'s Law Applications'
     ],
-    'Current Electricity': [
-      'Drift Velocity & Microscopic Deduction of Ohm\'s Law',
-      'Kirchhoff\'s Voltage and Current Laws (Loop Analysis)',
-      'Wheatstone Bridge and Potentiometer Balancing',
-      'Temperature Dependence of Resistivity & Relaxation Time',
-      'Internal Resistance & Terminal Potential Difference'
+    'Chapter 2: Electrostatic Potential and Capacitance': [
+      'Electrostatic Potential & Potential due to Point Charge / Dipole',
+      'Equipotential Surfaces & Potential Energy of System of Charges',
+      'Electrostatics of Conductors & Dielectric Polarization',
+      'Capacitors & Capacitance of Parallel Plate Capacitor',
+      'Effect of Dielectric on Capacitance & Combination of Capacitors',
+      'Energy Stored in a Capacitor & Energy Density'
     ],
-    'Ray Optics & Optical Instruments': [
+    'Chapter 3: Current Electricity': [
+      'Electric Current, Drift Velocity and Electron Mobility',
+      'Ohm\'s Law, Resistance, Resistivity & Temperature Dependence',
+      'Electrical Energy, Power and Heating Effect',
+      'Cells, Electromotive Force (EMF), Internal Resistance & Combinations',
+      'Kirchhoff\'s Rules (Junction & Loop Rules)',
+      'Wheatstone Bridge Principle & Balancing Condition'
+    ],
+    'Chapter 4: Moving Charges and Magnetism': [
+      'Magnetic Force on Moving Charge & Lorentz Force',
+      'Biot-Savart Law & Field of Straight Wire & Circular Loop',
+      'Ampere\'s Circuital Law & Solenoid / Toroid',
+      'Force on Current-Carrying Conductor & Parallel Wires',
+      'Torque on Current Loop & Magnetic Dipole Moment',
+      'Moving Coil Galvanometer (Sensitivity & Shunt Conversion)'
+    ],
+    'Chapter 5: Magnetism and Matter': [
+      'The Bar Magnet & Magnetic Field of Equivalent Solenoid',
+      'Torque and Potential Energy of Magnetic Dipole in Uniform Field',
+      'Gauss\'s Law for Magnetism & Earth\'s Magnetic Field (Declination & Dip)',
+      'Magnetisation (M), Magnetic Intensity (H) & Susceptibility (χ)',
+      'Classification of Magnetic Materials (Diamagnetic, Paramagnetic, Ferromagnetic)',
+      'Hysteresis Loop, Permanent Magnets and Electromagnets'
+    ],
+    'Chapter 6: Electromagnetic Induction': [
+      'Magnetic Flux & Faraday\'s Laws of Induction',
+      'Lenz\'s Law and Conservation of Energy',
+      'Motional Electromotive Force (e = Bvl derivation)',
+      'Eddy Currents, Induction Heating & Damping',
+      'Self-Induction & Inductance of a Solenoid',
+      'Mutual Induction & Energy Stored in an Inductor'
+    ],
+    'Chapter 7: Alternating Current': [
+      'Alternating Current, Voltage and Peak vs RMS Values',
+      'AC Applied to Pure Resistor, Inductor & Capacitor (Phasors & Reactance)',
+      'Series LCR Circuit & Impedance Triangle',
+      'Resonance in Series LCR Circuit & Quality Factor (Q-Factor)',
+      'Power in AC Circuits & Wattless Current',
+      'LC Oscillations & AC Transformer (Step-up and Step-down)'
+    ],
+    'Chapter 8: Electromagnetic Waves': [
+      'Displacement Current & Inconsistency of Ampere\'s Law',
+      'Maxwell\'s Four Equations & EM Wave Generation',
+      'Nature, Transverse Character & Speed of EM Waves',
+      'Electromagnetic Spectrum (Radio, Micro, IR, Visible, UV, X-Ray, Gamma)',
+      'Characteristics, Frequency Ranges & Industrial / Medical Applications'
+    ],
+    'Chapter 9: Ray Optics and Optical Instruments': [
+      'Reflection by Spherical Mirrors & Mirror Formula',
+      'Refraction at Plane Surfaces, Refractive Index & Total Internal Reflection (TIR)',
       'Refraction at Spherical Surfaces & Lens Maker\'s Formula',
-      'Total Internal Reflection and Optical Fibres',
-      'Compound Microscope & Astronomical Telescope',
-      'Prism Dispersion and Angle of Minimum Deviation'
+      'Thin Lens Formula, Magnification & Power of Lens Combinations',
+      'Refraction through a Prism, Angle of Deviation & Minimum Deviation',
+      'Optical Instruments: Simple Microscope, Compound Microscope & Astronomical Telescope'
     ],
-    'Oscillations & Waves': [
-      'Damped & Driven Oscillations (Resonance & Q-Factor)',
-      'Simple Harmonic Motion Restoring Force & Phase',
-      'Doppler Effect in Acoustic Waves',
-      'Standing Waves in Open & Closed Organ Pipes'
+    'Chapter 10: Wave Optics': [
+      'Huygens\' Principle & Construction of Wavefronts',
+      'Proof of Laws of Reflection and Refraction using Wave Theory',
+      'Coherent Sources & Interference of Light',
+      'Young\'s Double Slit Experiment (YDSE) & Fringe Width Derivation',
+      'Diffraction of Light at Single Slit & Angular Width of Central Maximum',
+      'Polarisation of Light, Brewster\'s Law & Malus\'s Law'
     ],
-    'Electrostatics & Capacitance': [
-      'Gauss\'s Law Applications (Spherical & Planar Symmetries)',
-      'Electric Potential and Dipole Field Work Done',
-      'Parallel Plate Capacitor with Dielectric Slab',
-      'Energy Density in Electrostatic Field'
+    'Chapter 11: Dual Nature of Radiation and Matter': [
+      'Work Function, Electron Emission & Experimental Photoelectric Effect',
+      'Einstein\'s Photoelectric Equation (hν = Φ₀ + K_max) & Stopping Potential',
+      'Particle Nature of Light & Photon Characteristics',
+      'Wave Nature of Matter: de Broglie Wavelength (λ = h/p = h/√(2mqV))',
+      'Davisson-Germer Experiment & Wave-Particle Duality'
     ],
-    'Magnetic Effects of Current': [
-      'Biot-Savart Law and Circular Loop Magnetic Field',
-      'Ampere\'s Circuital Law Applications',
-      'Moving Coil Galvanometer Sensitivity & Conversion',
-      'Lorentz Force & Cyclotron Motion'
+    'Chapter 12: Atoms': [
+      'Alpha-Particle Scattering Experiment & Rutherford Atomic Model',
+      'Alpha-Particle Trajectory, Impact Parameter & Distance of Closest Approach',
+      'Bohr\'s Postulates and Quantized Energy Levels of Hydrogen Atom',
+      'Derivation of Radius, Velocity and Total Energy of nth Bohr Orbit',
+      'Hydrogen Emission Spectral Series (Lyman, Balmer, Paschen, Brackett, Pfund)',
+      'de Broglie\'s Wave Explanation of Bohr\'s Second Postulate'
+    ],
+    'Chapter 13: Nuclei': [
+      'Composition, Nuclear Radius (R = R₀ A^(1/3)) & Constant Nuclear Density',
+      'Mass Defect, Einstein\'s Mass-Energy Equivalence (E = mc²) & Binding Energy',
+      'Binding Energy per Nucleon Curve & Stability of Nuclei',
+      'Nuclear Forces & Characteristics (Strongest in Nature, Short-Range, Saturation)',
+      'Radioactive Decay Law (N = N₀ e^(-λt)), Half-Life (T_1/2) & Activity (Bq)',
+      'Nuclear Fission, Chain Reaction & Controlled Nuclear Fusion in Stars'
+    ],
+    'Chapter 14: Semiconductor Electronics': [
+      'Energy Bands in Solids: Conductors, Semiconductors & Insulators',
+      'Intrinsic Semiconductors & Extrinsic Semiconductors (n-type and p-type Doping)',
+      'Formation of p-n Junction, Depletion Layer & Barrier Potential',
+      'p-n Junction Diode V-I Characteristics in Forward and Reverse Bias',
+      'Diode as a Rectifier: Half-Wave and Full-Wave Rectification',
+      'Special Purpose Diodes: Zener Diode (Voltage Regulator), LED, Photodiode & Solar Cell',
+      'Junction Transistors & Digital Logic Gates (NOT, AND, OR, NAND, NOR Truth Tables)'
     ]
   },
-  CHEMISTRY: {
+    CHEMISTRY: {
     'Chemical Kinetics': [
       'Rate Law & Arrhenius Activation Energy Equation',
       'First Order Integrated Rate Law & Half-Life',
@@ -1125,11 +1198,11 @@ const FACULTY_SUBJECT_CLASSES = {
 
 const assignedTestsState = [
   {
-    id: 'test_live_rotational',
-    title: 'Class 12-A • Diagnostic Test: Rotational Dynamics & Torque',
+    id: 'test_live_charges',
+    title: 'Class 12-A • Diagnostic Test: Electric Charges & Gauss\'s Law',
     targetClass: 'Class 12-A',
     subject: 'Physics',
-    topic: 'Pure Rolling of Solid Sphere on Incline',
+    topic: 'Electric Flux & Gauss\'s Law Applications',
     duration: '45 Mins',
     submitted: '44 / 48',
     submittedCount: 44,
@@ -1140,10 +1213,10 @@ const assignedTestsState = [
   },
   {
     id: 'test_live_wheatstone',
-    title: 'Class 11-NonMed • Live Spot Quiz: Kirchhoff Laws & Loops',
-    targetClass: 'Class 11-NonMed',
+    title: 'Class 12-B • Live Spot Quiz: Kirchhoff Rules & Wheatstone Bridge',
+    targetClass: 'Class 12-B',
     subject: 'Physics',
-    topic: 'Kirchhoff Voltage and Current Laws',
+    topic: 'Kirchhoff\'s Rules & Wheatstone Bridge Balancing Condition',
     duration: '15 Mins',
     submitted: '39 / 42',
     submittedCount: 39,
@@ -1157,7 +1230,7 @@ const assignedTestsState = [
     title: 'Class 12-A • Unit Quiz: Microscopic Drift & Ohm\'s Law',
     targetClass: 'Class 12-A',
     subject: 'Physics',
-    topic: 'Drift Velocity & Microscopic Deduction of Ohm\'s Law',
+    topic: 'Electric Current, Drift Velocity and Electron Mobility',
     duration: '20 Mins',
     submitted: '48 / 48',
     submittedCount: 48,
@@ -1167,74 +1240,46 @@ const assignedTestsState = [
     statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
   },
   {
-    id: 'test_past_kinematics',
-    title: 'Class 11-NonMed • Weekly Test: Kinematics & Projectiles',
-    targetClass: 'Class 11-NonMed',
+    id: 'test_past_capacitance',
+    title: 'Class 12-A • Term Assessment: Electrostatic Potential & Capacitance',
+    targetClass: 'Class 12-A',
     subject: 'Physics',
-    topic: 'Projectile Motion & Parabolic Trajectory',
-    duration: '40 Mins',
-    submitted: '41 / 42',
-    submittedCount: 41,
-    totalCount: 42,
-    avg: '71.8%',
-    status: 'COMPLETED',
-    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
-  },
-  {
-    id: 'test_past_gauss',
-    title: 'Class 12-Med • Electrostatics & Gauss Law Review',
-    targetClass: 'Class 12-Med',
-    subject: 'Physics',
-    topic: 'Gauss Law Applications (Planar Symmetries)',
-    duration: '45 Mins',
-    submitted: '38 / 38',
-    submittedCount: 38,
-    totalCount: 38,
+    topic: 'Capacitors & Capacitance of Parallel Plate Capacitor',
+    duration: '90 Mins',
+    submitted: '47 / 48',
+    submittedCount: 47,
+    totalCount: 48,
     avg: '79.1%',
     status: 'COMPLETED',
     statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
   },
   {
-    id: 'test_past_shm',
-    title: 'Class 11-Med • Oscillations & Resonance Benchmark',
-    targetClass: 'Class 11-Med',
-    subject: 'Physics',
-    topic: 'Simple Harmonic Motion Restoring Force',
-    duration: '30 Mins',
-    submitted: '40 / 40',
-    submittedCount: 40,
-    totalCount: 40,
-    avg: '74.6%',
-    status: 'COMPLETED',
-    statusBadge: '<span class="status-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">Finalized</span>'
-  },
-  {
-    id: 'test_upcoming_optics',
-    title: 'Class 12-A • Pre-Board Mock: Ray Optics & Wave Optics',
+    id: 'test_up_optics',
+    title: 'Class 12-A • Term Exam: Ray Optics & Optical Instruments',
     targetClass: 'Class 12-A',
     subject: 'Physics',
-    topic: 'Lens Maker\'s Formula & Optical Instruments',
-    duration: '90 Mins',
+    topic: 'Refraction at Spherical Surfaces & Lens Maker\'s Formula',
+    duration: '45 Mins',
     submitted: '0 / 48',
     submittedCount: 0,
     totalCount: 48,
-    avg: '--',
-    status: 'SCHEDULED',
-    statusBadge: '<span class="status-badge" style="background:rgba(234,179,8,0.15); color:#fbbf24;">Scheduled (Tomorrow)</span>'
+    avg: '—',
+    status: 'UPCOMING',
+    statusBadge: '<span class="status-badge" style="background:rgba(251,191,36,0.15); color:#fbbf24;">Scheduled (Tomorrow)</span>'
   },
   {
-    id: 'test_upcoming_biot',
-    title: 'Class 11-NonMed • Unit Exam: Biot-Savart & Ampere Laws',
-    targetClass: 'Class 11-NonMed',
+    id: 'test_up_ac',
+    title: 'Class 12-B • Periodic Test: Alternating Current & LCR Resonance',
+    targetClass: 'Class 12-B',
     subject: 'Physics',
-    topic: 'Biot-Savart Law and Circular Loop Field',
+    topic: 'Series LCR Circuit & Resonance (Q-Factor)',
     duration: '45 Mins',
     submitted: '0 / 42',
     submittedCount: 0,
     totalCount: 42,
-    avg: '--',
-    status: 'SCHEDULED',
-    statusBadge: '<span class="status-badge" style="background:rgba(234,179,8,0.15); color:#fbbf24;">Scheduled (Friday)</span>'
+    avg: '—',
+    status: 'UPCOMING',
+    statusBadge: '<span class="status-badge" style="background:rgba(251,191,36,0.15); color:#fbbf24;">Scheduled (Friday)</span>'
   }
 ];
 
@@ -1418,10 +1463,24 @@ window.handleGenChapterChange = function(chName) {
   const topicSelect = document.getElementById('selectGenTopic');
   if (!topicSelect) return;
   const chapters = CURRICULUM_CHAPTER_TOPICS[subjKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
-  const topics = chapters[chName] || ['Standard Conceptual & Numerical Problems'];
+  let topics = chapters[chName];
+  if (!topics) {
+    const cleanCh = (chName || '').toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+    for (const [k, v] of Object.entries(chapters)) {
+      const cleanK = k.toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+      if (cleanK === cleanCh || cleanK.includes(cleanCh) || cleanCh.includes(cleanK)) {
+        topics = v;
+        break;
+      }
+    }
+  }
+  if (!topics) topics = ['Standard Conceptual & Numerical Problems'];
   topicSelect.innerHTML = topics.map((t, idx) =>
     `<option value="${escapeHtml(t)}" ${idx === 0 ? 'selected' : ''}>🎯 ${escapeHtml(t)}</option>`
   ).join('');
+  if (topics.length > 0) {
+    window.handleGenTopicChange(topics[0]);
+  }
 };
 
 window.handleGenTopicChange = function(tName) {
@@ -1450,7 +1509,18 @@ window.populatePaperTopics = function(subjectKey, chapterName) {
   const topicSelect = document.getElementById('selectPaperTopic');
   if (!topicSelect) return;
   const chapters = CURRICULUM_CHAPTER_TOPICS[subjectKey] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
-  const topics = chapters[chapterName] || ['Standard Conceptual & Numerical Problems'];
+  let topics = chapters[chapterName];
+  if (!topics) {
+    const cleanCh = (chapterName || '').toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+    for (const [k, v] of Object.entries(chapters)) {
+      const cleanK = k.toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+      if (cleanK === cleanCh || cleanK.includes(cleanCh) || cleanCh.includes(cleanK)) {
+        topics = v;
+        break;
+      }
+    }
+  }
+  if (!topics) topics = ['Standard Conceptual & Numerical Problems'];
 
   topicSelect.innerHTML = topics.map((t, idx) => 
     `<option value="${escapeHtml(t)}" ${idx === 0 ? 'selected' : ''}>🎯 ${escapeHtml(t)}</option>`
@@ -1543,129 +1613,508 @@ window.createTeacherPaper = function(event) {
 // =============================================================================
 // AUTHENTIC EXAM GENERATOR (15 QUESTIONS FOR 45-MIN EXAM, FULL BLUEPRINT)
 // =============================================================================
+const CLASS12_PHYSICS_EXAM_BANK = {
+  1: {
+    name: 'Electric Charges and Fields',
+    mcqs: [
+      { question: 'Two point charges +3 μC and +8 μC repel each other with a force of 40 N. If a charge of -5 μC is added to each of them, the force between them will be:', options: ['(A) -10 N (attractive)', '(B) +10 N (repulsive)', '(C) -20 N (attractive)', '(D) +20 N (repulsive)'], ans: '(A) -10 N (attractive)' },
+      { question: 'An electric dipole of moment p is placed in a uniform electric field E. The torque τ acting on it and its potential energy U when aligned antiparallel (θ = 180°) are:', options: ['(A) τ = 0, U = +pE (unstable equilibrium)', '(B) τ = pE, U = 0', '(C) τ = 0, U = -pE (stable equilibrium)', '(D) τ = pE, U = -pE'], ans: '(A) τ = 0, U = +pE (unstable equilibrium)' },
+      { question: 'Total electric flux emerging through a closed cubical Gaussian surface enclosing an electric dipole of moment p is:', options: ['(A) Zero (net enclosed charge is 0)', '(B) p / (ε₀ a)', '(C) 2p / ε₀', '(D) p / (6ε₀ a²)'], ans: '(A) Zero (net enclosed charge is 0)' },
+      { question: 'The electric field intensity at distance r from an infinitely long straight wire of uniform linear charge density λ varies as:', options: ['(A) E ∝ 1/r', '(B) E ∝ 1/r²', '(C) E ∝ r', '(D) E is independent of r'], ans: '(A) E ∝ 1/r' },
+      { question: 'A point charge q is placed at the center of an imaginary spherical Gaussian surface. If the radius of the sphere is doubled, the outward electric flux through the surface will:', options: ['(A) Remain unchanged (depends only on enclosed charge)', '(B) Be halved', '(C) Be doubled', '(D) Become four times'], ans: '(A) Remain unchanged (depends only on enclosed charge)' }
+    ],
+    shorts: [
+      'Define electric dipole moment (p). State its SI unit and vector direction from negative to positive charge.',
+      'State Gauss\'s law in electrostatics in mathematical integral form and state the physical condition under which net electric flux is zero.',
+      'Why do two electrostatic field lines never cross each other? Explain in terms of the uniqueness of the field vector at any point.',
+      'Sketch electric field lines for: (i) two equal positive charges separated by small distance, and (ii) an isolated negative point charge.',
+      'State the principle of superposition of electrostatic forces. Express the net Coulomb force vector on a charge q₁ due to n discrete stationary charges.'
+    ],
+    longs: [
+      '(a) Derive an expression for the electric field intensity E at an axial point at distance r from the center of an electric dipole of length 2a. (b) What is the limiting value of E when r >> a?',
+      '(a) Derive the expression for electric field intensity on the equatorial line of a dipole. (b) Hence prove that for a short dipole, E_axial = 2 E_equatorial.',
+      'State Gauss\'s law. Apply it to derive the expression for electric field intensity at a distance r from an infinitely long straight conductor with uniform linear charge density λ. Draw the E vs r graph.',
+      'Using Gauss\'s law, derive the expression for electric field intensity due to a uniformly charged infinite thin plane sheet of surface charge density σ. Explain why the field is independent of distance.',
+      'Two point charges q₁ = +4 μC and q₂ = +1 μC are placed 30 cm apart in vacuum. (a) Locate the neutral point on the line joining them where net electric field is zero. (b) Calculate the total electrostatic potential energy of the system.'
+    ]
+  },
+  2: {
+    name: 'Electrostatic Potential and Capacitance',
+    mcqs: [
+      { question: 'The work done in moving a charge of 5 μC between two points on an equipotential surface separated by 10 cm is:', options: ['(A) Zero (potential difference ΔV = 0)', '(B) 0.5 J', '(C) 50 J', '(D) Dependent on path taken'], ans: '(A) Zero (potential difference ΔV = 0)' },
+      { question: 'A parallel plate capacitor is charged and then disconnected from the battery. A dielectric slab of constant K is inserted between the plates. The stored potential energy will:', options: ['(A) Decrease by a factor of K', '(B) Increase by a factor of K', '(C) Remain unchanged', '(D) Become zero'], ans: '(A) Decrease by a factor of K' },
+      { question: 'An electric charge Q is placed at the center of a conducting spherical shell of inner radius R₁ and outer radius R₂. The electric field inside the conducting shell material is:', options: ['(A) Zero everywhere inside conductor', '(B) Q / (4πε₀ R₁²)', '(C) Q / (4πε₀ R₂²)', '(D) Uniform throughout'], ans: '(A) Zero everywhere inside conductor' },
+      { question: 'Three identical capacitors each of capacitance C are connected first in series and then in parallel. The ratio of equivalent capacitance C_series / C_parallel is:', options: ['(A) 1 : 9', '(B) 1 : 3', '(C) 9 : 1', '(D) 3 : 1'], ans: '(A) 1 : 9' },
+      { question: 'The electrostatic energy density u_E stored in an electric field E in vacuum is given by:', options: ['(A) (1/2) ε₀ E²', '(B) (1/2) ε₀ E', '(C) ε₀ E²', '(D) (1/2) E² / ε₀'], ans: '(A) (1/2) ε₀ E²' }
+    ],
+    shorts: [
+      'Define an equipotential surface. State two characteristic properties of equipotential surfaces.',
+      'Establish the differential relation between electric field intensity E and electrostatic potential V (E = -dV/dr). Explain the physical meaning of the negative sign.',
+      'What is electrostatic shielding? Mention one important practical application in electronic equipment.',
+      'Explain why the electrostatic field must be normal to the surface of a charged conductor at every point on the surface.',
+      'A parallel plate capacitor of capacitance C has charge Q. Derive the expression for energy stored in terms of Q and C.'
+    ],
+    longs: [
+      'Derive an expression for the electrostatic potential V at distance r from a point charge Q. Draw graphs showing variation of V and E with r.',
+      'Derive the expression for the electrostatic potential at an arbitrary point (r, θ) due to a short electric dipole of dipole moment p.',
+      '(a) Derive the formula for capacitance of a parallel plate capacitor with plate area A and separation d. (b) Deduce the capacitance when a dielectric slab of thickness t < d and dielectric constant K is introduced.',
+      '(a) Derive the expression for energy stored in a charged parallel plate capacitor U = (1/2) C V². (b) Hence deduce the formula for electrostatic energy density u_E = (1/2) ε₀ E².',
+      'A 900 pF capacitor is charged by a 100 V battery. It is then disconnected from the battery and connected to another uncharged 900 pF capacitor. (a) What is the common electrostatic potential? (b) How much electrostatic energy is dissipated during sharing of charge?'
+    ]
+  },
+  3: {
+    name: 'Current Electricity',
+    mcqs: [
+      { question: 'The drift speed of conduction electrons in a copper wire carrying a typical direct current is of the order of:', options: ['(A) 10⁻⁴ m/s (fraction of a mm/s)', '(B) 10⁶ m/s', '(C) 3 × 10⁸ m/s', '(D) 10² m/s'], ans: '(A) 10⁻⁴ m/s (fraction of a mm/s)' },
+      { question: 'Kirchhoff\'s Junction Rule (Σ I = 0) at an electrical network node is a direct consequence of conservation of:', options: ['(A) Electric Charge', '(B) Energy', '(C) Momentum', '(D) Angular Momentum'], ans: '(A) Electric Charge' },
+      { question: 'When the temperature of a metallic conductor increases, its electrical resistivity increases primarily because:', options: ['(A) Relaxation time τ decreases due to more frequent collisions', '(B) Electron number density n decreases', '(C) Electron mass increases', '(D) Mean free path increases'], ans: '(A) Relaxation time τ decreases due to more frequent collisions' },
+      { question: 'In a Wheatstone bridge with four resistance arms P, Q, R, S, the galvanometer shows null deflection when:', options: ['(A) P/Q = R/S', '(B) P·Q = R·S', '(C) P + Q = R + S', '(D) P - Q = R - S'], ans: '(A) P/Q = R/S' },
+      { question: 'A cell of EMF E and internal resistance r is connected across external resistance R. Terminal voltage V equals:', options: ['(A) E - I r', '(B) E + I r', '(C) E / (1 + r)', '(D) I r'], ans: '(A) E - I r' }
+    ],
+    shorts: [
+      'Define drift velocity (v_d) and relaxation time (τ). State the mathematical relation between them in an electric field E.',
+      'State Ohm\'s law in microscopic vector form (J = σE) and define electrical conductivity σ in terms of relaxation time.',
+      'Define mobility (μ) of a charge carrier. State its SI unit and relation with drift velocity.',
+      'Why does the resistivity of a semiconductor (like Silicon or Germanium) decrease rapidly with an increase in temperature?',
+      'State Kirchhoff\'s Loop Rule and justify which fundamental conservation law it embodies.'
+    ],
+    longs: [
+      '(a) Derive the microscopic relation between electric current I and drift velocity v_d: I = n e A v_d. (b) Hence deduce Ohm\'s law and obtain formula for resistivity ρ = m / (n e² τ).',
+      'State Kirchhoff\'s laws. Use them to derive the balancing condition P/Q = R/S for a Wheatstone bridge circuit using mesh/loop analysis.',
+      '(a) Two cells of EMFs E₁, E₂ and internal resistances r₁, r₂ are connected in parallel. Derive expressions for equivalent EMF E_eq and equivalent internal resistance r_eq. (b) What happens when identical cells are combined?',
+      'Explain the temperature dependence of resistance: define temperature coefficient of resistance α and contrast the graphs of ρ vs T for Copper (conductor), Nichrome (alloy), and Silicon (semiconductor).',
+      'A storage battery of EMF 8.0 V and internal resistance 0.5 Ω is being charged by a 120 V DC supply using a series resistor of 15.5 Ω. (a) What is the terminal voltage of the battery during charging? (b) What is the purpose of having a series resistor in the charging circuit?'
+    ]
+  },
+  4: {
+    name: 'Moving Charges and Magnetism',
+    mcqs: [
+      { question: 'A proton enters a uniform magnetic field B with velocity v perpendicular to the field lines. The kinetic energy of the proton in the field will:', options: ['(A) Remain constant (magnetic force does zero work)', '(B) Increase linearly with time', '(C) Decrease to zero', '(D) Oscillate sinusoidally'], ans: '(A) Remain constant (magnetic force does zero work)' },
+      { question: 'The magnetic field B at the center of a circular coil of radius R carrying current I is given by:', options: ['(A) μ₀ I / (2R)', '(B) μ₀ I / (4πR)', '(C) μ₀ I / (2πR)', '(D) μ₀ I / R'], ans: '(A) μ₀ I / (2R)' },
+      { question: 'Two parallel long straight conductors carrying currents in the same direction:', options: ['(A) Attract each other', '(B) Repel each other', '(C) Exert no mutual force', '(D) Rotate perpendicular to each other'], ans: '(A) Attract each other' },
+      { question: 'To convert a moving coil galvanometer into an ammeter of desired range, one must connect:', options: ['(A) A small resistance (shunt) in parallel', '(B) A large resistance in series', '(C) A small resistance in series', '(D) A large resistance in parallel'], ans: '(A) A small resistance (shunt) in parallel' },
+      { question: 'The torque τ acting on a planar current loop of area A carrying current I placed in a uniform magnetic field B is:', options: ['(A) τ = M × B (where M = NIA)', '(B) τ = M · B', '(C) τ = B / M', '(D) τ = M × v'], ans: '(A) τ = M × B (where M = NIA)' }
+    ],
+    shorts: [
+      'State Biot-Savart law in vector form and identify the angle between the current element and position vector.',
+      'Write the expression for Lorentz magnetic force acting on a charge q moving with velocity v in magnetic field B. When is this force maximum and when is it zero?',
+      'State Ampere\'s Circuital Law in mathematical line integral form and state its symmetry requirements.',
+      'Why does the magnetic force on a moving charge do zero work, and why can it not alter the kinetic energy of the charge?',
+      'Define current sensitivity and voltage sensitivity of a Moving Coil Galvanometer. State their SI units.'
+    ],
+    longs: [
+      'Apply Biot-Savart law to derive an expression for the magnetic field at an axial point at distance x from the center of a circular current loop of radius R. Hence deduce field at the center.',
+      'State Ampere\'s Circuital Law. Use it to derive the magnetic field intensity inside a long straight solenoid of n turns per unit length carrying current I.',
+      '(a) Derive the expression for the magnetic force per unit length between two long straight parallel conductors carrying steady currents I₁ and I₂ separated by distance d. (b) Hence define the standard SI unit \'Ampere\'.',
+      '(a) Explain the principle, construction and working of a Moving Coil Galvanometer with neat labelled diagram. (b) Explain why a radial magnetic field with soft iron core is employed.',
+      'A galvanometer of coil resistance 15 Ω gives full-scale deflection for a current of 4 mA. Explain how it can be converted into: (a) an ammeter of range 0 to 6 A, and (b) a voltmeter of range 0 to 18 V. Calculate required resistor values.'
+    ]
+  },
+  5: {
+    name: 'Magnetism and Matter',
+    mcqs: [
+      { question: 'Gauss\'s Law for Magnetism (∮ B · dA = 0) physically implies that:', options: ['(A) Isolated magnetic monopoles do not exist', '(B) Magnetic field lines are discontinuous', '(C) Magnetic poles cannot be separated', '(D) Earth has no magnetic field'], ans: '(A) Isolated magnetic monopoles do not exist' },
+      { question: 'The magnetic susceptibility χ of a diamagnetic substance is:', options: ['(A) Small and negative', '(B) Small and positive', '(C) Very large and positive', '(D) Strongly temperature dependent'], ans: '(A) Small and negative' },
+      { question: 'At the magnetic equator of the Earth, the angle of dip (magnetic inclination) is:', options: ['(A) 0°', '(B) 90°', '(C) 45°', '(D) 180°'], ans: '(A) 0°' },
+      { question: 'According to Curie\'s Law, the magnetic susceptibility of a paramagnetic substance varies with absolute temperature T as:', options: ['(A) χ ∝ 1/T', '(B) χ ∝ T', '(C) χ ∝ T²', '(D) χ is independent of T'], ans: '(A) χ ∝ 1/T' },
+      { question: 'The material best suited for making permanent magnets must possess:', options: ['(A) High retentivity and high coercivity', '(B) High retentivity and low coercivity', '(C) Low retentivity and high coercivity', '(D) Low retentivity and low coercivity'], ans: '(A) High retentivity and high coercivity' }
+    ],
+    shorts: [
+      'State Gauss\'s law for magnetism and explain what it reveals about magnetic monopoles.',
+      'Define magnetic declination and magnetic dip (inclination) at a place on Earth\'s surface.',
+      'Define magnetic susceptibility (χ) and relative permeability (μ_r). State the relation connecting them.',
+      'Why is soft iron preferred over steel for making cores of transformers and electromagnets?',
+      'State Curie\'s law for paramagnetic substances. What happens to a ferromagnetic material above its Curie temperature?'
+    ],
+    longs: [
+      '(a) Show that a current-carrying solenoid produces an axial magnetic field identical to that of a bar magnet of dipole moment M. (b) Deduce M = N I A.',
+      '(a) Derive an expression for the torque τ acting on a magnetic dipole of dipole moment M placed in a uniform magnetic field B. (b) Find the work done in rotating the dipole from orientation θ₁ to θ₂.',
+      'Compare Diamagnetic, Paramagnetic, and Ferromagnetic materials with respect to: (i) behavior in non-uniform magnetic field, (ii) magnetic susceptibility χ, (iii) relative permeability μ_r, and (iv) effect of temperature.',
+      'Draw the magnetic hysteresis (B-H) loop for a ferromagnetic material. Define: (i) Retentivity / Remanence, (ii) Coercivity, and (iii) Hysteresis energy loss. Explain its significance in transformer core selection.',
+      'The horizontal component of Earth\'s magnetic field at a location is 0.35 G and the angle of dip is 60°. (a) Calculate the total magnetic field of the Earth at that place. (b) What will be the vertical component of the magnetic field?'
+    ]
+  },
+  6: {
+    name: 'Electromagnetic Induction',
+    mcqs: [
+      { question: 'Lenz\'s law for electromagnetic induction is a direct consequence of the law of conservation of:', options: ['(A) Energy', '(B) Charge', '(C) Momentum', '(D) Angular momentum'], ans: '(A) Energy' },
+      { question: 'A conducting rod of length l moves with uniform velocity v perpendicular to a uniform magnetic field B. The motional EMF induced across its ends is:', options: ['(A) B v l', '(B) (1/2) B v l', '(C) B v² l', '(D) B v / l'], ans: '(A) B v l' },
+      { question: 'The SI unit of self-inductance and mutual inductance is Henry (H), which is equivalent to:', options: ['(A) Volt · second / Ampere (V·s/A)', '(B) Volt / (Ampere · second)', '(C) Ampere · second / Volt', '(D) Joule / Ampere'], ans: '(A) Volt · second / Ampere (V·s/A)' },
+      { question: 'If the number of turns per unit length in a long solenoid is doubled while keeping its length and radius unchanged, its self-inductance becomes:', options: ['(A) 4 times (L ∝ n²)', '(B) 2 times', '(C) 8 times', '(D) Unchanged'], ans: '(A) 4 times (L ∝ n²)' },
+      { question: 'Eddy currents are produced in a metal block when it is:', options: ['(A) Placed in a time-varying magnetic field', '(B) Placed in a steady uniform magnetic field', '(C) Placed in a constant electric field', '(D) Cooled to absolute zero'], ans: '(A) Placed in a time-varying magnetic field' }
+    ],
+    shorts: [
+      'State Faraday\'s laws of electromagnetic induction in both descriptive and mathematical forms.',
+      'State Lenz\'s law. Explain briefly how it conforms with the principle of conservation of energy.',
+      'What are Eddy currents? Mention two advantageous applications where eddy currents are deliberately utilized.',
+      'Define self-inductance (L) of a coil. What physical property does self-inductance represent in an electrical circuit?',
+      'Why is a spark observed when an inductive circuit carrying heavy DC current is suddenly broken?'
+    ],
+    longs: [
+      'Derive an expression for the motional EMF induced across the ends of a straight conducting rod of length l moving with uniform velocity v perpendicular to a uniform magnetic field B using Lorentz force analysis.',
+      'Derive an expression for the self-inductance L of a long air-cored solenoid of length l, cross-sectional area A and total turns N. What is the effect of inserting a soft iron core of relative permeability μ_r?',
+      '(a) Define mutual inductance between two co-axial solenoids. (b) Derive the expression for mutual inductance M₁₂ of two concentric long co-axial solenoids of equal length l and radii r₁ and r₂ (r₁ < r₂).',
+      '(a) Derive the expression for magnetic potential energy U stored in a current-carrying inductor of self-inductance L carrying steady current I: U = (1/2) L I². (b) Hence deduce magnetic energy density u_B = B² / (2μ₀).',
+      'A rectangular coil of N turns and area A is rotated with constant angular velocity ω in a uniform transverse magnetic field B. (a) Derive expression for instantaneous induced EMF e = e₀ sin ωt. (b) Explain working of an AC generator with input/output waveforms.'
+    ]
+  },
+  7: {
+    name: 'Alternating Current',
+    mcqs: [
+      { question: 'The root-mean-square (RMS) value of a sinusoidal alternating voltage V = V₀ sin(ωt) is:', options: ['(A) V₀ / √2 ≈ 0.707 V₀', '(B) 2 V₀ / π', '(C) V₀ / 2', '(D) √2 V₀'], ans: '(A) V₀ / √2 ≈ 0.707 V₀' },
+      { question: 'In a purely inductive AC circuit, the alternating current lags behind the applied alternating voltage by a phase angle of:', options: ['(A) π/2 radians (90°)', '(B) π radians (180°)', '(C) 0 radians', '(D) π/4 radians (45°)'], ans: '(A) π/2 radians (90°)' },
+      { question: 'In a series LCR resonant circuit, the electrical impedance Z at resonance frequency ω_r is:', options: ['(A) Minimum and purely resistive (Z = R)', '(B) Maximum and purely inductive', '(C) Zero', '(D) Infinite'], ans: '(A) Minimum and purely resistive (Z = R)' },
+      { question: 'The power factor of an AC circuit undergoing series resonance is:', options: ['(A) 1.0 (Unity, cos φ = 1)', '(B) 0.0', '(C) 0.5', '(D) -1.0'], ans: '(A) 1.0 (Unity, cos φ = 1)' },
+      { question: 'In an ideal step-up transformer, the output secondary coil has:', options: ['(A) Higher voltage and lower current than primary', '(B) Higher voltage and higher current', '(C) Lower voltage and higher current', '(D) Higher power output than input power'], ans: '(A) Higher voltage and lower current than primary' }
+    ],
+    shorts: [
+      'Define root-mean-square (RMS) value of alternating current. Why cannot standard moving-coil DC meters measure AC?',
+      'What is meant by wattless current? Under what circuit conditions does wattless current occur?',
+      'Define inductive reactance (X_L) and capacitive reactance (X_C). Sketch their variations with AC frequency f.',
+      'State the condition for electrical resonance in a series LCR circuit and write the formula for resonant angular frequency ω_r.',
+      'Define Quality Factor (Q-factor) of a resonant series LCR circuit and explain its role in receiver tuning sharpness.'
+    ],
+    longs: [
+      'An alternating EMF V = V₀ sin ωt is applied to a series LCR circuit. Using a phasor diagram, derive expressions for: (i) impedance Z, (ii) phase angle φ between voltage and current, and (iii) current amplitude I₀.',
+      '(a) Derive the condition for resonance in a series LCR circuit and obtain the expression for resonant frequency f_r. (b) Derive formula for sharpness of resonance (Q-factor = ω_r L / R).',
+      '(a) Derive the expression for average power dissipated in an AC circuit: P_avg = V_rms I_rms cos φ. (b) Explain why a pure inductor and pure capacitor consume zero net power over a full cycle.',
+      '(a) Explain the principle, construction and working of an AC transformer with neat diagram. (b) Derive the transformation ratio relation V_s / V_p = N_s / N_p = I_p / I_s. (c) Enumerate four energy loss mechanisms in a real transformer.',
+      'A series LCR circuit with R = 20 Ω, L = 1.5 H and C = 35 μF is connected to a variable-frequency 220 V AC supply. (a) Determine the resonant angular frequency ω_r. (b) Calculate the impedance and current amplitude at resonance. (c) Calculate the Q-factor.'
+    ]
+  },
+  8: {
+    name: 'Electromagnetic Waves',
+    mcqs: [
+      { question: 'The concept of displacement current (I_d = ε₀ dΦ_E/dt) was introduced by Maxwell to resolve an inconsistency in:', options: ['(A) Ampere\'s Circuital Law', '(B) Faraday\'s Law', '(C) Gauss\'s Law for Magnetism', '(D) Coulomb\'s Law'], ans: '(A) Ampere\'s Circuital Law' },
+      { question: 'The speed of electromagnetic waves in free space is given by the relation:', options: ['(A) c = 1 / √(μ₀ ε₀)', '(B) c = √(μ₀ / ε₀)', '(C) c = √(ε₀ / μ₀)', '(D) c = μ₀ ε₀'], ans: '(A) c = 1 / √(μ₀ ε₀)' },
+      { question: 'Electromagnetic waves are transverse in nature. This fundamental property is conclusively established by:', options: ['(A) Polarisation', '(B) Interference', '(C) Diffraction', '(D) Refraction'], ans: '(A) Polarisation' },
+      { question: 'Which electromagnetic radiation has the highest frequency and shortest wavelength in the electromagnetic spectrum?', options: ['(A) Gamma rays', '(B) X-rays', '(C) Ultraviolet rays', '(D) Radio waves'], ans: '(A) Gamma rays' },
+      { question: 'The electromagnetic radiation widely used in RADAR systems for aircraft navigation and speed detection is:', options: ['(A) Microwaves', '(B) Infrared rays', '(C) Ultraviolet rays', '(D) Radio waves'], ans: '(A) Microwaves' }
+    ],
+    shorts: [
+      'What was the inconsistency in Ampere\'s Circuital Law pointed out by James Clerk Maxwell during capacitor charging?',
+      'Define displacement current (I_d) and write Maxwell\'s modified Ampere-Maxwell law.',
+      'Write Maxwell\'s four equations of electromagnetism in integral form.',
+      'State two crucial characteristics of electromagnetic waves relating their electric (E) and magnetic (B) field vectors.',
+      'Name the electromagnetic radiation used in: (i) water purification (sterilization), (ii) night-vision photography, and (iii) cellular telecommunications.'
+    ],
+    longs: [
+      '(a) Explain the necessity of introducing the concept of displacement current during the charging of a parallel plate capacitor. (b) Prove that conduction current I_c in wires equals displacement current I_d between capacitor plates.',
+      'State Maxwell\'s four equations in integral form and explain the fundamental physical law underlying each equation.',
+      '(a) Describe the key physical properties of electromagnetic waves (velocity, transverse nature, ratio E₀/B₀ = c, energy sharing u_E = u_B). (b) Explain how EM waves transport energy and linear momentum.',
+      'Arrange the seven regions of the electromagnetic spectrum in order of increasing frequency. For any three regions, specify their wavelength range, method of production, and two important practical applications.',
+      'In a plane electromagnetic wave of frequency 25 MHz traveling along the +x direction in vacuum, the electric field amplitude at a given point is E₀ = 6.3 V/m along the +y axis. (a) Determine the magnetic field amplitude B₀. (b) Find the wavelength λ and wave vector k. (c) Write the vector equations for E and B.'
+    ]
+  },
+  9: {
+    name: 'Ray Optics and Optical Instruments',
+    mcqs: [
+      { question: 'The relation connecting the critical angle C for total internal reflection and the refractive index μ of a medium is:', options: ['(A) sin C = 1 / μ', '(B) cos C = 1 / μ', '(C) tan C = μ', '(D) sin C = μ'], ans: '(A) sin C = 1 / μ' },
+      { question: 'When a convex lens of refractive index 1.5 is immersed in a liquid of refractive index 1.5, its focal length becomes:', options: ['(A) Infinite (behaves as a plane glass plate)', '(B) Zero', '(C) Halved', '(D) Unchanged'], ans: '(A) Infinite (behaves as a plane glass plate)' },
+      { question: 'Two thin lenses of focal lengths +20 cm and -40 cm are placed in co-axial contact. The optical power of the combination is:', options: ['(A) +2.5 Dioptres', '(B) -2.5 Dioptres', '(C) +5.0 Dioptres', '(D) +7.5 Dioptres'], ans: '(A) +2.5 Dioptres' },
+      { question: 'For a ray passing symmetrically through an equilateral glass prism in minimum deviation, the angle of incidence i is related to prism angle A and minimum deviation D_m by:', options: ['(A) i = (A + D_m) / 2', '(B) i = A + D_m', '(C) i = (A - D_m) / 2', '(D) i = D_m / 2'], ans: '(A) i = (A + D_m) / 2' },
+      { question: 'The magnifying power of an astronomical telescope in normal adjustment (image at infinity) is given by:', options: ['(A) m = - f_o / f_e', '(B) m = - f_e / f_o', '(C) m = f_o + f_e', '(D) m = - (f_o / f_e)(1 + f_e/D)'], ans: '(A) m = - f_o / f_e' }
+    ],
+    shorts: [
+      'State the laws of refraction and express Snell\'s law in terms of absolute refractive indices of media.',
+      'State the two essential conditions required for total internal reflection (TIR) to occur at an interface.',
+      'Define the optical power of a lens and state its SI unit. What does a power of -2.0 D indicate about lens nature?',
+      'Why does the sun appear slightly reddish at sunrise and sunset while sky appears blue at midday? Explain using Rayleigh scattering.',
+      'Draw a ray diagram showing refraction through an equilateral triangular glass prism at the angle of minimum deviation.'
+    ],
+    longs: [
+      'Derive the Lens Maker\'s Formula: 1/f = (μ - 1)(1/R₁ - 1/R₂) for a thin double convex lens by analyzing refraction at two spherical surfaces.',
+      'Derive the prism formula relating the refractive index μ of prism material to the prism angle A and angle of minimum deviation D_m: μ = sin((A + D_m)/2) / sin(A/2).',
+      '(a) Draw a neat labelled ray diagram of a Compound Microscope with final image formed at near point (least distance of distinct vision D = 25 cm). (b) Derive the expression for its total magnifying power.',
+      '(a) Draw a neat labelled ray diagram of an Astronomical Refracting Telescope in normal adjustment (final image at infinity). (b) Derive the formula for its magnifying power and state its tube length L = f_o + f_e.',
+      'A convex lens of focal length 20 cm is placed co-axially in contact with a concave lens of focal length 10 cm. (a) Determine the focal length and optical power of the combination. (b) An object of height 3 cm is placed 30 cm in front of the combination; find the position, nature, and size of the image.'
+    ]
+  },
+  10: {
+    name: 'Wave Optics',
+    mcqs: [
+      { question: 'The wavefront originating from an isolated point source of light at a finite distance in an isotropic medium is:', options: ['(A) Spherical', '(B) Plane', '(C) Cylindrical', '(D) Parabolic'], ans: '(A) Spherical' },
+      { question: 'In Young\'s Double Slit Experiment, the fringe width β is directly proportional to:', options: ['(A) Wavelength λ and screen distance D, and inversely to slit separation d', '(B) Slit separation d', '(C) 1/λ', '(D) 1/D'], ans: '(A) Wavelength λ and screen distance D, and inversely to slit separation d' },
+      { question: 'If the entire Young\'s double slit experimental apparatus is immersed in water (μ = 4/3), the fringe width will:', options: ['(A) Decrease to 3/4 of its original value', '(B) Increase by 4/3 times', '(C) Remain unchanged', '(D) Disappear completely'], ans: '(A) Decrease to 3/4 of its original value' },
+      { question: 'In Fraunhofer single slit diffraction of slit width a, the angular width of the central diffraction maximum is:', options: ['(A) 2λ / a', '(B) λ / a', '(C) λ / (2a)', '(D) a / (2λ)'], ans: '(A) 2λ / a' },
+      { question: 'According to Brewster\'s Law, when unpolarized light is reflected from a transparent medium at polarizing angle i_p:', options: ['(A) The reflected ray and refracted ray are mutually perpendicular (i_p + r = 90°)', '(B) All light is absorbed', '(C) Refraction ceases', '(D) Reflected light is unpolarized'], ans: '(A) The reflected ray and refracted ray are mutually perpendicular (i_p + r = 90°)' }
+    ],
+    shorts: [
+      'Define wavefront. What is the geometrical shape of a wavefront corresponding to parallel rays from a distant star?',
+      'State Huygens\' Principle of secondary wavelets for the propagation of light waves.',
+      'State two indispensable conditions for producing sustained, clear interference fringes with light.',
+      'What happens to the interference fringes in YDSE if the monochromatic source is replaced by a white light source?',
+      'Distinguish between the physical phenomena of Interference of light and Diffraction of light with two key points.'
+    ],
+    longs: [
+      'State Huygens\' Principle. Using it, construct wavefronts and prove the Law of Reflection (angle of incidence = angle of reflection) at a plane reflecting surface.',
+      'State Huygens\' Principle. Using secondary wavelets construction, prove Snell\'s Law of Refraction (sin i / sin r = μ₂/μ₁) at a plane interface.',
+      'In Young\'s Double Slit Experiment, derive the mathematical conditions for constructive and destructive interference. Hence obtain the formula for fringe width β = λ D / d.',
+      '(a) Explain the phenomenon of Fraunhofer diffraction at a single slit of width a. (b) Derive the conditions for secondary minima (a sin θ = nλ) and maxima. (c) Deduce the linear and angular width of the central maximum.',
+      '(a) State Brewster\'s Law of polarisation by reflection. (b) Prove that when light is incident at the polarizing angle i_p, the reflected and refracted rays are at right angles to each other. (c) Calculate the Brewster angle for glass of refractive index 1.5.'
+    ]
+  },
+  11: {
+    name: 'Dual Nature of Radiation and Matter',
+    mcqs: [
+      { question: 'The slope of the graph of stopping potential V₀ versus incident light frequency ν for a photosensitive metal equals:', options: ['(A) h / e (universal constant)', '(B) h · e', '(C) e / h', '(D) Work function Φ₀'], ans: '(A) h / e (universal constant)' },
+      { question: 'In photoelectric emission, the maximum kinetic energy of emitted photoelectrons depends solely on:', options: ['(A) Frequency of incident radiation and work function of emitter', '(B) Intensity of incident radiation', '(C) Distance of source from metal', '(D) Exposure time'], ans: '(A) Frequency of incident radiation and work function of emitter' },
+      { question: 'The de Broglie wavelength λ of an electron accelerated from rest across a potential difference of V volts is:', options: ['(A) 1.227 / √V nm', '(B) 12.27 / √V nm', '(C) 0.1227 / √V nm', '(D) 1.227 · √V nm'], ans: '(A) 1.227 / √V nm' },
+      { question: 'A proton and an alpha particle are accelerated across the same potential difference V. The ratio of their de Broglie wavelengths λ_p / λ_α is:', options: ['(A) 2√2 : 1', '(B) 1 : 2√2', '(C) 2 : 1', '(D) 4 : 1'], ans: '(A) 2√2 : 1' },
+      { question: 'The momentum p of a photon of frequency ν and wavelength λ in vacuum is given by:', options: ['(A) p = h / λ = hν / c', '(B) p = h λ', '(C) p = h c / λ', '(D) p = h / (ν c)'], ans: '(A) p = h / λ = hν / c' }
+    ],
+    shorts: [
+      'Define threshold frequency (ν₀) and work function (Φ₀) of a photosensitive metal. State their relationship.',
+      'State Einstein\'s photoelectric equation and define all symbols used in the equation.',
+      'Why could the classical wave theory of light not account for: (i) existence of threshold frequency, and (ii) immediate emission of photoelectrons?',
+      'Define stopping potential (V₀). How is it related to the maximum kinetic energy of emitted photoelectrons?',
+      'State de Broglie hypothesis of matter waves. Write the expression for matter wavelength in terms of particle momentum.'
+    ],
+    longs: [
+      '(a) Describe Hertz and Lenard\'s observations on photoelectric effect. (b) Sketch graphs showing variation of photoelectric current with: (i) intensity, (ii) collector plate potential for different intensities, and (iii) collector plate potential for different frequencies.',
+      '(a) State Einstein\'s photoelectric equation hν = Φ₀ + K_max. (b) Explain how this equation accounts for: (i) existence of threshold frequency, (ii) independence of K_max from intensity, and (iii) instantaneous photoemission without time lag.',
+      '(a) State de Broglie hypothesis. (b) Derive the expression for the de Broglie wavelength of a particle of mass m, charge q accelerated through a potential difference V: λ = h / √(2mqV). (c) Evaluate the formula for an electron.',
+      '(a) Describe the experimental arrangement and procedure of the Davisson and Germer experiment with a neat diagram. (b) Explain how the peak in electron scattering intensity at 54 V confirmed the wave nature of electrons.',
+      'The work function of caesium metal is 2.14 eV. When light of frequency 6.0 × 10¹⁴ Hz is incident on the metal surface: (a) calculate the maximum kinetic energy of emitted photoelectrons in eV, (b) find the stopping potential V₀, and (c) calculate the maximum speed of emitted photoelectrons (m_e = 9.1 × 10⁻³¹ kg).'
+    ]
+  },
+  12: {
+    name: 'Atoms',
+    mcqs: [
+      { question: 'In Geiger-Marsden alpha-particle scattering experiment, the trajectory traced by an alpha particle scattered at angle θ is a:', options: ['(A) Hyperbola', '(B) Parabola', '(C) Ellipse', '(D) Straight line'], ans: '(A) Hyperbola' },
+      { question: 'According to Bohr\'s model of the hydrogen atom, the orbital radius r_n of an electron in the nth stationary orbit varies with principal quantum number n as:', options: ['(A) r_n ∝ n²', '(B) r_n ∝ n', '(C) r_n ∝ 1/n', '(D) r_n ∝ 1/n²'], ans: '(A) r_n ∝ n²' },
+      { question: 'The total energy of an electron in the ground state (n = 1) of a hydrogen atom is -13.6 eV. Its kinetic energy and potential energy in this state are:', options: ['(A) K = +13.6 eV, U = -27.2 eV', '(B) K = -13.6 eV, U = +27.2 eV', '(C) K = +13.6 eV, U = -13.6 eV', '(D) K = +27.2 eV, U = -13.6 eV'], ans: '(A) K = +13.6 eV, U = -27.2 eV' },
+      { question: 'Which spectral series of the hydrogen atomic emission spectrum lies exclusively in the visible region of light?', options: ['(A) Balmer series', '(B) Lyman series', '(C) Paschen series', '(D) Brackett series'], ans: '(A) Balmer series' },
+      { question: 'The orbital angular momentum L of an electron in the second excited state (n = 3) of hydrogen is:', options: ['(A) 3h / (2π)', '(B) 2h / (2π)', '(C) h / (2π)', '(D) 4h / (2π)'], ans: '(A) 3h / (2π)' }
+    ],
+    shorts: [
+      'State the three fundamental postulates of Bohr\'s model of the hydrogen atom.',
+      'Define impact parameter in alpha-particle scattering. How does scattering angle vary with impact parameter?',
+      'What were the two major limitations of Rutherford\'s planetary model of the atom that necessitated Bohr\'s model?',
+      'Write the Rydberg formula for the wavelengths of hydrogen spectral lines and calculate the series limit (shortest wavelength) of the Lyman series.',
+      'Explain how de Broglie\'s concept of matter waves provided a theoretical justification for Bohr\'s angular momentum quantization condition.'
+    ],
+    longs: [
+      '(a) Describe the alpha-particle scattering experiment performed by Geiger and Marsden with a labelled diagram. (b) Derive the expression for the distance of closest approach r₀ of an alpha particle of kinetic energy K approaching a gold nucleus of atomic number Z.',
+      'Using Bohr\'s postulates, derive expressions for: (i) radius of the nth orbit r_n = ε₀ n² h² / (π m Z e²), and (ii) orbital speed v_n = Z e² / (2 ε₀ n h) for a hydrogen-like atom.',
+      '(a) Derive the expression for total energy E_n of an electron in the nth orbit of a hydrogen atom. (b) Show that E_n = -13.6 / n² eV. (c) What is the physical significance of the negative total energy?',
+      '(a) Draw an energy level diagram for hydrogen showing electron energy values from n = 1 to n = ∞. (b) Show transitions corresponding to Lyman, Balmer, Paschen, Brackett, and Pfund series. (c) Calculate the longest and shortest wavelengths of the Balmer series.',
+      '(a) State de Broglie\'s explanation of Bohr\'s second postulate of orbital quantization: 2π r_n = n λ. (b) A hydrogen atom initially in ground state absorbs a photon which excites it to n = 4 level. Determine the wavelength and frequency of the absorbed photon.'
+    ]
+  },
+  13: {
+    name: 'Nuclei',
+    mcqs: [
+      { question: 'The nuclear radius R of a nucleus of mass number A is related to A by:', options: ['(A) R = R₀ A^(1/3)', '(B) R = R₀ A^(1/2)', '(C) R = R₀ A³', '(D) R = R₀ A'], ans: '(A) R = R₀ A^(1/3)' },
+      { question: 'The density of nuclear matter for all atomic nuclei is approximately of the order of:', options: ['(A) 2.3 × 10¹⁷ kg/m³ (independent of mass number A)', '(B) 10³ kg/m³', '(C) 10¹⁰ kg/m³', '(D) 10²⁴ kg/m³'], ans: '(A) 2.3 × 10¹⁷ kg/m³ (independent of mass number A)' },
+      { question: 'The energy equivalent of 1 atomic mass unit (1 u) according to Einstein\'s equation E = mc² is approximately:', options: ['(A) 931.5 MeV', '(B) 931.5 keV', '(C) 1.6 × 10⁻¹⁹ J', '(D) 3 × 10⁸ J'], ans: '(A) 931.5 MeV' },
+      { question: 'The nuclear force between two nucleons is characterized by being:', options: ['(A) Short-range, strongest force in nature, and charge-independent', '(B) Long-range and inverse-square dependent', '(C) Strongly charge-dependent', '(D) Weaker than electrostatic repulsive force'], ans: '(A) Short-range, strongest force in nature, and charge-independent' },
+      { question: 'If a radioactive sample has a half-life of 20 days, the fraction of initial radioactive nuclei remaining undecayed after 60 days is:', options: ['(A) 1 / 8 (after 3 half-lives)', '(B) 1 / 4', '(C) 1 / 16', '(D) 1 / 2'], ans: '(A) 1 / 8 (after 3 half-lives)' }
+    ],
+    shorts: [
+      'Define mass defect (Δm) and binding energy (E_b) of an atomic nucleus. Write their formulas.',
+      'Show that nuclear density is constant and independent of mass number A.',
+      'State the radioactive decay law: dN/dt = -λ N. Define half-life T_1/2 and decay constant λ, and write their relation.',
+      'State three essential characteristics of the strong nuclear force.',
+      'Distinguish between nuclear fission and nuclear fusion with one typical nuclear reaction equation for each.'
+    ],
+    longs: [
+      '(a) Draw a plot showing the variation of Binding Energy per Nucleon (E_bn) as a function of Mass Number A. (b) Highlight the peak region and flat plateau. (c) Explain on the basis of this curve why: (i) nuclear fission of heavy nuclei releases energy, and (ii) nuclear fusion of very light nuclei releases energy.',
+      '(a) State the Law of Radioactive Decay. (b) Derive the radioactive exponential decay relation N(t) = N₀ e^(-λt). (c) Define half-life T_1/2 and mean life τ, and obtain their mathematical relations with decay constant λ.',
+      '(a) Describe the nuclear fission of Uranium-235 by slow neutrons. (b) Explain the concepts of chain reaction, multiplication factor k, critical mass, and the functions of moderators and control rods in a nuclear power reactor.',
+      '(a) Describe thermonuclear fusion occurring in the core of the Sun (Proton-Proton cycle). (b) Why are extremely high temperatures (~10⁷ K) and pressures essential for triggering fusion reactions?',
+      'Calculate the binding energy per nucleon of a Calcium nucleus (⁴⁰₂₀Ca). Given: m(⁴⁰₂₀Ca) = 39.962589 u, m_p = 1.007825 u, m_n = 1.008665 u, and 1 u = 931.5 MeV. State whether this nucleus is exceptionally stable.'
+    ]
+  },
+  14: {
+    name: 'Semiconductor Electronics: Materials, Devices and Simple Circuits',
+    mcqs: [
+      { question: 'At absolute zero temperature (T = 0 K), a pure intrinsic semiconductor crystal behaves as a perfect:', options: ['(A) Insulator', '(B) Conductor', '(C) Superconductor', '(D) Metal'], ans: '(A) Insulator' },
+      { question: 'A p-type semiconductor is obtained by doping pure silicon or germanium with pentavalent / trivalent atoms:', options: ['(A) Trivalent impurity atoms (e.g. Boron, Indium, Aluminium)', '(B) Pentavalent impurity atoms (e.g. Phosphorus, Arsenic)', '(C) Monovalent atoms', '(D) Divalent atoms'], ans: '(A) Trivalent impurity atoms (e.g. Boron, Indium, Aluminium)' },
+      { question: 'The width of the depletion layer in a p-n junction diode:', options: ['(A) Increases under reverse bias and decreases under forward bias', '(B) Decreases under reverse bias', '(C) Remains unchanged under any bias', '(D) Increases under forward bias'], ans: '(A) Increases under reverse bias and decreases under forward bias' },
+      { question: 'In a full-wave rectifier operating from a 50 Hz AC mains supply, the fundamental ripple frequency of the output voltage is:', options: ['(A) 100 Hz (double the supply frequency)', '(B) 50 Hz', '(C) 25 Hz', '(D) 200 Hz'], ans: '(A) 100 Hz (double the supply frequency)' },
+      { question: 'A Zener diode is uniquely operated in electrical circuits in:', options: ['(A) Reverse breakdown region as a constant DC voltage regulator', '(B) Forward active region as an amplifier', '(C) Unbiased condition', '(D) Inverted saturation region'], ans: '(A) Reverse breakdown region as a constant DC voltage regulator' }
+    ],
+    shorts: [
+      'Distinguish between intrinsic semiconductors and extrinsic semiconductors with respect to carrier concentration and electrical conductivity.',
+      'Explain how a p-type semiconductor and an n-type semiconductor are fabricated by doping pure Silicon.',
+      'Explain the terms: (i) Depletion Region, and (ii) Barrier Potential in an unbiased p-n junction diode.',
+      'Draw the circuit symbol and characteristic reverse breakdown V-I curve of a Zener diode.',
+      'Name two universal digital logic gates. Write the truth table and Boolean expression for a 2-input NAND gate.'
+    ],
+    longs: [
+      '(a) Explain the formation of a p-n junction. Describe the two simultaneous processes of diffusion and drift of charge carriers that create the depletion layer and barrier potential. (b) Explain what happens to the barrier potential when forward bias and reverse bias are applied.',
+      '(a) Draw separate circuit diagrams for studying the forward bias and reverse bias V-I characteristics of a silicon diode. (b) Sketch the complete V-I characteristic curve showing knee voltage and reverse breakdown voltage. (c) Define dynamic resistance.',
+      '(a) With a neat circuit diagram, explain the working of a Full-Wave Rectifier utilizing two junction diodes and a center-tapped transformer. (b) Draw the input AC and rectified output voltage waveforms. (c) Explain how a shunt capacitor filter smoothes output DC.',
+      '(a) Explain the principle and working of a Zener diode as a DC voltage regulator with a neat circuit diagram. (b) Explain how the output voltage remains constant even when unregulated DC input voltage or load current fluctuates.',
+      'Write concise explanatory notes with circuit symbols and operating principles for: (a) Light Emitting Diode (LED), (b) Photodiode (and explain why it is operated in reverse bias), (c) Solar Cell, and (d) Logic OR and AND gates truth tables.'
+    ]
+  }
+};
+
 window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
-  const isRotational = (topic || '').toLowerCase().includes('rolling') || (chapter || '').toLowerCase().includes('rotational') || (topic || '').toLowerCase().includes('incline');
+  // 1. Identify Class 12 Chapter Number from chapter or topic
+  let chNum = 1;
+  const combined = `${chapter || ''} ${topic || ''}`.toLowerCase();
+
+  if (combined.includes('capacit') || combined.includes('electrostatic potential') || combined.includes('equipotential') || combined.includes('chapter 2')) {
+    chNum = 2;
+  } else if (combined.includes('current electricity') || combined.includes('drift') || combined.includes('ohm') || combined.includes('wheatstone') || combined.includes('kirchhoff') || combined.includes('resistance') || combined.includes('chapter 3')) {
+    chNum = 3;
+  } else if (combined.includes('moving charges') || combined.includes('biot') || combined.includes('galvanometer') || combined.includes('lorentz') || combined.includes('solenoid') || combined.includes('chapter 4')) {
+    chNum = 4;
+  } else if (combined.includes('magnetism and matter') || combined.includes('bar magnet') || combined.includes('earth\'s magnetism') || combined.includes('hysteresis') || combined.includes('diamagnet') || combined.includes('paramagnet') || combined.includes('ferromagnet') || combined.includes('chapter 5')) {
+    chNum = 5;
+  } else if (combined.includes('electromagnetic induction') || combined.includes('faraday') || combined.includes('lenz') || combined.includes('motional emf') || combined.includes('eddy') || combined.includes('inductance') || combined.includes('chapter 6')) {
+    chNum = 6;
+  } else if (combined.includes('alternating current') || combined.includes('lcr') || combined.includes('resonance') || combined.includes('transformer') || combined.includes('wattless') || combined.includes('impedance') || combined.includes('chapter 7')) {
+    chNum = 7;
+  } else if (combined.includes('electromagnetic wave') || combined.includes('displacement current') || combined.includes('maxwell') || combined.includes('spectrum') || combined.includes('chapter 8')) {
+    chNum = 8;
+  } else if (combined.includes('ray optics') || combined.includes('mirror') || combined.includes('lens maker') || combined.includes('prism') || combined.includes('telescope') || combined.includes('microscope') || combined.includes('refraction') || combined.includes('chapter 9')) {
+    chNum = 9;
+  } else if (combined.includes('wave optics') || combined.includes('huygens') || combined.includes('interference') || combined.includes('young') || combined.includes('ydse') || combined.includes('diffraction') || combined.includes('polarisation') || combined.includes('chapter 10')) {
+    chNum = 10;
+  } else if (combined.includes('dual nature') || combined.includes('photoelectric') || combined.includes('de broglie') || combined.includes('davisson') || combined.includes('photon') || combined.includes('work function') || combined.includes('chapter 11')) {
+    chNum = 11;
+  } else if (combined.includes('atom') || combined.includes('bohr') || combined.includes('rutherford') || combined.includes('spectral series') || combined.includes('hydrogen') || combined.includes('chapter 12')) {
+    chNum = 12;
+  } else if (combined.includes('nuclei') || combined.includes('nucleus') || combined.includes('binding energy') || combined.includes('radioactiv') || combined.includes('fission') || combined.includes('fusion') || combined.includes('mass defect') || combined.includes('chapter 13')) {
+    chNum = 13;
+  } else if (combined.includes('semiconductor') || combined.includes('diode') || combined.includes('rectifier') || combined.includes('zener') || combined.includes('logic gate') || combined.includes('transistor') || combined.includes('chapter 14')) {
+    chNum = 14;
+  } else if (combined.includes('electric charge') || combined.includes('coulomb') || combined.includes('gauss') || combined.includes('dipole') || combined.includes('chapter 1')) {
+    chNum = 1;
+  } else {
+    // Check if numeric chapter prefix was provided
+    const match = (chapter || '').match(/chapter\s*(\d+)/i);
+    if (match && match[1]) {
+      const parsed = parseInt(match[1], 10);
+      if (parsed >= 1 && parsed <= 14) chNum = parsed;
+    }
+  }
+
+  const chData = CLASS12_PHYSICS_EXAM_BANK[chNum] || CLASS12_PHYSICS_EXAM_BANK[1];
 
   // Blueprints
   if (formatKey === 'UNIT_45') {
     // Exactly 15 Questions across Section A (5 MCQs), Section B (5 Short), Section C (5 Long Derivations/Numericals) = 45 Marks
-    return [
-      // SECTION A: 5 MCQs (1 Mark each = 5 Marks)
-      {
-        num: 1, section: 'A', type: 'MCQ', marks: 1,
-        question: `A uniform solid sphere of mass M and radius R rolls down without slipping along an inclined plane of inclination &theta;. The linear acceleration of its center of mass is:`,
-        options: ['(A) g sin &theta;', '(B) (5/7) g sin &theta;', '(C) (2/3) g sin &theta;', '(D) (1/2) g sin &theta;'],
-        ans: '(B) (5/7) g sin &theta;'
-      },
-      {
-        num: 2, section: 'A', type: 'MCQ', marks: 1,
-        question: `During pure rolling of a rigid sphere along an incline without slipping, the work done by the static friction force is:`,
-        options: ['(A) Positive and increases kinetic energy', '(B) Negative and dissipates heat', '(C) Exactly zero because the contact point is instantaneously at rest', '(D) Dependent on the incline length'],
-        ans: '(C) Exactly zero because the contact point is instantaneously at rest'
-      },
-      {
-        num: 3, section: 'A', type: 'MCQ', marks: 1,
-        question: `For a solid cylinder of mass M and radius R rolling without slipping with speed v, the ratio of its rotational kinetic energy to its total kinetic energy is:`,
-        options: ['(A) 1 : 2', '(B) 1 : 3', '(C) 2 : 5', '(D) 1 : 4'],
-        ans: '(B) 1 : 3'
-      },
-      {
-        num: 4, section: 'A', type: 'MCQ', marks: 1,
-        question: `The torque &tau; acting on a rigid body rotating about an axis is related to its angular momentum L by:`,
-        options: ['(A) &tau; = dL/dt', '(B) &tau; = L &times; &omega;', '(C) &tau; = I (d&theta;/dt)', '(D) &tau; = &omega; (dL/dt)'],
-        ans: '(A) &tau; = dL/dt'
-      },
-      {
-        num: 5, section: 'A', type: 'MCQ', marks: 1,
-        question: `A ring, a solid disc, and a solid sphere of equal mass and radius are released simultaneously from rest down an incline. The object that reaches the bottom first is:`,
-        options: ['(A) Solid Sphere (smallest k²/R²)', '(B) Solid Disc', '(C) Ring', '(D) All reach simultaneously'],
-        ans: '(A) Solid Sphere (smallest k²/R²)'
-      },
-      // SECTION B: 5 Short Conceptual Questions (2 Marks each = 10 Marks)
-      {
-        num: 6, section: 'B', type: 'SHORT', marks: 2,
-        question: `State the kinematic condition relating the linear velocity of center of mass (v_cm) and angular velocity (&omega;) for pure rolling without slipping on a stationary surface.`
-      },
-      {
-        num: 7, section: 'B', type: 'SHORT', marks: 2,
-        question: `Why does a solid sphere roll down an incline faster than a hollow spherical shell of identical mass and radius? Explain in terms of moment of inertia.`
-      },
-      {
-        num: 8, section: 'B', type: 'SHORT', marks: 2,
-        question: `Derive the general expression for the total kinetic energy of a body of mass M and radius of gyration k undergoing simultaneous translation and rotation.`
-      },
-      {
-        num: 9, section: 'B', type: 'SHORT', marks: 2,
-        question: `A wheel of radius 0.5 m rolls without slipping at a linear speed of 8 m/s. Calculate: (i) the instantaneous velocity of the top-most point, and (ii) the bottom contact point.`
-      },
-      {
-        num: 10, section: 'B', type: 'SHORT', marks: 2,
-        question: `Define the term "Radius of Gyration" (k). State its SI unit and physical importance in deciding the resistance of a body to rotational acceleration.`
-      },
-      // SECTION C: 5 Long Derivations & Numericals (6 Marks each = 30 Marks)
-      {
-        num: 11, section: 'C', type: 'LONG', marks: 6,
-        question: `(a) Derive from first principles (using Newton's second law and rotational dynamics) the formula for linear acceleration: a = (g sin &theta;) / [1 + (k²/R²)] for a body rolling down an incline of angle &theta;. (b) Hence deduce the acceleration for a uniform solid sphere.`
-      },
-      {
-        num: 12, section: 'C', type: 'LONG', marks: 6,
-        question: `A solid sphere of mass M and radius R is released from rest at height h on a rough incline of angle &theta; = 30&deg;. (a) Show that the minimum coefficient of static friction &mu;_s required to ensure pure rolling without slipping is (2/7) tan &theta;. (b) Evaluate &mu;_s numerically.`
-      },
-      {
-        num: 13, section: 'C', type: 'LONG', marks: 6,
-        question: `A solid uniform cylinder of mass 2 kg and radius 0.25 m rolls without slipping down a 30&deg; incline of length 6 meters from rest. Calculate: (i) linear acceleration of center of mass, (ii) force of static friction acting on the cylinder, and (iii) final translational speed at the base.`
-      },
-      {
-        num: 14, section: 'C', type: 'LONG', marks: 6,
-        question: `State the Law of Conservation of Angular Momentum. A turntable of moment of inertia 200 kg&middot;m² rotates freely about a vertical axis at 30 rpm. A student of mass 60 kg stands at the outer rim (radius 2 m) and walks inwards to the exact center. Determine: (i) the new angular speed, and (ii) compare the initial and final kinetic energies.`
-      },
-      {
-        num: 15, section: 'C', type: 'LONG', marks: 6,
-        question: `(a) State and prove the Parallel Axis Theorem of moment of inertia. (b) Use it to calculate the moment of inertia of a uniform solid sphere about a tangent. (c) A horizontal force F is applied at the apex of a solid sphere resting on a rough floor; determine the acceleration and direction of friction.`
-      }
-    ];
+    const questions = [];
+    // Section A: 5 MCQs (1 Mark each = 5 Marks)
+    chData.mcqs.forEach((m, idx) => {
+      questions.push({
+        num: idx + 1,
+        section: 'A',
+        type: 'MCQ',
+        marks: 1,
+        question: m.question,
+        options: m.options,
+        ans: m.ans
+      });
+    });
+    // Section B: 5 Short Conceptual Questions (2 Marks each = 10 Marks)
+    chData.shorts.forEach((s, idx) => {
+      questions.push({
+        num: idx + 6,
+        section: 'B',
+        type: 'SHORT',
+        marks: 2,
+        question: s
+      });
+    });
+    // Section C: 5 Long Derivations & Numericals (6 Marks each = 30 Marks)
+    chData.longs.forEach((l, idx) => {
+      questions.push({
+        num: idx + 11,
+        section: 'C',
+        type: 'LONG',
+        marks: 6,
+        question: l
+      });
+    });
+    return questions;
   } else if (formatKey === 'QUIZ_15') {
-    // 5 Questions (20 Marks)
+    // 5 Questions (20 Marks): 3 MCQs (2M) + 2 Short (7M)
     return [
-      { num: 1, section: 'A', type: 'MCQ', marks: 2, question: `For a rigid body rolling without slipping along an incline, what fraction of its total kinetic energy is rotational?`, options: ['(A) (k²/R²) / [1 + (k²/R²)]', '(B) 1 / [1 + (k²/R²)]', '(C) k²/R²', '(D) Zero'], ans: '(A)' },
-      { num: 2, section: 'A', type: 'MCQ', marks: 2, question: `Which point of a rolling wheel on a horizontal road has the maximum instantaneous velocity?`, options: ['(A) Center of mass', '(B) Topmost point (2v)', '(C) Contact point with road', '(D) Both edges'], ans: '(B) Topmost point (2v)' },
-      { num: 3, section: 'A', type: 'MCQ', marks: 2, question: `The dimensions of torque are identical to those of:`, options: ['(A) Work / Energy', '(B) Angular momentum', '(C) Linear momentum', '(D) Power'], ans: '(A) Work / Energy' },
-      { num: 4, section: 'B', type: 'SHORT', marks: 7, question: `Derive the expression for the linear speed of a solid sphere reaching the bottom of an incline of vertical height h from rest.` },
-      { num: 5, section: 'B', type: 'SHORT', marks: 7, question: `Explain why the contact point has zero instantaneous velocity during pure rolling, and clarify whether static friction produces any dissipation.` }
+      { num: 1, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[0].question, options: chData.mcqs[0].options, ans: chData.mcqs[0].ans },
+      { num: 2, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[1].question, options: chData.mcqs[1].options, ans: chData.mcqs[1].ans },
+      { num: 3, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[2].question, options: chData.mcqs[2].options, ans: chData.mcqs[2].ans },
+      { num: 4, section: 'B', type: 'SHORT', marks: 7, question: chData.shorts[0] },
+      { num: 5, section: 'B', type: 'SHORT', marks: 7, question: chData.shorts[1] }
     ];
   } else if (formatKey === 'TERM_90') {
     // 20 Questions (60 Marks)
     const qs = [];
     for (let i = 1; i <= 8; i++) {
-      qs.push({ num: i, section: 'A', type: 'MCQ', marks: 1, question: `Conceptual MCQ ${i} on ${topic}: Identify the correct physical statement regarding governing laws, forces, and boundary conditions.`, options: ['(A) Option Alpha', '(B) Option Beta (Verified)', '(C) Option Gamma', '(D) Option Delta'], ans: '(B) Option Beta (Verified)' });
+      const baseMcq = chData.mcqs[(i - 1) % chData.mcqs.length];
+      qs.push({
+        num: i,
+        section: 'A',
+        type: 'MCQ',
+        marks: 1,
+        question: i <= 5 ? baseMcq.question : `Conceptual MCQ ${i} on ${topic || chData.name}: Identify the physically accurate condition among the choices.`,
+        options: baseMcq.options,
+        ans: baseMcq.ans
+      });
     }
     for (let i = 9; i <= 14; i++) {
-      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: `Short Answer Question ${i}: Explain the physical principle of ${topic} with mathematical deduction and diagram.` });
+      const baseShort = chData.shorts[(i - 9) % chData.shorts.length];
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: baseShort });
     }
     for (let i = 15; i <= 18; i++) {
-      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: `Analytical Derivation ${i}: Complete step-by-step mathematical working establishing governing equations for ${topic}.` });
+      const baseLong = chData.longs[(i - 15) % chData.longs.length];
+      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: baseLong });
     }
     for (let i = 19; i <= 20; i++) {
-      qs.push({ num: i, section: 'D', type: 'CASE', marks: 7, question: `Case Study / Experimental Problem ${i}: Analyze the laboratory observation for ${topic} and solve sub-parts (a), (b), and (c).` });
+      qs.push({
+        num: i,
+        section: 'D',
+        type: 'CASE',
+        marks: 7,
+        question: `Case Study / Experimental Analysis Q${i}: Read the passage on laboratory investigation of ${topic || chData.name} and answer sub-parts (a), (b), and (c) with complete mathematical steps.`
+      });
     }
     return qs;
   } else {
     // MOCK_180: 30 Questions (100 Marks)
     const qs = [];
     for (let i = 1; i <= 12; i++) {
-      qs.push({ num: i, section: 'A', type: 'MCQ', marks: 1, question: `Section A Objective Q${i}: Question testing foundational understanding of ${topic} and related concepts.`, options: ['(A) Option A', '(B) Option B', '(C) Option C', '(D) Option D'], ans: '(A)' });
+      const baseMcq = chData.mcqs[(i - 1) % chData.mcqs.length];
+      qs.push({
+        num: i,
+        section: 'A',
+        type: 'MCQ',
+        marks: 1,
+        question: i <= 5 ? baseMcq.question : `Section A Objective Q${i}: ${topic || chData.name} board standard question testing fundamental understanding.`,
+        options: baseMcq.options,
+        ans: baseMcq.ans
+      });
     }
     for (let i = 13; i <= 20; i++) {
-      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: `Section B Conceptual Q${i}: Explain the physical mechanism and compute values for given parameters.` });
+      const baseShort = chData.shorts[(i - 13) % chData.shorts.length];
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: baseShort });
     }
     for (let i = 21; i <= 26; i++) {
-      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: `Section C Board Derivation Q${i}: Derive the standard expression with neat diagram and state evaluation steps.` });
+      const baseLong = chData.longs[(i - 21) % chData.longs.length];
+      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: baseLong });
     }
     for (let i = 27; i <= 28; i++) {
-      qs.push({ num: i, section: 'D', type: 'CASE', marks: 7, question: `Section D Case Study Q${i}: Read the passage on experimental verification of ${topic} and answer sub-questions.` });
+      qs.push({
+        num: i,
+        section: 'D',
+        type: 'CASE',
+        marks: 7,
+        question: `Section D Case Study Q${i}: Detailed experimental passage on ${topic || chData.name}. Answer sub-questions with CBSE step-marking criteria.`
+      });
     }
     for (let i = 29; i <= 30; i++) {
-      qs.push({ num: i, section: 'E', type: 'LONG', marks: 10, question: `Section E Comprehensive Numerical & Theoretical Problem Q${i}: Multi-part problem with CBSE marking scheme.` });
+      qs.push({
+        num: i,
+        section: 'E',
+        type: 'LONG',
+        marks: 10,
+        question: `Section E Comprehensive Numerical & Theoretical Derivation Q${i}: Multi-part problem covering ${topic || chData.name} with complete deduction, formulas, and final values.`
+      });
     }
     return qs;
   }
@@ -9316,10 +9765,23 @@ function populateQbChapterPills(activeVal = 'ALL') {
     subjectDisplayName = 'Class 10th Math';
   } else if (teacherBuilderState.currentTaxonomy?.chapters) {
     subjectDisplayName = teacherBuilderState.currentTaxonomy.subjectName || activeSubj;
-    chapters = teacherBuilderState.currentTaxonomy.chapters.map(c => ({
+    let chList = teacherBuilderState.currentTaxonomy.chapters;
+    if (activeSubj === 'PHYSICS') {
+      const g12 = chList.filter(c => String(c.grade) === '12');
+      if (g12.length > 0) chList = g12;
+    }
+    chapters = chList.map(c => ({
       num: c.chapterNumber || c.id,
       name: c.chapterName || c.title || `Chapter ${c.chapterNumber}`,
       short: (c.chapterName || c.title || '').replace(/^Chapter \d+:\s*/i, '').slice(0, 24),
+      count: null
+    }));
+  } else if (activeSubj === 'PHYSICS') {
+    const phyChapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.PHYSICS);
+    chapters = phyChapters.map((ch, idx) => ({
+      num: idx + 1,
+      name: ch,
+      short: ch.replace(/^Chapter \d+:\s*/i, '').slice(0, 24),
       count: null
     }));
   }
@@ -9792,7 +10254,8 @@ async function loadQuestionBankView(forceReload = false) {
     const taxSubj = teacherBuilderState.currentTaxonomy?.subjectKey || teacherBuilderState.currentTaxonomy?.subject;
     if (!teacherBuilderState.currentTaxonomy || taxSubj !== activeSubj) {
       try {
-        const taxRes = await fetch(`${getApiBaseUrl()}/api/curriculum/taxonomy/${activeSubj}?grade=ALL`);
+        const gradeParam = activeSubj === 'PHYSICS' ? '12' : 'ALL';
+        const taxRes = await fetch(`${getApiBaseUrl()}/api/curriculum/taxonomy/${activeSubj}?grade=${gradeParam}`);
         if (taxRes.ok) {
           teacherBuilderState.currentTaxonomy = await taxRes.json();
         }
@@ -9812,8 +10275,19 @@ async function loadQuestionBankView(forceReload = false) {
       }
     } else if (teacherBuilderState.currentTaxonomy?.chapters) {
       const curVal = chapterSelect.value || 'ALL';
-      chapterSelect.innerHTML = `<option value="ALL">All Chapters</option>` +
-        teacherBuilderState.currentTaxonomy.chapters.map(c => `<option value="${c.chapterNumber || c.id}">Ch ${c.chapterNumber || ''}: ${c.chapterName || c.title}</option>`).join('');
+      let chs = teacherBuilderState.currentTaxonomy.chapters;
+      if (activeSubj === 'PHYSICS') {
+        const g12 = chs.filter(c => String(c.grade) === '12');
+        if (g12.length > 0) chs = g12;
+      }
+      chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
+        chs.map(c => `<option value="${c.chapterNumber || c.id}">Ch ${c.chapterNumber || ''}: ${c.chapterName || c.title}</option>`).join('');
+      chapterSelect.value = curVal;
+    } else if (activeSubj === 'PHYSICS') {
+      const curVal = chapterSelect.value || 'ALL';
+      const phyChapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.PHYSICS);
+      chapterSelect.innerHTML = `<option value="ALL">All 14 Chapters</option>` +
+        phyChapters.map((ch, idx) => `<option value="${idx + 1}">Ch ${idx + 1}: ${ch.replace(/^Chapter\\s*\\d+\\s*:\\s*/i, '')}</option>`).join('');
       chapterSelect.value = curVal;
     }
   }
@@ -9937,10 +10411,17 @@ window.handleQbChapterChange = function(chapterVal) {
     const chaptersObj = CURRICULUM_CHAPTER_TOPICS[activeSubj] || CURRICULUM_CHAPTER_TOPICS.PHYSICS;
     const chNames = Object.keys(chaptersObj);
     const chIndex = parseInt(chapterVal, 10) - 1;
-    if (chIndex >= 0 && chIndex < chNames.length) {
+    if (!isNaN(chIndex) && chIndex >= 0 && chIndex < chNames.length) {
       topics = chaptersObj[chNames[chIndex]] || [];
     } else if (chaptersObj[chapterVal]) {
       topics = chaptersObj[chapterVal];
+    } else {
+      const cleanVal = String(chapterVal).toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+      const match = chNames.find(k => {
+        const cleanK = k.toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+        return cleanK === cleanVal || cleanK.includes(cleanVal) || cleanVal.includes(cleanK);
+      });
+      if (match) topics = chaptersObj[match];
     }
     topicSelect.innerHTML = `<option value="ALL">All Topics in Chapter</option>` +
       topics.map(t => `<option value="${escapeHtml(t)}">🎯 ${escapeHtml(t)}</option>`).join('');
