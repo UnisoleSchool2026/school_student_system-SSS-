@@ -6985,17 +6985,17 @@ function displayDiagnosticResults(results) {
 
           <!-- Step 3: Verified Answer & Result -->
           <div class="qb-solution-answer-box">
-            <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:rgba(16,185,129,0.2); color:#34d399; flex-shrink:0; margin-top:2px;">
+            <span class="qb-solution-answer-icon">
               <i data-lucide="check-circle" style="width:18px; height:18px;"></i>
             </span>
             <div style="flex:1;">
-              <div style="font-size:0.76rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">
+              <div class="qb-solution-answer-title">
                 Step 3: Final Verified Result &amp; Concluding Statement
               </div>
-              <div style="font-size:1.12rem; font-weight:800; color:#ecfdf5; margin:6px 0 4px 0; overflow-x:auto;">
+              <div class="qb-solution-answer-math">
                 Correct Answer: Option ${escapeHtml(expectedOpt)}
               </div>
-              <div style="font-size:0.92rem; color:rgba(236,253,245,0.9); line-height:1.6;">
+              <div class="qb-solution-answer-desc">
                 ${renderLatexString(stepsData.correctAnswer || `Option ${expectedOpt} matches the verified analytical derivation.`)}
               </div>
             </div>
@@ -7003,10 +7003,10 @@ function displayDiagnosticResults(results) {
 
           <!-- Step 4: Examiner Tip & Common Pitfalls -->
           <div class="qb-solution-tip-box">
-            <div style="font-size:0.76rem; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:inline-flex; align-items:center; gap:6px;">
-              <i data-lucide="alert-triangle" style="width:15px; height:15px; color:#fbbf24; flex-shrink:0; margin-top:2px;"></i> Step 4: Examiner Tip &amp; Common Pitfalls
+            <div class="qb-solution-step4-title" style="margin-bottom:8px;">
+              <i data-lucide="alert-triangle" style="width:15px; height:15px; color:#d97706; flex-shrink:0; margin-top:2px;"></i> Step 4: Examiner Tip &amp; Common Pitfalls
             </div>
-            <div style="font-size:0.9rem; color:#fef3c7; line-height:1.65;">
+            <div class="qb-solution-advice-box">
               ${renderLatexString(stepsData.examTip || prof.studentGuidance)}
             </div>
           </div>
@@ -13843,7 +13843,7 @@ function renderQbCurrentPage() {
             <i data-lucide="book-open" style="width:20px; height:20px;"></i>
           </span>
           <div>
-            <div style="font-weight:800; font-size:0.96rem; color:#f8fafc; font-family:'Outfit', sans-serif;">
+            <div style="font-weight:800; font-size:0.96rem; color:var(--text-primary); font-family:'Outfit', sans-serif;">
               Step-by-Step Solution &amp; Pedagogical Walkthrough
             </div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
@@ -13866,16 +13866,16 @@ function renderQbCurrentPage() {
               <i data-lucide="book-open-check" style="width:16px; height:16px;"></i>
             </span>
             <div>
-              <div style="font-size:0.94rem; font-weight:800; color:#93c5fd; font-family:'Outfit', sans-serif;">
+              <div style="font-size:0.96rem; font-weight:800; color:var(--text-primary); font-family:'Outfit', sans-serif;">
                 Step-by-Step Solution &amp; Pedagogical Walkthrough
               </div>
-              <div style="font-size:0.73rem; color:var(--text-muted); margin-top:2px;">
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
                 Complete conceptual explanation &bull; Board marking scheme &bull; Examiner tips
               </div>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.75rem; font-weight:700; color:#10b981; background:rgba(16,185,129,0.12); padding:3px 10px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
+            <span class="qb-solution-header-ans-pill">
               Answer: ${renderLatexString(steps.correctAnswer)}
             </span>
             <button type="button" class="btn-secondary" onclick="toggleCardSolutionView('${qId}')" id="btnToggleSol_${qId}" style="font-size:0.74rem; padding:4px 11px; display:inline-flex; align-items:center; gap:6px;" title="Hide Solution">
@@ -13889,24 +13889,24 @@ function renderQbCurrentPage() {
         <div id="solBody_${qId}" style="display:flex; flex-direction:column; gap:16px;">
           <!-- STEP 1: FUNDAMENTAL PRINCIPLE & FORMULA -->
           <div class="qb-solution-concept-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
-              <span style="font-size:0.76rem; font-weight:800; color:#22d3ee; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+              <span class="qb-solution-step1-title">
                 <i data-lucide="compass" style="width:14px; height:14px;"></i> Step 1: Fundamental Concept &amp; Governing Formula
               </span>
               <div style="display:flex; align-items:center; gap:8px;">
                 <button type="button" class="qb-btn-toggle-explain" onclick="toggleSolutionConceptExplanation('${qId}')" id="btnExplain_${qId}">
                   <i data-lucide="help-circle" style="width:13px; height:13px;"></i> View Concept &amp; Reasoning
                 </button>
-                <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); background:rgba(255,255,255,0.04); padding:2px 7px; border-radius:4px;">
+                <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); background:var(--bg-card); padding:2px 7px; border-radius:4px; border:1px solid var(--border-subtle);">
                   Foundation Step
                 </span>
               </div>
             </div>
-            <div style="background:rgba(0,0,0,0.3); border:1px dashed rgba(6,182,212,0.45); border-radius:6px; padding:12px 16px; font-size:1.02rem; color:#38bdf8; overflow-x:auto;">
+            <div class="qb-solution-formula-box">
               ${renderLatexString(steps.formulaLatex)}
             </div>
             <div id="boxExplain_${qId}" class="qb-concept-explanation-box" style="display:none; margin-top:10px;">
-              <div style="font-size:0.84rem; color:#bae6fd; font-weight:700; margin-bottom:4px;">Physical Concept &amp; Intuition:</div>
+              <div style="font-size:0.84rem; color:var(--accent-blue); font-weight:700; margin-bottom:4px;">Physical Concept &amp; Intuition:</div>
               <div style="font-size:0.96rem; color:var(--text-primary); line-height:1.7;">
                 ${escapeHtml(steps.principleIntuition || steps.principle)}
               </div>
@@ -13915,7 +13915,7 @@ function renderQbCurrentPage() {
 
           <!-- STEP 2: LINE-BY-LINE MATHEMATICAL DERIVATION (WITH CLEAR GAPS) -->
           <div>
-            <div style="font-size:0.76rem; font-weight:800; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; display:inline-flex; align-items:center; gap:6px;">
+            <div class="qb-solution-step2-title">
               <i data-lucide="list-ordered" style="width:14px; height:14px;"></i> Step 2: Line-by-Line Mathematical Working (${steps.parsedSteps.length} Key Steps)
             </div>
             <div class="qb-solution-steps-flow">
@@ -13939,17 +13939,17 @@ function renderQbCurrentPage() {
 
           <!-- STEP 3: FINAL VERIFIED RESULT -->
           <div class="qb-solution-answer-box">
-            <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:rgba(16,185,129,0.2); color:#34d399; flex-shrink:0; margin-top:2px;">
+            <span class="qb-solution-answer-icon">
               <i data-lucide="check-circle" style="width:18px; height:18px;"></i>
             </span>
             <div style="flex:1;">
-              <div style="font-size:0.76rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">
+              <div class="qb-solution-answer-title">
                 Step 3: Final Verified Result &amp; Concluding Statement
               </div>
-              <div style="font-size:1.12rem; font-weight:800; color:#ecfdf5; margin:6px 0 4px 0; overflow-x:auto;">
+              <div class="qb-solution-answer-math">
                 ${renderLatexString(steps.correctAnswer)}
               </div>
-              <div style="font-size:0.88rem; color:#a7f3d0; line-height:1.6;">
+              <div class="qb-solution-answer-desc">
                 ${escapeHtml(steps.answerInterpretation || 'This result completes the derivation according to CBSE and State Board evaluation criteria.')}
               </div>
             </div>
@@ -13958,21 +13958,21 @@ function renderQbCurrentPage() {
           <!-- STEP 4: BOARD MARKING SCHEME & EXAMINER ADVICE -->
           <div class="qb-solution-exam-tip-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:0.76rem; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+              <span class="qb-solution-step4-title">
                 <i data-lucide="award" style="width:14px; height:14px;"></i> Step 4: Official CBSE / HP Board Step Rubric (${marks} Mark${marks > 1 ? 's' : ''})
               </span>
-              <span style="font-size:0.74rem; color:#f59e0b; font-weight:700;">Examiner Marking Guide</span>
+              <span style="font-size:0.74rem; color:#b45309; font-weight:700;">Examiner Marking Guide</span>
             </div>
-            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.86rem; color:var(--text-secondary); margin-bottom:10px;">
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.86rem; margin-bottom:10px;">
               ${steps.rubric.map(r => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed rgba(255,255,255,0.06);">
+                <div class="qb-solution-rubric-item">
                   <span>${escapeHtml(r.step)}</span>
-                  <strong style="color:#fbbf24; margin-left:8px;">${r.marks}</strong>
+                  <strong style="color:#b45309; margin-left:8px;">${r.marks}</strong>
                 </div>
               `).join('')}
             </div>
-            <div style="display:flex; align-items:flex-start; gap:8px; font-size:0.86rem; color:#fde68a; line-height:1.6; padding-top:4px;">
-              <i data-lucide="alert-triangle" style="width:15px; height:15px; color:#fbbf24; flex-shrink:0; margin-top:2px;"></i>
+            <div class="qb-solution-advice-box">
+              <i data-lucide="alert-triangle" style="width:15px; height:15px; color:#d97706; flex-shrink:0; margin-top:2px;"></i>
               <span><strong>Examiner Advice:</strong> ${escapeHtml(steps.examTip || 'Follow step-by-step arithmetic without skipping formula statements to secure maximum board credit.')}</span>
             </div>
           </div>
@@ -14313,9 +14313,9 @@ function openStepSolutionStudio(qId) {
         </div>
         <div style="display:flex; flex-direction:column; gap:10px;">
           ${steps.parsedSteps.map((s, sIdx) => `
-            <div style="background:rgba(0,0,0,0.22); padding:12px 14px; border-radius:6px; border:1px solid var(--border-subtle);">
+            <div class="qb-solution-step-item" style="padding:14px 16px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:0.76rem; font-weight:800; color:var(--accent-blue); background:rgba(37,99,235,0.15); padding:2px 8px; border-radius:4px;">
+                <span class="qb-solution-step-badge">
                   Step 2.${sIdx + 1}: ${escapeHtml(s.title)}
                 </span>
                 <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">
@@ -14338,9 +14338,9 @@ function openStepSolutionStudio(qId) {
           </span>
           <span style="font-size:0.72rem; color:#10b981; font-weight:700;">Verified Key</span>
         </div>
-        <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); border-radius:6px; padding:12px 16px; font-size:1.05rem; font-weight:700; color:#34d399; display:flex; align-items:center; gap:10px;">
-          <i data-lucide="check" style="width:18px; height:18px;"></i>
-          <span>${renderLatexString(steps.correctAnswer)}</span>
+        <div class="qb-solution-answer-box" style="padding:14px 18px; display:flex; align-items:center; gap:10px;">
+          <i data-lucide="check" style="width:18px; height:18px; color:#10b981;"></i>
+          <span class="qb-solution-answer-math" style="margin:0; font-size:1.08rem;">${renderLatexString(steps.correctAnswer)}</span>
         </div>
       </div>
 
@@ -14533,7 +14533,7 @@ function openChapterSolutionSheetModal() {
                   <div style="font-size:0.86rem; color:var(--text-primary); line-height:1.6; margin-bottom:8px;">
                     <strong>Intuition:</strong> ${escapeHtml(steps.principleIntuition || steps.principle)}
                   </div>
-                  <div style="background:rgba(0,0,0,0.25); border:1px dashed rgba(6,182,212,0.4); border-radius:6px; padding:8px 12px; font-size:0.92rem; color:#38bdf8;">
+                  <div class="qb-solution-formula-box" style="padding:8px 12px; font-size:0.92rem;">
                     ${renderLatexString(steps.formulaLatex)}
                   </div>
                 </div>
@@ -14559,14 +14559,14 @@ function openChapterSolutionSheetModal() {
 
                 <!-- Final Answer Box -->
                 <div class="qb-solution-answer-box">
-                  <span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:rgba(16,185,129,0.2); color:#34d399; flex-shrink:0;">
+                  <span class="qb-solution-answer-icon" style="width:24px; height:24px;">
                     <i data-lucide="check-circle" style="width:14px; height:14px;"></i>
                   </span>
                   <div>
-                    <div style="font-size:0.7rem; font-weight:800; color:#34d399; text-transform:uppercase;">
+                    <div class="qb-solution-answer-title" style="font-size:0.7rem;">
                       Verified Final Answer
                     </div>
-                    <div style="font-size:0.96rem; font-weight:800; color:#ecfdf5; margin-top:2px;">
+                    <div class="qb-solution-answer-math" style="font-size:0.96rem; margin-top:2px;">
                       ${renderLatexString(steps.correctAnswer)}
                     </div>
                   </div>
