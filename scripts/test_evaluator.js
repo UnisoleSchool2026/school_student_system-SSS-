@@ -91,7 +91,7 @@ async function runDiagnostics() {
   });
   console.log('✅ LLM Provider:', llmQ.llm_provider);
   console.log('NCERT Section:', llmQ.ncert_mapping?.ncert_section || 'N/A');
-  console.log('Question LaTeX snippet:', llmQ.question_latex.slice(0, 90) + '...');
+  console.log('Question LaTeX snippet:', (llmQ.question_latex || llmQ.question_text || llmQ.question || '').slice(0, 90) + '...');
   console.log('Rubric Step 1:', llmQ.step_rubric ? llmQ.step_rubric[0].description : 'N/A');
 
   // Test 7: Class 10 NCERT Previous Year Question Bank
