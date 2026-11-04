@@ -14870,6 +14870,9 @@ function openInjectQuestionModal() {
 
   // Reset preview section
   injectQuestionStudioState.currentExtracted = null;
+  injectQuestionStudioState.extractedQuestions = [];
+  const container = document.getElementById('containerInjectCards');
+  if (container) container.innerHTML = '';
   const sectionPrev = document.getElementById('sectionInjectPreview');
   if (sectionPrev) sectionPrev.style.display = 'none';
 
@@ -14878,6 +14881,7 @@ function openInjectQuestionModal() {
     btnPush.disabled = true;
     btnPush.style.opacity = '0.5';
     btnPush.style.cursor = 'not-allowed';
+    btnPush.innerHTML = `<i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> 🚀 Push All Questions to Bank`;
   }
 
   const modal = document.getElementById('modalInjectQuestion');
@@ -14976,14 +14980,65 @@ function insertInjectSampleQuestion() {
   if (!txtArea) return;
 
   if (subjKey.includes('CHEM')) {
-    txtArea.value = `For a first-order chemical reaction, the half-life period $t_{1/2}$ is $69.3\\,\\text{min}$. Calculate the time required for $99\\%$ completion of the reaction. (Take $\\log 10 = 1, \\ln 2 = 0.693$).\nA) $t = 460.6\\,\\text{min}$\nB) $t = 138.6\\,\\text{min}$\nC) $t = 693.0\\,\\text{min}$\nD) $t = 230.3\\,\\text{min}$\nAnswer: A\nSolution: Rate constant $k = \\frac{0.693}{t_{1/2}} = \\frac{0.693}{69.3} = 0.01\\,\\text{min}^{-1}$. For 99% completion, $[A] = [A]_0 - 0.99[A]_0 = 0.01[A]_0$. Then $$t = \\frac{2.303}{k}\\log\\left(\\frac{[A]_0}{0.01[A]_0}\\right) = \\frac{2.303}{0.01}\\log(100) = 460.6\\,\\text{min}$$.`;
+    txtArea.value = `Question 1: (1 Mark) What is the unit of rate constant for a zero order chemical reaction?
+A) $\\text{mol} \\cdot \\text{L}^{-1} \\cdot \\text{s}^{-1}$
+B) $\\text{s}^{-1}$
+C) $\\text{L} \\cdot \\text{mol}^{-1} \\cdot \\text{s}^{-1}$
+D) $\\text{L}^2 \\cdot \\text{mol}^{-2} \\cdot \\text{s}^{-1}$
+Answer: A
+Solution: For an $n$-th order reaction, the unit of rate constant is $(\\text{mol/L})^{1-n} \\text{s}^{-1}$. For zero order ($n=0$), unit = $\\text{mol} \\cdot \\text{L}^{-1} \\cdot \\text{s}^{-1}$.
+
+Question 2: (3 Marks) For a first-order chemical reaction, the half-life period $t_{1/2}$ is $69.3\\,\\text{min}$. Calculate the time required for $99\\%$ completion of the reaction. (Take $\\log 10 = 1, \\ln 2 = 0.693$).
+Solution: Step 1: Rate constant $k = \\frac{0.693}{t_{1/2}} = \\frac{0.693}{69.3} = 0.01\\,\\text{min}^{-1}$.
+Step 2: For 99% completion, $[A] = [A]_0 - 0.99[A]_0 = 0.01[A]_0$.
+Step 3: Using first-order integrated rate law: $t = \\frac{2.303}{k}\\log\\left(\\frac{[A]_0}{0.01[A]_0}\\right) = \\frac{2.303}{0.01}\\log(100) = 460.6\\,\\text{min}$.`;
   } else if (subjKey.includes('MATH')) {
-    txtArea.value = `Find the area of the region bounded by the ellipse $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$ in the first quadrant.\nA) $\\text{Area} = \\frac{\\pi a b}{4}$\nB) $\\text{Area} = \\pi a b$\nC) $\\text{Area} = \\frac{\\pi a b}{2}$\nD) $\\text{Area} = 2\\pi a b$\nAnswer: A\nSolution: The required area is $\\int_0^a y\\,dx = \\frac{b}{a}\\int_0^a \\sqrt{a^2 - x^2}\\,dx = \\frac{b}{a}\\left[\\frac{x}{2}\\sqrt{a^2-x^2} + \\frac{a^2}{2}\\sin^{-1}\\left(\\frac{x}{a}\right)\\right]_0^a = \\frac{b}{a}\\left(\\frac{a^2}{2} \\cdot \\frac{\\pi}{2}\\right) = \\frac{\\pi a b}{4}$.`;
+    txtArea.value = `Question 1: (1 Mark) If $A$ is a square matrix of order $3$ and $|A| = 5$, then find the value of $|\\text{adj}(A)|$.
+A) $25$
+B) $5$
+C) $125$
+D) $625$
+Answer: A
+Solution: For any $n \\times n$ matrix $A$, $|\\text{adj}(A)| = |A|^{n-1}$. For $n=3$, $|\\text{adj}(A)| = 5^{3-1} = 25$.
+
+Question 2: (5 Marks) Using integration, find the area of the region bounded by the ellipse $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$.
+Solution: Step 1: Total area = $4 \\times \\text{Area in 1st quadrant} = 4 \\int_0^a y\\,dx$.
+Step 2: From ellipse equation, $y = \\frac{b}{a}\\sqrt{a^2 - x^2}$.
+Step 3: $\\text{Area} = 4 \\frac{b}{a} \\int_0^a \\sqrt{a^2 - x^2}\\,dx = 4 \\frac{b}{a} \\left[ \\frac{x}{2}\\sqrt{a^2 - x^2} + \\frac{a^2}{2}\\sin^{-1}\\left(\\frac{x}{a}\\right) \\right]_0^a = 4 \\frac{b}{a} \\left( \\frac{a^2}{2} \\cdot \\frac{\\pi}{2} \\right) = \\pi a b$.`;
   } else if (subjKey.includes('BIO')) {
-    txtArea.value = `In a dihybrid cross between two heterozygous round yellow seeded pea plants ($RrYy \\times RrYy$), what proportion of the offspring are expected to have round green seeds?\nA) $\\frac{3}{16}$\nB) $\\frac{9}{16}$\nC) $\\frac{1}{16}$\nD) $\\frac{3}{8}$\nAnswer: A\nSolution: In a standard Mendel dihybrid phenotypic ratio $9:3:3:1$, the phenotypes are: 9 Round Yellow, 3 Round Green ($R\\_yy$), 3 Wrinkled Yellow ($rrY\\_$), and 1 Wrinkled Green ($rryy$). Therefore, the proportion of round green seeds is $\\frac{3}{16}$.`;
+    txtArea.value = `Question 1: (1 Mark) In a dihybrid cross between two heterozygous round yellow seeded pea plants ($RrYy \\times RrYy$), what proportion of the offspring are expected to have round green seeds?
+A) $\\frac{3}{16}$
+B) $\\frac{9}{16}$
+C) $\\frac{1}{16}$
+D) $\\frac{3}{8}$
+Answer: A
+Solution: In a standard Mendel dihybrid cross, phenotypes appear in $9:3:3:1$ ratio. The proportion of round green seeds ($R\\_yy$) is $\\frac{3}{16}$.
+
+Question 2: (3 Marks) Describe the primary events occurring during Translation phase of protein synthesis in prokaryotes.
+Solution: Step 1: Initiation: Ribosomal small subunit 30S binds to mRNA at Shine-Dalgarno sequence with initiator tRNA.
+Step 2: Elongation: Peptide bonds formed between amino acids by peptidyl transferase activity of 23S rRNA.
+Step 3: Termination: Stop codon recognized by release factors, dissociating the ribosome complex.`;
   } else {
-    // Physics default
-    txtArea.value = `An alternating voltage $V = 220\\sqrt{2} \\sin(100\\pi t)$ is applied across a pure capacitor of capacitance $C = 10\\,\\mu\\text{F}$. Find the capacitive reactance $X_c$ and the peak current $I_0$.\nA) $X_c = 318.3\\,\\Omega,\\; I_0 = 0.98\\,\\text{A}$\nB) $X_c = 100.0\\,\\Omega,\\; I_0 = 2.20\\,\\text{A}$\nC) $X_c = 50.0\\,\\Omega,\\; I_0 = 4.40\\,\\text{A}$\nD) $X_c = 636.6\\,\\Omega,\\; I_0 = 0.49\\,\\text{A}$\nAnswer: A\nSolution: Angular frequency $\\omega = 100\\pi\\,\\text{rad/s}$. Capacitive reactance $$X_c = \\frac{1}{\\omega C} = \\frac{1}{100\\pi \\times 10 \\times 10^{-6}} = \\frac{10^3}{\\pi} \\approx 318.3\\,\\Omega$$. Peak current $$I_0 = \\frac{V_0}{X_c} = \\frac{220\\sqrt{2}}{318.3} \\approx 0.98\\,\\text{A}$$.`;
+    // Physics default (Multi-question sample across chapters and marks)
+    txtArea.value = `Question 1: (1 Mark) What is the SI unit of electric flux?
+A) $N \\cdot m^2 / C$
+B) $N / C$
+C) $V \\cdot m^2$
+D) $J / C$
+Answer: A
+Solution: Electric flux is given by $\\Phi_E = \\int \\vec{E} \\cdot d\\vec{A}$. Since electric field $E$ has unit $N/C$ and area $A$ has unit $m^2$, the SI unit of electric flux is $N \\cdot m^2 \\cdot C^{-1}$ (or $V \\cdot m$).
+
+Question 2: (3 Marks) An alternating voltage $V = 220\\sqrt{2} \\sin(100\\pi t)$ is applied across a pure capacitor of capacitance $C = 10\\,\\mu\\text{F}$. Find the capacitive reactance $X_C$ and the peak current $I_0$ in the circuit.
+Solution: Step 1: Angular frequency $\\omega = 100\\pi\\,\\text{rad/s}$.
+Step 2: Capacitive reactance $X_C = \\frac{1}{\\omega C} = \\frac{1}{100\\pi \\times 10 \\times 10^{-6}} = \\frac{10^3}{\\pi} \\approx 318.3\\,\\Omega$.
+Step 3: Peak current $I_0 = \\frac{V_0}{X_C} = \\frac{220\\sqrt{2}}{318.3} \\approx 0.98\\,\\text{A}$.
+
+Question 3: (5 Marks) State Gauss's law in electrostatics. Using this law, derive an expression for the electric field intensity due to an infinitely long straight wire of uniform linear charge density $\\lambda$.
+Solution: Step 1: Statement of Gauss's Law: The net electric flux through any closed Gaussian surface equals $\\frac{q_{\\text{enc}}}{\\varepsilon_0}$, i.e., $\\oint \\vec{E} \\cdot d\\vec{A} = \\frac{q_{\\text{enc}}}{\\varepsilon_0}$.
+Step 2: Consider an imaginary cylindrical Gaussian surface of radius $r$ and length $L$ coaxial with the wire.
+Step 3: Due to cylindrical symmetry, the electric field is directed radially outward everywhere on the curved surface. Flux through the two circular flat ends is zero because $\\vec{E} \\perp \\hat{n}$.
+Step 4: Flux through the curved surface $\\Phi = E \\times (2\\pi r L)$. Charge enclosed $q_{\\text{enc}} = \\lambda L$.
+Step 5: Applying Gauss's law: $E(2\\pi r L) = \\frac{\\lambda L}{\\varepsilon_0} \\implies E = \\frac{\\lambda}{2\\pi \\varepsilon_0 r}$.`;
   }
 }
 
@@ -15055,7 +15110,7 @@ async function triggerAiQuestionExtraction() {
   const rawText = document.getElementById('textareaInjectRaw')?.value || '';
 
   if (mode === 'text' && !rawText.trim()) {
-    alert('Please paste the question text or click "Load Sample Question".');
+    alert('Please paste question text or click "Load Sample Questions".');
     return;
   }
   if (mode === 'image' && !injectQuestionStudioState.imageBase64) {
@@ -15095,10 +15150,7 @@ async function triggerAiQuestionExtraction() {
     mediaData: mode === 'image' ? injectQuestionStudioState.imageBase64 : injectQuestionStudioState.pdfBase64,
     mimeType: mode === 'image' ? injectQuestionStudioState.imageMime : 'application/pdf',
     grade: document.getElementById('selectInjectGrade')?.value || '12',
-    chapter: document.getElementById('selectInjectChapter')?.value || 'General',
-    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
-    marks: Number(document.getElementById('selectInjectMarks')?.value) || 3,
-    difficulty: document.getElementById('selectInjectDifficulty')?.value || 'MEDIUM'
+    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ'
   };
 
   try {
@@ -15114,52 +15166,114 @@ async function triggerAiQuestionExtraction() {
     }
 
     const data = await res.json();
-    const extracted = data.previewQuestion;
-    injectQuestionStudioState.currentExtracted = extracted;
+    const questions = Array.isArray(data.questions) && data.questions.length > 0
+      ? data.questions
+      : (data.previewQuestion ? [data.previewQuestion] : []);
 
-    // Render Live Preview
-    const qEl = document.getElementById('previewInjectQuestionLatex');
-    if (qEl) {
-      qEl.innerHTML = renderLatexString(escapeHtml(extracted.question_latex));
-      renderMathInElement(qEl);
-    }
+    injectQuestionStudioState.extractedQuestions = questions;
+    injectQuestionStudioState.currentExtracted = questions[0] || null;
 
-    const optGrid = document.getElementById('previewInjectOptionsGrid');
-    if (optGrid && Array.isArray(extracted.options_latex)) {
-      optGrid.innerHTML = extracted.options_latex.map(opt => {
-        const isCor = Boolean(opt.is_correct);
-        const borderColor = isCor ? '#10b981' : 'var(--border-subtle)';
-        const bgColor = isCor ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)';
+    // Render multi-question cards inside containerInjectCards
+    const container = document.getElementById('containerInjectCards');
+    if (container) {
+      container.innerHTML = questions.map((q, idx) => {
+        const qNum = q.question_number || (idx + 1);
+        const chName = q.chapter_name || 'General';
+        const marks = q.marks_weightage || 1;
+        const diff = q.difficulty || 'MEDIUM';
+        const diffColor = diff === 'HARD' ? '#ef4444' : diff === 'MEDIUM' ? '#f59e0b' : '#10b981';
+        const hasOptions = Array.isArray(q.options_latex) && q.options_latex.length > 0;
+
+        let optionsHtml = '';
+        if (hasOptions) {
+          optionsHtml = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px; margin:10px 0;">
+              ${q.options_latex.map(opt => {
+                const isCor = Boolean(opt.is_correct);
+                const bColor = isCor ? '#10b981' : 'var(--border-subtle)';
+                const bg = isCor ? 'rgba(16,185,129,0.08)' : 'var(--bg-secondary)';
+                return `
+                  <div style="border:1.5px solid ${bColor}; background:${bg}; border-radius:6px; padding:8px 10px;">
+                    <strong style="color:${isCor ? '#10b981' : 'var(--text-primary)'}; font-size:0.8rem;">
+                      Option ${escapeHtml(opt.key)} ${isCor ? '✓ (Correct)' : ''}
+                    </strong>
+                    <div class="katex-render-target" style="font-size:0.88rem; font-weight:600; color:var(--text-primary); margin-top:3px;">
+                      ${renderLatexString(escapeHtml(opt.latex || ''))}
+                    </div>
+                    ${opt.distractor_trap ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><span style="color:#f59e0b; font-weight:700;">Trap:</span> ${escapeHtml(opt.distractor_trap)}</div>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+
         return `
-          <div style="border:1.5px solid ${borderColor}; background:${bgColor}; border-radius:8px; padding:10px 12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <strong style="color:${isCor ? '#10b981' : 'var(--text-primary)'}; font-size:0.85rem;">Option ${opt.key} ${isCor ? '✓ (Correct Answer)' : ''}</strong>
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <!-- Header Bar with Auto-Categorization Badges -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="background:var(--accent-blue); color:#fff; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">
+                  Question ${qNum}
+                </span>
+                <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);">
+                  Auto-Categorized Question
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span style="background:rgba(37,99,235,0.1); color:var(--accent-blue); font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid rgba(37,99,235,0.25);">
+                  📘 ${escapeHtml(chName)}
+                </span>
+                <span style="background:rgba(16,185,129,0.1); color:#10b981; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid rgba(16,185,129,0.25);">
+                  ⭐ ${marks} Mark${marks > 1 ? 's' : ''}
+                </span>
+                <span style="background:${diffColor}18; color:${diffColor}; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid ${diffColor}40;">
+                  🎯 ${diff}
+                </span>
+              </div>
             </div>
-            <div style="font-size:0.92rem; font-weight:600; color:var(--text-primary); margin-bottom:4px;">
-              ${renderLatexString(escapeHtml(opt.latex))}
+
+            <!-- Question Statement in LaTeX -->
+            <div class="katex-render-target" style="font-size:0.92rem; line-height:1.6; color:var(--text-primary); margin-bottom:8px;">
+              ${renderLatexString(escapeHtml(q.question_latex || ''))}
             </div>
-            ${opt.distractor_trap ? `<div style="font-size:0.72rem; color:var(--text-muted);"><span style="color:#f59e0b; font-weight:700;">Trap:</span> ${escapeHtml(opt.distractor_trap)}</div>` : ''}
+
+            <!-- Options if MCQ -->
+            ${optionsHtml}
+
+            <!-- Step-by-Step Solution & Rubric -->
+            <div style="margin-top:10px; background:var(--bg-secondary); border-radius:8px; padding:10px 12px; border-left:3px solid #10b981;">
+              <div style="font-size:0.75rem; font-weight:800; color:#10b981; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                <span>✓ Verified Solution &amp; Step Rubric</span>
+                <span style="color:var(--text-muted); font-size:0.7rem; font-weight:600;">Ans: ${escapeHtml(q.correct_answer_latex || 'Verified')}</span>
+              </div>
+              <div class="katex-render-target" style="font-size:0.86rem; line-height:1.55; color:var(--text-primary);">
+                ${renderLatexString(escapeHtml(q.solution_latex || ''))}
+              </div>
+            </div>
           </div>
         `;
       }).join('');
-      renderMathInElement(optGrid);
+
+      renderMathInElement(container);
     }
 
-    const solEl = document.getElementById('previewInjectSolutionLatex');
-    if (solEl) {
-      solEl.innerHTML = renderLatexString(escapeHtml(extracted.solution_latex));
-      renderMathInElement(solEl);
-    }
+    // Update auto counts
+    const badgeAuto = document.getElementById('badgeInjectAutoCount');
+    if (badgeAuto) badgeAuto.innerText = `✓ ${questions.length} Auto-Categorized Question${questions.length > 1 ? 's' : ''}`;
+
+    const titleAuto = document.getElementById('titleInjectAutoCount');
+    if (titleAuto) titleAuto.innerText = `${questions.length} Question${questions.length > 1 ? 's' : ''} Extracted & Auto-Categorized`;
 
     const auditEl = document.getElementById('previewInjectAuditStamp');
     if (auditEl) {
       const catLabel = document.getElementById('selectInjectCategory')?.selectedOptions[0]?.text || payload.category;
       auditEl.innerHTML = `
         <i data-lucide="shield-check" style="width:13px; height:13px; vertical-align:middle; color:#10b981;"></i>
-        Discipline Verified: <strong>${escapeHtml(payload.targetSubject)}</strong> &bull;
+        Discipline Lock Verified: <strong>${escapeHtml(payload.targetSubject)}</strong> &bull;
         Injected By: <strong>${escapeHtml(activeTeacher.name || 'Faculty')}</strong> &bull;
         Category: <strong>${escapeHtml(catLabel)}</strong> &bull;
-        Ready for Repository Sync
+        ${questions.length} Auto-Categorized Questions Ready for Repository Sync
       `;
     }
 
@@ -15171,6 +15285,7 @@ async function triggerAiQuestionExtraction() {
       btnPush.disabled = false;
       btnPush.style.opacity = '1';
       btnPush.style.cursor = 'pointer';
+      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push All ${questions.length} Question${questions.length > 1 ? 's' : ''} to Bank`;
     }
 
     if (typeof initLucideIcons === 'function') initLucideIcons();
@@ -15187,8 +15302,9 @@ async function triggerAiQuestionExtraction() {
 }
 
 async function commitInjectedQuestionToBank() {
-  if (!injectQuestionStudioState.currentExtracted) {
-    alert('Please run AI Extract first to preview and verify the question.');
+  const questions = injectQuestionStudioState.extractedQuestions || [];
+  if (questions.length === 0 && !injectQuestionStudioState.currentExtracted) {
+    alert('Please run AI Extract first to preview and verify questions.');
     return;
   }
 
@@ -15215,11 +15331,8 @@ async function commitInjectedQuestionToBank() {
     targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
     mode: injectQuestionStudioState.mode,
     grade: document.getElementById('selectInjectGrade')?.value || '12',
-    chapter: document.getElementById('selectInjectChapter')?.value || 'General',
     category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
-    marks: Number(document.getElementById('selectInjectMarks')?.value) || 3,
-    difficulty: document.getElementById('selectInjectDifficulty')?.value || 'MEDIUM',
-    structuredQuestion: injectQuestionStudioState.currentExtracted
+    questions: questions.length > 0 ? questions : [injectQuestionStudioState.currentExtracted]
   };
 
   try {
@@ -15235,13 +15348,15 @@ async function commitInjectedQuestionToBank() {
     }
 
     const data = await res.json();
-    const newQ = data.question;
+    const newQuestions = Array.isArray(data.questions) && data.questions.length > 0
+      ? data.questions
+      : (data.question ? [data.question] : []);
 
-    // Immediately prepend to local question bank data so it's Question #1
+    // Immediately prepend to local question bank data so they are at the top
     if (Array.isArray(state.questionBankData)) {
-      state.questionBankData.unshift(newQ);
+      state.questionBankData.unshift(...newQuestions);
     } else {
-      state.questionBankData = [newQ];
+      state.questionBankData = [...newQuestions];
     }
 
     // Reset pagination to first page
@@ -15251,13 +15366,16 @@ async function commitInjectedQuestionToBank() {
     closeInjectQuestionModal();
 
     // Trigger filter and view reload
-    filterQuestionBankCards();
+    if (typeof filterQuestionBankCards === 'function') {
+      filterQuestionBankCards();
+    }
 
     // Show toast
+    const msg = `✅ Successfully pushed ${newQuestions.length} auto-categorized question(s) into ${data.targetBank}!`;
     if (typeof showToast === 'function') {
-      showToast(`✅ Successfully injected question into ${data.targetBank} by ${data.audit?.faculty_name || 'Faculty'}!`, 'success');
+      showToast(msg, 'success');
     } else {
-      alert(`✅ Question successfully injected into ${data.targetBank}!`);
+      alert(msg);
     }
   } catch (err) {
     console.error('[commitInjectedQuestionToBank error]', err);
@@ -15265,7 +15383,7 @@ async function commitInjectedQuestionToBank() {
   } finally {
     if (btnPush) {
       btnPush.disabled = false;
-      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push to Question Bank`;
+      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push All Questions to Bank`;
       if (typeof initLucideIcons === 'function') initLucideIcons();
     }
   }

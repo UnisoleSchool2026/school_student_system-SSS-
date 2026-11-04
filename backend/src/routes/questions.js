@@ -7,7 +7,8 @@ const { getAllClass10Questions, getCuratedClass10Question } = require('../servic
 const {
   validateFacultySubjectLock,
   processQuestionExtraction,
-  commitQuestionToStore
+  commitQuestionToStore,
+  commitBatchQuestionsToStore
 } = require('../services/questionInjectionService');
 
 // GET all questions from bank (queries inMemoryStore.questions and all subjectBanks)
@@ -226,7 +227,7 @@ router.post('/generate-llm', async (req, res) => {
   }
 });
 
-// POST /api/questions/inject/preview - AI extraction for preview before committing
+// POST /api/questions/inject/preview - AI extraction & auto-categorization for review before committing
 router.post('/inject/preview', async (req, res) => {
   try {
     const {
@@ -238,10 +239,7 @@ router.post('/inject/preview', async (req, res) => {
       mediaData = '',
       mimeType = 'image/jpeg',
       grade = '12',
-      chapter = 'General',
-      category = 'CBSE_PYQ',
-      marks = 3,
-      difficulty = 'MEDIUM'
+      category = 'CBSE_PYQ'
     } = req.body;
 
     // Strict Faculty Subject Lock verification
@@ -254,16 +252,19 @@ router.post('/inject/preview', async (req, res) => {
       mimeType,
       targetSubject: targetSubject || teacher.subject || 'Physics',
       grade,
-      chapter,
-      category,
-      marks,
-      difficulty
+      category
     });
+
+    const questionList = Array.isArray(extracted.questions) && extracted.questions.length > 0
+      ? extracted.questions
+      : [extracted];
 
     res.json({
       success: true,
-      message: 'Question successfully extracted and structured for review.',
-      previewQuestion: extracted,
+      message: `Extracted and auto-categorized ${questionList.length} question(s) successfully.`,
+      detectedCount: questionList.length,
+      questions: questionList,
+      previewQuestion: questionList[0],
       subjectLockedTo: teacher.subject || teacher.subjectKey
     });
   } catch (err) {
@@ -273,7 +274,7 @@ router.post('/inject/preview', async (req, res) => {
   }
 });
 
-// POST /api/questions/inject - Commit question into backend Question Bank with audit trail
+// POST /api/questions/inject - Commit single or batch questions into backend Question Bank with audit trail
 router.post('/inject', async (req, res) => {
   try {
     const {
@@ -285,46 +286,66 @@ router.post('/inject', async (req, res) => {
       mediaData = '',
       mimeType = 'image/jpeg',
       grade = '12',
-      chapter = 'General',
       category = 'CBSE_PYQ',
-      marks = 3,
-      difficulty = 'MEDIUM',
-      structuredQuestion = null
+      structuredQuestion = null,
+      questions = null
     } = req.body;
 
     // Strict Faculty Subject Lock verification
     validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey });
 
-    let finalStructured = structuredQuestion;
-    if (!finalStructured || !finalStructured.question_latex) {
-      finalStructured = await processQuestionExtraction({
-        mode,
-        rawText,
-        mediaData,
-        mimeType,
+    const questionsToCommit = Array.isArray(questions) && questions.length > 0
+      ? questions
+      : (structuredQuestion ? [structuredQuestion] : null);
+
+    if (questionsToCommit && questionsToCommit.length > 0) {
+      const batchResult = commitBatchQuestionsToStore({
+        questions: questionsToCommit,
+        teacher,
         targetSubject: targetSubject || teacher.subject || 'Physics',
         grade,
-        chapter,
         category,
-        marks,
-        difficulty
+        mode
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: `Successfully pushed ${batchResult.count} auto-categorized question(s) into ${batchResult.targetBank} (Total in bank: ${batchResult.totalBankCount}).`,
+        count: batchResult.count,
+        questions: batchResult.questions,
+        question: batchResult.questions[0],
+        targetBank: batchResult.targetBank,
+        totalBankCount: batchResult.totalBankCount,
+        audit: batchResult.questions[0]?.injected_by
       });
     }
 
+    // Single extraction fallback
+    const extracted = await processQuestionExtraction({
+      mode,
+      rawText,
+      mediaData,
+      mimeType,
+      targetSubject: targetSubject || teacher.subject || 'Physics',
+      grade,
+      category
+    });
+
+    const singleQ = extracted.questions?.[0] || extracted;
     const result = commitQuestionToStore({
-      structuredQuestion: finalStructured,
+      structuredQuestion: singleQ,
       teacher,
       targetSubject: targetSubject || teacher.subject || 'Physics',
       grade,
-      chapter,
       category,
-      marks,
       mode
     });
 
     res.status(201).json({
       success: true,
       message: `Successfully pushed question into ${result.targetBank} (Total in bank: ${result.totalBankCount}).`,
+      count: 1,
+      questions: [result.question],
       question: result.question,
       targetBank: result.targetBank,
       totalBankCount: result.totalBankCount,

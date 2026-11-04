@@ -3805,7 +3805,7 @@ _Unisole AI School Scholar Assistant_</div>
         </div>
 
         <!-- Scope & Classification Form Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; background: var(--bg-secondary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-subtle);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; background: var(--bg-secondary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-subtle);">
           
           <!-- Subject (Readonly locked to faculty profile) -->
           <div>
@@ -3820,20 +3820,10 @@ _Unisole AI School Scholar Assistant_</div>
             <label for="selectInjectGrade" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">
               Class / Target Level
             </label>
-            <select id="selectInjectGrade" class="form-select" onchange="window.handleInjectGradeChange(this.value)" style="width:100%; font-size:0.85rem; padding:7px 10px;">
+            <select id="selectInjectGrade" class="form-select" style="width:100%; font-size:0.85rem; padding:7px 10px;">
               <option value="12" selected>Class 12th</option>
               <option value="11">Class 11th</option>
               <option value="10">Class 10th (Foundation)</option>
-            </select>
-          </div>
-
-          <!-- Chapter Scope -->
-          <div>
-            <label for="selectInjectChapter" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">
-              Target Chapter
-            </label>
-            <select id="selectInjectChapter" class="form-select" style="width:100%; font-size:0.85rem; padding:7px 10px;">
-              <!-- Populated dynamically via JS -->
             </select>
           </div>
 
@@ -3850,31 +3840,19 @@ _Unisole AI School Scholar Assistant_</div>
             </select>
           </div>
 
-          <!-- Difficulty -->
-          <div>
-            <label for="selectInjectDifficulty" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">
-              Difficulty
-            </label>
-            <select id="selectInjectDifficulty" class="form-select" style="width:100%; font-size:0.85rem; padding:7px 10px;">
-              <option value="EASY">Easy</option>
-              <option value="MEDIUM" selected>Medium</option>
-              <option value="HARD">Hard</option>
-            </select>
+          <!-- Smart Auto-Categorization Active Banner -->
+          <div style="grid-column: 1 / -1; background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="background: #10b981; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px;">
+                ⚡ AUTO-CATEGORIZATION ACTIVE
+              </span>
+              <span style="font-size: 0.82rem; color: var(--text-primary); font-weight: 600;">
+                All chapters, marks weightage (1–5 Marks), and difficulty levels are automatically detected per question from your document.
+              </span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Handles single questions &amp; multi-chapter papers</span>
           </div>
 
-          <!-- Marks -->
-          <div>
-            <label for="selectInjectMarks" style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">
-              Marks Weightage
-            </label>
-            <select id="selectInjectMarks" class="form-select" style="width:100%; font-size:0.85rem; padding:7px 10px;">
-              <option value="1">1 Mark (MCQ)</option>
-              <option value="2">2 Marks (Short)</option>
-              <option value="3" selected>3 Marks (Standard)</option>
-              <option value="4">4 Marks (Case-Based)</option>
-              <option value="5">5 Marks (Long / Derivation)</option>
-            </select>
-          </div>
         </div>
 
         <!-- 3 Ingestion Mode Switcher Tabs -->
@@ -3894,13 +3872,13 @@ _Unisole AI School Scholar Assistant_</div>
         <div id="panelInjectText" style="display:block; margin-bottom:16px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <label style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">
-              Raw Question Text, OCR Snippet, or LaTeX Formula
+              Raw Question Text, Multi-Question Test Sheet, or OCR Snippet
             </label>
             <button type="button" class="btn-secondary" onclick="insertInjectSampleQuestion()" style="font-size:0.74rem; padding:3px 8px; border-radius:6px;">
-              💡 Load Sample Question
+              💡 Load Sample Questions
             </button>
           </div>
-          <textarea id="textareaInjectRaw" class="form-textarea" rows="5" placeholder="Paste the question statement here. You can include options (A, B, C, D), correct answer, or step-by-step working if available. The AI pipeline will automatically parse, clean LaTeX formatting, and isolate distractor traps." style="width:100%; font-family:monospace; font-size:0.86rem; padding:10px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-primary); line-height:1.45;"></textarea>
+          <textarea id="textareaInjectRaw" class="form-textarea" rows="6" placeholder="Paste single or multiple questions here (e.g. Q1, Q2, 1., 2.). The AI system automatically splits the questions, identifies each question's chapter, marks (1-5), and difficulty, formats KaTeX math, and generates step solutions." style="width:100%; font-family:monospace; font-size:0.86rem; padding:10px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-card); color:var(--text-primary); line-height:1.45;"></textarea>
         </div>
 
         <!-- Mode 2: Upload Image Container -->
@@ -3908,7 +3886,7 @@ _Unisole AI School Scholar Assistant_</div>
           <div id="dropzoneInjectImage" style="border:2px dashed var(--accent-blue); background:rgba(37,99,235,0.03); border-radius:10px; padding:24px; text-align:center; cursor:pointer;" onclick="document.getElementById('inputInjectImageFile').click()">
             <i data-lucide="upload-cloud" style="width:36px; height:36px; color:var(--accent-blue); margin:0 auto 8px; display:block;"></i>
             <strong style="display:block; font-size:0.95rem; color:var(--text-primary);">Click or Drag &amp; Drop Question Image Here</strong>
-            <span style="font-size:0.78rem; color:var(--text-muted); display:block; margin-top:4px;">Supports PNG, JPG, JPEG, WEBP (Clear snapshot of textbook page, diagram, or test paper)</span>
+            <span style="font-size:0.78rem; color:var(--text-muted); display:block; margin-top:4px;">Supports PNG, JPG, JPEG, WEBP (Single questions or full multi-question exam paper photo)</span>
             <input type="file" id="inputInjectImageFile" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleInjectImageFileSelect(event)" />
           </div>
           <div id="previewInjectImageWrap" style="display:none; margin-top:12px; align-items:center; gap:14px; background:var(--bg-secondary); padding:10px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
@@ -3928,7 +3906,7 @@ _Unisole AI School Scholar Assistant_</div>
           <div id="dropzoneInjectPdf" style="border:2px dashed var(--accent-cyan); background:rgba(6,182,212,0.03); border-radius:10px; padding:24px; text-align:center; cursor:pointer;" onclick="document.getElementById('inputInjectPdfFile').click()">
             <i data-lucide="file-text" style="width:36px; height:36px; color:var(--accent-cyan); margin:0 auto 8px; display:block;"></i>
             <strong style="display:block; font-size:0.95rem; color:var(--text-primary);">Click or Drag &amp; Drop Question PDF Here</strong>
-            <span style="font-size:0.78rem; color:var(--text-muted); display:block; margin-top:4px;">Upload assignment sheet, board question paper PDF, or NCERT chapter booklet</span>
+            <span style="font-size:0.78rem; color:var(--text-muted); display:block; margin-top:4px;">Upload full PYQ board paper, multi-chapter question paper PDF, or NCERT exercises</span>
             <input type="file" id="inputInjectPdfFile" accept="application/pdf" style="display:none;" onchange="handleInjectPdfFileSelect(event)" />
           </div>
           <div id="previewInjectPdfWrap" style="display:none; margin-top:12px; align-items:center; gap:14px; background:var(--bg-secondary); padding:10px 14px; border-radius:8px; border:1px solid var(--border-subtle);">
@@ -3937,7 +3915,7 @@ _Unisole AI School Scholar Assistant_</div>
             </div>
             <div style="flex:1;">
               <strong id="labelInjectPdfName" style="font-size:0.85rem; display:block; color:var(--text-primary);">QuestionPaper.pdf</strong>
-              <span id="labelInjectPdfSize" style="font-size:0.75rem; color:var(--text-muted);">PDF document &bull; Ready for multimodal parsing</span>
+              <span id="labelInjectPdfSize" style="font-size:0.75rem; color:var(--text-muted);">PDF document &bull; Ready for multi-question extraction</span>
             </div>
             <button type="button" class="btn-secondary" onclick="clearInjectPdfFile()" style="font-size:0.75rem; padding:4px 8px; color:var(--accent-red);">
               <i data-lucide="trash-2" style="width:13px; height:13px;"></i> Remove
@@ -3948,50 +3926,34 @@ _Unisole AI School Scholar Assistant_</div>
         <!-- Extract Button -->
         <div style="text-align:center; margin-bottom:16px;">
           <button type="button" class="btn-primary" id="btnTriggerAiExtract" onclick="triggerAiQuestionExtraction()" style="font-size:0.9rem; padding:10px 24px; min-height:42px; background:linear-gradient(135deg, #2563eb, #1d4ed8); border:none; box-shadow:0 3px 12px rgba(37,99,235,0.4); font-weight:700; cursor:pointer;">
-            <i data-lucide="sparkles" style="width:16px; height:16px;"></i> ✨ AI Extract &amp; Format LaTeX Preview
+            <i data-lucide="sparkles" style="width:16px; height:16px;"></i> ✨ AI Extract &amp; Auto-Categorize Questions
           </button>
           <div id="injectExtractSpinner" style="display:none; margin-top:10px; font-size:0.82rem; color:var(--accent-blue);">
-            <i data-lucide="loader-2" class="spin" style="width:16px; height:16px; vertical-align:middle;"></i> Multimodal AI pipeline active... Processing LaTeX &amp; distractor options
+            <i data-lucide="loader-2" class="spin" style="width:16px; height:16px; vertical-align:middle;"></i> Multimodal AI pipeline active... Auto-detecting chapters, marks, and LaTeX formulas
           </div>
         </div>
 
         <!-- LIVE PREVIEW & VERIFICATION SECTION -->
         <div id="sectionInjectPreview" style="display:none; border-top:1px dashed var(--border-subtle); padding-top:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span class="badge" style="background:rgba(16,185,129,0.15); color:#10b981; font-weight:700; font-size:0.75rem; padding:3px 8px; border-radius:6px;">
-                ✓ Verified Extraction Preview
+              <span class="badge" style="background:rgba(16,185,129,0.15); color:#10b981; font-weight:700; font-size:0.75rem; padding:3px 8px; border-radius:6px;" id="badgeInjectAutoCount">
+                ✓ Auto-Categorized Questions
               </span>
-              <strong style="font-size:0.9rem; color:var(--text-primary);">KaTeX Math &amp; Board Blueprint Structure</strong>
+              <strong style="font-size:0.92rem; color:var(--text-primary);" id="titleInjectAutoCount">
+                Extracted Questions Preview
+              </strong>
             </div>
-            <span style="font-size:0.74rem; color:var(--text-muted);">Review and confirm before pushing to repository</span>
+            <span style="font-size:0.74rem; color:var(--text-muted);">Review auto-detected chapters &amp; marks before pushing to repository</span>
           </div>
 
-          <!-- Preview Card -->
-          <div class="glass-card" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:16px; margin-bottom:14px;">
-            <!-- Question prompt preview -->
-            <div style="margin-bottom:14px;">
-              <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Question Statement (KaTeX Rendered)</span>
-              <div id="previewInjectQuestionLatex" style="font-size:1.02rem; font-weight:600; color:var(--text-primary); margin-top:6px; line-height:1.5;"></div>
-            </div>
-
-            <!-- Options preview -->
-            <div style="margin-bottom:14px;">
-              <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">4 Standard Options &amp; Distractor Traps</span>
-              <div id="previewInjectOptionsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px; margin-top:6px;"></div>
-            </div>
-
-            <!-- Solution preview -->
-            <div style="background:var(--bg-secondary); border-radius:8px; padding:12px; margin-bottom:12px; border-left:3px solid var(--accent-blue);">
-              <span style="font-size:0.72rem; font-weight:700; color:var(--accent-blue); text-transform:uppercase; display:block; margin-bottom:4px;">
-                Verified Step-by-Step Solution &amp; Working
-              </span>
-              <div id="previewInjectSolutionLatex" style="font-size:0.88rem; color:var(--text-primary); line-height:1.5;"></div>
-            </div>
-
-            <!-- Audit stamp preview -->
-            <div id="previewInjectAuditStamp" style="font-size:0.74rem; color:var(--text-muted); border-top:1px solid var(--border-subtle); padding-top:8px;"></div>
+          <!-- Dynamic Container for all extracted questions cards -->
+          <div id="containerInjectCards" style="display:flex; flex-direction:column; gap:14px; margin-bottom:14px;">
+            <!-- Populated dynamically via JS -->
           </div>
+
+          <!-- Audit stamp preview -->
+          <div id="previewInjectAuditStamp" style="font-size:0.74rem; color:var(--text-muted); border-top:1px solid var(--border-subtle); padding-top:8px;"></div>
         </div>
 
       </div>
@@ -4002,7 +3964,7 @@ _Unisole AI School Scholar Assistant_</div>
           Cancel
         </button>
         <button type="button" class="btn-primary" id="btnPushToBank" onclick="commitInjectedQuestionToBank()" disabled style="font-size: 0.88rem; padding: 9px 24px; background: linear-gradient(135deg, #10b981, #059669); font-weight: 700; cursor: not-allowed; opacity: 0.5; box-shadow: 0 2px 8px rgba(16,185,129,0.3);">
-          <i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> 🚀 Push to Question Bank
+          <i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> 🚀 Push All Questions to Bank
         </button>
       </div>
 

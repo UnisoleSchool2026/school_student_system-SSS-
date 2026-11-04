@@ -14,6 +14,7 @@ const {
   validateFacultySubjectLock,
   processQuestionExtraction,
   commitQuestionToStore,
+  commitBatchQuestionsToStore,
   parseRawTextLocally
 } = require('../backend/src/services/questionInjectionService');
 
@@ -173,7 +174,74 @@ Solution: Magnetic field at center $B = \\frac{\\mu_0 I}{2r} = \\frac{\\mu_0 V}{
   assert(imgParsed.solution_latex, 'Solution must be present');
   console.log('✅ PASS: Multimodal Image pipeline processed successfully with fallback resiliency');
 
-  console.log('\n🎉 ALL 5 QUESTION INJECTION INTEGRATION TESTS PASSED PERFECTLY!');
+  // Test 6: Multi-Question Document Auto-Categorization & Batch Ingestion
+  console.log('\n--- TEST 6: Multi-Question Document Auto-Categorization & Batch Ingestion ---');
+  const multiQuestionText = `Question 1: (1 Mark) What is the SI unit of electric flux?
+A) $N \\cdot m^2 / C$
+B) $N / C$
+C) $V \\cdot m^2$
+D) $J / C$
+Answer: A
+Solution: Electric flux $\\Phi_E = \\int \\vec{E} \\cdot d\\vec{A}$. Since $[E] = N/C$ and $[A] = m^2$, the unit is $N \\cdot m^2 \\cdot C^{-1}$.
+
+Question 2: (3 Marks) An alternating voltage $V = 220\\sqrt{2} \\sin(100\\pi t)$ is applied across a pure capacitor of capacitance $C = 10\\,\\mu\\text{F}$. Find the capacitive reactance $X_C$ and the peak current $I_0$.
+Solution: Angular frequency $\\omega = 100\\pi\\,\\text{rad/s}$. Capacitive reactance $X_C = \\frac{1}{\\omega C} = \\frac{1}{100\\pi \\times 10 \\times 10^{-6}} = \\frac{10^3}{\\pi} \\approx 318.3\\,\\Omega$. Peak current $I_0 = \\frac{V_0}{X_C} = \\frac{220\\sqrt{2}}{318.3} \\approx 0.98\\,\\text{A}$.
+
+Question 3: (5 Marks) State Gauss's law in electrostatics. Using this law, derive an expression for the electric field intensity due to an infinitely long straight wire of uniform linear charge density $\\lambda$.
+Solution: Gauss's law states that $\\oint \\vec{E} \\cdot d\\vec{A} = \\frac{q_{\\text{enc}}}{\\varepsilon_0}$. For a cylindrical Gaussian surface of radius $r$ and length $L$, $E(2\\pi r L) = \\frac{\\lambda L}{\\varepsilon_0} \\implies E = \\frac{\\lambda}{2\\pi \\varepsilon_0 r}$.`;
+
+  const parsedBatch = parseRawTextLocally({
+    rawText: multiQuestionText,
+    targetSubject: 'Physics',
+    grade: '12',
+    category: 'CBSE_PYQ'
+  });
+
+  assert(Array.isArray(parsedBatch.questions), 'Batch must return questions array');
+  assert.strictEqual(parsedBatch.questions.length, 3, 'Must detect all 3 distinct questions');
+
+  // Verify Question 1 auto-categorization
+  const q1 = parsedBatch.questions[0];
+  assert.strictEqual(q1.question_number, 1);
+  assert(q1.chapter_name.includes('Electric Charges') || q1.chapter_name.includes('1'), 'Q1 must auto-detect Electric Charges and Fields');
+  assert.strictEqual(q1.marks_weightage, 1, 'Q1 must auto-detect 1 Mark');
+  assert.strictEqual(q1.difficulty, 'EASY', '1 Mark MCQ defaults to EASY');
+  assert.strictEqual(q1.options_latex.length, 4, 'Q1 must have 4 MCQ options');
+
+  // Verify Question 2 auto-categorization
+  const q2 = parsedBatch.questions[1];
+  assert.strictEqual(q2.question_number, 2);
+  assert(q2.chapter_name.includes('Alternating Current') || q2.chapter_name.includes('7'), 'Q2 must auto-detect Alternating Current');
+  assert.strictEqual(q2.marks_weightage, 3, 'Q2 must auto-detect 3 Marks');
+  assert.strictEqual(q2.difficulty, 'MEDIUM', '3 Mark numerical defaults to MEDIUM');
+
+  // Verify Question 3 auto-categorization
+  const q3 = parsedBatch.questions[2];
+  assert.strictEqual(q3.question_number, 3);
+  assert(q3.chapter_name.includes('Electric Charges') || q3.chapter_name.includes('1'), 'Q3 must auto-detect Electric Charges and Fields');
+  assert.strictEqual(q3.marks_weightage, 5, 'Q3 must auto-detect 5 Marks');
+  assert.strictEqual(q3.difficulty, 'HARD', '5 Mark long derivation defaults to HARD');
+
+  console.log('✅ PASS: Auto-categorized 3 questions with exact chapter matching, marks detection (1, 3, 5), and difficulty grading');
+
+  // Test batch commit
+  const batchCommitResult = commitBatchQuestionsToStore({
+    questions: parsedBatch.questions,
+    teacher: physicsFaculty,
+    targetSubject: 'Physics',
+    grade: '12',
+    category: 'CBSE_PYQ',
+    mode: 'text'
+  });
+
+  assert.strictEqual(batchCommitResult.count, 3, 'Batch commit must commit all 3 questions');
+  assert.strictEqual(batchCommitResult.targetBank, 'senior_physics');
+  assert.strictEqual(inMemoryStore.subjectBanks.senior_physics[0].id, batchCommitResult.questions[0].id);
+  assert.strictEqual(inMemoryStore.subjectBanks.senior_physics[1].id, batchCommitResult.questions[1].id);
+  assert.strictEqual(inMemoryStore.subjectBanks.senior_physics[2].id, batchCommitResult.questions[2].id);
+  console.log(`✅ PASS: Batch commit succeeded with 3 questions stored as #1, #2, #3 in senior_physics table`);
+
+  console.log('\n🎉 ALL 6 QUESTION INJECTION INTEGRATION TESTS PASSED PERFECTLY!');
 }
 
 runTests().catch(err => {
