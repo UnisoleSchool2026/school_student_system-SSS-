@@ -556,7 +556,8 @@ window.submitGatewayTeacherLogin = function(event) {
     name,
     phone,
     subjectKey,
-    subjectName: subjectNames[subjectKey] || 'Physics'
+    subjectName: subjectNames[subjectKey] || 'Physics',
+    role: 'TEACHER'
   };
 
   try {
@@ -14821,13 +14822,14 @@ function openInjectQuestionModal() {
     return;
   }
 
-  const activeTeacher = teacherBuilderState.activeTeacher || {
-    id: 'fac_phy_01',
-    name: 'Dr. Vikram Sharma',
-    phone: '9816010001',
-    subject: 'Physics',
-    subjectKey: 'PHYSICS',
-    department: 'PHYSICS',
+  const baseTeacher = teacherBuilderState.activeTeacher || {};
+  const activeTeacher = {
+    id: baseTeacher.id || 'fac_phy_01',
+    name: baseTeacher.name || baseTeacher.full_name || 'Dr. Vikram Sharma',
+    phone: baseTeacher.phone || '9816010001',
+    subject: baseTeacher.subjectName || baseTeacher.subject || 'Physics',
+    subjectKey: baseTeacher.subjectKey || 'PHYSICS',
+    department: baseTeacher.department || baseTeacher.subjectKey || 'PHYSICS',
     role: 'TEACHER'
   };
 
@@ -15073,13 +15075,14 @@ async function triggerAiQuestionExtraction() {
     btnExtract.style.opacity = '0.6';
   }
 
-  const activeTeacher = teacherBuilderState.activeTeacher || {
-    id: 'fac_phy_01',
-    name: 'Dr. Vikram Sharma',
-    phone: '9816010001',
-    subject: 'Physics',
-    subjectKey: 'PHYSICS',
-    department: 'PHYSICS',
+  const baseTeacher = teacherBuilderState.activeTeacher || {};
+  const activeTeacher = {
+    id: baseTeacher.id || 'fac_phy_01',
+    name: baseTeacher.name || baseTeacher.full_name || 'Dr. Vikram Sharma',
+    phone: baseTeacher.phone || '9816010001',
+    subject: baseTeacher.subjectName || baseTeacher.subject || 'Physics',
+    subjectKey: baseTeacher.subjectKey || 'PHYSICS',
+    department: baseTeacher.department || baseTeacher.subjectKey || 'PHYSICS',
     role: 'TEACHER'
   };
 
@@ -15195,13 +15198,14 @@ async function commitInjectedQuestionToBank() {
     btnPush.innerText = 'Pushing to Repository...';
   }
 
-  const activeTeacher = teacherBuilderState.activeTeacher || {
-    id: 'fac_phy_01',
-    name: 'Dr. Vikram Sharma',
-    phone: '9816010001',
-    subject: 'Physics',
-    subjectKey: 'PHYSICS',
-    department: 'PHYSICS',
+  const baseTeacher = teacherBuilderState.activeTeacher || {};
+  const activeTeacher = {
+    id: baseTeacher.id || 'fac_phy_01',
+    name: baseTeacher.name || baseTeacher.full_name || 'Dr. Vikram Sharma',
+    phone: baseTeacher.phone || '9816010001',
+    subject: baseTeacher.subjectName || baseTeacher.subject || 'Physics',
+    subjectKey: baseTeacher.subjectKey || 'PHYSICS',
+    department: baseTeacher.department || baseTeacher.subjectKey || 'PHYSICS',
     role: 'TEACHER'
   };
 

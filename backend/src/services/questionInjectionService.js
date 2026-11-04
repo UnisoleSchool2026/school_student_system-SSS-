@@ -18,7 +18,7 @@ function validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey }
     throw new Error('Access Denied: Teacher credentials are required to inject questions.');
   }
 
-  const role = (teacher.role || '').toUpperCase();
+  const role = (teacher.role || (teacher.subjectKey || teacher.department ? 'TEACHER' : '')).toUpperCase();
   if (role !== 'TEACHER' && role !== 'FACULTY' && role !== 'ADMIN') {
     throw new Error('Access Denied: Question Injection is strictly restricted to verified Faculty members.');
   }
