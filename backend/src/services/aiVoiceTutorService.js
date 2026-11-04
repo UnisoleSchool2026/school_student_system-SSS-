@@ -111,6 +111,33 @@ async function synthesizeNeuralAudio({ text, voiceKey = 'swara' }) {
 function getCuratedHinglishBrief(topic, questionText) {
   const qLower = (questionText + ' ' + (topic || '')).toLowerCase();
 
+  // Chemistry: Electrochemistry & Gibbs Free Energy
+  if (qLower.includes('cell reaction') || qLower.includes('nernst') || qLower.includes('cell potential') || qLower.includes('gibbs') || qLower.includes('faraday') || qLower.includes('galvanic')) {
+    return {
+      hinglishBrief: "Dekho beta, yeh Electrochemistry ka standard cell potential aur Gibbs free energy problem hai. Sabse pehle balanced redox reaction se transfer hone wale electrons n identify karo. Standard Gibbs energy formula Delta G not = -n F E not cell note karo, jahan F Faraday constant 96500 C per mole hai. Values substitute karne par free energy calculated ho jati hai aur negative sign spontaneous cell reaction confirm karta hai!",
+      firstStepFormula: "\\Delta G^\\circ = -nFE^\\circ_{\\text{cell}}, \\quad n = 2 \\text{ electrons}",
+      pitfallTip: "Delta G not calculate karte time minus sign lagana bilkul mat bhoolna, aur n hamesha balanced half-reactions se nikalte hain!"
+    };
+  }
+
+  // Chemistry: Solutions & Colligative Properties
+  if (qLower.includes('colligative') || qLower.includes('freezing point') || qLower.includes('boiling point') || qLower.includes('molality') || qLower.includes('cane sugar') || qLower.includes('glucose')) {
+    return {
+      hinglishBrief: "Is question mein hume Solutions chapter ka colligative property formula Delta T f = K f into m apply karna hai. Pehle standard solution ke data se solvent pure water ka cryoscopic constant K f find karo. Phir target solution ki molality calculate karke freezing point depression nikalte hain aur pure water ke freezing point 273.15 K se subtract karke final temperature mil jata hai!",
+      firstStepFormula: "\\Delta T_f = K_f \\cdot m, \\quad m = \\frac{w_2 / M_2}{w_1 / 1000}",
+      pitfallTip: "Molality calculate karte time solvent ka mass kilograms mein hona chahiye, solution ka total volume nahi!"
+    };
+  }
+
+  // Chemistry: Kinetics
+  if (qLower.includes('first-order') || qLower.includes('half-life') || qLower.includes('rate constant') || qLower.includes('decomposition') || qLower.includes('kinetics')) {
+    return {
+      hinglishBrief: "Yeh Chemical Kinetics ka first-order integrated rate law numerical hai. Sabse pehle formula k = 2.303 upon t into log of R not upon R recall karo. Given time t par reactant remaining calculate karke log value substitute karo. Rate constant k aane ke baad half-life formula t half = 0.693 upon k se final answer evaluate ho jayega!",
+      firstStepFormula: "k = \\frac{2.303}{t}\\log\\left(\\frac{[R]_0}{[R]}\\right), \\quad t_{1/2} = \\frac{0.693}{k}",
+      pitfallTip: "First-order reaction ki half-life initial concentration par depend nahi karti, yeh hamesha constant rehti hai."
+    };
+  }
+
   if (qLower.includes('roll') || qLower.includes('incline') || qLower.includes('rotat') || qLower.includes('sphere') || qLower.includes('moment of inertia')) {
     return {
       hinglishBrief: "Dekho bacho, look at this question: Yahan ek solid sphere mass M aur radius R ka inclined plane par roll kar raha hai without slipping. Left side board par iska incline angle theta aur rolling sphere diagram dekho. Point of contact instantaneous rest par hota hai. Ab right side board par Step 1 note karo: acceleration formula a = g sin theta upon 1 plus I upon M R square lagate hain. Solid sphere ka moment of inertia I = 2 upon 5 M R square substitute karne par final answer a = 5 upon 7 g sin theta mil jata hai!",
@@ -394,10 +421,21 @@ async function generateSmartboardTeachingPlan({
   topic = '',
   options = [],
   correctAnswer = '',
-  marks = 3
+  marks = 3,
+  subject = '',
+  subjectKey = '',
+  facultyName = ''
 }) {
   const cleanQ = cleanLatexForSpeech(questionText);
   const cleanS = cleanLatexForSpeech(solutionText);
+
+  const sUpper = (subjectKey || subject || '').toUpperCase();
+  let discipline = 'PHYSICS';
+  if (sUpper.includes('CHEM')) discipline = 'CHEMISTRY';
+  else if (sUpper.includes('BIO')) discipline = 'BIOLOGY';
+  else if (sUpper.includes('MATH')) discipline = 'MATHEMATICS';
+
+  const teacher = facultyName || (discipline === 'CHEMISTRY' ? 'Prof. Sunita Rao' : discipline === 'BIOLOGY' ? 'Dr. Ananya Mukherjee' : discipline === 'MATHEMATICS' ? 'Mr. Rajesh Bansal' : 'Dr. Vikram Sharma');
 
   // 1. Initial heuristic detection of diagram type and core formulas
   const textCorpus = `${questionText} ${chapterName} ${topic} ${solutionText}`.toLowerCase();
@@ -420,7 +458,64 @@ async function generateSmartboardTeachingPlan({
   let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
   let diagSpoken = `Pehle left side board par diagram aur physical coordinate system dhyan se observe karo.`;
 
-  if (textCorpus.match(/roll|sphere|cylinder|incline|ramp|slip|angular|moment of inertia|torque/)) {
+  // DISCIPLINE-AWARE HEURISTICS
+  if (discipline === 'CHEMISTRY') {
+    defaultDiagType = 'chemistry_reaction';
+    defaultTitle = `${chapterName || 'Chemistry Concept'} • Chemical Reaction Framework`;
+    defaultTip = 'Always verify chemical stoichiometry, oxidation numbers, and state symbols!';
+    s1Title = 'Governing Chemical Principles & Setup';
+    s1Formula = '• Balanced Reaction Equation\n• Primary governing relation or standard formula';
+    s1Exp = 'Establish the fundamental chemical relationship connecting knowns and target variable.';
+    s2Title = 'Stoichiometric & Quantitative Working';
+    s2Formula = cleanS.slice(0, 180) || 'Substitute numerical quantities into the chemical relationship.';
+    s2Exp = 'Step-by-step chemical calculation preserving proper units and stoichiometry.';
+    s3Title = 'Final Evaluated Answer & Verified Takeaway';
+    s3Formula = `Final Answer: ${cleanS.slice(0, 80) || 'Calculated with SI standard'} ${correctAnswer ? `[Option ${correctAnswer}]` : ''}`;
+    s3Exp = 'Sanity check confirms consistency with mass conservation and chemical equilibrium.';
+    defaultHinglish = `Is question mein hume ${chapterName || 'Chemistry concept'} solve karna hai. Pehle left side board par chemical system setup dekho... Ab right side board par step-by-step formula lagakar solve karte hain... aur verified answer mil gaya!`;
+
+    if (textCorpus.match(/electrochem|galvanic|nernst|cell|electrode|emf|redox|anode|cathode|faraday|gibbs/)) {
+      defaultDiagType = 'chemistry_cell';
+      defaultTitle = 'Galvanic Cell & Electrochemical Equilibrium';
+      defaultTip = 'Negative ΔG° confirms spontaneity! Always verify n from balanced redox half-equations.';
+      s1Title = 'Nernst Relation & Standard Gibbs Energy';
+      s1Formula = '• ΔG° = -n · F · E°_cell\n• E_cell = E° - (0.059 / n) · log Q\n• F = 96,500 C/mol,  n = 2 electrons';
+      s1Exp = 'Standard cell potential directly relates to maximum non-expansion work and thermodynamic free energy change.';
+      s1Spoken = 'Dekho beta, pehle left board par Galvanic cell setup, anode, cathode aur electron migration direction observe karo.';
+
+      s2Title = 'Electron Transfer & Gibbs Calculation';
+      s2Formula = cleanS || '1) n = 2 electrons transferred\n2) ΔG° = -2 × 96500 × 1.10 = -212300 J/mol\n3) ΔG° = -212.3 kJ/mol';
+      s2Exp = 'Substitute electron transfer number n and standard cell potential into the Gibbs relationship.';
+      s2Spoken = 'Ab n = 2 electrons aur cell potential substitute karke energy calculate karte hain.';
+
+      s3Title = 'Final Evaluated Energy & Takeaway';
+      s3Formula = `• Standard Gibbs Free Energy: ΔG° = -212.3 kJ/mol  ${correctAnswer ? `[Option ${correctAnswer}]` : ''}\n• Spontaneous Reaction Confirmed`;
+      s3Exp = 'Negative Gibbs free energy ΔG° confirms the cell reaction is thermodynamically spontaneous under standard conditions.';
+      s3Spoken = 'Aur final answer negative 212.3 kJ per mole spontaneous cell reaction confirm karta hai!';
+      diagSpoken = 'Pehle left side board par Galvanic cell diagram aur electrodes observe karo.';
+      defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+    } else if (textCorpus.match(/solution|colligative|freezing|boiling|osmotic|van 't hoff|raoult|molarity|molality/)) {
+      defaultDiagType = 'chemistry_solutions';
+      defaultTitle = 'Solutions • Phase Equilibrium & Colligative Depression';
+      defaultTip = 'Always use mass of solvent in kg for molality m, and remember freezing point = T°_f - ΔT_f!';
+      s1Title = 'Colligative Relations & Molality Definition';
+      s1Formula = '• Freezing Point Depression: ΔT_f = i · K_f · m\n• Boiling Point Elevation:   ΔT_b = i · K_b · m\n• Molality: m = (w₂ / M₂) / (w₁ / 1000)';
+      s1Exp = 'Colligative properties depend solely on the ratio of solute particles to solvent mass in kg.';
+      s1Spoken = 'Dekho beta, pehle colligative property formula Delta T f = K f into m note karte hain.';
+
+      s2Title = 'Molality Calculation & K_f Substitution';
+      s2Formula = cleanS || '1) Compute molality of standard solution\n2) Determine solvent constant K_f\n3) Calculate unknown freezing point depression';
+      s2Exp = 'Apply the relation to determine solvent constant K_f and evaluate the depression in freezing point for target solution.';
+      s2Spoken = 'Ab sugar solution se K f nikal kar glucose solution ki molality substitute karte hain.';
+
+      s3Title = 'Final Evaluated Freezing Point & Takeaway';
+      s3Formula = `• Calculated Freezing Point: ${cleanS.slice(0, 80) || 'Evaluated successfully'} ${correctAnswer ? `[Option ${correctAnswer}]` : ''}`;
+      s3Exp = 'Subtract calculated depression ΔT_f from pure solvent freezing point (273.15 K).';
+      s3Spoken = 'Aur pure water freezing point se subtract karke final temperature accurately mil jata hai!';
+      diagSpoken = 'Pehle left side board par pure solvent aur dilute solution ke phase equilibrium diagram ko note karo.';
+      defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+    }
+  } else if (textCorpus.match(/roll|sphere|cylinder|incline|ramp|slip|angular|moment of inertia|torque/)) {
     defaultDiagType = 'rolling_incline';
     defaultTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
     defaultTip = 'Static friction sustains pure rolling without dissipating total mechanical energy!';
@@ -506,14 +601,15 @@ async function generateSmartboardTeachingPlan({
   const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
   if (groqKey) {
     try {
-      const prompt = `You are Dr. Vikram Sharma, an elite Indian STEM faculty member teaching a student live in front of an interactive classroom smartboard.
+      const prompt = `You are ${teacher}, an elite Indian senior ${discipline} faculty mentor teaching a student live in front of an interactive classroom smartboard.
 Analyze the following question and produce a synchronized teaching plan with rich explanations:
-- Left board has the visual physical diagram/schematic and question statement.
+- Left board has the visual ${discipline} diagram/schematic and question statement.
 - Right board has the step-by-step solution with rich pedagogical explanations written directly on the board.
 - Spoken Hinglish explanation for the voice tutor exactly matching what is written on each card.
 
 Question: "${cleanQ}"
-Chapter: "${chapterName || 'Physics/STEM'}"
+Subject: "${discipline}"
+Chapter: "${chapterName || 'Curriculum STEM'}"
 Topic: "${topic || ''}"
 Solution Reference: "${solutionText || ''}"
 Options: ${JSON.stringify(options || [])}
@@ -521,10 +617,10 @@ Correct Answer: "${correctAnswer || ''}"
 
 Return STRICT JSON only:
 {
-  "diagramType": "circuit|rolling_incline|lens|projectile|fbd|oscillator|concept",
+  "diagramType": "chemistry_cell|chemistry_solutions|chemistry_reaction|chemistry_organic|circuit|rolling_incline|lens|projectile|fbd|oscillator|math_calculus|math_matrix|bio_genetics|concept",
   "diagramTitle": "Concise diagram title",
   "diagramExplanation": "Clear description of visual forces, axes, and components shown in the diagram.",
-  "diagramSpoken": "Dekho beta, pehle left side board par diagram aur physical system note karo...",
+  "diagramSpoken": "Dekho beta, pehle left side board par diagram aur setup observe karo...",
   "examTip": "One golden teacher exam tip / pitfall (1 crisp sentence)",
   "step1": {
     "title": "GIVEN SETUP & GOVERNING PRINCIPLE",

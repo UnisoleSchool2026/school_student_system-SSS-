@@ -12589,6 +12589,48 @@ async function loadQuestionBankView(forceReload = false) {
     state.questionBankData = [];
   }
 
+  // Resilient Dual-Layer Persistence: Merge persisted custom injected questions from localStorage
+  try {
+    const localKey = 'haps_injected_questions';
+    const localQuestions = JSON.parse(localStorage.getItem(localKey) || '[]');
+    if (Array.isArray(localQuestions) && localQuestions.length > 0) {
+      const existingIds = new Set((state.questionBankData || []).map(q => q.id));
+      const relevantInjected = localQuestions.filter(q => {
+        if (!q || !q.id || existingIds.has(q.id)) return false;
+        const qGrade = String(q.grade || '12');
+        if (qGrade !== curGrade && curGrade !== 'ALL') return false;
+
+        const qSubj = (q.subjectKey || q.subject || '').toUpperCase();
+        if (isClass10) {
+          if (activeSubj === 'CLASS10_MATHEMATICS' && (qSubj.includes('MATH') || qSubj === 'CLASS10_MATHEMATICS')) return true;
+          if (activeSubj === 'CLASS10_SCIENCE' && (qSubj.includes('SCI') || qSubj === 'CLASS10_SCIENCE' || qSubj.includes('PHYS') || qSubj.includes('CHEM') || qSubj.includes('BIO'))) return true;
+          return false;
+        }
+
+        if (activeSubj === 'PHYSICS' && (qSubj.includes('PHYS') || q.targetBank === 'senior_physics')) return true;
+        if (activeSubj === 'CHEMISTRY' && (qSubj.includes('CHEM') || q.targetBank === 'senior_chemistry')) return true;
+        if (activeSubj === 'BIOLOGY' && (qSubj.includes('BIO') || q.targetBank === 'senior_biology')) return true;
+        if (activeSubj === 'MATHEMATICS' && (qSubj.includes('MATH') || q.targetBank === 'senior_mathematics')) return true;
+        return false;
+      });
+
+      if (relevantInjected.length > 0) {
+        state.questionBankData = [...relevantInjected, ...state.questionBankData];
+      }
+    }
+
+    // Two-way sync: Ensure any newly received server injected questions are cached in localStorage
+    const serverInjected = (state.questionBankData || []).filter(q => q.injected_by || String(q.id).includes('_inj_'));
+    if (serverInjected.length > 0) {
+      const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const existMap = new Map(existing.map(q => [q.id, q]));
+      serverInjected.forEach(q => existMap.set(q.id, q));
+      localStorage.setItem(localKey, JSON.stringify(Array.from(existMap.values())));
+    }
+  } catch (err) {
+    console.warn('[LOCAL STORAGE QB MERGE ERROR]', err);
+  }
+
   filterQuestionBankCards();
 }
 
@@ -13452,8 +13494,9 @@ async function startRealtimeVoiceAssistant(qId) {
   attachLiveVoiceCallbacks(qId);
   toggleLiveWhiteboard(qId, true);
 
+  const localPlan = buildLocalSmartboardPlan(qId);
   const cached = voiceTutorState.teachingPlans?.[qId];
-  const teachingPlan = (cached && cached.smartboardPlan) ? cached.smartboardPlan : buildLocalSmartboardPlan(qId);
+  const teachingPlan = (cached && cached.smartboardPlan) ? cached.smartboardPlan : localPlan;
 
   try {
     await window.geminiLiveVoiceTutor.startSession({
@@ -13463,6 +13506,8 @@ async function startRealtimeVoiceAssistant(qId) {
       chapterName: ch,
       topic: top,
       teachingPlan: teachingPlan,
+      facultyName: localPlan.teacherName,
+      subjectName: localPlan.subjectDiscipline || localPlan.subject,
       apiBaseUrl: getApiBaseUrl()
     });
   } catch (err) {
@@ -13597,90 +13642,379 @@ function buildLocalSmartboardPlan(qId) {
   const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
   const rawQ = qObj.question_latex || qObj.questionText || '';
   const rawS = qObj.solution_latex || '';
-  const ch = qObj.chapter_name || qObj.chapter || 'Physics / Science';
-  const marks = qObj.marks || 3;
+  const ch = qObj.chapter_name || qObj.chapter || 'Curriculum Concept';
+  const marks = qObj.marks_weightage || qObj.marks || 3;
   const ans = qObj.correct_answer_latex || qObj.correct_answer || '';
 
+  // 1. Precise Subject & Discipline Isolation
+  const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  const qSubj = (qObj.subjectKey || qObj.subject || teacherBuilderState.selectedSubjectKey || profSubj).toUpperCase();
+  const curGrade = String(qObj.grade || teacherBuilderState.activeGrade || '12');
+  const isC10 = (curGrade === '10');
+
+  let discipline = 'PHYSICS';
+  if (isC10) {
+    discipline = (qSubj.includes('MATH') || profSubj.includes('MATH')) ? 'MATHEMATICS' : 'CLASS10_SCIENCE';
+  } else {
+    if (qSubj.includes('CHEM')) discipline = 'CHEMISTRY';
+    else if (qSubj.includes('BIO')) discipline = 'BIOLOGY';
+    else if (qSubj.includes('MATH')) discipline = 'MATHEMATICS';
+    else discipline = 'PHYSICS';
+  }
+
+  // 2. Discipline-Specific Faculty Persona
+  let facultyName = teacherBuilderState.activeTeacher?.name || teacherBuilderState.activeTeacher?.full_name;
+  if (!facultyName) {
+    if (discipline === 'CHEMISTRY') facultyName = 'Prof. Sunita Rao';
+    else if (discipline === 'BIOLOGY') facultyName = 'Dr. Ananya Mukherjee';
+    else if (discipline === 'MATHEMATICS') facultyName = 'Mr. Rajesh Bansal';
+    else facultyName = 'Dr. Vikram Sharma';
+  }
+
   const textForDetection = (rawQ + ' ' + ch + ' ' + (qObj.topic || '') + ' ' + (qObj.subtopic || '') + ' ' + rawS).toLowerCase();
+  const cleanAns = cleanLatexForClientVoice(ans);
+  const cleanSol = cleanLatexForClientVoice(rawS);
+
+  // Defaults adapted per discipline
   let diagramType = 'concept';
-  let diagTitle = `${ch} • Conceptual Schematic`;
-  let tipText = 'Always cross-check unit dimensions, coordinate signs, and physical boundary conditions!';
-  let step1Title = 'Given Setup & Governing Principle';
-  let step1Formula = '• Identify given physical inputs and stated boundary constraints.\n• Primary governing mathematical relation applied.';
-  let step1Exp = 'Establish foundational physical law linking known inputs to target output.';
-  let step2Title = 'Step-by-Step Derivation & Substitution';
-  let step2Working = cleanLatexForClientVoice(rawS).slice(0, 180) || '• Substitute numerical values into the equation.\n• Simplify algebraic terms step by step.';
-  let step2Exp = 'Step-by-step resolution preserving SI units throughout.';
+  let diagTitle = `${ch} • Conceptual Model`;
+  let tipText = 'Always verify unit dimensions, coordinate signs, and boundary constraints!';
+  let step1Title = 'Governing Principles & Setup';
+  let step1Formula = '• Identify given problem variables and boundary conditions.\n• Apply primary governing formula.';
+  let step1Exp = 'Establish foundational governing relation connecting known inputs to target output.';
+  let step2Title = 'Derivation & Step-by-Step Working';
+  let step2Working = cleanSol.slice(0, 180) || '• Substitute numerical values into the equation.\n• Simplify algebraic / chemical relations step by step.';
+  let step2Exp = 'Step-by-step resolution preserving proper units throughout.';
   let step3Title = 'Final Evaluated Answer & Verified Takeaway';
-  let step3Working = `Final Answer: ${cleanLatexForClientVoice(rawS).slice(0, 80) || 'Calculated with SI standard'} ${ans ? `[Option ${ans}]` : ''}`;
-  let step3Exp = 'Physical check confirms the calculated magnitude and sign convention.';
-  let s1Spoken = 'Pehle stated physical parameters aur primary governing relation note karte hain.';
-  let s2Spoken = 'Ab known quantities substitute karke algebraic derivation solve karte hain.';
-  let s3Spoken = 'Aur yeh raha final verified result with proper SI units aur physical significance.';
+  let step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-90).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+  let step3Exp = 'Physical / Chemical sanity check confirms calculated magnitude and theoretical consistency.';
+  let diagSpoken = `Pehle left side board par ${discipline === 'CHEMISTRY' ? 'chemical system setup' : discipline === 'MATHEMATICS' ? 'mathematical coordinate setup' : 'visual diagram'} dhyan se observe karo.`;
+  let s1Spoken = 'Pehle stated parameters aur primary governing relation note karte hain.';
+  let s2Spoken = 'Ab equations mein known values substitute karke step-by-step derivation solve karte hain.';
+  let s3Spoken = 'Aur yeh raha final verified result with proper units aur board marking takeaway.';
 
-  if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
-    diagramType = 'rolling_incline';
-    diagTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
-    step1Title = 'Free-Body Force & Torque Equations';
-    step1Formula = 'Down Incline:   M·g·sin θ - f_s = M·a\nTorque about C: τ = f_s · R = I · α\nPure Rolling:   a = α · R  ⇒  α = a / R';
-    step1Exp = 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.';
+  // ==========================================================================
+  // DISCIPLINE 1: SENIOR SECONDARY CHEMISTRY
+  // ==========================================================================
+  if (discipline === 'CHEMISTRY') {
+    tipText = 'Always verify stoichiometric balance, oxidation numbers, and state symbols!';
+    step1Title = 'Chemical Principles & Governing Equation';
+    step2Title = 'Stoichiometric & Quantitative Working';
+    step3Title = 'Final Evaluated Chemistry Result';
+    diagTitle = `${ch} • Chemical System Model`;
 
-    step2Title = 'Torque & Linear Force Substitution';
-    step2Working = '1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
-    step2Exp = 'This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).';
+    if (textForDetection.match(/electrochem|galvanic|nernst|cell|electrode|emf|redox|anode|cathode|faraday|gibbs|standard potential|daniel/)) {
+      diagramType = 'chemistry_cell';
+      diagTitle = 'Galvanic Cell & Electrochemical Equilibrium';
+      step1Title = 'Nernst Relation & Standard Gibbs Free Energy';
+      step1Formula = '• Standard Gibbs Energy: ΔG° = -n · F · E°_cell\n• Nernst Relation:      E_cell = E° - (0.059 / n) · log Q\n• Faraday Constant:     F = 96,500 C/mol';
+      step1Exp = 'Standard cell potential E°cell directly relates to the maximum electrical work and thermodynamic free energy change.';
+      
+      step2Title = 'Electron Transfer & Gibbs Calculation';
+      step2Working = cleanSol || '1) Identify electron moles transferred: n = 2\n2) Substitute: ΔG° = -2 × 96,500 C/mol × 1.10 V\n3) Calculate: ΔG° = -212,300 J/mol = -212.3 kJ/mol';
+      step2Exp = 'Substitute electron transfer number n and standard cell potential into the Gibbs relationship.';
+      
+      step3Title = 'Final Evaluated Free Energy & Sanity Check';
+      step3Working = `Final Evaluated Energy: ΔG° = -212.3 kJ/mol  ${ans ? `[Option ${ans}]` : ''}`;
+      step3Exp = 'Negative Gibbs free energy ΔG° confirms the cell reaction is thermodynamically spontaneous under standard conditions.';
+      tipText = 'Negative ΔG° confirms spontaneity! Always verify n from balanced redox half-equations.';
+      diagSpoken = 'Pehle left side board par Galvanic cell setup, anode, cathode aur electron migration direction note karo.';
+      s1Spoken = 'Dekho beta, sabse pehle cell potential aur Gibbs free energy relation Delta G not = -n F E not cell note karte hain.';
+      s2Spoken = 'Ab n = 2 electrons aur cell potential substitute karke energy calculate karte hain.';
+      s3Spoken = 'Aur final answer negative 212.3 kJ per mole spontaneous reaction confirm karta hai!';
 
-    step3Title = 'Moment of Inertia & Final Acceleration';
-    step3Working = 'Solid Sphere:   I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\nAcceleration:   a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\nFinal Result:   a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
-    step3Exp = 'A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.';
-    tipText = 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.';
-  } else if (textForDetection.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
-    diagramType = 'lens';
-    diagTitle = 'Ray Optics • Principal Axis & Image Formation';
-    step1Title = 'Governing Optical Equations';
-    step1Formula = '• Thin Lens Equation: 1/f = 1/v - 1/u\n• Magnification:       m = v / u = h_i / h_o\n• Power of Lens:       P = 1 / f (meters)';
-    step1Exp = 'Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative.';
+    } else if (textForDetection.match(/solution|colligative|freezing|boiling|osmotic|van 't hoff|raoult|molarity|molality|depression|elevation/)) {
+      diagramType = 'chemistry_solutions';
+      diagTitle = 'Solutions • Phase Equilibrium & Colligative Depression';
+      step1Title = 'Colligative Relations & Molality Definition';
+      step1Formula = '• Freezing Point Depression: ΔT_f = i · K_f · m\n• Boiling Point Elevation:   ΔT_b = i · K_b · m\n• Molality of Solute:        m = (w₂ / M₂) / (w₁ / 1000)';
+      step1Exp = 'Colligative properties depend solely on the ratio of solute particle count to solvent mass in kg.';
 
-    step2Title = 'Coordinate Substitution & Calculation';
-    step2Working = '1) Identify: Focal length f (convex > 0), Object distance u (< 0)\n2) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n3) Image distance: v = (u · f) / (u + f)';
-    step2Exp = 'Calculate v and check sign: positive v confirms a real image on opposite side.';
+      step2Title = 'Molality Calculation & K_f Substitution';
+      step2Working = cleanSol || '1) Compute molality for standard solution\n2) Determine cryoscopic constant K_f\n3) Evaluate depression ΔT_f for target solute';
+      step2Exp = 'Apply colligative proportionality to evaluate depression and compute final freezing point.';
 
-    step3Title = 'Image Nature & Final Result';
-    step3Working = '• Magnification: m = v / u\n• Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f (in meters)';
-    step3Exp = 'State complete nature, orientation, and size relative to object.';
-    tipText = 'Always state the nature (real/virtual, inverted/erect) and magnification sign!';
-  } else if (textForDetection.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
-    diagramType = 'circuit';
-    diagTitle = 'Electric Circuit • Current & Resistivity Model';
-    step1Title = 'Governing Circuit Principles';
-    step1Formula = '• Ohm\'s Law:          V = I · R\n• Microscopic Drift:   I = n · e · A · v_d,   v_d = (e · E · τ) / m\n• Resistivity:         R = ρ · (l / A),       ρ = m / (n · e² · τ)';
-    step1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
+      step3Title = 'Final Evaluated Freezing Point & Takeaway';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Exp = 'Depression ΔT_f is subtracted from pure solvent freezing temperature (273.15 K).';
+      tipText = 'Always use mass of solvent in kg for molality m, not total solution volume!';
+      diagSpoken = 'Pehle left side board par pure solvent aur dilute solution ke vapor pressure lowering ko observe karo.';
+      s1Spoken = 'Dekho beta, pehle colligative property formula Delta T f = K f into m note karte hain.';
+      s2Spoken = 'Ab given values substitute karke target solution ki freezing point depression nikalte hain.';
+      s3Spoken = 'Aur pure water freezing point se subtract karke final temperature accurately mil jata hai!';
 
-    step2Title = 'Current Derivation & Ohm Deduction';
-    step2Working = '1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R';
-    step2Exp = 'Confirms Ohm\'s Law V = IR with resistivity ρ = m / (n·e²·τ).';
+    } else if (textForDetection.match(/kinetic|rate|half-life|first-order|zero-order|arrhenius|activation energy|order of reaction/)) {
+      diagramType = 'chemistry_reaction';
+      diagTitle = 'Chemical Kinetics & Arrhenius Activation Energy';
+      step1Title = 'Integrated Rate Law & Half-Life Relation';
+      step1Formula = '• Integrated 1st Order: k = (2.303 / t) · log([R]₀ / [R])\n• Half-Life Period:    t_½ = 0.693 / k\n• Arrhenius Relation:   k = A · exp(-E_a / RT)';
+      step1Exp = 'For first-order decomposition, the specific reaction rate constant k is concentration-independent.';
 
-    step3Title = 'Final Formula & Board Takeaway';
-    step3Working = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verified Result: Microscopic basis of electrical resistance established';
-    step3Exp = 'Resistivity depends only on material electron density n and relaxation time τ.';
-    tipText = 'Relaxation time tau decreases with temperature in metals, increasing electrical resistance!';
-  } else if (textForDetection.match(/projectile|trajectory|parabola|horizontal range|max height/)) {
-    diagramType = 'projectile';
-    diagTitle = 'Projectile Motion • Parabolic Trajectory';
-    step1Title = 'Kinematic Component Equations';
-    step1Formula = '• Horizontal: u_x = u · cos θ,  a_x = 0,  x(t) = (u · cos θ) · t\n• Vertical: u_y = u · sin θ,  a_y = -g,  y(t) = (u · sin θ) · t - ½·g·t²';
-    step1Exp = 'Two independent perpendicular motions occurring simultaneously.';
+      step2Title = 'Logarithmic Evaluation & Rate Constant';
+      step2Working = cleanSol || '1) Calculate fraction remaining: [R] = [R]₀ - 0.30[R]₀ = 0.70[R]₀\n2) Evaluate k = (2.303 / t) · log(10 / 7)\n3) Compute half-life: t_½ = 0.693 / k';
+      step2Exp = 'Substitute elapsed time and fractional reactant concentration into integrated rate expression.';
 
-    step2Title = 'Trajectory Equation & Peak Calculation';
-    step2Working = '1) Flight Time: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
-    step2Exp = 'Peak height occurs at vertical velocity v_y = 0.';
+      step3Title = 'Final Half-Life Period & Takeaway';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Exp = 'First-order half-life is constant throughout reaction progress and independent of initial concentration.';
+      tipText = 'For first-order kinetics, half-life t_½ = 0.693 / k is completely independent of initial reactant concentration!';
+      diagSpoken = 'Pehle left board par reactant concentration decay curve aur Arrhenius activation barrier observe karo.';
+      s1Spoken = 'Dekho beta, first-order reaction ke liye integrated rate equation k = 2.303 by t log R not by R note karte hain.';
+      s2Spoken = 'Ab time aur concentration fraction substitute karke rate constant k evaluate karte hain.';
+      s3Spoken = 'Aur t half = 0.693 by k formula lagate hi accurate half-life mil jata hai!';
 
-    step3Title = 'Final Answer & Range Verification';
-    step3Working = `Final Answer: Maximum range occurs at θ = 45° where R_max = u² / g ${ans ? `[Option ${ans}]` : ''}`;
-    step3Exp = 'Air resistance is neglected; path is purely parabolic.';
-    tipText = 'Horizontal velocity u_x = u·cos θ remains CONSTANT throughout flight!';
+    } else if (textForDetection.match(/organic|haloalkane|alcohol|aldehyde|ketone|amine|sn1|sn2|mechanism|benzene|reagent|elimination|addition/)) {
+      diagramType = 'chemistry_organic';
+      diagTitle = 'Organic Reaction Mechanism & Regiochemistry';
+      step1Title = 'Substrate & Reaction Classification';
+      step1Formula = '• Substrate Classification: Primary (1°) / Secondary (2°) / Tertiary (3°)\n• Attacking Reagent: Nucleophile (Nu⁻) / Electrophile (E⁺)\n• Pathway: Substitution (S_N1 vs S_N2) / Elimination (E1 vs E2)';
+      step1Exp = 'Reaction trajectory is dictated by steric hindrance and carbocation / transition state stability.';
+
+      step2Title = 'Reactive Intermediate & Transition Pathway';
+      step2Working = cleanSol || '1) Leaving group departs to form reactive intermediate\n2) Carbocation stability order: 3° > 2° > 1°\n3) Nucleophilic attack completes target bond formation';
+      step2Exp = 'Analyze carbocation stability or concerted backside attack mechanism.';
+
+      step3Title = 'Major Product & Stereochemical Outcome';
+      step3Working = `Major Product: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-90).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Exp = 'Regioselectivity and stereochemical outcome (inversion vs retention) verified according to board rubric.';
+      tipText = 'S_N2 proceeds with Walden inversion via backside attack; S_N1 proceeds via planar carbocation with racemization!';
+      diagSpoken = 'Pehle left side board par substrate molecular structure aur attacking reagent pathway note karo.';
+      s1Spoken = 'Dekho beta, pehle substrate aur attacking reagent ka nature classify karte hain.';
+      s2Spoken = 'Ab intermediate carbocation stability aur transition state trace karke mechanism explain karte hain.';
+      s3Spoken = 'Aur major product standard board rubric ke according verified mil jata hai!';
+
+    } else {
+      // General Chemistry Framework
+      diagramType = 'chemistry_reaction';
+      diagTitle = `${ch} • Chemical System & Stoichiometric Framework`;
+      step1Title = 'Governing Chemical Principle & Balanced Equation';
+      step1Formula = cleanSol.slice(0, 160) || '• Balance stoichiometric reaction equation\n• Identify given molar quantities and boundary conditions';
+      step2Title = 'Step-by-Step Stoichiometric & Mathematical Working';
+      step2Working = cleanSol.slice(0, 220) || '• Substitute known molar quantities into chemical relation\n• Solve for target variable preserving units';
+      step3Title = 'Final Evaluated Answer & Verified Takeaway';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-90).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      tipText = 'Always verify chemical stoichiometry, oxidation numbers, and state symbols!';
+      diagSpoken = 'Pehle left side board par chemical system setup aur given variables note karo.';
+      s1Spoken = 'Dekho beta, pehle stated chemical inputs aur governing equation note karte hain.';
+      s2Spoken = 'Ab right side board par step-by-step stoichiometric working solve karte hain.';
+      s3Spoken = 'Aur yeh raha final answer chemical theory ke according bilkul accurate!';
+    }
+
+  // ==========================================================================
+  // DISCIPLINE 2: SENIOR SECONDARY MATHEMATICS
+  // ==========================================================================
+  } else if (discipline === 'MATHEMATICS') {
+    tipText = 'Double-check algebraic sign transitions across equality steps!';
+    step1Title = 'Governing Mathematical Theorem & Formula';
+    step2Title = 'Step-by-Step Algebraic Working & Simplification';
+    step3Title = 'Final Evaluated Solution & Sanity Check';
+    diagTitle = `${ch} • Mathematical Framework`;
+
+    if (textForDetection.match(/calculus|derivative|integral|tangent|area under|limit|continuity|differential equation/)) {
+      diagramType = 'math_calculus';
+      diagTitle = `${ch} • Calculus Derivation & Curve Analysis`;
+      step1Title = 'Governing Calculus Theorem & Definition';
+      step1Formula = '• Definite Integral:  ∫ₐᵇ f(x) dx = F(b) - F(a)\n• Derivative Rule:    d/dx [u · v] = u · (dv/dx) + v · (du/dx)\n• Integration Parts:  ∫ u · dv = u · v - ∫ v · du';
+      step1Exp = 'Apply the fundamental theorem of calculus to link geometric curve area with anti-derivatives.';
+
+      step2Title = 'Analytical Integration & Substitution';
+      step2Working = cleanSol || '1) Formulate integrand and apply substitution u = g(x)\n2) Transform limits of integration\n3) Evaluate anti-derivative expression';
+      step2Exp = 'Step-by-step mathematical working preserving algebraic rigour.';
+
+      step3Title = 'Final Evaluated Integral & Verification';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Exp = 'Boundary limits evaluated; geometric area check confirms positive definite result.';
+      tipText = 'For indefinite integrals, never forget the constant of integration C; for definite integrals, transform limits correctly!';
+      diagSpoken = 'Pehle left side board par function curve y = f(x), tangent line aur shaded integral area note karo.';
+      s1Spoken = 'Dekho beta, pehle calculus theorem aur governing derivative ya integral formula note karte hain.';
+      s2Spoken = 'Ab right board par algebraic substitution aur analytical integration solve karte hain.';
+      s3Spoken = 'Aur yeh raha verified final answer, standard CBSE marking scheme ke mutabiq!';
+
+    } else if (textForDetection.match(/matrix|matrices|determinant|cramer|adjoint|inverse/)) {
+      diagramType = 'math_matrix';
+      diagTitle = `${ch} • Matrix Transformations & Determinants`;
+      step1Title = 'Matrix Formulation & Governing Properties';
+      step1Formula = '• Matrix System:      A · X = B\n• Determinant:        |A| = det(A) ≠ 0 (Invertible Condition)\n• Matrix Inverse:     A⁻¹ = (1 / |A|) · adj(A)';
+      step1Exp = 'A square matrix is non-singular and uniquely invertible if and only if its determinant is non-zero.';
+
+      step2Title = 'Cofactor Matrix & Determinant Evaluation';
+      step2Working = cleanSol || '1) Calculate determinant |A| by row expansion\n2) Determine cofactors: C_ij = (-1)^(i+j) · M_ij\n3) Form adjoint adj(A) = [C_ij]^T and compute A⁻¹ · B';
+      step2Exp = 'Calculate cofactors and evaluate adjoint transpose step by step.';
+
+      step3Title = 'Solution Vector & Sanity Check';
+      step3Working = `Solution Vector: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Exp = 'Substitute solution vector [x, y, z] back into original system equations to confirm consistency.';
+      tipText = 'Always verify |A| ≠ 0 before calculating inverse; if |A| = 0 and (adj A)·B ≠ 0, system is inconsistent!';
+      diagSpoken = 'Pehle left side board par matrix system A X = B aur determinant diagonal expansion observe karo.';
+      s1Spoken = 'Dekho beta, pehle matrix equations ko standard A X = B form mein formulate karte hain.';
+      s2Spoken = 'Ab determinant |A| evaluate karke cofactors aur adjoint transpose calculate karte hain.';
+      s3Spoken = 'Aur inverse matrix se multiply karte hi solution vector mil jata hai!';
+
+    } else {
+      diagramType = 'concept';
+      diagTitle = `${ch} • Mathematical Pathway`;
+      step1Title = 'Governing Theorem & Stated Formulation';
+      step1Formula = cleanSol.slice(0, 160) || '• Identify given mathematical conditions\n• State governing theorem or algebraic identity';
+      step2Title = 'Line-by-Line Mathematical Working';
+      step2Working = cleanSol.slice(0, 220) || '• Substitute known quantities into equation\n• Solve algebraically step-by-step';
+      step3Title = 'Final Evaluated Solution';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      diagSpoken = 'Pehle left side board par mathematical framework aur coordinate relations note karo.';
+      s1Spoken = 'Dekho beta, pehle governing mathematical principle aur given conditions note karte hain.';
+      s2Spoken = 'Ab step-by-step algebraic working solve karte hain.';
+      s3Spoken = 'Aur final evaluated answer bilkul verified tarike se nikal aata hai!';
+    }
+
+  // ==========================================================================
+  // DISCIPLINE 3: SENIOR SECONDARY BIOLOGY
+  // ==========================================================================
+  } else if (discipline === 'BIOLOGY') {
+    tipText = 'Focus on precise biological terminology and regulatory feedback pathways!';
+    step1Title = 'Core Biological Principle & Setup';
+    step2Title = 'Mechanism & Physiological Pathway';
+    step3Title = 'Final Verified Observation & Biological Takeaway';
+
+    if (textForDetection.match(/genetic|mendel|inheritance|dna|chromosome|allele|cross|punnett/)) {
+      diagramType = 'bio_genetics';
+      diagTitle = `${ch} • Mendelian Inheritance & Punnett Square`;
+      step1Title = 'Parental Genotypes & Allele Segregation';
+      step1Formula = '• Parental Cross:      Tt × Tt (Monohybrid Heterozygous)\n• Allele Segregation:  Gametes T (50%) and t (50%)\n• Independent Assortment of non-linked alleles';
+      step1Exp = 'During gamete formation, pairs of unit factors separate cleanly without blending (Law of Segregation).';
+
+      step2Title = 'Punnett Square & Probability Formulation';
+      step2Working = cleanSol || '1) Cross gametes: T and t with T and t\n2) Genotypes formed: 1 TT : 2 Tt : 1 tt\n3) Phenotypes observed: 3 Tall : 1 Dwarf';
+      step2Exp = 'Calculate individual genotypic probabilities and phenotypic dominance expression.';
+
+      step3Title = 'Evaluated Ratios & Board Takeaway';
+      step3Working = `Final Ratios: Phenotypic 3:1 | Genotypic 1:2:1  ${ans ? `[Option ${ans}]` : ''}`;
+      step3Exp = 'Ratios match classical Mendelian predictions for complete dominance.';
+      tipText = 'Independent assortment applies strictly to unlinked genes on non-homologous chromosomes!';
+      diagSpoken = 'Pehle left side board par 2x2 Punnett square grid aur gamete combinations note karo.';
+      s1Spoken = 'Dekho beta, pehle parental genotypes aur gamete segregation principle note karte hain.';
+      s2Spoken = 'Ab Punnett grid mein gamete combinations cross karke genotypic probabilities formulate karte hain.';
+      s3Spoken = 'Aur phenotypic ratio 3:1 aur genotypic ratio 1:2:1 confirm ho jata hai!';
+
+    } else {
+      diagramType = 'concept';
+      diagTitle = `${ch} • Biological System & Mechanism`;
+      step1Title = 'Biological Principle & System Architecture';
+      step1Formula = cleanSol.slice(0, 160) || '• Identify biological system and regulatory factors\n• Outline primary governing mechanism';
+      step2Title = 'Physiological Steps & Cellular Pathway';
+      step2Working = cleanSol.slice(0, 220) || '• Trace sequential biochemical or physiological stages\n• Detail enzymatic and regulatory feedback steps';
+      step3Title = 'Final Biological Conclusion & Takeaway';
+      step3Working = `Final Conclusion: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      diagSpoken = 'Pehle left side board par biological schematic aur cellular pathway note karo.';
+      s1Spoken = 'Dekho beta, pehle biological system aur regulatory factors note karte hain.';
+      s2Spoken = 'Ab step-by-step cellular mechanism aur physiological stages explain karte hain.';
+      s3Spoken = 'Aur final biological conclusion standard textbook rubric se match ho jata hai!';
+    }
+
+  // ==========================================================================
+  // DISCIPLINE 4: SENIOR SECONDARY PHYSICS & FOUNDATION SCIENCE
+  // ==========================================================================
+  } else {
+    // PHYSICS ONLY: Strict discipline isolation ensures rolling / circuit never triggers for chemistry
+    if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
+      diagramType = 'rolling_incline';
+      diagTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
+      step1Title = 'Free-Body Force & Torque Equations';
+      step1Formula = 'Down Incline:   M·g·sin θ - f_s = M·a\nTorque about C: τ = f_s · R = I · α\nPure Rolling:   a = α · R  ⇒  α = a / R';
+      step1Exp = 'Pure rolling without slipping: Contact point P is at instantaneous rest with zero relative sliding.';
+
+      step2Title = 'Torque & Linear Force Substitution';
+      step2Working = '1) Torque equation: f_s · R = I · (a / R)  ⇒  f_s = (I / R²) · a\n2) Substitute f_s:  M·g·sin θ - (I / R²) · a = M·a\n3) General Formula: a = (g · sin θ) / [1 + I / (M · R²)]';
+      step2Exp = 'This general acceleration equation applies to all rolling symmetrical objects (sphere, cylinder, ring).';
+
+      step3Title = 'Moment of Inertia & Final Acceleration';
+      step3Working = 'Solid Sphere:   I = (2/5) · M · R²  ⇒  I / (M · R²) = 2/5\nAcceleration:   a = (g · sin θ) / [1 + 2/5] = (g · sin θ) / (7/5)\nFinal Result:   a = (5/7) · g · sin θ  ≈ 0.714 · g · sin θ';
+      step3Exp = 'A solid sphere accelerates faster than a hollow sphere (5/7 > 3/5) due to lower rotational inertia.';
+      tipText = 'Pure rolling is sustained by STATIC friction. Work done by static friction is ZERO! Total mechanical energy is conserved.';
+      diagSpoken = 'Pehle left side board par inclined plane, sphere ka contact point P aur forces note karo.';
+      s1Spoken = 'Dekho beta, pehle linear force M g sin theta aur static friction torque equations note karte hain.';
+      s2Spoken = 'Ab friction eliminate karke general rolling acceleration derive karte hain.';
+      s3Spoken = 'Aur solid sphere ke liye final answer a = 5/7 g sin theta mil jata hai!';
+
+    } else if (textForDetection.match(/lens|mirror|focal|refract|reflect|convex|concave|ray|optical/)) {
+      diagramType = 'lens';
+      diagTitle = 'Ray Optics • Principal Axis & Image Formation';
+      step1Title = 'Governing Optical Equations';
+      step1Formula = '• Thin Lens Equation: 1/f = 1/v - 1/u\n• Magnification:       m = v / u = h_i / h_o\n• Power of Lens:       P = 1 / f (meters)';
+      step1Exp = 'Cartesian Sign Convention: Distances along incident ray are positive; opposite are negative.';
+
+      step2Title = 'Coordinate Substitution & Calculation';
+      step2Working = '1) Identify: Focal length f (convex > 0), Object distance u (< 0)\n2) Rearrange: 1/v = 1/f + 1/u = (u + f) / (u · f)\n3) Image distance: v = (u · f) / (u + f)';
+      step2Exp = 'Calculate v and check sign: positive v confirms a real image on opposite side.';
+
+      step3Title = 'Image Nature & Final Result';
+      step3Working = '• Magnification: m = v / u\n• Real & Inverted if m < 0; Virtual & Erect if m > 0\n• Power: P = 1 / f (in meters)';
+      step3Exp = 'State complete nature, orientation, and size relative to object.';
+      tipText = 'Always state the nature (real/virtual, inverted/erect) and magnification sign!';
+      diagSpoken = 'Pehle left side board par principal axis aur convex lens ke ray diagram ko dhyan se dekho.';
+      s1Spoken = 'Dekho beta, pehle optical sign convention ke sath lens formula 1/f = 1/v - 1/u note karte hain.';
+      s2Spoken = 'Ab coordinates substitute karke image position v aur magnification calculate karte hain.';
+      s3Spoken = 'Aur final result mein image real aur inverted confirm hoti hai!';
+
+    } else if (textForDetection.match(/circuit|ohm|resistor|resistance|current|voltage|battery|ampere|drift/)) {
+      diagramType = 'circuit';
+      diagTitle = 'Electric Circuit • Current & Resistivity Model';
+      step1Title = 'Governing Circuit Principles';
+      step1Formula = '• Ohm\'s Law:          V = I · R\n• Microscopic Drift:   I = n · e · A · v_d,   v_d = (e · E · τ) / m\n• Resistivity:         R = ρ · (l / A),       ρ = m / (n · e² · τ)';
+      step1Exp = 'Relaxation time τ connects electron kinematics to macroscopic electrical resistance.';
+
+      step2Title = 'Current Derivation & Ohm Deduction';
+      step2Working = '1) Electric field: E = V / l\n2) Current: I = n·e·A·(e·V·τ / m·l) = (n·e²·A·τ / m·l)·V\n3) Ratio V / I = [m / (n·e²·τ)] · (l / A) = R';
+      step2Exp = 'Confirms Ohm\'s Law V = IR with resistivity ρ = m / (n·e²·τ).';
+
+      step3Title = 'Final Formula & Board Takeaway';
+      step3Working = '• Resistance: R = ρ · (l / A)\n• Resistivity: ρ = m / (n · e² · τ)\n• Verified Result: Microscopic basis of electrical resistance established';
+      step3Exp = 'Resistivity depends only on material electron density n and relaxation time τ.';
+      tipText = 'Relaxation time tau decreases with temperature in metals, increasing electrical resistance!';
+      diagSpoken = 'Pehle left board par conductor circuit model aur electron drift velocity note karo.';
+      s1Spoken = 'Dekho beta, pehle macroscopic Ohm\'s law aur microscopic drift current formulate karte hain.';
+      s2Spoken = 'Ab drift velocity substitute karke resistance ratio derive karte hain.';
+      s3Spoken = 'Aur final resistivity intrinsic material property ke roop mein verify ho jati hai!';
+
+    } else if (textForDetection.match(/projectile|trajectory|parabola|horizontal range|max height/)) {
+      diagramType = 'projectile';
+      diagTitle = 'Projectile Motion • Parabolic Trajectory';
+      step1Title = 'Kinematic Component Equations';
+      step1Formula = '• Horizontal: u_x = u · cos θ,  a_x = 0,  x(t) = (u · cos θ) · t\n• Vertical: u_y = u · sin θ,  a_y = -g,  y(t) = (u · sin θ) · t - ½·g·t²';
+      step1Exp = 'Two independent perpendicular motions occurring simultaneously.';
+
+      step2Title = 'Trajectory Equation & Peak Calculation';
+      step2Working = '1) Flight Time: T = (2·u·sin θ) / g\n2) Maximum Height: H = (u²·sin² θ) / (2·g)\n3) Horizontal Range: R = (u²·sin 2θ) / g';
+      step2Exp = 'Peak height occurs at vertical velocity v_y = 0.';
+
+      step3Title = 'Final Answer & Range Verification';
+      step3Working = `Final Answer: Maximum range occurs at θ = 45° where R_max = u² / g ${ans ? `[Option ${ans}]` : ''}`;
+      step3Exp = 'Air resistance is neglected; path is purely parabolic.';
+      tipText = 'Horizontal velocity u_x = u·cos θ remains CONSTANT throughout flight!';
+      diagSpoken = 'Pehle left board par parabolic trajectory aur initial launch vector observe karo.';
+      s1Spoken = 'Dekho beta, projectile motion mein horizontal aur vertical equations separately formulate karte hain.';
+      s2Spoken = 'Ab flight time, peak height aur horizontal range derive karte hain.';
+      s3Spoken = 'Aur 45 degree angle par maximum horizontal range verify ho jata hai!';
+
+    } else {
+      diagramType = 'concept';
+      diagTitle = `${ch} • Physical Framework`;
+      step1Title = 'Governing Physical Law & Given Setup';
+      step1Formula = cleanSol.slice(0, 160) || '• Identify given physical quantities and boundary conditions\n• State primary governing physical law';
+      step2Title = 'Step-by-Step Derivation & Working';
+      step2Working = cleanSol.slice(0, 220) || '• Substitute numerical values into governing equation\n• Solve algebraically preserving SI units';
+      step3Title = 'Final Evaluated Answer & Verification';
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      diagSpoken = 'Pehle left board par physical system schematic aur coordinates observe karo.';
+      s1Spoken = 'Dekho beta, pehle physical setup aur governing equations note karte hain.';
+      s2Spoken = 'Ab step-by-step substitution karke derivation solve karte hain.';
+      s3Spoken = 'Aur final verified result SI units ke sath evaluate ho jata hai!';
+    }
   }
 
   return {
+    teacherName: facultyName,
+    subject: discipline,
+    subjectDiscipline: discipline,
+    subjectKey: qSubj,
     questionHeader: {
       title: cleanLatexForClientVoice(rawQ).slice(0, 180),
       chapter: ch,
@@ -13690,7 +14024,7 @@ function buildLocalSmartboardPlan(qId) {
       type: diagramType,
       title: diagTitle,
       tip: tipText,
-      spokenScript: 'Pehle left side board par visual physical diagram aur coordinate axes observe karo.'
+      spokenScript: diagSpoken
     },
     examTip: tipText,
     solution: {
@@ -13730,6 +14064,9 @@ function syncQuestionToWhiteboard(qId) {
         options: qObj.options_latex || qObj.options || [],
         correctAnswer: qObj.correct_answer_latex || qObj.correct_answer || '',
         marks: qObj.marks_weightage || qObj.marks || 3,
+        subject: localPlan.subjectDiscipline || 'CHEMISTRY',
+        subjectKey: localPlan.subjectKey || 'CHEMISTRY',
+        facultyName: localPlan.teacherName || 'Faculty Mentor',
         voice: voiceTutorState.selectedVoice || 'swara'
       })
     })
@@ -13739,7 +14076,7 @@ function syncQuestionToWhiteboard(qId) {
         voiceTutorState.teachingPlans[qId] = data;
         sendWhiteboardMessage(qId, {
           type: 'RENDER_SMARTBOARD_SOLUTION',
-          payload: data.smartboardPlan
+          payload: { ...data.smartboardPlan, teacherName: localPlan.teacherName }
         });
 
         // If Gemini Live is active on this question, notify it of the updated plan
@@ -13747,10 +14084,10 @@ function syncQuestionToWhiteboard(qId) {
           window.geminiLiveVoiceTutor.updateTeachingPlan(data.smartboardPlan);
         }
 
-        // If transcript drawer is shown, display Dr. Vikram's Hinglish brief
+        // If transcript drawer is shown, display Faculty's Hinglish brief
         const transcriptEl = document.getElementById(`voiceTranscript_${qId}`);
         if (transcriptEl && (!window.geminiLiveVoiceTutor || !window.geminiLiveVoiceTutor.isSessionActive())) {
-          transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">Teacher Dr. Vikram:</strong> ${escapeHtml(data.hinglishBrief)}</div></div>`;
+          transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">${escapeHtml(localPlan.teacherName)}:</strong> ${escapeHtml(data.hinglishBrief)}</div></div>`;
           initLucideIcons();
         }
       }
@@ -13793,6 +14130,7 @@ window.addEventListener('message', (event) => {
     const qId = qObj.id || `q_${state.qbCurrentPage}`;
     const plan = voiceTutorState.teachingPlans?.[qId] || { smartboardPlan: buildLocalSmartboardPlan(qId) };
     const p = plan.smartboardPlan || plan;
+    const teacherTag = p.teacherName || teacherBuilderState.activeTeacher?.name || 'Faculty Mentor';
 
     let spokenText = '';
     if (idx === 0) {
@@ -13809,7 +14147,7 @@ window.addEventListener('message', (event) => {
 
     const transcriptEl = document.getElementById(`voiceTranscript_${qId}`);
     if (transcriptEl && (!window.geminiLiveVoiceTutor || !window.geminiLiveVoiceTutor.isSessionActive())) {
-      transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">Dr. Vikram [Concept ${idx < 4 ? idx + 1 : 'All'}]:</strong> ${escapeHtml(spokenText)}</div></div>`;
+      transcriptEl.innerHTML = `<div style="display:flex; align-items:flex-start; gap:8px;"><i data-lucide="sparkles" style="width:16px; height:16px; color:#38bdf8; flex-shrink:0; margin-top:3px;"></i><div><strong style="color:#38bdf8;">${escapeHtml(teacherTag)} [Concept ${idx < 4 ? idx + 1 : 'All'}]:</strong> ${escapeHtml(spokenText)}</div></div>`;
       initLucideIcons();
     }
   }
@@ -15423,11 +15761,22 @@ async function commitInjectedQuestionToBank() {
       ? data.questions
       : (data.question ? [data.question] : []);
 
-    // Immediately prepend to local question bank data so they are at the top
+    // 1. Immediately prepend to local question bank data so they are at the top
     if (Array.isArray(state.questionBankData)) {
       state.questionBankData.unshift(...newQuestions);
     } else {
       state.questionBankData = [...newQuestions];
+    }
+
+    // 2. Permanently persist into browser localStorage so questions survive refresh & restarts
+    try {
+      const localKey = 'haps_injected_questions';
+      const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const newIds = new Set(newQuestions.map(q => q.id));
+      const updated = [...newQuestions, ...existing.filter(q => !newIds.has(q.id))];
+      localStorage.setItem(localKey, JSON.stringify(updated));
+    } catch (storeErr) {
+      console.warn('[LOCAL STORAGE QB PERSIST ERROR]', storeErr);
     }
 
     // Reset pagination to first page

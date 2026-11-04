@@ -8,7 +8,9 @@ const {
   validateFacultySubjectLock,
   processQuestionExtraction,
   commitQuestionToStore,
-  commitBatchQuestionsToStore
+  commitBatchQuestionsToStore,
+  loadPersistedCustomQuestions,
+  savePersistedCustomQuestions
 } = require('../services/questionInjectionService');
 
 // GET all questions from bank (queries inMemoryStore.questions and all subjectBanks)
@@ -355,6 +357,64 @@ router.post('/inject', async (req, res) => {
     console.error('[API INJECT COMMIT ERROR]', err.message);
     const statusCode = err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500;
     res.status(statusCode).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/questions/injected-questions - Retrieve all custom injected questions from persistent disk storage
+router.get('/injected-questions', (req, res) => {
+  try {
+    const list = loadPersistedCustomQuestions();
+    res.json({
+      success: true,
+      count: list.length,
+      questions: list
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/questions/sync-injected-cache - Synchronize and write injected questions into backend storage
+router.post('/sync-injected-cache', (req, res) => {
+  try {
+    const { questions = [] } = req.body;
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.json({ success: true, count: 0 });
+    }
+
+    // Hydrate into inMemoryStore
+    questions.forEach(q => {
+      if (!q || !q.id) return;
+      const sUpper = (q.subjectKey || q.subject || '').toUpperCase();
+      const isC10 = String(q.grade) === '10';
+
+      let bankKey = 'senior_physics';
+      if (isC10) {
+        if (sUpper.includes('MATH')) bankKey = 'class10_maths';
+        else bankKey = 'class10_science';
+      } else {
+        if (sUpper.includes('PHYS')) bankKey = 'senior_physics';
+        else if (sUpper.includes('CHEM')) bankKey = 'senior_chemistry';
+        else if (sUpper.includes('BIO')) bankKey = 'senior_biology';
+        else if (sUpper.includes('MATH')) bankKey = 'senior_mathematics';
+      }
+
+      if (!inMemoryStore.subjectBanks) inMemoryStore.subjectBanks = {};
+      if (!inMemoryStore.subjectBanks[bankKey]) inMemoryStore.subjectBanks[bankKey] = [];
+      if (!inMemoryStore.subjectBanks[bankKey].some(item => item.id === q.id)) {
+        inMemoryStore.subjectBanks[bankKey].unshift(q);
+      }
+    });
+
+    savePersistedCustomQuestions(questions);
+
+    res.json({
+      success: true,
+      syncedCount: questions.length,
+      message: `Persisted and hydrated ${questions.length} questions into backend storage.`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

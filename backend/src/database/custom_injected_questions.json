@@ -1,0 +1,69 @@
+[
+  {
+    "id": "snr_c_inj_1793801747344_553",
+    "grade": "12",
+    "subject": "Chemistry",
+    "subjectKey": "CHEMISTRY",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Electrochemistry",
+    "chapter": "Electrochemistry",
+    "topic": "Nernst Equation",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "HARD",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 225,
+    "marks_weightage": 5,
+    "question_latex": "Calculate the emf of the cell: $\\text{Zn} | \\text{Zn}^{2+}(0.01\\,\\text{M}) || \\text{Cu}^{2+}(0.1\\,\\text{M}) | \\text{Cu}$.",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$1.13\\,\\text{V}$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$1.07\\,\\text{V}$",
+        "is_correct": false
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$1.13\\,\\text{V}$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$1.07\\,\\text{V}$",
+        "is_correct": false
+      }
+    ],
+    "correct_answer_latex": "$1.13\\,\\text{V}$",
+    "correct_answer": "A",
+    "solution_latex": "$$E_{\\text{cell}} = E^\\circ_{\\text{cell}} - \\frac{0.059}{2}\\log\\left(\\frac{0.01}{0.1}\\right) = 1.10 - 0.0295(-1) = 1.1295\\,\\text{V}$$.",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Electrochemistry",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 5
+    },
+    "injected_by": {
+      "faculty_id": "fac_chem_01",
+      "faculty_name": "Prof. Sunita Rao",
+      "faculty_phone": "",
+      "faculty_subject": "Chemistry",
+      "department": "CHEMISTRY",
+      "role": "faculty",
+      "timestamp": "2026-11-04T14:15:47.344Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-04T14:15:47.344Z"
+  }
+]

@@ -197,6 +197,9 @@ router.post('/solve-and-sync', async (req, res) => {
       options = [],
       correctAnswer = '',
       marks = 3,
+      subject = '',
+      subjectKey = '',
+      facultyName = '',
       voice = 'swara'
     } = req.body;
 
@@ -208,6 +211,7 @@ router.post('/solve-and-sync', async (req, res) => {
     let opts = options;
     let ans = correctAnswer;
     let m = marks;
+    let subj = subject || subjectKey;
 
     if (!qText && questionId) {
       const allBanks = Object.values(inMemoryStore.subjectBanks || {});
@@ -222,6 +226,7 @@ router.post('/solve-and-sync', async (req, res) => {
             opts = match.options_latex || opts;
             ans = match.correct_answer_latex || match.correct_answer || ans;
             m = match.marks_weightage || m;
+            if (!subj) subj = match.subject || match.subjectKey;
             break;
           }
         }
@@ -236,7 +241,10 @@ router.post('/solve-and-sync', async (req, res) => {
       topic: top,
       options: opts,
       correctAnswer: ans,
-      marks: m
+      marks: m,
+      subject: subj,
+      subjectKey: subjectKey || subj,
+      facultyName
     });
 
     const audioUrl = `/api/voice-tutor/audio?text=${encodeURIComponent(plan.hinglishBrief)}&voice=${encodeURIComponent(voice)}`;

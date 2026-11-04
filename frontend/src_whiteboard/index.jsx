@@ -310,29 +310,30 @@ function applySpotlight(conceptIndex) {
   if (!editorInstance) return;
   if (typeof conceptIndex !== 'number' || conceptIndex < 0 || conceptIndex > 3) return;
 
+  const teacherTag = currentPlanCache?.teacherName || 'Faculty Mentor';
   const configs = [
     {
       x: 44, y: 239, w: 692, h: 507,
       color: 'light-blue',
-      label: '👨‍🏫 Dr. Vikram: Visual Physical Model & Coordinates',
+      label: `👨‍🏫 ${teacherTag}: Visual Concept Model & Setup`,
       labelX: 50, labelY: 205
     },
     {
       x: 754, y: 44, w: 812, h: 237,
       color: 'yellow',
-      label: '👨‍🏫 Dr. Vikram: Governing Principles & Primary Law',
+      label: `👨‍🏫 ${teacherTag}: Governing Principles & Primary Law`,
       labelX: 760, labelY: 12
     },
     {
       x: 754, y: 289, w: 812, h: 297,
       color: 'light-blue',
-      label: '👨‍🏫 Dr. Vikram: Mathematical Derivation & Algebraic Working',
+      label: `👨‍🏫 ${teacherTag}: Derivation & Step-by-Step Working`,
       labelX: 760, labelY: 257
     },
     {
       x: 754, y: 594, w: 812, h: 272,
       color: 'green',
-      label: '👨‍🏫 Dr. Vikram: Evaluated Result & Exam Takeaway',
+      label: `👨‍🏫 ${teacherTag}: Evaluated Result & Exam Takeaway`,
       labelX: 760, labelY: 562
     }
   ];
@@ -518,16 +519,17 @@ const WhiteboardController = {
   spotlightConcept(conceptIndex) {
     logTelemetry('WHITEBOARD_ACTION_SPOTLIGHT_CONCEPT', { conceptIndex });
     applySpotlight(conceptIndex);
+    const teacherTag = currentPlanCache?.teacherName || 'Faculty Mentor';
     const titles = [
-      'Visual Physical Model',
-      'Governing Physical Principles',
-      'Mathematical Derivation & Working',
+      'Visual Concept Model & Setup',
+      'Governing Principles & Primary Law',
+      'Derivation & Step-by-Step Working',
       'Evaluated Solution & Takeaway',
       'Full Board Complete'
     ];
     const lbl = titles[conceptIndex] || 'Synchronized Classroom Smartboard';
     if (window.updateUIProgress) {
-      window.updateUIProgress(conceptIndex, `👨‍🏫 Dr. Vikram Teaching: ${lbl}`);
+      window.updateUIProgress(conceptIndex, `👨‍🏫 ${teacherTag} Teaching: ${lbl}`);
     }
     try {
       window.parent.postMessage({ type: 'WB_CONCEPT_CHANGED', conceptIndex, title: lbl }, '*');
@@ -541,7 +543,7 @@ const WhiteboardController = {
 
     const qHeader = payload.questionHeader || {
       title: 'Question Statement & Analysis',
-      chapter: 'Senior Secondary STEM',
+      chapter: payload.subject || 'Senior Secondary STEM',
       marks: 3
     };
     this.addQuestionHeader(qHeader);
@@ -557,22 +559,19 @@ const WhiteboardController = {
     const rx = BOARD_LAYOUT.COL_RIGHT_X;
     const rw = BOARD_LAYOUT.COL_RIGHT_W;
 
-    // Helper to format clean, non-numbered headers
+    // Helper to format clean, non-numbered headers without forcing physics labels on other subjects
     const cleanSectionTitle = (t, fallback) => (t || fallback)
       .replace(/^(step\s*\d+[\s.:-]*|\d+[\s.:-]*)/i, '')
-      .replace(/^(governing principles & physical setup|free-body force & torque equations)/i, 'Force & Torque Equations')
-      .replace(/^(mathematical derivation & substitution|torque & linear force substitution)/i, 'Derivation & Substitution')
-      .replace(/^(evaluated result & physical takeaway|moment of inertia & final acceleration)/i, 'Evaluation & Final Result')
       .trim().toUpperCase();
 
-    // 1. Governing Principles / Equations (Top Card - Clean Math Only)
+    // 1. Governing Principles / Equations (Top Card - Clean Math / Chemistry / Physics)
     const s1 = sol.step1 || {
-      title: 'Force & Torque Equations',
-      formula: 'Down Incline: M·g·sin θ - f_s = M·a\nTorque: τ = f_s·R = I·α\nRolling Constraint: a = α·R ⇒ α = a/R'
+      title: 'Governing Principles & Setup',
+      formula: '• Identify given inputs and constraints\n• Apply foundational governing law or formula'
     };
     const s1CleanF = formatMathForWhiteboard(s1.formula || '');
     const s1Text = [
-      cleanSectionTitle(s1.title, 'FORCE & TORQUE EQUATIONS'),
+      cleanSectionTitle(s1.title, 'GOVERNING PRINCIPLES & SETUP'),
       '',
       s1CleanF
     ].filter(Boolean).join('\n');
@@ -592,14 +591,14 @@ const WhiteboardController = {
       }
     });
 
-    // 2. Mathematical Derivation & Substitution (Middle Card - Clean Math Only)
+    // 2. Mathematical / Chemical Derivation & Substitution (Middle Card)
     const s2 = sol.step2 || {
-      title: 'Derivation & Substitution',
-      formula: '1) f_s = (I / R²) · a\n2) M·g·sin θ - (I / R²)·a = M·a\n3) a = (g·sin θ) / [1 + I / (M·R²)]'
+      title: 'Derivation & Step-by-Step Working',
+      formula: '1) Substitute known parameters into equation\n2) Simplify algebraic / stoichiometric relations step-by-step'
     };
     const s2CleanF = formatMathForWhiteboard(s2.formula || '');
     const s2Text = [
-      cleanSectionTitle(s2.title, 'DERIVATION & SUBSTITUTION'),
+      cleanSectionTitle(s2.title, 'DERIVATION & WORKING'),
       '',
       s2CleanF
     ].filter(Boolean).join('\n');
@@ -619,14 +618,14 @@ const WhiteboardController = {
       }
     });
 
-    // 3. Evaluated Result & Final Answer (Bottom Card - Clean Math Only)
+    // 3. Evaluated Result & Final Answer (Bottom Card)
     const s3 = sol.step3 || {
-      title: 'Evaluation & Final Result',
-      formula: '• For Solid Sphere: I = (2/5)·M·R² ⇒ I / (M·R²) = 2/5\n• Acceleration: a = (g·sin θ) / (1 + 2/5) = (g·sin θ) / (7/5)\n• Final Expression: a = (5/7)·g·sin θ ≈ 0.714·g·sin θ'
+      title: 'Final Evaluated Answer & Verified Takeaway',
+      formula: '• Final verified result evaluated with standard SI units\n• Sanity check confirms theoretical consistency'
     };
     const s3CleanF = formatMathForWhiteboard(s3.formula || '');
     const s3Text = [
-      cleanSectionTitle(s3.title, 'EVALUATION & FINAL RESULT'),
+      cleanSectionTitle(s3.title, 'FINAL EVALUATED RESULT'),
       '',
       s3CleanF
     ].filter(Boolean).join('\n');
@@ -665,6 +664,7 @@ const WhiteboardController = {
 
     const lx = BOARD_LAYOUT.COL_LEFT_X;
     const dy = BOARD_LAYOUT.DIAGRAM_Y;
+    let cy = dy + 180;
 
     // Outer Diagram Container Card (Ensures visual clarity and zero overlap with other sections)
     safeCreateShape({
@@ -953,7 +953,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 190;
+      cy = dy + 190;
       // Optical Axis
       safeCreateShape({
         type: 'line',
@@ -1057,7 +1057,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 180;
+      cy = dy + 180;
       // Circuit rectangle loop
       safeCreateShape({
         type: 'geo',
@@ -1141,7 +1141,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 180;
+      cy = dy + 180;
       // Ground horizontal line
       safeCreateShape({
         type: 'line',
@@ -1222,7 +1222,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 180;
+      cy = dy + 180;
       // Surface line
       safeCreateShape({
         type: 'line',
@@ -1319,7 +1319,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 180;
+      cy = dy + 180;
       // Fixed wall line
       safeCreateShape({
         type: 'line',
@@ -1384,7 +1384,520 @@ const WhiteboardController = {
         }
       });
 
-    } else {
+    } else if (type === 'chemistry_cell' || type === 'electrochem') {
+      // GALVANIC ELECTROCHEMICAL CELL DIAGRAM
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('GALVANIC CELL • ZINC-COPPER ELECTROCHEMICAL EQUILIBRIUM'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 110;
+
+      // Anode Beaker (Left - Zn Half-Cell)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 50,
+        y: cy + 40,
+        props: {
+          geo: 'rectangle',
+          w: 220,
+          h: 170,
+          color: 'light-blue',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('ANODE HALF-CELL (-)\n\nZnSO₄ (aq) Solution\nZn(s) → Zn²⁺ + 2e⁻')
+        }
+      });
+
+      // Anode Zinc Electrode Bar
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 120,
+        y: cy,
+        props: {
+          geo: 'rectangle',
+          w: 40,
+          h: 140,
+          color: 'grey',
+          fill: 'solid',
+          size: 's',
+          richText: toRichText('Zn\n(-)')
+        }
+      });
+
+      // Cathode Beaker (Right - Cu Half-Cell)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 370,
+        y: cy + 40,
+        props: {
+          geo: 'rectangle',
+          w: 220,
+          h: 170,
+          color: 'orange',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('CATHODE HALF-CELL (+)\n\nCuSO₄ (aq) Solution\nCu²⁺ + 2e⁻ → Cu(s)')
+        }
+      });
+
+      // Cathode Copper Electrode Bar
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 470,
+        y: cy,
+        props: {
+          geo: 'rectangle',
+          w: 40,
+          h: 140,
+          color: 'red',
+          fill: 'solid',
+          size: 's',
+          richText: toRichText('Cu\n(+)')
+        }
+      });
+
+      // Salt Bridge Tube connecting both beakers
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 230,
+        y: cy + 20,
+        props: {
+          geo: 'rectangle',
+          w: 180,
+          h: 55,
+          color: 'yellow',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('Salt Bridge (KNO₃ / Agar)')
+        }
+      });
+
+      // Voltmeter Indicator Circle
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 285,
+        y: cy - 65,
+        props: {
+          geo: 'ellipse',
+          w: 70,
+          h: 70,
+          color: 'green',
+          fill: 'solid',
+          size: 's',
+          richText: toRichText('V\n+1.10V')
+        }
+      });
+
+      // Connecting Wire Lines from Anode to Cathode
+      safeCreateShape({
+        type: 'line',
+        x: lx + 140,
+        y: cy - 30,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 30 },
+            a2: { id: 'a2', index: 'a2', x: 0, y: 0 },
+            a3: { id: 'a3', index: 'a3', x: 145, y: 0 }
+          },
+          color: 'green',
+          size: 'm'
+        }
+      });
+      safeCreateShape({
+        type: 'line',
+        x: lx + 355,
+        y: cy - 30,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 135, y: 0 },
+            a3: { id: 'a3', index: 'a3', x: 135, y: 30 }
+          },
+          color: 'green',
+          size: 'm'
+        }
+      });
+
+      // Electron flow arrow
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 210,
+        y: cy - 45,
+        props: { start: { x: 0, y: 0 }, end: { x: 50, y: 0 }, color: 'yellow' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 215,
+        y: cy - 65,
+        props: { richText: toRichText('e⁻ flow →'), size: 's', color: 'yellow' }
+      });
+
+      // Bottom Electrochemical Governing Law Summary
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Governing Cell Law: ΔG° = -n·F·E°_cell  |  E_cell = E° - (0.059/n)·log Q  |  n = 2 electrons'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'chemistry_reaction' || type === 'chemistry_kinetics' || type === 'reaction_profile') {
+      // CHEMICAL KINETICS & ARRHENIUS ENERGY PROFILE
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('REACTION KINETICS & ARRHENIUS ACTIVATION ENERGY (Ea) PROFILE'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 100;
+      // Potential Energy Y-Axis
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 60,
+        y: cy + 220,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: -200 }, color: 'grey' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 25,
+        y: cy + 10,
+        props: { richText: toRichText('Potential\nEnergy (kJ)'), size: 's', color: 'grey' }
+      });
+
+      // Reaction Coordinate X-Axis
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 60,
+        y: cy + 220,
+        props: { start: { x: 0, y: 0 }, end: { x: 530, y: 0 }, color: 'grey' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 440,
+        y: cy + 225,
+        props: { richText: toRichText('Reaction Progress →'), size: 's', color: 'grey' }
+      });
+
+      // Reactants Plateau
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 90,
+        y: cy + 120,
+        props: { geo: 'rectangle', w: 120, h: 45, color: 'blue', fill: 'semi', size: 's', richText: toRichText('Reactants [R]') }
+      });
+
+      // Transition State Peak
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 270,
+        y: cy + 15,
+        props: { geo: 'rectangle', w: 120, h: 45, color: 'red', fill: 'semi', size: 's', richText: toRichText('Transition [X‡]') }
+      });
+
+      // Products Plateau
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 450,
+        y: cy + 150,
+        props: { geo: 'rectangle', w: 120, h: 45, color: 'green', fill: 'semi', size: 's', richText: toRichText('Products [P]') }
+      });
+
+      // Activation Energy Arrow (Ea)
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 215,
+        y: cy + 120,
+        props: { start: { x: 0, y: 0 }, end: { x: 0, y: -90 }, color: 'yellow' }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 225,
+        y: cy + 70,
+        props: { richText: toRichText('E_a (Forward)'), size: 's', color: 'yellow' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Integrated Rate Law: k = (2.303/t)·log([R]₀/[R])  |  Half-Life: t_½ = 0.693/k  |  k = A·e^(-Ea/RT)'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'chemistry_solutions' || type === 'solutions') {
+      // SOLUTIONS & COLLIGATIVE PROPERTIES DIAGRAM
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('SOLUTIONS • PHASE EQUILIBRIUM & COLLIGATIVE DEPRESSION'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 95;
+      // Solvent vs Solution Beaker Comparison
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 50,
+        y: cy + 20,
+        props: {
+          geo: 'rectangle',
+          w: 240,
+          h: 180,
+          color: 'light-blue',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('PURE SOLVENT (H₂O)\n\n• High Vapor Pressure P°\n• Freezing Point T°_f = 273.15 K\n• Normal Boiling Point = 373.15 K')
+        }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 350,
+        y: cy + 20,
+        props: {
+          geo: 'rectangle',
+          w: 240,
+          h: 180,
+          color: 'orange',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('DILUTE SOLUTION (Solvent + Solute)\n\n• Lowered Vapor Pressure (Raoult\'s)\n• Freezing Depression: ΔT_f = K_f · m\n• Boiling Elevation: ΔT_b = K_b · m')
+        }
+      });
+
+      // Transfer arrow between states
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 295,
+        y: cy + 110,
+        props: { start: { x: 0, y: 0 }, end: { x: 50, y: 0 }, color: 'yellow' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Colligative Principles: ΔT_f = i·K_f·m  |  m = (w₂/M₂) / (w₁/1000)  |  T_f = T°_f - ΔT_f'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'chemistry_organic' || type === 'organic') {
+      // ORGANIC MECHANISM PATHWAY
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('ORGANIC REACTION MECHANISM & REGIOCHEMICAL PATHWAY'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 100;
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 40,
+        y: cy + 30,
+        props: { geo: 'rectangle', w: 160, h: 90, color: 'blue', fill: 'semi', size: 's', richText: toRichText('SUBSTRATE\nR-LG + Nu⁻\n(Substrate)') }
+      });
+
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 205,
+        y: cy + 75,
+        props: { start: { x: 0, y: 0 }, end: { x: 45, y: 0 }, color: 'yellow' }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 255,
+        y: cy + 30,
+        props: { geo: 'rectangle', w: 170, h: 90, color: 'red', fill: 'semi', size: 's', richText: toRichText('INTERMEDIATE\nCarbocation (3°>2°>1°)\nPlanar Transition State') }
+      });
+
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 430,
+        y: cy + 75,
+        props: { start: { x: 0, y: 0 }, end: { x: 45, y: 0 }, color: 'yellow' }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 480,
+        y: cy + 30,
+        props: { geo: 'rectangle', w: 150, h: 90, color: 'green', fill: 'semi', size: 's', richText: toRichText('MAJOR PRODUCT\nMarkovnikov / Saytzeff\nTarget Product') }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Mechanism Rules: S_N2 → Inversion of Configuration  |  S_N1 → Carbocation Rearrangement & Racemization'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'math_calculus' || type === 'calculus') {
+      // CALCULUS & CURVE ANALYSIS
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('CALCULUS • FUNCTION GRAPH, TANGENT & DEFINITE INTEGRAL'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 100;
+      // Coordinate axes
+      safeCreateShape({
+        type: 'line',
+        x: lx + 60,
+        y: cy + 220,
+        props: { points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 0, y: -200 } }, color: 'grey', size: 's' }
+      });
+      safeCreateShape({
+        type: 'line',
+        x: lx + 60,
+        y: cy + 220,
+        props: { points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 520, y: 0 } }, color: 'grey', size: 's' }
+      });
+
+      // Function curve box representation
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 120,
+        y: cy + 50,
+        props: { geo: 'rectangle', w: 420, h: 120, color: 'light-blue', fill: 'semi', size: 's', richText: toRichText('Function Curve y = f(x)\n\n• Tangent Slope at (x₀, y₀): m = dy/dx = f\'(x₀)\n• Definite Area Under Curve: A = ∫ₐᵇ f(x) dx = F(b) - F(a)') }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Calculus Principles: Integration by Parts ∫u·dv = u·v - ∫v·du  |  Derivative Chain Rule d/dx[f(g(x))] = f\'(g(x))·g\'(x)'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'math_matrix' || type === 'matrix') {
+      // MATRIX ALGEBRA & DETERMINANTS
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('MATRIX ALGEBRA • DETERMINANT EXPANSION & INVERSION'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 95;
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 80,
+        y: cy + 25,
+        props: {
+          geo: 'rectangle',
+          w: 480,
+          h: 170,
+          color: 'violet',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('MATRIX REPRESENTATION: A · X = B\n\n• Determinant Expansion: |A| = a₁₁(a₂₂a₃₃ - a₂₃a₃₂) - a₁₂(a₂₁a₃₃ - ...) + ...\n• Matrix Inverse: A⁻¹ = (1 / |A|) · adj(A),  where |A| ≠ 0\n• Cramer\'s Solution: x = |A_x| / |A|,  y = |A_y| / |A|,  z = |A_z| / |A|')
+        }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Theorem: A is invertible iff det(A) ≠ 0. If det(A) = 0 and (adj A)·B ≠ 0, system has NO solution.'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'bio_genetics' || type === 'genetics') {
+      // GENETICS & PUNNETT SQUARE
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('MENDELIAN GENETICS • PUNNETT SQUARE INHERITANCE'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      cy = dy + 95;
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 80,
+        y: cy + 20,
+        props: {
+          geo: 'rectangle',
+          w: 480,
+          h: 180,
+          color: 'green',
+          fill: 'semi',
+          size: 's',
+          richText: toRichText('PUNNETT CROSS GRID: Tt × Tt (Monohybrid)\n\n          T (50%)          t (50%)\nT (50%)   TT (Tall, 25%)   Tt (Tall, 25%)\nt (50%)   Tt (Tall, 25%)   tt (Dwarf, 25%)\n\n• Phenotypic Ratio: 3 Tall : 1 Dwarf (3:1)\n• Genotypic Ratio: 1 TT : 2 Tt : 1 tt (1:2:1)')
+        }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Law of Segregation: Alleles separate during gamete formation. Each gamete carries only one allele.'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
       // General Visual Concept Framework (Universal for all subjects & concepts)
       safeCreateShape({
         type: 'text',
@@ -1397,7 +1910,7 @@ const WhiteboardController = {
         }
       });
 
-      const cy = dy + 120;
+      cy = dy + 120;
       // Block A: Stated Given Parameters
       safeCreateShape({
         type: 'geo',

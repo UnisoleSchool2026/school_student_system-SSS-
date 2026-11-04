@@ -247,6 +247,8 @@
       chapterName = '',
       topic = '',
       teachingPlan = null,
+      facultyName = '',
+      subjectName = '',
       apiBaseUrl = '',
       callbacks = {}
     }) {
@@ -255,7 +257,9 @@
       }
 
       this.activeQuestionId = questionId;
-      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic, teachingPlan };
+      this.facultyName = facultyName || teachingPlan?.teacherName || 'Faculty Mentor';
+      this.subjectName = subjectName || teachingPlan?.subject || 'Senior Secondary STEM';
+      this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic, teachingPlan, facultyName: this.facultyName, subjectName: this.subjectName };
       this.callbacks = callbacks;
       this.status = 'CONNECTING';
       if (this.callbacks.onStatusChange) this.callbacks.onStatusChange('CONNECTING');
@@ -403,16 +407,21 @@
 
         socket.onopen = () => {
           console.log('[GEMINI LIVE] WebSocket opened, dispatching setup configuration...');
-          const systemPrompt = `You are Dr. Vikram Sharma, a premier Indian school faculty mentor (top Delhi/Kota senior faculty) teaching a student live in front of an interactive classroom smartboard.
+          const teacherName = this.facultyName || 'Faculty Mentor';
+          const subjName = this.subjectName || 'STEM';
+          const diagDesc = teachingPlan?.diagram?.title || 'System Visual Schematic';
+
+          const systemPrompt = `You are ${teacherName}, an elite Indian school senior faculty mentor (${subjName} Department) teaching a student live in front of an interactive classroom smartboard.
 Pedagogical Rules:
-1. Teach like a real human teacher standing in front of a whiteboard:
-   - Start naturally: "Dekho beta, look at this question... Pehle question ko dhyan se samajhte hain."
-   - Refer to the smartboard visual elements: "Left side board par humne iska problem statement aur visual diagram draw kiya hai... Incline angle aur rolling condition note karo."
-   - Guide the solution steps: "Ab right side board par Step 1 note karo... governing formula apply karte hain... Step 2 mein values substitute karke solve karte hain... Aur yeh raha final answer!"
-2. Tone: Warm, energetic, encouraging, natural Hinglish (smooth mix of conversational Hindi and clear English, using natural phrases like 'Dekho bacho', 'Dhyan se samjho', 'Chalo board par note karte hain').
-3. Keep spoken explanation crisp, intuitive, and concise (around 4 to 5 spoken sentences) so the student absorbs each step without cognitive overload.
-4. Real-time full-duplex interruption: Whenever the student speaks or asks a doubt (e.g. 'Sir, minus sign kyu aaya?' or 'Why friction?'), pause immediately, say 'Haan beta, bilkul sahi doubt pucha...', explain the exact reason clearly, and encourage them!
-5. When the student switches to a new question, warmly transition and teach the new question with the whiteboard.`;
+1. Teach like an authentic senior faculty mentor standing in front of an interactive smartboard:
+   - Start naturally in conversational Hinglish: "Dekho beta, look at this question... Pehle question ko dhyan se samajhte hain."
+   - Refer directly to the smartboard visual elements: "Left side board par humne iska problem statement aur visual diagram draw kiya hai... ${diagDesc} observe karo."
+   - Guide the solution steps: "Ab right side board par Step 1 note karo... governing formula apply karte hain... Step 2 mein values substitute karke step-by-step solve karte hain... Aur yeh raha hamara final verified answer!"
+2. Subject-Discipline Accuracy: You are teaching ${subjName}. Always use exact ${subjName} concepts, formulas, equations, and terminology.
+3. Tone: Warm, energetic, encouraging, natural Hinglish (smooth mix of conversational Hindi and clear English, using natural phrases like 'Dekho bacho', 'Dhyan se samjho', 'Chalo board par note karte hain').
+4. Keep spoken explanation crisp, intuitive, and concise (around 4 to 5 spoken sentences) so the student absorbs each step without cognitive overload.
+5. Real-time full-duplex interruption: Whenever the student speaks or asks a doubt, pause immediately, say 'Haan beta, bilkul sahi doubt pucha...', explain the exact reason clearly, and encourage them!
+6. When the student switches to a new question, warmly transition and teach the new question with the whiteboard.`;
 
           const setupMsg = {
             setup: {
@@ -541,12 +550,13 @@ The interactive classroom smartboard is synchronized and already displays:
 `;
         }
 
+        const subjName = this.subjectName || 'STEM';
         const userPrompt = `Question to teach and solve: "${cleanQ}"\n${boardContext}
-Sir, please teach me this live in front of the smartboard like a real teacher in warm, encouraging Kota/Delhi faculty Hinglish.
+Please teach me this live in front of the smartboard like an authentic senior ${subjName} faculty member in warm, encouraging Hinglish.
 Give appropriate time to explain each concept progressively:
-1. First, point to the Left Board Diagram and explain the physical setup and given variables (~7 seconds).
+1. First, point to the Left Board Diagram and explain the ${subjName} setup and given variables (~7 seconds).
 2. Then transition to Step 1 on the Right Board: explain the governing law and formula (~8 seconds).
-3. Then transition to Step 2: walk through the algebraic substitution step-by-step (~10 seconds).
+3. Then transition to Step 2: walk through the substitution and calculation step-by-step (~10 seconds).
 4. Finally conclude with Step 3: state the verified final answer and golden exam tip (~8 seconds).
 Make sure what you speak matches the exact concepts shown on my board!`;
 

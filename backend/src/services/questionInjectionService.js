@@ -6,6 +6,8 @@
 // ============================================================================
 
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const { inMemoryStore } = require('../config/database');
 const { sanitizeLatexString, sanitizeQuestionPayload } = require('./llmQuestionEngine');
 const { CURRICULUM_TAXONOMY } = require('./curriculumTaxonomy');
@@ -1020,11 +1022,79 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
   if (!inMemoryStore.questions) inMemoryStore.questions = [];
   inMemoryStore.questions.unshift(finalQuestion);
 
+  // Persist question to disk so it survives server restarts and lambda recycles
+  try {
+    savePersistedCustomQuestions([finalQuestion]);
+  } catch (err) {
+    console.warn('[QUESTION PERSISTENCE] Warning while saving question to disk:', err.message);
+  }
+
   return {
     question: finalQuestion,
     targetBank: bankKey,
     totalBankCount: inMemoryStore.subjectBanks[bankKey].length
   };
+}
+
+/**
+ * Storage paths for permanent question persistence across restarts and serverless lambdas
+ */
+function getCustomQuestionsStoragePaths() {
+  return [
+    path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
+    '/tmp/custom_injected_questions.json'
+  ];
+}
+
+/**
+ * Reads all custom injected questions from persistent JSON file
+ */
+function loadPersistedCustomQuestions() {
+  const paths = getCustomQuestionsStoragePaths();
+  for (const p of paths) {
+    try {
+      if (fs.existsSync(p)) {
+        const raw = fs.readFileSync(p, 'utf8');
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length > 0) {
+          return list;
+        }
+      }
+    } catch (e) {
+      // Continue to next path
+    }
+  }
+  return [];
+}
+
+/**
+ * Writes custom injected questions to persistent JSON storage (with /tmp fallback)
+ */
+function savePersistedCustomQuestions(newQuestions = []) {
+  if (!Array.isArray(newQuestions) || newQuestions.length === 0) return;
+  const existing = loadPersistedCustomQuestions();
+  const map = new Map();
+
+  // Deduplicate by question id, keeping newest versions
+  existing.forEach(q => { if (q && q.id) map.set(q.id, q); });
+  newQuestions.forEach(q => { if (q && q.id) map.set(q.id, q); });
+
+  const allQuestions = Array.from(map.values());
+  const paths = getCustomQuestionsStoragePaths();
+  let saved = false;
+
+  for (const p of paths) {
+    try {
+      const dir = path.dirname(p);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(p, JSON.stringify(allQuestions, null, 2), 'utf8');
+      saved = true;
+    } catch (e) {
+      // Continue to next path if filesystem is read-only
+    }
+  }
+
+  return saved;
 }
 
 /**
@@ -1054,6 +1124,11 @@ function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, g
     primaryTargetBank = res.targetBank;
   }
 
+  // Explicitly ensure the whole batch is written to disk
+  try {
+    savePersistedCustomQuestions(committedQuestions);
+  } catch (e) {}
+
   return {
     count: committedQuestions.length,
     questions: committedQuestions,
@@ -1070,5 +1145,8 @@ module.exports = {
   processQuestionExtraction,
   commitQuestionToStore,
   commitBatchQuestionsToStore,
+  getCustomQuestionsStoragePaths,
+  loadPersistedCustomQuestions,
+  savePersistedCustomQuestions,
   parseRawTextLocally
 };

@@ -3616,6 +3616,69 @@ try {
   console.warn('[DATABASE] Options enrichment notice:', e.message);
 }
 
+// Hydrate custom questions permanently stored on disk (e.g. from faculty injection studio)
+try {
+  const fs = require('fs');
+  const path = require('path');
+  const storagePaths = [
+    path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
+    '/tmp/custom_injected_questions.json'
+  ];
+
+  let persistedCustom = [];
+  for (const sp of storagePaths) {
+    try {
+      if (fs.existsSync(sp)) {
+        const raw = fs.readFileSync(sp, 'utf8');
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length > 0) {
+          persistedCustom = list;
+          break;
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (persistedCustom.length > 0 && inMemoryStore.subjectBanks) {
+    persistedCustom.forEach(q => {
+      if (!q || !q.id) return;
+      const sUpper = (q.subjectKey || q.subject || '').toUpperCase();
+      const isC10 = String(q.grade) === '10';
+
+      let bankKey = 'senior_physics';
+      if (isC10) {
+        if (sUpper.includes('MATH')) bankKey = 'class10_maths';
+        else bankKey = 'class10_science';
+      } else {
+        if (sUpper.includes('PHYS')) bankKey = 'senior_physics';
+        else if (sUpper.includes('CHEM')) bankKey = 'senior_chemistry';
+        else if (sUpper.includes('BIO')) bankKey = 'senior_biology';
+        else if (sUpper.includes('MATH')) bankKey = 'senior_mathematics';
+      }
+
+      if (!inMemoryStore.subjectBanks[bankKey]) inMemoryStore.subjectBanks[bankKey] = [];
+      const alreadyExists = inMemoryStore.subjectBanks[bankKey].some(item => item.id === q.id);
+      if (!alreadyExists) {
+        inMemoryStore.subjectBanks[bankKey].unshift(q);
+      }
+
+      if (bankKey === 'class10_maths') {
+        if (!inMemoryStore.subjectBanks.class10_math_pyq_ncert) inMemoryStore.subjectBanks.class10_math_pyq_ncert = [];
+        if (!inMemoryStore.subjectBanks.class10_math_pyq_ncert.some(item => item.id === q.id)) {
+          inMemoryStore.subjectBanks.class10_math_pyq_ncert.unshift(q);
+        }
+      }
+
+      if (Array.isArray(inMemoryStore.questions) && !inMemoryStore.questions.some(item => item.id === q.id)) {
+        inMemoryStore.questions.unshift(q);
+      }
+    });
+    console.log(`[DATABASE] Successfully hydrated ${persistedCustom.length} custom injected questions from persistent disk storage.`);
+  }
+} catch (e) {
+  console.warn('[DATABASE] Persisted questions hydration notice:', e.message);
+}
+
 module.exports = {
   initDatabase,
   query,
