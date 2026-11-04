@@ -396,12 +396,102 @@ async function callGeminiApi({ apiKey, systemPrompt, userPrompt }) {
   throw lastError || new Error('All Gemini model endpoints failed.');
 }
 
+// Universal Symbol Font / Private Use Area (PUA) Unicode Mapping Table (0xF020 - 0xF0FF)
+const PUA_SYMBOL_MAP = {
+  '\uF020': ' ', '\uF025': '%', '\uF02B': '+', '\uF02D': '-',
+  '\uF030': '0', '\uF031': '1', '\uF032': '2', '\uF033': '3', '\uF034': '4',
+  '\uF035': '5', '\uF036': '6', '\uF037': '7', '\uF038': '8', '\uF039': '9',
+  '\uF03D': '=',
+  '\uF041': 'A', '\uF042': 'B', '\uF043': 'C', '\uF044': '\\Delta ',
+  '\uF045': 'E', '\uF046': '\\Phi ', '\uF047': '\\Gamma ',
+  '\uF050': '\\Pi ', '\uF051': '\\Theta ', '\uF053': '\\Sigma ', '\uF057': '\\Omega ',
+  '\uF061': '\\alpha ', '\uF062': '\\beta ', '\uF063': '\\chi ', '\uF064': '\\delta ',
+  '\uF065': '\\varepsilon ', '\uF066': '\\phi ', '\uF067': '\\gamma ', '\uF068': '\\eta ',
+  '\uF069': '\\iota ', '\uF06A': '\\varphi ', '\uF06B': 'k', '\uF06C': '\\lambda ',
+  '\uF06D': '\\mu ', '\uF06E': '\\nu ', '\uF06F': 'o', '\uF070': '\\pi ',
+  '\uF071': '\\theta ', '\uF072': '\\rho ', '\uF073': '\\sigma ', '\uF074': '\\tau ',
+  '\uF075': '\\upsilon ', '\uF076': '\\varpi ', '\uF077': '\\omega ', '\uF078': '\\xi ',
+  '\uF079': '\\psi ', '\uF07A': '\\zeta ',
+  '\uF0A3': '\\le ', '\uF0A5': '\\infty ', '\uF0A7': '\\approx ',
+  '\uF0AB': '\\leftrightarrow ', '\uF0AC': '\\leftarrow ', '\uF0AE': '\\rightarrow ',
+  '\uF0B0': '^\\circ ', '\uF0B1': '\\pm ', '\uF0B3': '\\ge ',
+  '\uF0B4': ' \\times ', '\uF0B7': ' \\cdot ', '\uF0B9': '\\neq ', '\uF0BA': '\\equiv ',
+  '\uF0D6': '\\sqrt '
+};
+
+function mapPuaSymbols(str) {
+  if (!str || typeof str !== 'string') return '';
+  let s = str;
+  for (const [k, v] of Object.entries(PUA_SYMBOL_MAP)) {
+    if (s.includes(k)) {
+      s = s.split(k).join(v);
+    }
+  }
+  // Replace remaining unmapped PUA characters with space
+  return s.replace(/[\uF000-\uF0FF]/g, ' ');
+}
+
 function sanitizeLatexString(str) {
   if (!str || typeof str !== 'string') return str;
-  let s = str.replace(/\\\]\\/g, '\\]');
+  let s = mapPuaSymbols(str);
+
+  // Normalize double brackets and LaTeX delimiters
+  s = s.replace(/\\\]\\/g, '\\]');
   s = s.replace(/\\\]\s*\\/g, '\\]');
   s = s.replace(/([:;,])\s*\\\s*(?=\\\[|\$\$)/g, '$1\n');
+
+  // Strip trailing question marks numbers from PDF columns: e.g. "is 1" -> "is:"
+  s = s.replace(/(\b(?:is|as|Then|given by|equal to|equal|are))\s+[1-5]\s*$/im, '$1:');
+  s = s.replace(/\s+[1-5]\s*$/im, '');
+
+  // Fix wave equation representations
+  s = s.replace(/sin\s*\(\s*[^z\(\)\s]*z\s*[-–−]\s*[^t\(\)\s]*t\s*\)/gi, '\\sin(kz - \\omega t)');
+  s = s.replace(/sin\s*\(\s*[^t\(\)\s]*t\s*[-–−]\s*[^z\(\)\s]*z\s*\)/gi, '\\sin(\\omega t - kz)');
+  s = s.replace(/cos\s*\(\s*[^z\(\)\s]*z\s*[-–−]\s*[^t\(\)\s]*t\s*\)/gi, '\\cos(kz - \\omega t)');
+  s = s.replace(/cos\s*\(\s*[^t\(\)\s]*t\s*[-–−]\s*[^z\(\)\s]*z\s*\)/gi, '\\cos(\\omega t - kz)');
+
+  // Fix wave constants sentence e.g. "where m, n, ▯ and ▯ are constants"
+  s = s.replace(/where\s+([A-Za-z0-9_,\s]+?)(?:,\s*[▯\uFFFD\u25AF\u25A1\u25A0\uF000-\uF0FF\s,and]+\s+are\s+constants)/gi, (m, p1) => {
+    return `where $${p1.trim()}, k, \\omega$ are constants`;
+  });
+
+  // Fix scientific notation in text outside math mode
+  // e.g. 2.21 ▯ 10-35 kg or 6.63 x 10-34 J s
+  s = s.replace(/(\d+(?:\.\d+)?)\s*(?:[▯\uFFFD\u25AF\u25A1\u25A0\u25FB-\u25FE×x*·•\u00D7\u22C5]|\\times)\s*10\s*[-–−]\s*(\d+)/g, '$$$1 \\times 10^{-$2}$$');
+  s = s.replace(/(\d+(?:\.\d+)?)\s+10\s*[-–−]\s*(\d+)/g, '$$$1 \\times 10^{-$2}$$');
+
   return s;
+}
+
+function sanitizeOptionFormula(opt) {
+  if (!opt || typeof opt !== 'string') return '';
+  let s = mapPuaSymbols(opt.trim());
+
+  // Strip outer math delimiters if present
+  s = s.replace(/^\$+|\$+$/g, '').trim();
+
+  // If option is a single residual broken tofu or wave character, normalize it
+  if (/^[▯\uFFFD\u25AF\u25A1\u25A0\s]+$/.test(s)) {
+    return '$\\omega$';
+  }
+
+  // Fix tofu/replacement characters between number and 10
+  s = s.replace(/(\d+(?:\.\d+)?)\s*(?:[▯\uFFFD\u25AF\u25A1\u25A0\u25FB-\u25FE×x*·•\u00D7\u22C5]|\\times)\s*10/g, '$1 \\times 10');
+  s = s.replace(/(\d+(?:\.\d+)?)\s+10\s*[-–−]\s*(\d+)/g, '$1 \\times 10^{-$2}');
+  s = s.replace(/(\d+(?:\.\d+)?)\s+10\s*\^?\s*([0-9]+)/g, '$1 \\times 10^{$2}');
+
+  // Fix 10-35 -> 10^{-35}
+  s = s.replace(/10\s*[-–−]\s*(\d+)/g, '10^{-$1}');
+  s = s.replace(/10\s*\+\s*(\d+)/g, '10^{$1}');
+  s = s.replace(/10\s*\^\s*[-–−]\s*(\d+)/g, '10^{-$1}');
+  s = s.replace(/10\s*\^\s*\+?\s*(\d+)/g, '10^{$1}');
+
+  // Format trailing units (only if preceded by digit, decimal, or closing brace/paren)
+  s = s.replace(/(?<=[0-9\}\)]\s*)(kg|m\/s|m\s*s\^\{-?1\}|m|s|nm|\mu m|pm|mm|cm|km|J|kJ|eV|MeV|keV|V|mV|kV|Hz|kHz|MHz|GHz|T|mT|\mu T|W|kW|MW|N|kN|C|\mu C|nC|pC|A|mA|\mu A|\Omega|k\Omega|rad\/s|mol|K)\s*$/i, '\\text{ $1}');
+
+  s = s.replace(/\s+/g, ' ').trim();
+  // Wrap in $...$ if not already wrapped
+  return s.startsWith('$') && s.endsWith('$') ? s : `$${s}$`;
 }
 
 function sanitizeQuestionPayload(data) {
@@ -409,10 +499,19 @@ function sanitizeQuestionPayload(data) {
   const q = { ...data };
   if (q.question_latex) q.question_latex = sanitizeLatexString(q.question_latex);
   if (q.solution_latex) q.solution_latex = sanitizeLatexString(q.solution_latex);
+  if (q.correct_answer_latex) q.correct_answer_latex = sanitizeOptionFormula(q.correct_answer_latex);
+
   if (Array.isArray(q.options_latex)) {
     q.options_latex = q.options_latex.map(opt => ({
       ...opt,
-      latex: sanitizeLatexString(opt.latex),
+      latex: sanitizeOptionFormula(opt.latex || opt.text || ''),
+      distractor_trap: opt.distractor_trap ? sanitizeLatexString(opt.distractor_trap) : opt.distractor_trap
+    }));
+  }
+  if (Array.isArray(q.options)) {
+    q.options = q.options.map(opt => ({
+      ...opt,
+      latex: sanitizeOptionFormula(opt.latex || opt.text || ''),
       distractor_trap: opt.distractor_trap ? sanitizeLatexString(opt.distractor_trap) : opt.distractor_trap
     }));
   }
@@ -430,7 +529,9 @@ function sanitizeQuestionPayload(data) {
 
 module.exports = {
   generateLlmQuestion,
+  mapPuaSymbols,
   sanitizeLatexString,
+  sanitizeOptionFormula,
   sanitizeQuestionPayload
 };
 

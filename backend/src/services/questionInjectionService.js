@@ -9,7 +9,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { inMemoryStore } = require('../config/database');
-const { sanitizeLatexString, sanitizeQuestionPayload } = require('./llmQuestionEngine');
+const { sanitizeLatexString, sanitizeOptionFormula, sanitizeQuestionPayload } = require('./llmQuestionEngine');
 const { CURRICULUM_TAXONOMY } = require('./curriculumTaxonomy');
 
 // Universal Web Standards Polyfills for Serverless Node (Vercel / AWS Lambda)
@@ -360,7 +360,7 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
     if (val.length > 0 && !options.some(o => o.key === key) && !isAssertionReason) {
       options.push({
         key,
-        latex: val.includes('$') ? val : `$${val}$`,
+        latex: sanitizeOptionFormula(val),
         is_correct: key === answerKey,
         distractor_trap: key === 'B' ? 'Common sign convention slip' : key === 'C' ? 'Neglected boundary condition' : key === 'D' ? 'Formula inversion error' : null
       });
@@ -390,8 +390,9 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
     questionPrompt = promptBlock;
   }
 
-  // Strip leading question number (e.g. "1. ", "Question 1: ", etc.)
+  // Strip leading question number and trailing marks column digits, then normalize LaTeX
   questionPrompt = questionPrompt.replace(/^(?:Q(?:uestion)?\.?\s*)?\d+[\.:\)]\s*/i, '').trim();
+  questionPrompt = sanitizeLatexString(questionPrompt);
 
   // Auto-detect marks based on standard paper sections or explicit markers
   let detectedMarks = detectMarksFromText(text);
@@ -473,8 +474,11 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
     rawText = `Calculate the fundamental parameters for ${targetSubject} under standard atmospheric conditions.`;
   }
 
+  // Pre-clean PUA characters, symbol fonts, wave symbols and scientific exponents across raw document
+  const normalizedRaw = sanitizeLatexString(rawText);
+
   // 1. Check if document has numbered questions like 1. ... 2. ... (CBSE / State Board paper)
-  const lines = rawText.split('\n');
+  const lines = normalizedRaw.split('\n');
   const questionsMap = new Map();
   let currentQ = null;
   let isEnglish = true;
@@ -972,7 +976,7 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
     timestamp: new Date().toISOString()
   };
 
-  const finalQuestion = {
+  const rawQuestion = {
     id: uniqueId,
     grade: String(grade),
     subject: targetSubject,
@@ -1009,6 +1013,8 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
     injection_mode: mode,
     imported_at: new Date().toISOString()
   };
+
+  const finalQuestion = sanitizeQuestionPayload(rawQuestion);
 
   if (!inMemoryStore.subjectBanks) inMemoryStore.subjectBanks = {};
   if (!inMemoryStore.subjectBanks[bankKey]) inMemoryStore.subjectBanks[bankKey] = [];
@@ -1057,7 +1063,7 @@ function loadPersistedCustomQuestions() {
         const raw = fs.readFileSync(p, 'utf8');
         const list = JSON.parse(raw);
         if (Array.isArray(list) && list.length > 0) {
-          return list;
+          return list.map(q => sanitizeQuestionPayload(q));
         }
       }
     } catch (e) {
@@ -1076,8 +1082,8 @@ function savePersistedCustomQuestions(newQuestions = []) {
   const map = new Map();
 
   // Deduplicate by question id, keeping newest versions
-  existing.forEach(q => { if (q && q.id) map.set(q.id, q); });
-  newQuestions.forEach(q => { if (q && q.id) map.set(q.id, q); });
+  existing.forEach(q => { if (q && q.id) map.set(q.id, sanitizeQuestionPayload(q)); });
+  newQuestions.forEach(q => { if (q && q.id) map.set(q.id, sanitizeQuestionPayload(q)); });
 
   const allQuestions = Array.from(map.values());
   const paths = getCustomQuestionsStoragePaths();

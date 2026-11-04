@@ -215,10 +215,68 @@ function decodeHtmlEntities(str) {
     .replace(/&#39;/g, "'");
 }
 
+// Universal Symbol Font / Private Use Area (PUA) Unicode Mapping Table (0xF020 - 0xF0FF)
+const PUA_SYMBOL_MAP = {
+  '\uF020': ' ', '\uF025': '%', '\uF02B': '+', '\uF02D': '-',
+  '\uF030': '0', '\uF031': '1', '\uF032': '2', '\uF033': '3', '\uF034': '4',
+  '\uF035': '5', '\uF036': '6', '\uF037': '7', '\uF038': '8', '\uF039': '9',
+  '\uF03D': '=',
+  '\uF041': 'A', '\uF042': 'B', '\uF043': 'C', '\uF044': '\\Delta ',
+  '\uF045': 'E', '\uF046': '\\Phi ', '\uF047': '\\Gamma ',
+  '\uF050': '\\Pi ', '\uF051': '\\Theta ', '\uF053': '\\Sigma ', '\uF057': '\\Omega ',
+  '\uF061': '\\alpha ', '\uF062': '\\beta ', '\uF063': '\\chi ', '\uF064': '\\delta ',
+  '\uF065': '\\varepsilon ', '\uF066': '\\phi ', '\uF067': '\\gamma ', '\uF068': '\\eta ',
+  '\uF069': '\\iota ', '\uF06A': '\\varphi ', '\uF06B': 'k', '\uF06C': '\\lambda ',
+  '\uF06D': '\\mu ', '\uF06E': '\\nu ', '\uF06F': 'o', '\uF070': '\\pi ',
+  '\uF071': '\\theta ', '\uF072': '\\rho ', '\uF073': '\\sigma ', '\uF074': '\\tau ',
+  '\uF075': '\\upsilon ', '\uF076': '\\varpi ', '\uF077': '\\omega ', '\uF078': '\\xi ',
+  '\uF079': '\\psi ', '\uF07A': '\\zeta ',
+  '\uF0A3': '\\le ', '\uF0A5': '\\infty ', '\uF0A7': '\\approx ',
+  '\uF0AB': '\\leftrightarrow ', '\uF0AC': '\\leftarrow ', '\uF0AE': '\\rightarrow ',
+  '\uF0B0': '^\\circ ', '\uF0B1': '\\pm ', '\uF0B3': '\\ge ',
+  '\uF0B4': ' \\times ', '\uF0B7': ' \\cdot ', '\uF0B9': '\\neq ', '\uF0BA': '\\equiv ',
+  '\uF0D6': '\\sqrt '
+};
+
+function mapPuaSymbols(str) {
+  if (!str || typeof str !== 'string') return '';
+  let s = str;
+  for (const [k, v] of Object.entries(PUA_SYMBOL_MAP)) {
+    if (s.includes(k)) {
+      s = s.split(k).join(v);
+    }
+  }
+  return s.replace(/[\uF000-\uF0FF]/g, ' ');
+}
+
 function cleanFormula(tex) {
   let clean = decodeHtmlEntities(tex.trim());
+  clean = mapPuaSymbols(clean);
   // Strip leading and trailing $ signs if accidentally enclosed
   clean = clean.replace(/^\$+|\$+$/g, '').trim();
+
+  // If lone tofu glyph in math mode, normalize to \omega
+  if (/^[▯\uFFFD\u25AF\u25A1\u25A0\s]+$/.test(clean)) {
+    return '\\omega';
+  }
+
+  // Fix tofu/replacement characters between number and 10
+  clean = clean.replace(/(\d+(?:\.\d+)?)\s*(?:[▯\uFFFD\u25AF\u25A1\u25A0\u25FB-\u25FE×x*·•\u00D7\u22C5]|\\times)\s*10/g, '$1 \\times 10');
+  clean = clean.replace(/(\d+(?:\.\d+)?)\s+10\s*[-–−]\s*(\d+)/g, '$1 \\times 10^{-$2}');
+  clean = clean.replace(/(\d+(?:\.\d+)?)\s+10\s*\^?\s*([0-9]+)/g, '$1 \\times 10^{$2}');
+
+  // Fix scientific notation exponents: 10-35 -> 10^{-35}
+  clean = clean.replace(/10\s*[-–−]\s*(\d+)/g, '10^{-$1}');
+  clean = clean.replace(/10\s*\+\s*(\d+)/g, '10^{$1}');
+  clean = clean.replace(/10\s*\^\s*[-–−]\s*(\d+)/g, '10^{-$1}');
+  clean = clean.replace(/10\s*\^\s*\+?\s*(\d+)/g, '10^{$1}');
+
+  // Convert raw Latin multiplication x / × to \times in math formulas
+  clean = clean.replace(/(?<=[0-9\}])\s*[×\u00D7]\s*(?=[0-9\\\{])/g, ' \\times ');
+
+  // Wrap trailing scientific units in \text{...} only if preceded by digit, decimal, or closing brace/parenthesis
+  clean = clean.replace(/(?<=[0-9\}\)]\s*)(?<!\\text\{)(kg|m\/s|m\s*s\^\{-?1\}|m|s|nm|\mu m|pm|mm|cm|km|J|kJ|eV|MeV|keV|V|mV|kV|Hz|kHz|MHz|GHz|T|mT|\mu T|W|kW|MW|N|kN|C|\mu C|nC|pC|A|mA|\mu A|\Omega|k\Omega|rad\/s|mol|K)\s*$/i, '\\text{ $1}');
+
   // Replace double backslashes if present e.g. \\frac -> \frac
   clean = clean.replace(/\\\\([a-zA-Z]+)/g, '\\$1');
   // Fix unescaped text{...} e.g. text{cm} -> \text{cm}
@@ -234,6 +292,31 @@ function cleanFormula(tex) {
   // Fix unescaped & inside \text{...}
   clean = clean.replace(/(\\text\{[^{}]*?)(?<!\\)&/g, '$1\\&');
   return clean;
+}
+
+/**
+ * Universal Question Object Sanitizer (ensures prompts, options, formulas, and solutions are pristine)
+ */
+function sanitizeAcademicQuestionObject(data) {
+  if (!data || typeof data !== 'object') return data;
+  const q = { ...data };
+  if (q.question_latex) q.question_latex = normalizeLatexText(q.question_latex);
+  if (q.solution_latex) q.solution_latex = normalizeLatexText(q.solution_latex);
+  if (q.correct_answer_latex) q.correct_answer_latex = normalizeLatexText(q.correct_answer_latex);
+
+  if (Array.isArray(q.options_latex)) {
+    q.options_latex = q.options_latex.map(opt => ({
+      ...opt,
+      latex: normalizeLatexText(opt.latex || opt.text || '')
+    }));
+  }
+  if (Array.isArray(q.options)) {
+    q.options = q.options.map(opt => ({
+      ...opt,
+      latex: normalizeLatexText(opt.latex || opt.text || '')
+    }));
+  }
+  return q;
 }
 
 /**
@@ -288,7 +371,22 @@ function isFormulaString(str) {
  */
 function normalizeLatexText(raw) {
   if (!raw || typeof raw !== 'string') return '';
-  let str = raw.trim();
+  let str = mapPuaSymbols(raw.trim());
+
+  // Strip trailing question marks numbers from PDF column: e.g. "is 1" -> "is:"
+  str = str.replace(/(\b(?:is|as|Then|given by|equal to|equal|are))\s+[1-5]\s*$/im, '$1:');
+  str = str.replace(/\s+[1-5]\s*$/im, '');
+
+  // Fix wave equation representations
+  str = str.replace(/sin\s*\(\s*[^z\(\)\s]*z\s*[-–−]\s*[^t\(\)\s]*t\s*\)/gi, '\\sin(kz - \\omega t)');
+  str = str.replace(/sin\s*\(\s*[^t\(\)\s]*t\s*[-–−]\s*[^z\(\)\s]*z\s*\)/gi, '\\sin(\\omega t - kz)');
+  str = str.replace(/cos\s*\(\s*[^z\(\)\s]*z\s*[-–−]\s*[^t\(\)\s]*t\s*\)/gi, '\\cos(kz - \\omega t)');
+  str = str.replace(/cos\s*\(\s*[^t\(\)\s]*t\s*[-–−]\s*[^z\(\)\s]*z\s*\)/gi, '\\cos(\\omega t - kz)');
+
+  // Fix wave constants sentence e.g. "where m, n, ▯ and ▯ are constants"
+  str = str.replace(/where\s+([A-Za-z0-9_,\s]+?)(?:,\s*[▯\uFFFD\u25AF\u25A1\u25A0\uF000-\uF0FF\s,and]+\s+are\s+constants)/gi, (m, p1) => {
+    return 'where $' + p1.trim() + ', k, \\omega$ are constants';
+  });
 
   // If the entire string is an un-delimited formula, wrap it in $$...$$ for display math
   if (isFormulaString(str)) {
@@ -320,6 +418,12 @@ function normalizeLatexText(raw) {
   str = str.replace(/\\begin\{(equation|align|aligned|gather|matrix|pmatrix|bmatrix|cases)\}[\s\S]*?\\end\{\1\}/g, (m) => stash(`$$${m}$$`));
 
   // 2. Now examine non-stashed text outside math delimiters
+  // Scientific notation outside math e.g. 2.21 ▯ 10-35 kg or 6.63 x 10-33 kg
+  str = str.replace(/(^|[^a-zA-Z\$\\])(\d+(?:\.\d+)?\s*(?:[▯\uFFFD\u25AF\u25A1\u25A0\u25FB-\u25FE×x*·•\u00D7\u22C5]|\\times)?\s*10\s*[-–−]\s*\d+(?:\s*(?:kg|m\/s|m|s|nm|\mu m|pm|mm|cm|km|J|kJ|eV|MeV|keV|V|mV|kV|Hz|kHz|MHz|GHz|T|mT|\mu T|W|kW|MW|N|kN|C|\mu C|nC|pC|A|mA|\mu A|\Omega|k\Omega|rad\/s|mol|K))?)/g, (m, prefix, val) => prefix + stash('$' + cleanFormula(val) + '$'));
+
+  // Standalone lone powers of 10 outside math e.g. 10-35, 10-33, 10-19
+  str = str.replace(/(^|[^a-zA-Z0-9\$\\])(10\s*[-–−]\s*\d+)/g, (m, prefix, val) => prefix + stash('$' + cleanFormula(val) + '$'));
+
   // Standalone degree notations: 3^\circ, 2^\circ, 1^\circ, 0^\circ C, 90^\circ, 0°C
   str = str.replace(/(\b\d+\s*\^\s*\\?circ(?:\s*\\?text\{[A-Z]\})?)/g, (m) => stash(`$${m}$`));
   str = str.replace(/(\b\d+°(?:\s*C)?)/g, (m) => stash(`$${m.replace('°', '^\\circ ')}$`));
@@ -400,7 +504,7 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false, errorColor: '#3b82f6', strict: false }));
       } catch (e) {}
     }
     return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
@@ -411,7 +515,7 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false, errorColor: '#3b82f6', strict: false }));
       } catch (e) {}
     }
     return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
@@ -422,7 +526,7 @@ function renderLatexString(rawText) {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
       try {
-        return storeMath(window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false }));
+        return storeMath(window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false, errorColor: '#3b82f6', strict: false }));
       } catch (e) {}
     }
     return storeMath(`<span class="katex-inline-fallback">${cleanTex}</span>`);
@@ -434,10 +538,24 @@ function renderLatexString(rawText) {
     let rendered = `<span class="katex-inline-fallback">${cleanTex}</span>`;
     if (window.katex) {
       try {
-        rendered = window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false });
+        rendered = window.katex.renderToString(cleanTex, { displayMode: false, throwOnError: false, errorColor: '#3b82f6', strict: false });
       } catch (e) {}
     }
     return `${prefix}${storeMath(rendered)}`;
+  });
+
+  // 7. Post-processing text outside rendered math:
+  content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  content = content.replace(/\\(\s*[\r\n]+)/g, '$1');
+  content = content.replace(/([:;,])\s*\\\s*/g, '$1 ');
+
+  // Format line breaks safely only in text portions
+  content = content.replace(/\n\s*\n/g, '<br/><br/>');
+  content = content.replace(/\n/g, '<br/>');
+
+  // 8. Restore preserved KaTeX blocks with pristine untouched SVG paths
+  mathPlaceholders.forEach((html, i) => {
+    content = content.replace(new RegExp(`@@@KATEXBLOCK${i}@@@`, 'g'), () => html);
   });
 
   // 7. Post-processing text outside rendered math:
@@ -12619,6 +12737,11 @@ async function loadQuestionBankView(forceReload = false) {
       }
     }
 
+    // Sanitize all questions across question bank data so latex, units, and symbols are pristine
+    if (Array.isArray(state.questionBankData)) {
+      state.questionBankData = state.questionBankData.map(q => sanitizeAcademicQuestionObject(q));
+    }
+
     // Two-way sync: Ensure any newly received server injected questions are cached in localStorage
     const serverInjected = (state.questionBankData || []).filter(q => q.injected_by || String(q.id).includes('_inj_'));
     if (serverInjected.length > 0) {
@@ -14210,7 +14333,7 @@ function renderQbCurrentPage() {
     statsLabel.innerHTML = `Showing Question <strong>${currentIdx + 1}</strong> of <strong>${total}</strong> in selected scope &bull; 1 Question Per Page Mode`;
   }
 
-  const q = filtered[currentIdx];
+  const q = sanitizeAcademicQuestionObject(filtered[currentIdx]);
   const qId = q.id || `q_${currentIdx}`;
   const chNum = q.chapter_number || '';
   const chName = q.chapter_name || q.chapter || 'Chapter';
@@ -14219,6 +14342,7 @@ function renderQbCurrentPage() {
   const marks = q.marks || (diff === 'EASY' ? 1 : (diff === 'HARD' ? 5 : 3));
   const timeSec = q.benchmark_time_seconds || 90;
   const steps = formatIntuitiveSteps(q);
+  const options = (q.options_latex && q.options_latex.length > 0) ? q.options_latex : (q.options || []);
 
   const isPyq = q.question_source === 'CBSE_PYQ' || source.toUpperCase().includes('BOARD') || source.toUpperCase().includes('PYQ');
   const isExample = q.question_source === 'NCERT_TEXTBOOK' || source.toUpperCase().includes('EXAMPLE') || source.toUpperCase().includes('NCERT');
@@ -14234,7 +14358,6 @@ function renderQbCurrentPage() {
     ? 'background:rgba(16, 185, 129, 0.12); color:#10b981; border:1px solid rgba(16, 185, 129, 0.3);'
     : 'background:rgba(245, 158, 11, 0.12); color:#f59e0b; border:1px solid rgba(245, 158, 11, 0.3);';
 
-  const options = q.options_latex || [];
   const percentComplete = Math.round(((currentIdx + 1) / total) * 100);
 
   // Build Quick Question Jump Pills (window of nearby questions)
@@ -15575,9 +15698,10 @@ async function triggerAiQuestionExtraction() {
     }
 
     const data = await res.json();
-    const questions = Array.isArray(data.questions) && data.questions.length > 0
+    const rawList = Array.isArray(data.questions) && data.questions.length > 0
       ? data.questions
       : (data.previewQuestion ? [data.previewQuestion] : []);
+    const questions = rawList.map(q => sanitizeAcademicQuestionObject(q));
 
     injectQuestionStudioState.extractedQuestions = questions;
     injectQuestionStudioState.currentExtracted = questions[0] || null;
@@ -15607,7 +15731,7 @@ async function triggerAiQuestionExtraction() {
                       Option ${escapeHtml(opt.key)} ${isCor ? '✓ (Correct)' : ''}
                     </strong>
                     <div class="katex-render-target" style="font-size:0.88rem; font-weight:600; color:var(--text-primary); margin-top:3px;">
-                      ${renderLatexString(escapeHtml(opt.latex || ''))}
+                      ${renderLatexString(opt.latex || '')}
                     </div>
                     ${opt.distractor_trap ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><span style="color:#f59e0b; font-weight:700;">Trap:</span> ${escapeHtml(opt.distractor_trap)}</div>` : ''}
                   </div>
@@ -15644,7 +15768,7 @@ async function triggerAiQuestionExtraction() {
 
             <!-- Question Statement in LaTeX -->
             <div class="katex-render-target" style="font-size:0.92rem; line-height:1.6; color:var(--text-primary); margin-bottom:8px;">
-              ${renderLatexString(escapeHtml(q.question_latex || ''))}
+              ${renderLatexString(q.question_latex || '')}
             </div>
 
             <!-- Options if MCQ -->
@@ -15654,10 +15778,10 @@ async function triggerAiQuestionExtraction() {
             <div style="margin-top:10px; background:var(--bg-secondary); border-radius:8px; padding:10px 12px; border-left:3px solid #10b981;">
               <div style="font-size:0.75rem; font-weight:800; color:#10b981; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
                 <span>✓ Verified Solution &amp; Step Rubric</span>
-                <span style="color:var(--text-muted); font-size:0.7rem; font-weight:600;">Ans: ${escapeHtml(q.correct_answer_latex || 'Verified')}</span>
+                <span style="color:var(--text-muted); font-size:0.7rem; font-weight:600;">Ans: ${renderLatexString(q.correct_answer_latex || 'Verified')}</span>
               </div>
               <div class="katex-render-target" style="font-size:0.86rem; line-height:1.55; color:var(--text-primary);">
-                ${renderLatexString(escapeHtml(q.solution_latex || ''))}
+                ${renderLatexString(q.solution_latex || '')}
               </div>
             </div>
           </div>
@@ -15757,9 +15881,10 @@ async function commitInjectedQuestionToBank() {
     }
 
     const data = await res.json();
-    const newQuestions = Array.isArray(data.questions) && data.questions.length > 0
+    const rawQuestions = Array.isArray(data.questions) && data.questions.length > 0
       ? data.questions
       : (data.question ? [data.question] : []);
+    const newQuestions = rawQuestions.map(q => sanitizeAcademicQuestionObject(q));
 
     // 1. Immediately prepend to local question bank data so they are at the top
     if (Array.isArray(state.questionBankData)) {

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { inMemoryStore } = require('../config/database');
 const { generateAiQuestion } = require('../services/aiPromptEngine');
-const { generateLlmQuestion } = require('../services/llmQuestionEngine');
+const { generateLlmQuestion, sanitizeQuestionPayload } = require('../services/llmQuestionEngine');
 const { getAllClass10Questions, getCuratedClass10Question } = require('../services/class10PyqBank');
 const {
   validateFacultySubjectLock,
@@ -81,7 +81,7 @@ router.get('/', (req, res) => {
     success: true,
     totalCount: results.length,
     count: paginated.length,
-    questions: paginated
+    questions: paginated.map(q => sanitizeQuestionPayload(q))
   });
 });
 
@@ -367,7 +367,7 @@ router.get('/injected-questions', (req, res) => {
     res.json({
       success: true,
       count: list.length,
-      questions: list
+      questions: list.map(q => sanitizeQuestionPayload(q))
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -382,8 +382,10 @@ router.post('/sync-injected-cache', (req, res) => {
       return res.json({ success: true, count: 0 });
     }
 
+    const cleanList = questions.map(q => sanitizeQuestionPayload(q));
+
     // Hydrate into inMemoryStore
-    questions.forEach(q => {
+    cleanList.forEach(q => {
       if (!q || !q.id) return;
       const sUpper = (q.subjectKey || q.subject || '').toUpperCase();
       const isC10 = String(q.grade) === '10';
@@ -406,12 +408,12 @@ router.post('/sync-injected-cache', (req, res) => {
       }
     });
 
-    savePersistedCustomQuestions(questions);
+    savePersistedCustomQuestions(cleanList);
 
     res.json({
       success: true,
-      syncedCount: questions.length,
-      message: `Persisted and hydrated ${questions.length} questions into backend storage.`
+      syncedCount: cleanList.length,
+      message: `Persisted and hydrated ${cleanList.length} questions into backend storage.`
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

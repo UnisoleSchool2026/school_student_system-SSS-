@@ -3620,28 +3620,39 @@ try {
 try {
   const fs = require('fs');
   const path = require('path');
+  const { sanitizeQuestionPayload } = require('../services/llmQuestionEngine');
   const storagePaths = [
     path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
     '/tmp/custom_injected_questions.json'
   ];
 
   let persistedCustom = [];
+  let loadedFromPath = null;
   for (const sp of storagePaths) {
     try {
       if (fs.existsSync(sp)) {
         const raw = fs.readFileSync(sp, 'utf8');
         const list = JSON.parse(raw);
         if (Array.isArray(list) && list.length > 0) {
-          persistedCustom = list;
+          persistedCustom = list.map(q => sanitizeQuestionPayload(q));
+          loadedFromPath = sp;
           break;
         }
       }
     } catch (e) {}
   }
 
+  // Update persistent file with sanitized questions
+  if (loadedFromPath && persistedCustom.length > 0) {
+    try {
+      fs.writeFileSync(loadedFromPath, JSON.stringify(persistedCustom, null, 2), 'utf8');
+    } catch (e) {}
+  }
+
   if (persistedCustom.length > 0 && inMemoryStore.subjectBanks) {
-    persistedCustom.forEach(q => {
-      if (!q || !q.id) return;
+    persistedCustom.forEach(rawQ => {
+      if (!rawQ || !rawQ.id) return;
+      const q = sanitizeQuestionPayload(rawQ);
       const sUpper = (q.subjectKey || q.subject || '').toUpperCase();
       const isC10 = String(q.grade) === '10';
 
