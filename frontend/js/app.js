@@ -227,7 +227,57 @@ function cleanFormula(tex) {
   clean = clean.replace(/(?<!\\)rm\s*\{/g, '\\mathrm{');
   // Fix unescaped % inside math formulas
   clean = clean.replace(/(?<!\\)%/g, '\\%');
+  // Fix en-dash / em-dash in math mode to minus
+  clean = clean.replace(/[–—]/g, '-');
+  // Fix Rupee currency symbol in math mode
+  clean = clean.replace(/₹/g, '\\text{₹}');
+  // Fix unescaped & inside \text{...}
+  clean = clean.replace(/(\\text\{[^{}]*?)(?<!\\)&/g, '$1\\&');
   return clean;
+}
+
+/**
+ * Robust mathematical formula detector.
+ * Identifies mathematical formulas that lack outer delimiters ($ or $$)
+ * so they can be wrapped in display math without misclassifying English prose.
+ */
+function isFormulaString(str) {
+  if (!str || typeof str !== 'string') return false;
+  const s = str.trim();
+  if (!s) return false;
+
+  // If already enclosed entirely in math delimiters:
+  if (/^(\$\$[\s\S]*\$\$|\\\[[\s\S]*\\\]|^\$[^\$]+\$$)$/.test(s)) return true;
+
+  // If it already contains math delimiters anywhere inside, it is already marked up!
+  if (s.includes('$') || s.includes('\\' + '[') || s.includes('\\' + '(')) return false;
+
+  // If it starts with common question / imperative prose words:
+  if (/^(Show|Find|Evaluate|Calculate|Prove|State|Determine|Define|Explain|If|What|Which|Why|How|A|An|The|Solve|Given|Check|Write|Draw|Construct|Deduce|Derive|Verify|Express|Consider|Suppose|Assume)\b/i.test(s)) {
+    return false;
+  }
+
+  // If it has sentence ending punctuation followed by capital letter, it is prose
+  if (/[.?!]\s+[A-Z]/.test(s)) return false;
+
+  // Check for presence of LaTeX commands or math relations/operators
+  const hasMathCommands = /\\[a-zA-Z]+/.test(s);
+  const hasMathOperators = /[=><\approx\le\ge\pm\neq\equiv\propto\sim\times\div\^_\{\}]/.test(s);
+
+  if (!hasMathCommands && !hasMathOperators) return false;
+
+  // Count non-math prose words outside \text{...} or \mathrm{...}
+  let stripped = s
+    .replace(/\\(text|mathrm|mathbf|operatorname)\{[^{}]*\}/g, '')
+    .replace(/\\[a-zA-Z]+/g, ' ')
+    .replace(/[{}\[\]\(\)\^_\d=><+\-*\/,;:\.|&~`!@#%]/g, ' ')
+    .trim();
+
+  const words = (stripped.match(/\b[a-zA-Z]{3,}\b/g) || []).filter(w => {
+    return !/^(sin|cos|tan|cot|sec|csc|log|ln|lim|max|min|det|exp|deg|rad|vol|mol|rpm|and|or|when|for|from|where|with)$/i.test(w);
+  });
+
+  return words.length <= 3;
 }
 
 /**
@@ -240,16 +290,22 @@ function normalizeLatexText(raw) {
   if (!raw || typeof raw !== 'string') return '';
   let str = raw.trim();
 
-  // 1. Stash existing valid math blocks
+  // If the entire string is an un-delimited formula, wrap it in $$...$$ for display math
+  if (isFormulaString(str)) {
+    if (!/^\$\$[\s\S]*\$\$$/.test(str) && !/^\\\[[\s\S]*\\\]$/.test(str) && !/^\$[^\$]+\$$/.test(str)) {
+      return `$$${cleanFormula(str)}$$`;
+    }
+    return str;
+  }
+
+  // 1. Stash existing valid math blocks using safe identifiers WITHOUT underscores
   const placeholders = [];
   const stash = (match) => {
-    const id = `___MATH_PLH_${placeholders.length}___`;
+    const id = `@@@MATHPLH${placeholders.length}@@@`;
     placeholders.push({ id, val: match });
     return id;
   };
 
-  // Stash environments: \begin{...}...\end{...}
-  str = str.replace(/\\begin\{(equation|align|aligned|gather|matrix|pmatrix|bmatrix)\}[\s\S]*?\\end\{\1\}/g, stash);
   // Stash display math: $$...$$ and \[...\]
   str = str.replace(/\$\$[\s\S]*?\$\$/g, stash);
   str = str.replace(/\\\[[\s\S]*?\\\]/g, stash);
@@ -260,52 +316,52 @@ function normalizeLatexText(raw) {
     return prefix + stash(`$${inner}$`);
   });
 
+  // Stash standalone LaTeX environments outside math: \begin{...}...\end{...}
+  str = str.replace(/\\begin\{(equation|align|aligned|gather|matrix|pmatrix|bmatrix|cases)\}[\s\S]*?\\end\{\1\}/g, (m) => stash(`$$${m}$$`));
+
   // 2. Now examine non-stashed text outside math delimiters
-  const englishWords = (str.replace(/\\[a-zA-Z]+(?:\{[^{}]*\})?/g, '').match(/\b[a-zA-Z]{3,}\b/g) || [])
-    .filter(w => !/^(sin|cos|tan|cot|sec|csc|log|ln|lim|max|min|det|exp|deg|units|unit|rad|vol|mol|rpm)$/i.test(w));
+  // Standalone degree notations: 3^\circ, 2^\circ, 1^\circ, 0^\circ C, 90^\circ, 0°C
+  str = str.replace(/(\b\d+\s*\^\s*\\?circ(?:\s*\\?text\{[A-Z]\})?)/g, (m) => stash(`$${m}$`));
+  str = str.replace(/(\b\d+°(?:\s*C)?)/g, (m) => stash(`$${m.replace('°', '^\\circ ')}$`));
 
-  const isEntireFormula = !str.includes('___MATH_PLH_') &&
-    englishWords.length <= 1 &&
-    (
-      /^([a-zA-Z_0-9\\]+(\s*[=><\approx\le\ge\pm]\s*|\\frac|\\sqrt|\\int|\\sum|\\lim|\\prod)).*$/.test(str) ||
-      /^\\(frac|sqrt|rho|sigma|alpha|beta|gamma|Delta|theta|lambda|tau|omega|Phi|psi)\b/.test(str)
-    );
+  // Common chemical orbital notations outside math: d^2sp^3, sp^3d^2, sp^3, sp^2, sp, t_{2g}^3, e_g^2
+  str = str.replace(/\b(d\^2sp\^3|sp\^3d\^2|sp\^3|sp\^2|sp|t_\{2g\}\^3|e_g\^2|[1-5][sspdf]\^\d+)\b/g, (m) => stash(`$${m}$`));
 
-  if (isEntireFormula) {
-    str = `$${str}$`;
-  } else {
-    // Standalone degree notations: 3^\circ, 2^\circ, 1^\circ, 0^\circ C, 90^\circ, 0°C
-    str = str.replace(/(\b\d+\s*\^\s*\\?circ(?:\s*\\?text\{[A-Z]\})?)/g, (m) => stash(`$${m}$`));
-    str = str.replace(/(\b\d+°(?:\s*C)?)/g, (m) => stash(`$${m.replace('°', '^\\circ ')}$`));
+  // Complex coordination ions outside math: e.g. [Co(NH_3)_6]^{3+}, [CoF_6]^{3-}
+  str = str.replace(/(\[[A-Z][a-zA-Z0-9_\(\)]+\]\^\{[0-9]+[+-]\})/g, (m) => stash(`$${m}$`));
 
-    // Common chemical orbital notations outside math: d^2sp^3, sp^3d^2, sp^3, sp^2, sp, t_{2g}^3, e_g^2
-    str = str.replace(/\b(d\^2sp\^3|sp\^3d\^2|sp\^3|sp\^2|sp|t_\{2g\}\^3|e_g\^2|[1-5][sspdf]\^\d+)\b/g, (m) => stash(`$${m}$`));
+  // Reaction mechanism notation: S_N1, S_N2
+  str = str.replace(/\b(S_N[12])\b/g, (m) => stash(`$${m}$`));
 
-    // Complex coordination ions outside math: e.g. [Co(NH_3)_6]^{3+}, [CoF_6]^{3-}
-    str = str.replace(/(\[[A-Z][a-zA-Z0-9_\(\)]+\]\^\{[0-9]+[+-]\})/g, (m) => stash(`$${m}$`));
+  // Numbers preceding LaTeX roots/fractions: e.g. 19\sqrt{3}\text{ m} -> wrap term
+  str = str.replace(/(^|[^a-zA-Z\$\\])(\d+(?:\.\d+)?\s*\\(?:sqrt|frac|times)\b[^{}]*(?:\{[^{}]*\})*(?:\s*\\text\{[^{}]*\})?)/g, (m, prefix, mathPart) => {
+    return prefix + stash(`$${mathPart}$`);
+  });
 
-    // Reaction mechanism notation: S_N1, S_N2
-    str = str.replace(/\b(S_N[12])\b/g, (m) => stash(`$${m}$`));
+  // Standalone \text{...} outside math (CBSE notes / answer keys)
+  str = str.replace(/(\b\\text\{[^{}]+\})/g, (m) => stash(`$${m}$`));
 
-    // LaTeX macros with parameters outside math: \frac{...}{...}, \sqrt{...}, \mathrm{...}
-    str = str.replace(/(\\(?:frac|sqrt|mathrm|text|mathbf|vec|overline)\{[^{}]+\}(?:\{[^{}]+\})?)/g, (m) => stash(`$${m}$`));
+  // LaTeX macros with parameters outside math: \frac{...}{...}, \sqrt{...}, \mathrm{...}
+  str = str.replace(/(\\(?:frac|sqrt|mathrm|mathbf|vec|overline)\{[^{}]+\}(?:\{[^{}]+\})?)/g, (m) => stash(`$${m}$`));
 
-    // Greek letters & math operators outside math: e.g. \beta-elimination -> $\beta$-elimination
-    str = str.replace(/(\\(?:alpha|beta|gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|Xi|pi|Pi|rho|sigma|Sigma|tau|upsilon|phi|Phi|chi|psi|Psi|omega|Omega|rightarrow|leftarrow|rightleftharpoons|to|times|pm|mp|le|ge|leq|geq|neq|approx|sim|propto|infty|nabla|partial|degree)\b(?:\s*[-–]\s*[a-zA-Z]+)?)/g, (match) => {
-      const hyphenIdx = match.search(/[-–]/);
-      if (hyphenIdx > -1) {
-        const sym = match.slice(0, hyphenIdx).trim();
-        const rest = match.slice(hyphenIdx);
-        return stash(`$${sym}$`) + rest;
-      }
-      return stash(`$${match}$`);
-    });
-  }
+  // Greek letters & math operators outside math: e.g. \beta-elimination -> $\beta$-elimination
+  str = str.replace(/(\\(?:alpha|beta|gamma|delta|Delta|epsilon|varepsilon|zeta|eta|theta|Theta|iota|kappa|lambda|Lambda|mu|nu|xi|Xi|pi|Pi|rho|sigma|Sigma|tau|upsilon|phi|Phi|chi|psi|Psi|omega|Omega|rightarrow|leftarrow|rightleftharpoons|to|times|pm|mp|le|ge|leq|geq|neq|approx|sim|propto|infty|nabla|partial|degree)\b(?:\s*[-–]\s*[a-zA-Z]+)?)/g, (match) => {
+    const hyphenIdx = match.search(/[-–]/);
+    if (hyphenIdx > -1) {
+      const sym = match.slice(0, hyphenIdx).trim();
+      const rest = match.slice(hyphenIdx);
+      return stash(`$${sym}$`) + rest;
+    }
+    return stash(`$${match}$`);
+  });
 
-  // 3. Restore stashed math blocks in reverse order
+  // 3. Restore stashed math blocks in reverse order using function replacement to prevent $1-$9 interpretation
   for (let i = placeholders.length - 1; i >= 0; i--) {
-    str = str.replace(placeholders[i].id, placeholders[i].val);
+    str = str.replace(placeholders[i].id, () => placeholders[i].val);
   }
+
+  // Prevent accidental $$ formed when two adjacent $...$$...$ touch
+  str = str.replace(/\$(\s*)\$/g, '$ $1');
 
   return str;
 }
@@ -323,7 +379,7 @@ function renderLatexString(rawText) {
 
   const mathPlaceholders = [];
   function storeMath(html) {
-    const key = `___KATEX_BLOCK_${mathPlaceholders.length}___`;
+    const key = `@@@KATEXBLOCK${mathPlaceholders.length}@@@`;
     mathPlaceholders.push(html);
     return key;
   }
@@ -339,18 +395,7 @@ function renderLatexString(rawText) {
   content = content.replace(/(^|\s)\[\s*([^\[\]]*?\\[a-zA-Z]+[^\[\]]*?)\s*\\?\]/g, '$1\\[$2\\]');
   content = content.replace(/(^|\s)\[\s*([^\[\]]+?)\s*\\\]/g, '$1\\[$2\\]');
 
-  // 3. Render LaTeX environments: \begin{...}...\end{...}
-  content = content.replace(/\\begin\{(equation|align|aligned|gather|matrix|pmatrix|bmatrix)\}([\s\S]*?)\\end\{\1\}/g, (match) => {
-    const cleanTex = cleanFormula(match);
-    if (window.katex) {
-      try {
-        return storeMath(window.katex.renderToString(cleanTex, { displayMode: true, throwOnError: false }));
-      } catch (e) {}
-    }
-    return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
-  });
-
-  // 4. Render Display Math: $$...$$
+  // 3. Render Display Math: $$...$$
   content = content.replace(/\$\$([\s\S]*?)\$\$/g, (match, tex) => {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
@@ -361,7 +406,7 @@ function renderLatexString(rawText) {
     return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
   });
 
-  // 5. Render Display Math: \[...\]
+  // 4. Render Display Math: \[...\]
   content = content.replace(/\\\[([\s\S]*?)\\\](?:\\)?/g, (match, tex) => {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
@@ -372,7 +417,7 @@ function renderLatexString(rawText) {
     return storeMath(`<div class="katex-display-fallback">${cleanTex}</div>`);
   });
 
-  // 6. Render Inline Math: \(...\)
+  // 5. Render Inline Math: \(...\)
   content = content.replace(/\\\(([\s\S]*?)\\\)/g, (match, tex) => {
     const cleanTex = cleanFormula(tex);
     if (window.katex) {
@@ -383,7 +428,7 @@ function renderLatexString(rawText) {
     return storeMath(`<span class="katex-inline-fallback">${cleanTex}</span>`);
   });
 
-  // 7. Render Inline Math: $...$
+  // 6. Render Inline Math: $...$
   content = content.replace(/(^|[^\$])\$([^\$\n]+?)\$(?!\$)/g, (match, prefix, tex) => {
     const cleanTex = cleanFormula(tex);
     let rendered = `<span class="katex-inline-fallback">${cleanTex}</span>`;
@@ -395,7 +440,7 @@ function renderLatexString(rawText) {
     return `${prefix}${storeMath(rendered)}`;
   });
 
-  // 8. Post-processing text outside rendered math:
+  // 7. Post-processing text outside rendered math:
   content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   content = content.replace(/\\(\s*[\r\n]+)/g, '$1');
   content = content.replace(/([:;,])\s*\\\s*/g, '$1 ');
@@ -404,9 +449,9 @@ function renderLatexString(rawText) {
   content = content.replace(/\n\s*\n/g, '<br/><br/>');
   content = content.replace(/\n/g, '<br/>');
 
-  // 9. Restore preserved KaTeX blocks with pristine untouched SVG paths
+  // 8. Restore preserved KaTeX blocks with pristine untouched SVG paths
   mathPlaceholders.forEach((html, i) => {
-    content = content.replace(`___KATEX_BLOCK_${i}___`, () => html);
+    content = content.replace(new RegExp(`@@@KATEXBLOCK${i}@@@`, 'g'), () => html);
   });
 
   return content;
@@ -11209,7 +11254,7 @@ function renderFacultyClassSwitcherCards() {
   const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
   const subjKey = (profSubj === 'CLASS10_MATHEMATICS' || profSubj === 'MATHEMATICS') ? 'MATHEMATICS'
     : ((profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE' || profSubj === 'PHYSICS') ? 'PHYSICS' : profSubj);
-  const currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
+  let currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
   const currentGrade = String(teacherBuilderState.activeGrade || (currentClassId.startsWith('11') ? '11' : (currentClassId.startsWith('10') ? '10' : '12')));
 
   let classCards = [];
@@ -12100,7 +12145,7 @@ function formatIntuitiveSteps(q) {
     } else {
       principle = 'Core Science & Biological Principles';
       principleIntuition = 'Analyze the biological/chemical process sequentially, highlighting key anatomical structures, hormonal regulation, or molecular interactions.';
-      formulaLatex = '\\text{Observe balanced physiological & biochemical mechanisms}';
+      formulaLatex = '\\text{Observe balanced physiological \\& biochemical mechanisms}';
       examTip = 'Use precise biological terminology and reference organ/cellular locations explicitly.';
     }
   } else {
