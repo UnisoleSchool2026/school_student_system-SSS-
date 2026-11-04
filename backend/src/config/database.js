@@ -215,7 +215,7 @@ const inMemoryStore = {
         stream: 'COMMON_SENIOR',
         target_exam: 'JEE_MAIN',
         subject: 'Physics',
-        chapter_number: 7,
+        chapter_number: 6,
         chapter_name: 'System of Particles and Rotational Motion',
         topic: 'Moment of Inertia & Torque',
         subtopic: 'Rolling Without Slipping',
@@ -238,6 +238,130 @@ const inMemoryStore = {
           "Recall the standard formula for linear acceleration in rolling without slipping: $a = \\frac{g\\sin\\theta}{1 + I/(MR^2)}$.",
           "What is the moment of inertia $I$ of a solid uniform sphere about its diameter?",
           "Substitute $I = \\frac{2}{5}MR^2$ and simplify the fraction."
+        ]
+      },
+      {
+        id: 'snr_p_11_02',
+        grade: '11',
+        stream: 'COMMON_SENIOR',
+        target_exam: 'JEE_MAIN',
+        subject: 'Physics',
+        chapter_number: 6,
+        chapter_name: 'System of Particles and Rotational Motion',
+        topic: 'Moment of Inertia & Torque',
+        subtopic: 'Rotational Dynamics of Cylinder',
+        curriculum_board: 'JEE_MAIN',
+        pyq_appearance: 'JEE Main 2023 & CBSE Class 11 Exemplar',
+        difficulty: 'MEDIUM',
+        question_format: 'MCQ_SINGLE',
+        benchmark_time_seconds: 90,
+        marks_weightage: 4,
+        question_latex: 'A solid uniform cylinder of mass $M$ and radius $R$ is free to rotate about its geometric axis. A light string is wound around its circumference and pulled with a constant tension $T$. Find the angular acceleration $\\alpha$ of the cylinder.',
+        options_latex: [
+          { key: 'A', latex: '$\\alpha = \\frac{T}{MR}$', is_correct: false, distractor_trap: 'Treated cylinder as hollow thin shell ($I=MR^2$)' },
+          { key: 'B', latex: '$\\alpha = \\frac{2T}{MR}$', is_correct: true, distractor_trap: null },
+          { key: 'C', latex: '$\\alpha = \\frac{T}{2MR}$', is_correct: false, distractor_trap: 'Multiplied instead of dividing by moment of inertia constant' },
+          { key: 'D', latex: '$\\alpha = \\frac{4T}{MR}$', is_correct: false, distractor_trap: 'Calculation error in radius factor' }
+        ],
+        correct_answer_latex: 'B',
+        solution_latex: 'Torque about central axis is $\\tau = T \\cdot R$. Moment of inertia for solid cylinder is $I = \\frac{1}{2} M R^2$. Since $\\tau = I\\alpha \\implies TR = (\\frac{1}{2}MR^2)\\alpha \\implies \\alpha = \\frac{2T}{MR}$.',
+        socratic_hints: [
+          "What is the torque produced by tension $T$ acting at radius $R$?",
+          "What is the moment of inertia $I$ of a solid cylinder?",
+          "Equate torque $\\tau = I\\alpha$ to solve for angular acceleration."
+        ]
+      },
+      {
+        id: 'snr_p_11_03',
+        grade: '11',
+        stream: 'COMMON_SENIOR',
+        target_exam: 'CBSE_CLASS_11',
+        subject: 'Physics',
+        chapter_number: 5,
+        chapter_name: 'Work, Energy and Power',
+        topic: 'Work Done by Variable Force',
+        subtopic: 'Integral Calculus Work-Energy Theorem',
+        curriculum_board: 'CBSE',
+        pyq_appearance: 'CBSE Class 11 Annual Exam & HPBOSE Board Track',
+        difficulty: 'MEDIUM',
+        question_format: 'SUBJECTIVE_NUMERICAL',
+        benchmark_time_seconds: 120,
+        marks_weightage: 3,
+        question_latex: 'A variable force $F(x) = (3x^2 - 2x + 5)\\,\\text{N}$ acts on a particle of mass $m = 2\\,\\text{kg}$ moving along the $x$-axis. Calculate the net work done by this force in moving the particle from $x = 1\\,\\text{m}$ to $x = 3\\,\\text{m}$.',
+        options_latex: [
+          { key: 'A', latex: '$W = 28\\,\\text{J}$', is_correct: true, distractor_trap: null },
+          { key: 'B', latex: '$W = 33\\,\\text{J}$', is_correct: false, distractor_trap: 'Forgot to subtract lower boundary term $F(1)$' },
+          { key: 'C', latex: '$W = 24\\,\\text{J}$', is_correct: false, distractor_trap: 'Sign error in integration of $-2x$' },
+          { key: 'D', latex: '$W = 18\\,\\text{J}$', is_correct: false, distractor_trap: 'Arithmetic mistake in evaluating $x^3$' }
+        ],
+        correct_answer_latex: 'A',
+        solution_latex: '$$W = \\int_{1}^{3} (3x^2 - 2x + 5)\\,dx = \\left[ x^3 - x^2 + 5x \\right]_1^3 = (27 - 9 + 15) - (1 - 1 + 5) = 33 - 5 = 28\\,\\text{J}$$.',
+        socratic_hints: [
+          "Recall that work done by a variable force is $W = \\int F(x) dx$.",
+          "Integrate each polynomial term separately: $\\int 3x^2 dx = x^3$, $\\int 2x dx = x^2$, $\\int 5 dx = 5x$.",
+          "Subtract the lower limit value from the upper limit value."
+        ]
+      },
+      {
+        id: 'snr_p_11_04',
+        grade: '11',
+        stream: 'COMMON_SENIOR',
+        target_exam: 'JEE_ADVANCED',
+        subject: 'Physics',
+        chapter_number: 13,
+        chapter_name: 'Oscillations',
+        topic: 'Damped Harmonic Oscillations',
+        subtopic: 'Energy Dissipation Rate',
+        curriculum_board: 'JEE_ADVANCED',
+        pyq_appearance: 'JEE Advanced / Main Physics & HPBOSE State Science Talent',
+        difficulty: 'HARD',
+        question_format: 'MCQ_SINGLE',
+        benchmark_time_seconds: 150,
+        marks_weightage: 4,
+        question_latex: 'An oscillator of mass $m$ undergoes damped harmonic oscillations with damping coefficient $b$. If the mechanical energy of the oscillator decays to $\\frac{1}{e}$ of its initial value in time $t_0$, find the relaxation time $t_0$.',
+        options_latex: [
+          { key: 'A', latex: '$t_0 = \\frac{m}{b}$', is_correct: true, distractor_trap: null },
+          { key: 'B', latex: '$t_0 = \\frac{2m}{b}$', is_correct: false, distractor_trap: 'Confused amplitude decay time with total mechanical energy decay time' },
+          { key: 'C', latex: '$t_0 = \\frac{m}{2b}$', is_correct: false, distractor_trap: 'Inverted factor of 2 in damping exponent' },
+          { key: 'D', latex: '$t_0 = \\frac{b}{m}$', is_correct: false, distractor_trap: 'Dimensional mismatch' }
+        ],
+        correct_answer_latex: 'A',
+        solution_latex: 'Mechanical energy decays as $E(t) = E_0 e^{-\\frac{b}{m}t}$. Setting $E(t_0) = E_0 e^{-1} \\implies \\frac{b}{m}t_0 = 1 \\implies t_0 = \\frac{m}{b}$.',
+        socratic_hints: [
+          "Recall that mechanical energy $E \\propto A^2$.",
+          "Amplitude decays as $A(t) = A_0 e^{-bt/(2m)}$, so $E(t) = E_0 e^{-bt/m}$.",
+          "Equate the exponential term to $e^{-1}$."
+        ]
+      },
+      {
+        id: 'snr_p_11_05',
+        grade: '11',
+        stream: 'COMMON_SENIOR',
+        target_exam: 'JEE_MAIN',
+        subject: 'Physics',
+        chapter_number: 3,
+        chapter_name: 'Motion in a Plane',
+        topic: 'Projectile Motion',
+        subtopic: 'Horizontal Range and Maximum Height',
+        curriculum_board: 'CBSE',
+        pyq_appearance: 'CBSE Class 11 & JEE Main 2023',
+        difficulty: 'MEDIUM',
+        question_format: 'MCQ_SINGLE',
+        benchmark_time_seconds: 100,
+        marks_weightage: 3,
+        question_latex: 'A projectile is launched from ground level with speed $u$ at an elevation angle $\\theta = 45^\\circ$. If its horizontal range is $R$, find the maximum vertical height $H$ attained by the projectile.',
+        options_latex: [
+          { key: 'A', latex: '$H = \\frac{R}{4}$', is_correct: true, distractor_trap: null },
+          { key: 'B', latex: '$H = \\frac{R}{2}$', is_correct: false, distractor_trap: 'Omitted factor of 2 in denominator of height formula' },
+          { key: 'C', latex: '$H = R$', is_correct: false, distractor_trap: 'Equated range and height directly at $45^\\circ$' },
+          { key: 'D', latex: '$H = \\frac{R}{8}$', is_correct: false, distractor_trap: 'Squared the angle factor' }
+        ],
+        correct_answer_latex: 'A',
+        solution_latex: 'Horizontal range $R = \\frac{u^2 \\sin 2\\theta}{g} = \\frac{u^2}{g}$ for $\\theta = 45^\\circ$. Maximum height $H = \\frac{u^2 \\sin^2 45^\\circ}{2g} = \\frac{u^2 (1/2)}{2g} = \\frac{u^2}{4g}$. Hence $H = \\frac{R}{4}$.',
+        socratic_hints: [
+          "Write the formula for range: $R = \\frac{u^2 \\sin 2\\theta}{g}$.",
+          "Write the formula for maximum height: $H = \\frac{u^2 \\sin^2\\theta}{2g}$.",
+          "Divide $H$ by $R$ and evaluate at $\\theta = 45^\\circ$."
         ]
       },
       {

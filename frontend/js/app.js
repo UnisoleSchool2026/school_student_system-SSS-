@@ -552,18 +552,51 @@ window.submitGatewayTeacherLogin = function(event) {
     COMPUTER_SCIENCE: 'Computer Science'
   };
 
-  teacherBuilderState.activeTeacher = {
-    name,
-    phone,
-    subjectKey,
-    subjectName: subjectNames[subjectKey] || 'Physics',
-    role: 'TEACHER'
+  const cleanPhone = phone.replace(/\D/g, '') || '9816010001';
+  const isC10 = subjectKey.startsWith('CLASS10_') || subjectKey === 'SCIENCE';
+  const defaultGrade = isC10 ? '10' : '12';
+  const defaultClass = isC10 
+    ? (subjectKey === 'CLASS10_MATHEMATICS' ? '10-Maths-A' : '10-Science-A')
+    : (subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed');
+  const sName = subjectNames[subjectKey] || 'Physics';
+
+  const teacherProfile = {
+    id: `fac_${subjectKey.toLowerCase()}_${cleanPhone}`,
+    name: name,
+    full_name: name,
+    phone: phone,
+    email: `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || subjectKey.toLowerCase()}@haps.edu.in`,
+    subjectKey: subjectKey,
+    subjectName: sName,
+    grade: defaultGrade,
+    role: 'TEACHER',
+    designation: isC10 
+      ? (sName.includes('Science') ? 'Class 10th Science Faculty & Board Coordinator' : 'Class 10th Mathematics Faculty & Board Coordinator')
+      : (subjectKey === 'BIOLOGY' ? 'Senior Biology Faculty & NEET Coordinator' : `Senior ${sName} Faculty & HOD`),
+    defaultClass: defaultClass,
+    targetStream: isC10 ? 'CBSE_CLASS_10' : (subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE'),
+    streamText: isC10
+      ? `Assigned Subject: ${sName} • Class 10 (CBSE & HP Board Foundation)`
+      : (subjectKey === 'BIOLOGY'
+        ? 'Assigned Subject: Biology &bull; Classes 11 &amp; 12 Medical (NEET UG &amp; CBSE Boards)'
+        : `Assigned Subject: ${sName} &bull; Classes 11 &amp; 12 (${subjectKey === 'MATHEMATICS' ? 'JEE Main/Adv &amp; CBSE Boards' : 'NEET, JEE Main &amp; CBSE Boards'})`)
   };
 
+  teacherBuilderState.activeTeacher = teacherProfile;
+  teacherBuilderState.teacherSubjectKey = subjectKey;
+  teacherBuilderState.selectedSubjectKey = subjectKey;
+  teacherBuilderState.activeGrade = defaultGrade;
+  teacherBuilderState.selectedClassId = defaultClass;
+
   try {
-    localStorage.setItem('haps_teacher_profile', JSON.stringify(teacherBuilderState.activeTeacher));
+    localStorage.setItem('haps_teacher_profile', JSON.stringify(teacherProfile));
+    localStorage.setItem('haps_active_teacher', JSON.stringify(teacherProfile));
     localStorage.setItem('haps_active_role', 'teacher');
   } catch (e) {}
+
+  if (typeof applyTeacherProfile === 'function') {
+    applyTeacherProfile(teacherProfile, false);
+  }
 
   window.closeRoleGatewayModal();
   state.activeTeacherTab = 'tabTeacherCreateTestAndPaper';
@@ -571,7 +604,7 @@ window.submitGatewayTeacherLogin = function(event) {
 
   const banner = document.createElement('div');
   banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(name)}</strong> (${subjectNames[subjectKey] || 'Physics'} Expert). Role locked to Teacher Portal.</span>`;
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(name)}</strong> (${sName} Expert &bull; Class ${defaultGrade}th Scope Active). Role locked to Teacher Portal.</span>`;
   document.body.appendChild(banner);
   initLucideIcons();
   setTimeout(() => banner.remove(), 4000);
@@ -9934,9 +9967,7 @@ function toggleChapterAccordion(chNum, event) {
 
 function selectCurriculumSubject(subjectKey, grade) {
   teacherBuilderState.selectedSubjectKey = subjectKey;
-  if (subjectKey.startsWith('CLASS10_')) {
-    teacherBuilderState.teacherSubjectKey = subjectKey;
-  }
+  // Preserve teacher's discipline in teacherSubjectKey without overwriting with temporary view
   
   // Update pill active class
   document.querySelectorAll('.subject-pill-btn').forEach(btn => {
@@ -11253,8 +11284,9 @@ function renderFacultyClassSwitcherCards() {
   if (!container) return;
 
   const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
-  const subjKey = (profSubj === 'CLASS10_MATHEMATICS' || profSubj === 'MATHEMATICS') ? 'MATHEMATICS'
-    : ((profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE' || profSubj === 'PHYSICS') ? 'PHYSICS' : profSubj);
+  let subjKey = profSubj;
+  if (profSubj === 'SCIENCE') subjKey = 'CLASS10_SCIENCE';
+  if (profSubj === 'MATHS') subjKey = 'MATHEMATICS';
   let currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
   const currentGrade = String(teacherBuilderState.activeGrade || (currentClassId.startsWith('11') ? '11' : (currentClassId.startsWith('10') ? '10' : '12')));
 
@@ -11645,7 +11677,18 @@ async function switchFacultyClassScope(classId) {
   teacherBuilderState.selectedClassId = classId;
   teacherBuilderState.activeGrade = activeGrade;
 
-  const subjKey = teacherBuilderState.teacherSubjectKey || teacherBuilderState.selectedSubjectKey || 'PHYSICS';
+  const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  teacherBuilderState.teacherSubjectKey = profSubj;
+
+  let activeSubj = profSubj;
+  if (isClass10) {
+    activeSubj = (profSubj === 'MATHEMATICS' || profSubj === 'CLASS10_MATHEMATICS') ? 'CLASS10_MATHEMATICS' : 'CLASS10_SCIENCE';
+  } else {
+    activeSubj = (profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE') ? 'PHYSICS' : (profSubj === 'CLASS10_MATHEMATICS' ? 'MATHEMATICS' : profSubj);
+  }
+  teacherBuilderState.selectedSubjectKey = activeSubj;
+
+  const subjKey = profSubj;
   const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
   const currentClassInfo = classObj ? {
     id: classId,
@@ -11655,16 +11698,26 @@ async function switchFacultyClassScope(classId) {
     name: activeGrade === '11' ? 'Class 11-NonMed • Physics (42 Students)' : (isClass10 ? 'Class 10-A • Foundation (45 Students)' : 'Class 12-A • Senior Physics (48 Students)')
   });
 
-  // 1. Update Header class badge and title
+  // 1. Update Header class badge, faculty name, faculty tag and title
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
   if (headerClassBadge) {
     headerClassBadge.innerText = `Class ${activeGrade}th ▼`;
   }
+  const headerFacultyName = document.getElementById('headerFacultyName');
+  if (headerFacultyName) {
+    headerFacultyName.innerText = teacherBuilderState.activeTeacher?.name || 'Dr. Vikram Sharma';
+  }
+  const headerFacultyTag = document.getElementById('headerFacultyTag');
+  if (headerFacultyTag) {
+    const sName = isClass10 
+      ? (profSubj === 'MATHEMATICS' ? 'Class 10th Math' : 'Class 10th Science')
+      : (teacherBuilderState.activeTeacher?.subjectName || 'Physics');
+    headerFacultyTag.innerText = `Faculty • ${sName}`;
+  }
   const headerNavTitle = document.getElementById('headerNavTitle');
   if (headerNavTitle && state.activeTeacherTab) {
-    const pSubj = (teacherBuilderState.activeTeacher?.subjectKey || 'PHYSICS').toUpperCase();
     const curSubjName = isClass10
-      ? (pSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
+      ? (profSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
       : `Class ${activeGrade}th ${teacherBuilderState.activeTeacher?.subjectName || 'Physics'}`;
     const tabTitles = {
       'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • ${curSubjName}`,
@@ -12372,10 +12425,11 @@ function formatIntuitiveSteps(q) {
 async function loadQuestionBankView(forceReload = false) {
   const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
   const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
-  const isClass10 = (curGrade === '10' || String(teacherBuilderState.selectedClassId || '').startsWith('10'));
+  const isClass10 = (curGrade === '10');
 
   // Ensure base teacher subject is ALWAYS preserved and never mutated
   teacherBuilderState.teacherSubjectKey = profSubj;
+  teacherBuilderState.activeGrade = curGrade;
 
   let activeSubj = profSubj;
   if (isClass10) {
@@ -12490,7 +12544,7 @@ async function loadQuestionBankView(forceReload = false) {
     let url = '';
     if (isClass10) {
       if (activeSubj === 'CLASS10_SCIENCE') {
-        url = `${getApiBaseUrl()}/api/questions/subject-banks/class10_science`;
+        url = `${getApiBaseUrl()}/api/questions/subject-banks/class10_science?grade=10`;
       } else {
         url = `${getApiBaseUrl()}/api/questions/class10-math-bank?limit=450`;
       }
@@ -12499,7 +12553,7 @@ async function loadQuestionBankView(forceReload = false) {
         : activeSubj === 'CHEMISTRY' ? 'senior_chemistry' 
         : activeSubj === 'BIOLOGY' ? 'senior_biology' 
         : 'senior_mathematics';
-      url = `${getApiBaseUrl()}/api/questions/subject-banks/${bankKey}`;
+      url = `${getApiBaseUrl()}/api/questions/subject-banks/${bankKey}?grade=${curGrade}`;
     }
 
     let res = null;
@@ -12647,6 +12701,14 @@ function filterQuestionBankCards() {
   }
 
   let filtered = [...(state.questionBankData || [])];
+
+  const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId || '').startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId || '').startsWith('10') ? '10' : '12')));
+  if (curGrade && curGrade !== 'ALL') {
+    filtered = filtered.filter(q => {
+      if (!q.grade) return true;
+      return String(q.grade) === curGrade;
+    });
+  }
 
   if (chVal !== 'ALL') {
     filtered = filtered.filter(q => {
@@ -14842,9 +14904,11 @@ function openInjectQuestionModal() {
     bannerName.innerText = `${activeTeacher.name || activeTeacher.full_name || 'Faculty Member'} • ${activeTeacher.designation || curSubj + ' Faculty'}`;
   }
 
+  const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId || '').startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId || '').startsWith('10') ? '10' : '12')));
+
   const badge = document.getElementById('injectFacultySubjectBadge');
   if (badge) {
-    badge.innerText = `🔒 Locked: ${curSubjKey} ONLY`;
+    badge.innerText = `🔒 Locked: ${curSubjKey} (Class ${curGrade}th Scope)`;
   }
 
   const inputSubj = document.getElementById('inputInjectSubject');
@@ -14855,9 +14919,16 @@ function openInjectQuestionModal() {
   // Set default grade matching teacher's active grade
   const gradeSel = document.getElementById('selectInjectGrade');
   if (gradeSel) {
-    const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
     gradeSel.value = curGrade;
     handleInjectGradeChange(curGrade);
+    if (!gradeSel._boundScopeSync) {
+      gradeSel._boundScopeSync = true;
+      gradeSel.addEventListener('change', (e) => {
+        const g = e.target.value;
+        const b = document.getElementById('injectFacultySubjectBadge');
+        if (b) b.innerText = `🔒 Locked: ${curSubjKey} (Class ${g}th Scope)`;
+      });
+    }
   }
 
   // Reset ingestion mode & inputs

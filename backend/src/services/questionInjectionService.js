@@ -100,9 +100,31 @@ function validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey }
 function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '12' }) {
   const sUpper = (targetSubject || '').toUpperCase();
   const lower = (text || '').toLowerCase();
+  const isG11 = String(grade) === '11';
+  const isC10 = String(grade) === '10';
 
   // 1. PHYSICS
   if (sUpper.includes('PHYS')) {
+    if (isG11) {
+      // Class 11 Physics (14 Chapters)
+      if (lower.includes('dimension') || lower.includes('significant figure') || lower.includes('error in measurement') || lower.includes('si unit') || lower.includes('vernier') || lower.includes('screw gauge')) return 'Units and Measurements';
+      if (lower.includes('straight line') || lower.includes('free fall') || lower.includes('stopping distance') || lower.includes('instantaneous velocity') || lower.includes('acceleration due to gravity g')) return 'Motion in a Straight Line';
+      if (lower.includes('projectile') || lower.includes('trajectory') || lower.includes('range of projectile') || lower.includes('centripetal') || lower.includes('horizontal range') || lower.includes('maximum height')) return 'Motion in a Plane';
+      if (lower.includes('friction') || lower.includes('banking') || lower.includes('momentum') || lower.includes('tension') || lower.includes('free body') || lower.includes('newton')) return 'Laws of Motion';
+      if (lower.includes('work done') || lower.includes('work-energy') || lower.includes('spring constant') || lower.includes('potential energy of a spring') || lower.includes('collision') || lower.includes('power in watt')) return 'Work, Energy and Power';
+      if (lower.includes('moment of inertia') || lower.includes('rolling') || lower.includes('torque') || lower.includes('angular momentum') || lower.includes('center of mass') || lower.includes('radius of gyration') || lower.includes('solid cylinder') || lower.includes('solid sphere') || lower.includes('flywheel') || lower.includes('disc')) return 'System of Particles and Rotational Motion';
+      if (lower.includes('gravitat') || lower.includes('kepler') || lower.includes('escape velocity') || lower.includes('orbital velocity') || lower.includes('satellite') || lower.includes('geostationary')) return 'Gravitation';
+      if (lower.includes('young\'s modulus') || lower.includes('stress') || lower.includes('strain') || lower.includes('hooke') || lower.includes('bulk modulus') || lower.includes('shear modulus') || lower.includes('elastic potential')) return 'Mechanical Properties of Solids';
+      if (lower.includes('bernoulli') || lower.includes('viscos') || lower.includes('surface tension') || lower.includes('terminal velocity') || lower.includes('poiseuille') || lower.includes('stokes') || lower.includes('capillary') || lower.includes('pascal') || lower.includes('hydraulic')) return 'Mechanical Properties of Fluids';
+      if (lower.includes('thermal expansion') || lower.includes('calorimet') || lower.includes('latent heat') || lower.includes('conduction') || lower.includes('convection') || lower.includes('radiation') || lower.includes('thermal conductivity') || lower.includes('newton\'s law of cooling') || lower.includes('wien') || lower.includes('stefan')) return 'Thermal Properties of Matter';
+      if (lower.includes('carnot') || lower.includes('entropy') || lower.includes('adiabatic') || lower.includes('isothermal') || lower.includes('first law of thermodynamics') || lower.includes('second law of thermodynamics') || lower.includes('mayer') || lower.includes('cp - cv')) return 'Thermodynamics';
+      if (lower.includes('mean free path') || lower.includes('rms speed') || lower.includes('kinetic theory') || lower.includes('ideal gas') || lower.includes('equipartition') || lower.includes('degrees of freedom')) return 'Kinetic Theory';
+      if (lower.includes('simple harmonic') || lower.includes('oscillation') || lower.includes('pendulum') || lower.includes('damped') || lower.includes('shm') || lower.includes('time period of oscillation')) return 'Oscillations';
+      if (lower.includes('sound wave') || lower.includes('standing wave') || lower.includes('organ pipe') || lower.includes('beats') || lower.includes('doppler') || lower.includes('transverse wave') || lower.includes('longitudinal wave') || lower.includes('speed of sound')) return 'Waves';
+      return 'System of Particles and Rotational Motion';
+    }
+
+    // Class 12 Physics (14 Chapters)
     // 1.1 Semiconductor Devices (check before generic charge)
     if (lower.includes('semiconductor') || lower.includes('diode') || lower.includes('p-n junction') || lower.includes('intrinsic semiconductor') || lower.includes('minority carrier') || lower.includes('transistor') || lower.includes('logic gate') || lower.includes('zener') || lower.includes('rectifier') || lower.includes('biasing')) {
       return 'Semiconductor Electronics: Materials, Devices, and Simple Circuits';
@@ -155,7 +177,7 @@ function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '
     if (lower.includes('electric field') || lower.includes('gauss') || lower.includes('flux') || lower.includes('coulomb') || lower.includes('electric dipole') || lower.includes('charge')) {
       return 'Electric Charges and Fields';
     }
-    // Class 11 Topics
+    // Fallback to Class 11 if generic mechanics keyword present
     if (lower.includes('projectile') || lower.includes('trajectory') || lower.includes('vector')) return 'Motion in a Plane';
     if (lower.includes('friction') || lower.includes('newton') || lower.includes('momentum') || lower.includes('tension')) return 'Laws of Motion';
     if (lower.includes('work done') || lower.includes('kinetic energy') || lower.includes('collision')) return 'Work, Energy and Power';
