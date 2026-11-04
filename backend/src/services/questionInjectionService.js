@@ -10,6 +10,38 @@ const { inMemoryStore } = require('../config/database');
 const { sanitizeLatexString, sanitizeQuestionPayload } = require('./llmQuestionEngine');
 const { CURRICULUM_TAXONOMY } = require('./curriculumTaxonomy');
 
+// Universal Web Standards Polyfills for Serverless Node (Vercel / AWS Lambda)
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  globalThis.DOMMatrix = class DOMMatrix {
+    constructor(init) {
+      this.a = 1; this.b = 0; this.c = 0; this.d = 1; this.e = 0; this.f = 0;
+      this.m11 = 1; this.m12 = 0; this.m13 = 0; this.m14 = 0;
+      this.m21 = 0; this.m22 = 1; this.m23 = 0; this.m24 = 0;
+      this.m31 = 0; this.m32 = 0; this.m33 = 1; this.m34 = 0;
+      this.m41 = 0; this.m42 = 0; this.m43 = 0; this.m44 = 1;
+      this.is2D = true;
+      this.isIdentity = true;
+      if (Array.isArray(init) && init.length === 6) {
+        this.a = init[0]; this.b = init[1]; this.c = init[2]; this.d = init[3]; this.e = init[4]; this.f = init[5];
+      }
+    }
+    multiply(other) { return this; }
+    translate(x, y) { return this; }
+    scale(x, y) { return this; }
+    rotate(angle) { return this; }
+    inverse() { return this; }
+    transformPoint(point) { return point; }
+  };
+}
+if (typeof globalThis.Path2D === 'undefined') {
+  globalThis.Path2D = class Path2D {};
+}
+if (typeof globalThis.ImageData === 'undefined') {
+  globalThis.ImageData = class ImageData {
+    constructor(w = 1, h = 1) { this.width = w; this.height = h; this.data = new Uint8ClampedArray(w * h * 4); }
+  };
+}
+
 /**
  * Validates faculty credentials and ensures discipline/subject locking.
  * A Physics faculty member can ONLY push Physics questions.
