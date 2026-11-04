@@ -2,6 +2,11 @@
   "version": 2,
   "outputDirectory": "frontend",
   "cleanUrls": true,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "node_modules/pdf-parse/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

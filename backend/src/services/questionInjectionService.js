@@ -729,6 +729,25 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
         cleanData = cleanData.split(';base64,')[1];
       }
       const buffer = Buffer.from(cleanData, 'base64');
+
+      // Ensure worker file exists in dist/pdf-parse/cjs/
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const cjsWorker = path.resolve(__dirname, '../../../node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs');
+        if (!fs.existsSync(cjsWorker)) {
+          const workerModule = require('pdf-parse/worker');
+          const data = typeof workerModule.getData === 'function' ? workerModule.getData() : null;
+          if (data) {
+            fs.mkdirSync(path.dirname(cjsWorker), { recursive: true });
+            fs.writeFileSync(cjsWorker, data);
+            console.log('[INJECTION SERVICE] Restored pdf.worker.mjs in cjs directory.');
+          }
+        }
+      } catch (wErr) {
+        // Continue if worker file creation fails
+      }
+
       const { PDFParse } = require('pdf-parse');
       const parser = new PDFParse({ data: buffer });
       const pdfRes = await parser.getText();
