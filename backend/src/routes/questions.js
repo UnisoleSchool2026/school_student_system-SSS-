@@ -4,6 +4,11 @@ const { inMemoryStore } = require('../config/database');
 const { generateAiQuestion } = require('../services/aiPromptEngine');
 const { generateLlmQuestion } = require('../services/llmQuestionEngine');
 const { getAllClass10Questions, getCuratedClass10Question } = require('../services/class10PyqBank');
+const {
+  validateFacultySubjectLock,
+  processQuestionExtraction,
+  commitQuestionToStore
+} = require('../services/questionInjectionService');
 
 // GET all questions from bank (queries inMemoryStore.questions and all subjectBanks)
 router.get('/', (req, res) => {
@@ -218,6 +223,117 @@ router.post('/generate-llm', async (req, res) => {
   } catch (err) {
     console.error('[API QUESTIONS GENERATE-LLM ERROR]', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/questions/inject/preview - AI extraction for preview before committing
+router.post('/inject/preview', async (req, res) => {
+  try {
+    const {
+      teacher,
+      targetSubject,
+      targetSubjectKey,
+      mode = 'text',
+      rawText = '',
+      mediaData = '',
+      mimeType = 'image/jpeg',
+      grade = '12',
+      chapter = 'General',
+      category = 'CBSE_PYQ',
+      marks = 3,
+      difficulty = 'MEDIUM'
+    } = req.body;
+
+    // Strict Faculty Subject Lock verification
+    validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey });
+
+    const extracted = await processQuestionExtraction({
+      mode,
+      rawText,
+      mediaData,
+      mimeType,
+      targetSubject: targetSubject || teacher.subject || 'Physics',
+      grade,
+      chapter,
+      category,
+      marks,
+      difficulty
+    });
+
+    res.json({
+      success: true,
+      message: 'Question successfully extracted and structured for review.',
+      previewQuestion: extracted,
+      subjectLockedTo: teacher.subject || teacher.subjectKey
+    });
+  } catch (err) {
+    console.error('[API INJECT PREVIEW ERROR]', err.message);
+    const statusCode = err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500;
+    res.status(statusCode).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/questions/inject - Commit question into backend Question Bank with audit trail
+router.post('/inject', async (req, res) => {
+  try {
+    const {
+      teacher,
+      targetSubject,
+      targetSubjectKey,
+      mode = 'text',
+      rawText = '',
+      mediaData = '',
+      mimeType = 'image/jpeg',
+      grade = '12',
+      chapter = 'General',
+      category = 'CBSE_PYQ',
+      marks = 3,
+      difficulty = 'MEDIUM',
+      structuredQuestion = null
+    } = req.body;
+
+    // Strict Faculty Subject Lock verification
+    validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey });
+
+    let finalStructured = structuredQuestion;
+    if (!finalStructured || !finalStructured.question_latex) {
+      finalStructured = await processQuestionExtraction({
+        mode,
+        rawText,
+        mediaData,
+        mimeType,
+        targetSubject: targetSubject || teacher.subject || 'Physics',
+        grade,
+        chapter,
+        category,
+        marks,
+        difficulty
+      });
+    }
+
+    const result = commitQuestionToStore({
+      structuredQuestion: finalStructured,
+      teacher,
+      targetSubject: targetSubject || teacher.subject || 'Physics',
+      grade,
+      chapter,
+      category,
+      marks,
+      mode
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully pushed question into ${result.targetBank} (Total in bank: ${result.totalBankCount}).`,
+      question: result.question,
+      targetBank: result.targetBank,
+      totalBankCount: result.totalBankCount,
+      audit: result.question.injected_by
+    });
+  } catch (err) {
+    console.error('[API INJECT COMMIT ERROR]', err.message);
+    const statusCode = err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500;
+    res.status(statusCode).json({ success: false, error: err.message });
   }
 });
 

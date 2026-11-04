@@ -12657,9 +12657,19 @@ function filterQuestionBankCards() {
 
   if (typeVal !== 'ALL') {
     filtered = filtered.filter(q => {
+      const qCat = (q.source_category || q.question_source || '').toUpperCase();
       const qSrc = (q.question_source || q.pyq_appearance || q.ncert_mapping?.pyq_tag || '').toUpperCase();
-      if (typeVal === 'PYQ') {
-        return q.question_source === 'CBSE_PYQ' || qSrc.includes('PYQ') || qSrc.includes('BOARD') || qSrc.includes('CBSE') || qSrc.includes('HPBOSE');
+      if (typeVal === 'CBSE_PYQ' || typeVal === 'PYQ') {
+        return qCat === 'CBSE_PYQ' || q.question_source === 'CBSE_PYQ' || qSrc.includes('PYQ') || qSrc.includes('BOARD') || qSrc.includes('CBSE') || qSrc.includes('HPBOSE');
+      }
+      if (typeVal === 'NCERT_EXAMPLE') {
+        return qCat === 'NCERT_EXAMPLE' || qSrc.includes('EXAMPLE') || qSrc.includes('IN-TEXT');
+      }
+      if (typeVal === 'NCERT_EXERCISE') {
+        return qCat === 'NCERT_EXERCISE' || qSrc.includes('EXERCISE') || qSrc.includes('TEXTBOOK');
+      }
+      if (typeVal === 'COMPETITIVE_OTHER' || typeVal === 'OTHER') {
+        return qCat === 'COMPETITIVE_OTHER' || qCat === 'OTHER' || qSrc.includes('EXEMPLAR') || qSrc.includes('JEE') || qSrc.includes('NEET') || qSrc.includes('COMPETITIVE');
       }
       if (typeVal === 'BOARD_PATTERN') {
         return q.question_source === 'CBSE_SAMPLE_PATTERN' || qSrc.includes('PATTERN') || qSrc.includes('SAMPLE') || qSrc.includes('STANDARD') || qSrc.includes('BASIC') || qSrc.includes('NCERT');
@@ -14787,6 +14797,487 @@ window.nextQbQuestion = nextQbQuestion;
 window.prevQbQuestion = prevQbQuestion;
 window.setQbQuestionIndex = setQbQuestionIndex;
 window.renderQbCurrentPage = renderQbCurrentPage;
+
+// ============================================================================
+// FACULTY QUESTION INGESTION STUDIO (MULTIMODAL AI PIPELINE)
+// Teachers only; strictly locks target subject to faculty profile;
+// Audits injection metadata and integrates into repository & KaTeX views.
+// ============================================================================
+
+const injectQuestionStudioState = {
+  mode: 'text', // 'text' | 'image' | 'pdf'
+  imageFile: null,
+  imageBase64: null,
+  imageMime: 'image/jpeg',
+  pdfFile: null,
+  pdfBase64: null,
+  currentExtracted: null,
+  isProcessing: false
+};
+
+function openInjectQuestionModal() {
+  if (state.activeRole !== 'teacher') {
+    alert('Access Restricted: Only authenticated Faculty members can inject questions into the repository.');
+    return;
+  }
+
+  const activeTeacher = teacherBuilderState.activeTeacher || {
+    id: 'fac_phy_01',
+    name: 'Dr. Vikram Sharma',
+    phone: '9816010001',
+    subject: 'Physics',
+    subjectKey: 'PHYSICS',
+    department: 'PHYSICS',
+    role: 'TEACHER'
+  };
+
+  const curSubj = (activeTeacher.subjectName || activeTeacher.subject || activeTeacher.subjectKey || 'Physics');
+  const curSubjKey = (activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+
+  // Populate Discipline-Locked Banner
+  const bannerName = document.getElementById('injectFacultyBannerName');
+  if (bannerName) {
+    bannerName.innerText = `${activeTeacher.name || activeTeacher.full_name || 'Faculty Member'} • ${activeTeacher.designation || curSubj + ' Faculty'}`;
+  }
+
+  const badge = document.getElementById('injectFacultySubjectBadge');
+  if (badge) {
+    badge.innerText = `🔒 Locked: ${curSubjKey} ONLY`;
+  }
+
+  const inputSubj = document.getElementById('inputInjectSubject');
+  if (inputSubj) {
+    inputSubj.value = curSubj;
+  }
+
+  // Set default grade matching teacher's active grade
+  const gradeSel = document.getElementById('selectInjectGrade');
+  if (gradeSel) {
+    const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
+    gradeSel.value = curGrade;
+    handleInjectGradeChange(curGrade);
+  }
+
+  // Reset ingestion mode & inputs
+  switchInjectMode('text');
+  const txtArea = document.getElementById('textareaInjectRaw');
+  if (txtArea) txtArea.value = '';
+
+  clearInjectImageFile();
+  clearInjectPdfFile();
+
+  // Reset preview section
+  injectQuestionStudioState.currentExtracted = null;
+  const sectionPrev = document.getElementById('sectionInjectPreview');
+  if (sectionPrev) sectionPrev.style.display = 'none';
+
+  const btnPush = document.getElementById('btnPushToBank');
+  if (btnPush) {
+    btnPush.disabled = true;
+    btnPush.style.opacity = '0.5';
+    btnPush.style.cursor = 'not-allowed';
+  }
+
+  const modal = document.getElementById('modalInjectQuestion');
+  if (modal) modal.style.display = 'flex';
+
+  if (typeof initLucideIcons === 'function') initLucideIcons();
+}
+
+function closeInjectQuestionModal() {
+  const modal = document.getElementById('modalInjectQuestion');
+  if (modal) modal.style.display = 'none';
+}
+
+function switchInjectMode(mode) {
+  injectQuestionStudioState.mode = mode;
+
+  const btnPaste = document.getElementById('btnModePaste');
+  const btnImage = document.getElementById('btnModeImage');
+  const btnPdf = document.getElementById('btnModePdf');
+
+  const panelText = document.getElementById('panelInjectText');
+  const panelImg = document.getElementById('panelInjectImage');
+  const panelPdf = document.getElementById('panelInjectPdf');
+
+  [btnPaste, btnImage, btnPdf].forEach(b => {
+    if (!b) return;
+    b.classList.remove('active');
+    b.style.background = 'var(--bg-secondary)';
+    b.style.color = 'var(--text-primary)';
+    b.style.border = '1px solid var(--border-subtle)';
+  });
+
+  const activeBtn = mode === 'text' ? btnPaste : mode === 'image' ? btnImage : btnPdf;
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = 'var(--accent-blue)';
+    activeBtn.style.color = '#fff';
+    activeBtn.style.border = 'none';
+  }
+
+  if (panelText) panelText.style.display = mode === 'text' ? 'block' : 'none';
+  if (panelImg) panelImg.style.display = mode === 'image' ? 'block' : 'none';
+  if (panelPdf) panelPdf.style.display = mode === 'pdf' ? 'block' : 'none';
+
+  if (typeof initLucideIcons === 'function') initLucideIcons();
+}
+
+function handleInjectGradeChange(grade) {
+  const chSel = document.getElementById('selectInjectChapter');
+  if (!chSel) return;
+
+  const activeTeacher = teacherBuilderState.activeTeacher || {};
+  const subjKey = (activeTeacher.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
+  const isC10 = String(grade) === '10';
+
+  let chapters = [];
+  if (isC10) {
+    if (subjKey.includes('MATH')) {
+      if (typeof CLASS10_MATH_CHAPTERS !== 'undefined') {
+        chapters = CLASS10_MATH_CHAPTERS.map(c => `Chapter ${c.num}: ${c.name}`);
+      }
+    } else {
+      if (typeof CURRICULUM_CHAPTER_TOPICS !== 'undefined' && CURRICULUM_CHAPTER_TOPICS.CLASS10_SCIENCE) {
+        chapters = Object.keys(CURRICULUM_CHAPTER_TOPICS.CLASS10_SCIENCE);
+      }
+    }
+  } else {
+    if (typeof getChaptersForSubject === 'function') {
+      const chaptersObj = getChaptersForSubject(subjKey, grade);
+      chapters = Object.keys(chaptersObj);
+    }
+  }
+
+  if (chapters.length === 0) {
+    chapters = [
+      'Chapter 1: Electric Charges and Fields',
+      'Chapter 2: Electrostatic Potential and Capacitance',
+      'Chapter 3: Current Electricity',
+      'Chapter 4: Moving Charges and Magnetism',
+      'Chapter 5: Magnetism and Matter',
+      'Chapter 6: Electromagnetic Induction',
+      'Chapter 7: Alternating Current',
+      'Chapter 8: Electromagnetic Waves',
+      'Chapter 9: Ray Optics and Optical Instruments',
+      'Chapter 10: Wave Optics'
+    ];
+  }
+
+  chSel.innerHTML = chapters.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+}
+
+function insertInjectSampleQuestion() {
+  const activeTeacher = teacherBuilderState.activeTeacher || {};
+  const subjKey = (activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+  const txtArea = document.getElementById('textareaInjectRaw');
+  if (!txtArea) return;
+
+  if (subjKey.includes('CHEM')) {
+    txtArea.value = `For a first-order chemical reaction, the half-life period $t_{1/2}$ is $69.3\\,\\text{min}$. Calculate the time required for $99\\%$ completion of the reaction. (Take $\\log 10 = 1, \\ln 2 = 0.693$).\nA) $t = 460.6\\,\\text{min}$\nB) $t = 138.6\\,\\text{min}$\nC) $t = 693.0\\,\\text{min}$\nD) $t = 230.3\\,\\text{min}$\nAnswer: A\nSolution: Rate constant $k = \\frac{0.693}{t_{1/2}} = \\frac{0.693}{69.3} = 0.01\\,\\text{min}^{-1}$. For 99% completion, $[A] = [A]_0 - 0.99[A]_0 = 0.01[A]_0$. Then $$t = \\frac{2.303}{k}\\log\\left(\\frac{[A]_0}{0.01[A]_0}\\right) = \\frac{2.303}{0.01}\\log(100) = 460.6\\,\\text{min}$$.`;
+  } else if (subjKey.includes('MATH')) {
+    txtArea.value = `Find the area of the region bounded by the ellipse $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$ in the first quadrant.\nA) $\\text{Area} = \\frac{\\pi a b}{4}$\nB) $\\text{Area} = \\pi a b$\nC) $\\text{Area} = \\frac{\\pi a b}{2}$\nD) $\\text{Area} = 2\\pi a b$\nAnswer: A\nSolution: The required area is $\\int_0^a y\\,dx = \\frac{b}{a}\\int_0^a \\sqrt{a^2 - x^2}\\,dx = \\frac{b}{a}\\left[\\frac{x}{2}\\sqrt{a^2-x^2} + \\frac{a^2}{2}\\sin^{-1}\\left(\\frac{x}{a}\right)\\right]_0^a = \\frac{b}{a}\\left(\\frac{a^2}{2} \\cdot \\frac{\\pi}{2}\\right) = \\frac{\\pi a b}{4}$.`;
+  } else if (subjKey.includes('BIO')) {
+    txtArea.value = `In a dihybrid cross between two heterozygous round yellow seeded pea plants ($RrYy \\times RrYy$), what proportion of the offspring are expected to have round green seeds?\nA) $\\frac{3}{16}$\nB) $\\frac{9}{16}$\nC) $\\frac{1}{16}$\nD) $\\frac{3}{8}$\nAnswer: A\nSolution: In a standard Mendel dihybrid phenotypic ratio $9:3:3:1$, the phenotypes are: 9 Round Yellow, 3 Round Green ($R\\_yy$), 3 Wrinkled Yellow ($rrY\\_$), and 1 Wrinkled Green ($rryy$). Therefore, the proportion of round green seeds is $\\frac{3}{16}$.`;
+  } else {
+    // Physics default
+    txtArea.value = `An alternating voltage $V = 220\\sqrt{2} \\sin(100\\pi t)$ is applied across a pure capacitor of capacitance $C = 10\\,\\mu\\text{F}$. Find the capacitive reactance $X_c$ and the peak current $I_0$.\nA) $X_c = 318.3\\,\\Omega,\\; I_0 = 0.98\\,\\text{A}$\nB) $X_c = 100.0\\,\\Omega,\\; I_0 = 2.20\\,\\text{A}$\nC) $X_c = 50.0\\,\\Omega,\\; I_0 = 4.40\\,\\text{A}$\nD) $X_c = 636.6\\,\\Omega,\\; I_0 = 0.49\\,\\text{A}$\nAnswer: A\nSolution: Angular frequency $\\omega = 100\\pi\\,\\text{rad/s}$. Capacitive reactance $$X_c = \\frac{1}{\\omega C} = \\frac{1}{100\\pi \\times 10 \\times 10^{-6}} = \\frac{10^3}{\\pi} \\approx 318.3\\,\\Omega$$. Peak current $$I_0 = \\frac{V_0}{X_c} = \\frac{220\\sqrt{2}}{318.3} \\approx 0.98\\,\\text{A}$$.`;
+  }
+}
+
+function handleInjectImageFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  injectQuestionStudioState.imageFile = file;
+  injectQuestionStudioState.imageMime = file.type || 'image/jpeg';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    injectQuestionStudioState.imageBase64 = e.target.result;
+    const thumb = document.getElementById('thumbInjectImage');
+    const nameLbl = document.getElementById('labelInjectImageName');
+    const sizeLbl = document.getElementById('labelInjectImageSize');
+    const wrap = document.getElementById('previewInjectImageWrap');
+
+    if (thumb) thumb.src = e.target.result;
+    if (nameLbl) nameLbl.innerText = file.name;
+    if (sizeLbl) sizeLbl.innerText = `${(file.size / 1024).toFixed(1)} KB • Ready for AI extraction`;
+    if (wrap) wrap.style.display = 'flex';
+    if (typeof initLucideIcons === 'function') initLucideIcons();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearInjectImageFile() {
+  injectQuestionStudioState.imageFile = null;
+  injectQuestionStudioState.imageBase64 = null;
+  const input = document.getElementById('inputInjectImageFile');
+  if (input) input.value = '';
+  const wrap = document.getElementById('previewInjectImageWrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
+function handleInjectPdfFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  injectQuestionStudioState.pdfFile = file;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    injectQuestionStudioState.pdfBase64 = e.target.result;
+    const nameLbl = document.getElementById('labelInjectPdfName');
+    const sizeLbl = document.getElementById('labelInjectPdfSize');
+    const wrap = document.getElementById('previewInjectPdfWrap');
+
+    if (nameLbl) nameLbl.innerText = file.name;
+    if (sizeLbl) sizeLbl.innerText = `${(file.size / 1024).toFixed(1)} KB • PDF Document loaded`;
+    if (wrap) wrap.style.display = 'flex';
+    if (typeof initLucideIcons === 'function') initLucideIcons();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearInjectPdfFile() {
+  injectQuestionStudioState.pdfFile = null;
+  injectQuestionStudioState.pdfBase64 = null;
+  const input = document.getElementById('inputInjectPdfFile');
+  if (input) input.value = '';
+  const wrap = document.getElementById('previewInjectPdfWrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
+async function triggerAiQuestionExtraction() {
+  const mode = injectQuestionStudioState.mode;
+  const rawText = document.getElementById('textareaInjectRaw')?.value || '';
+
+  if (mode === 'text' && !rawText.trim()) {
+    alert('Please paste the question text or click "Load Sample Question".');
+    return;
+  }
+  if (mode === 'image' && !injectQuestionStudioState.imageBase64) {
+    alert('Please select or drop an image file first.');
+    return;
+  }
+  if (mode === 'pdf' && !injectQuestionStudioState.pdfBase64) {
+    alert('Please select or drop a PDF document first.');
+    return;
+  }
+
+  const spinner = document.getElementById('injectExtractSpinner');
+  const btnExtract = document.getElementById('btnTriggerAiExtract');
+  if (spinner) spinner.style.display = 'block';
+  if (btnExtract) {
+    btnExtract.disabled = true;
+    btnExtract.style.opacity = '0.6';
+  }
+
+  const activeTeacher = teacherBuilderState.activeTeacher || {
+    id: 'fac_phy_01',
+    name: 'Dr. Vikram Sharma',
+    phone: '9816010001',
+    subject: 'Physics',
+    subjectKey: 'PHYSICS',
+    department: 'PHYSICS',
+    role: 'TEACHER'
+  };
+
+  const payload = {
+    teacher: activeTeacher,
+    targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
+    targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
+    mode: mode,
+    rawText: rawText,
+    mediaData: mode === 'image' ? injectQuestionStudioState.imageBase64 : injectQuestionStudioState.pdfBase64,
+    mimeType: mode === 'image' ? injectQuestionStudioState.imageMime : 'application/pdf',
+    grade: document.getElementById('selectInjectGrade')?.value || '12',
+    chapter: document.getElementById('selectInjectChapter')?.value || 'General',
+    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
+    marks: Number(document.getElementById('selectInjectMarks')?.value) || 3,
+    difficulty: document.getElementById('selectInjectDifficulty')?.value || 'MEDIUM'
+  };
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/questions/inject/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || `Server returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const extracted = data.previewQuestion;
+    injectQuestionStudioState.currentExtracted = extracted;
+
+    // Render Live Preview
+    const qEl = document.getElementById('previewInjectQuestionLatex');
+    if (qEl) {
+      qEl.innerHTML = renderLatexString(escapeHtml(extracted.question_latex));
+      renderMathInElement(qEl);
+    }
+
+    const optGrid = document.getElementById('previewInjectOptionsGrid');
+    if (optGrid && Array.isArray(extracted.options_latex)) {
+      optGrid.innerHTML = extracted.options_latex.map(opt => {
+        const isCor = Boolean(opt.is_correct);
+        const borderColor = isCor ? '#10b981' : 'var(--border-subtle)';
+        const bgColor = isCor ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)';
+        return `
+          <div style="border:1.5px solid ${borderColor}; background:${bgColor}; border-radius:8px; padding:10px 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong style="color:${isCor ? '#10b981' : 'var(--text-primary)'}; font-size:0.85rem;">Option ${opt.key} ${isCor ? '✓ (Correct Answer)' : ''}</strong>
+            </div>
+            <div style="font-size:0.92rem; font-weight:600; color:var(--text-primary); margin-bottom:4px;">
+              ${renderLatexString(escapeHtml(opt.latex))}
+            </div>
+            ${opt.distractor_trap ? `<div style="font-size:0.72rem; color:var(--text-muted);"><span style="color:#f59e0b; font-weight:700;">Trap:</span> ${escapeHtml(opt.distractor_trap)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      renderMathInElement(optGrid);
+    }
+
+    const solEl = document.getElementById('previewInjectSolutionLatex');
+    if (solEl) {
+      solEl.innerHTML = renderLatexString(escapeHtml(extracted.solution_latex));
+      renderMathInElement(solEl);
+    }
+
+    const auditEl = document.getElementById('previewInjectAuditStamp');
+    if (auditEl) {
+      const catLabel = document.getElementById('selectInjectCategory')?.selectedOptions[0]?.text || payload.category;
+      auditEl.innerHTML = `
+        <i data-lucide="shield-check" style="width:13px; height:13px; vertical-align:middle; color:#10b981;"></i>
+        Discipline Verified: <strong>${escapeHtml(payload.targetSubject)}</strong> &bull;
+        Injected By: <strong>${escapeHtml(activeTeacher.name || 'Faculty')}</strong> &bull;
+        Category: <strong>${escapeHtml(catLabel)}</strong> &bull;
+        Ready for Repository Sync
+      `;
+    }
+
+    const sectionPrev = document.getElementById('sectionInjectPreview');
+    if (sectionPrev) sectionPrev.style.display = 'block';
+
+    const btnPush = document.getElementById('btnPushToBank');
+    if (btnPush) {
+      btnPush.disabled = false;
+      btnPush.style.opacity = '1';
+      btnPush.style.cursor = 'pointer';
+    }
+
+    if (typeof initLucideIcons === 'function') initLucideIcons();
+  } catch (err) {
+    console.error('[triggerAiQuestionExtraction error]', err);
+    alert(`Extraction failed: ${err.message}`);
+  } finally {
+    if (spinner) spinner.style.display = 'none';
+    if (btnExtract) {
+      btnExtract.disabled = false;
+      btnExtract.style.opacity = '1';
+    }
+  }
+}
+
+async function commitInjectedQuestionToBank() {
+  if (!injectQuestionStudioState.currentExtracted) {
+    alert('Please run AI Extract first to preview and verify the question.');
+    return;
+  }
+
+  const btnPush = document.getElementById('btnPushToBank');
+  if (btnPush) {
+    btnPush.disabled = true;
+    btnPush.innerText = 'Pushing to Repository...';
+  }
+
+  const activeTeacher = teacherBuilderState.activeTeacher || {
+    id: 'fac_phy_01',
+    name: 'Dr. Vikram Sharma',
+    phone: '9816010001',
+    subject: 'Physics',
+    subjectKey: 'PHYSICS',
+    department: 'PHYSICS',
+    role: 'TEACHER'
+  };
+
+  const payload = {
+    teacher: activeTeacher,
+    targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
+    targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
+    mode: injectQuestionStudioState.mode,
+    grade: document.getElementById('selectInjectGrade')?.value || '12',
+    chapter: document.getElementById('selectInjectChapter')?.value || 'General',
+    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
+    marks: Number(document.getElementById('selectInjectMarks')?.value) || 3,
+    difficulty: document.getElementById('selectInjectDifficulty')?.value || 'MEDIUM',
+    structuredQuestion: injectQuestionStudioState.currentExtracted
+  };
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/questions/inject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || `Server returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const newQ = data.question;
+
+    // Immediately prepend to local question bank data so it's Question #1
+    if (Array.isArray(state.questionBankData)) {
+      state.questionBankData.unshift(newQ);
+    } else {
+      state.questionBankData = [newQ];
+    }
+
+    // Reset pagination to first page
+    state.qbCurrentPage = 0;
+
+    // Close modal
+    closeInjectQuestionModal();
+
+    // Trigger filter and view reload
+    filterQuestionBankCards();
+
+    // Show toast
+    if (typeof showToast === 'function') {
+      showToast(`✅ Successfully injected question into ${data.targetBank} by ${data.audit?.faculty_name || 'Faculty'}!`, 'success');
+    } else {
+      alert(`✅ Question successfully injected into ${data.targetBank}!`);
+    }
+  } catch (err) {
+    console.error('[commitInjectedQuestionToBank error]', err);
+    alert(`Failed to commit question: ${err.message}`);
+  } finally {
+    if (btnPush) {
+      btnPush.disabled = false;
+      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push to Question Bank`;
+      if (typeof initLucideIcons === 'function') initLucideIcons();
+    }
+  }
+}
+
+window.openInjectQuestionModal = openInjectQuestionModal;
+window.closeInjectQuestionModal = closeInjectQuestionModal;
+window.switchInjectMode = switchInjectMode;
+window.handleInjectGradeChange = handleInjectGradeChange;
+window.insertInjectSampleQuestion = insertInjectSampleQuestion;
+window.handleInjectImageFileSelect = handleInjectImageFileSelect;
+window.clearInjectImageFile = clearInjectImageFile;
+window.handleInjectPdfFileSelect = handleInjectPdfFileSelect;
+window.clearInjectPdfFile = clearInjectPdfFile;
+window.triggerAiQuestionExtraction = triggerAiQuestionExtraction;
+window.commitInjectedQuestionToBank = commitInjectedQuestionToBank;
 
 // ============================================================================
 // FULL-LENGTH BOARD QUESTION PAPER STUDIO & TEACHER CUSTOMIZER
