@@ -12748,7 +12748,14 @@ async function loadQuestionBankView(forceReload = false) {
       const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
       const existMap = new Map(existing.map(q => [q.id, q]));
       serverInjected.forEach(q => existMap.set(q.id, q));
-      localStorage.setItem(localKey, JSON.stringify(Array.from(existMap.values())));
+      const syncList = Array.from(existMap.values());
+      try {
+        localStorage.setItem(localKey, JSON.stringify(syncList));
+      } catch (quotaErr) {
+        try {
+          localStorage.setItem(localKey, JSON.stringify(syncList.slice(0, 100)));
+        } catch (e2) {}
+      }
     }
   } catch (err) {
     console.warn('[LOCAL STORAGE QB MERGE ERROR]', err);
@@ -15899,7 +15906,14 @@ async function commitInjectedQuestionToBank() {
       const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
       const newIds = new Set(newQuestions.map(q => q.id));
       const updated = [...newQuestions, ...existing.filter(q => !newIds.has(q.id))];
-      localStorage.setItem(localKey, JSON.stringify(updated));
+      try {
+        localStorage.setItem(localKey, JSON.stringify(updated));
+      } catch (quotaErr) {
+        // If quota exceeded (5MB limit), prune to newest 100 questions
+        try {
+          localStorage.setItem(localKey, JSON.stringify(updated.slice(0, 100)));
+        } catch (e2) {}
+      }
     } catch (storeErr) {
       console.warn('[LOCAL STORAGE QB PERSIST ERROR]', storeErr);
     }

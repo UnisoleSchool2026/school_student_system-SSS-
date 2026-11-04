@@ -489,13 +489,13 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
     if (!rawLine) continue;
 
     // Detect question header e.g. "1. A particle...", "Q1. ...", "Question 1: ..."
-    const qMatch = rawLine.match(/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,2})[\.:\)]\s+(.*)$/i);
+    const qMatch = rawLine.match(/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+(.*)$/i);
     if (qMatch) {
       const qNum = parseInt(qMatch[1], 10);
       const rest = qMatch[2].trim();
       const isEngLine = /^[A-Za-z]/.test(rest) || /[a-zA-Z]{3,}/.test(rest);
 
-      if (isEngLine && qNum >= 1 && qNum <= 60) {
+      if (isEngLine && qNum >= 1 && qNum <= 1000) {
         currentQ = qNum;
         isEnglish = true;
         hasNumberedStructure = true;
@@ -512,7 +512,7 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
       if (rawLine.includes('~55/3/1~') || rawLine.includes('P.T.O.') || rawLine.includes('•') || rawLine.includes('खण्ड') || rawLine.includes('नोट NOTE') || rawLine.includes('General Instructions')) {
         continue;
       }
-      if (/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,2})[\.:\)]\s+[^\x00-\x7F]/.test(rawLine)) {
+      if (/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+[^\x00-\x7F]/.test(rawLine)) {
         isEnglish = false;
         continue;
       }
@@ -941,7 +941,7 @@ function normalizeExtractedPayload(data, targetSubject = 'Physics', grade = '12'
 /**
  * Commits a single validated, structured question into the HAPS-AI repositories
  */
-function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text' }) {
+function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text', persistImmediately = true }) {
   const sUpper = (targetSubject || '').toUpperCase();
   const isC10 = String(grade) === '10';
 
@@ -1029,10 +1029,12 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
   inMemoryStore.questions.unshift(finalQuestion);
 
   // Persist question to disk so it survives server restarts and lambda recycles
-  try {
-    savePersistedCustomQuestions([finalQuestion]);
-  } catch (err) {
-    console.warn('[QUESTION PERSISTENCE] Warning while saving question to disk:', err.message);
+  if (persistImmediately) {
+    try {
+      savePersistedCustomQuestions([finalQuestion]);
+    } catch (err) {
+      console.warn('[QUESTION PERSISTENCE] Warning while saving question to disk:', err.message);
+    }
   }
 
   return {
@@ -1124,13 +1126,14 @@ function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, g
       targetSubject,
       grade,
       category,
-      mode
+      mode,
+      persistImmediately: false
     });
     committedQuestions[i] = res.question;
     primaryTargetBank = res.targetBank;
   }
 
-  // Explicitly ensure the whole batch is written to disk
+  // Explicitly ensure the whole batch is written to disk in a single atomic pass
   try {
     savePersistedCustomQuestions(committedQuestions);
   } catch (e) {}

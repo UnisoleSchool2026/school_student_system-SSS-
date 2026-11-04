@@ -24,6 +24,13 @@ try {
   console.warn('[DATABASE] Failed to load class10PyqBank:', e.message);
 }
 
+let class12PhysicsQuestions = [];
+try {
+  class12PhysicsQuestions = require('../services/class12PhysicsQuestionBank').class12PhysicsQuestions || [];
+} catch (e) {
+  console.warn('[DATABASE] Failed to load class12PhysicsQuestionBank:', e.message);
+}
+
 let pool = null;
 let isConnected = false;
 
@@ -727,7 +734,8 @@ const inMemoryStore = {
           "How does an increase in binding energy per nucleon correspond to energy release?",
           "Calculate the approximate energy yield per nucleon in fission vs fusion."
         ]
-      }
+      },
+      ...(class12PhysicsQuestions || [])
     ],
     senior_chemistry: [
       {

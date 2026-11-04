@@ -472,6 +472,14 @@ router.post('/import-batch', (req, res) => {
       imported.push(cleanQ);
     });
 
+    if (imported.length > 0) {
+      try {
+        savePersistedCustomQuestions(imported);
+      } catch (saveErr) {
+        console.warn('[IMPORT-BATCH] Persistence notice:', saveErr.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: `Successfully imported ${imported.length} questions into the HAPS-AI Question Bank.`,
@@ -769,6 +777,14 @@ router.post('/subject-banks/:subjectKey/import', (req, res) => {
       inMemoryStore.questions.push(cleanQ);
       imported.push(cleanQ);
     });
+
+    if (imported.length > 0) {
+      try {
+        savePersistedCustomQuestions(imported);
+      } catch (saveErr) {
+        console.warn('[IMPORT-BATCH] Persistence notice:', saveErr.message);
+      }
+    }
 
     res.status(201).json({
       success: true,
