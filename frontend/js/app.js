@@ -2594,12 +2594,19 @@ window.publishDraftTest = async function(testId) {
       studentResults: []
     };
 
-    RECORDED_CLASS_TESTS[classId].unshift(newRecordedTest);
+    RECORDED_CLASS_TESTS[classId] = RECORDED_CLASS_TESTS[classId] || [];
+    RECORDED_CLASS_TESTS[classId] = [newRecordedTest, ...RECORDED_CLASS_TESTS[classId].filter(t => t.id !== newRecordedTest.id)];
+
+    if (classId !== '12-NonMed') {
+      RECORDED_CLASS_TESTS['12-NonMed'] = RECORDED_CLASS_TESTS['12-NonMed'] || [];
+      RECORDED_CLASS_TESTS['12-NonMed'] = [newRecordedTest, ...RECORDED_CLASS_TESTS['12-NonMed'].filter(t => t.id !== newRecordedTest.id)];
+    }
 
     // Save permanently in localStorage
     try {
       const stored = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
       stored[classId] = RECORDED_CLASS_TESTS[classId];
+      if (classId !== '12-NonMed') stored['12-NonMed'] = RECORDED_CLASS_TESTS['12-NonMed'];
       localStorage.setItem('haps_recorded_class_tests', JSON.stringify(stored));
     } catch (e) {}
 
@@ -2624,14 +2631,20 @@ window.publishDraftTest = async function(testId) {
     // Show banner notification
     const banner = document.createElement('div');
     banner.className = 'role-switch-toast';
-    banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#10b981;"></i> <span><strong>Test Published:</strong> "${escapeHtml(draft.title)}" is now live for ${escapeHtml(draft.targetClassText || classId)}.</span>`;
+    banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#10b981;"></i> <span><strong>Test Published:</strong> "${escapeHtml(draft.title)}" is now live in Class Progress &amp; Tests.</span>`;
     document.body.appendChild(banner);
     initLucideIcons();
     setTimeout(() => banner.remove(), 4000);
 
     // Switch to Class Progress & Tests tab to view in recorded tests
+    teacherBuilderState.selectedClassId = classId;
     window.switchTeacherTab('tabTeacherClasses');
-    window.renderRecordedTestsTable(classId);
+    if (window.switchClassProgressSubView) {
+      window.switchClassProgressSubView('tests');
+    }
+    if (window.renderRecordedTestsTable) {
+      window.renderRecordedTestsTable(classId);
+    }
 
   } catch (err) {
     console.error('Error publishing test:', err);
@@ -3928,15 +3941,15 @@ window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = 
   const tbody = document.getElementById('tbodyRecordedTests');
   if (!tbody) return;
 
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
   let filtered = tests;
   if (filterQuery) {
     const q = filterQuery.toLowerCase().trim();
     filtered = tests.filter(t => 
-      t.title.toLowerCase().includes(q) ||
-      t.chapter.toLowerCase().includes(q) ||
-      t.topic.toLowerCase().includes(q) ||
-      t.code.toLowerCase().includes(q)
+      (t.title || '').toLowerCase().includes(q) ||
+      (t.chapter || '').toLowerCase().includes(q) ||
+      (t.topic || '').toLowerCase().includes(q) ||
+      (t.code || '').toLowerCase().includes(q)
     );
   }
 
@@ -3946,50 +3959,57 @@ window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = 
   }
 
   tbody.innerHTML = filtered.map(t => {
+    const excCount = t.tiers?.excellent?.count ?? 0;
+    const avgCount = t.tiers?.average?.count ?? 0;
+    const belowCount = t.tiers?.belowAverage?.count ?? 0;
+    const hasAttempts = Number(t.attemptedCount || 0) > 0 && t.averagePercentage && t.averagePercentage !== '--';
+    const avgScoreText = hasAttempts ? `Avg: ${t.averageScore} / ${t.totalMarks || 45} Marks` : `Pending Submissions`;
+    const avgPctText = hasAttempts ? escapeHtml(t.averagePercentage) : `--`;
+
     return `
       <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;">
         <td>
           <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800; padding:4px 10px; border-radius:6px; font-size:0.78rem; display:inline-block;">
-            ${escapeHtml(t.code)}
+            ${escapeHtml(t.code || 'Test')}
           </span>
         </td>
         <td>
-          <strong style="font-size:0.92rem; color:var(--text-primary); display:block;">${escapeHtml(t.title)}</strong>
+          <strong style="font-size:0.92rem; color:var(--text-primary); display:block;">${escapeHtml(t.title || 'Curriculum Assessment')}</strong>
           <span style="font-size:0.76rem; color:var(--text-secondary); display:block; margin-top:2px;">
-            ${escapeHtml(t.chapter)} &bull; Topic: <span style="color:var(--text-primary); font-weight:600;">${escapeHtml(t.topic)}</span>
+            ${escapeHtml(t.chapter || '')} &bull; Topic: <span style="color:var(--text-primary); font-weight:600;">${escapeHtml(t.topic || 'Target Concept')}</span>
           </span>
         </td>
         <td>
-          <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary); display:block;">${escapeHtml(t.duration)}</span>
-          <span style="font-size:0.75rem; color:var(--text-muted);">${t.totalQuestions} Questions &bull; ${t.totalMarks} Marks</span>
+          <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary); display:block;">${escapeHtml(t.duration || '45 Mins')}</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">${t.totalQuestions || 10} Questions &bull; ${t.totalMarks || 25} Marks</span>
         </td>
         <td>
           <div style="display:flex; align-items:center; gap:8px;">
-            <strong style="color:var(--text-primary); font-size:0.88rem;">${t.attemptedCount} / ${t.enrolledCount}</strong>
+            <strong style="color:var(--text-primary); font-size:0.88rem;">${t.attemptedCount || 0} / ${t.enrolledCount || 48}</strong>
             <span style="font-size:0.74rem; font-weight:700; color:#059669; background:#ecfdf5; border:1px solid #a7f3d0; padding:1px 6px; border-radius:4px;">
-              ${escapeHtml(t.attemptedRate)}
+              ${escapeHtml(t.attemptedRate || '0.0%')}
             </span>
           </div>
           <div style="background:#e2e8f0; height:5px; border-radius:3px; overflow:hidden; width:110px; margin-top:5px;">
-            <div style="background:linear-gradient(90deg, #059669, #10b981); width:${t.attemptedRate}; height:100%;"></div>
+            <div style="background:linear-gradient(90deg, #059669, #10b981); width:${t.attemptedRate || '0%'}; height:100%;"></div>
           </div>
         </td>
         <td>
           <span style="font-size:0.96rem; font-weight:800; color:var(--accent-blue); display:block;">
-            ${escapeHtml(t.averagePercentage)}
+            ${avgPctText}
           </span>
-          <span style="font-size:0.74rem; color:var(--text-muted);">Avg: ${t.averageScore} / ${t.totalMarks} Marks</span>
+          <span style="font-size:0.74rem; color:var(--text-muted);">${avgScoreText}</span>
         </td>
         <td>
           <div style="display:inline-flex; gap:4px; font-size:0.72rem; font-weight:700;">
             <span style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; padding:2px 6px; border-radius:4px;" title="Excellent (>80%)">
-              🟢 ${t.tiers.excellent.count} Exc
+              🟢 ${excCount} Exc
             </span>
             <span style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; padding:2px 6px; border-radius:4px;" title="Average (50-80%)">
-              🔵 ${t.tiers.average.count} Avg
+              🔵 ${avgCount} Avg
             </span>
             <span style="background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; padding:2px 6px; border-radius:4px;" title="Below Average (<50%)">
-              🔴 ${t.tiers.belowAverage.count} Below
+              🔴 ${belowCount} Below
             </span>
           </div>
         </td>
