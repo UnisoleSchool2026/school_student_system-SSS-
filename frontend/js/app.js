@@ -2541,6 +2541,39 @@ window.publishDraftTest = async function(testId) {
       RECORDED_CLASS_TESTS[classId] = [];
     }
 
+    const rosterStudents = (CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed']).students || [];
+    const tMarks = draft.totalMarks || 45;
+    const enrolledNum = CLASS_ROSTERS[classId]?.enrolled || 48;
+
+    const baseStudents = [
+      { roll: '102', name: 'Priya Verma', phone: '98160 55021', scorePct: 0.95, time: '36m' },
+      { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', scorePct: 0.91, time: '39m' },
+      { roll: '106', name: 'Divya Rana', phone: '98160 55061', scorePct: 0.86, time: '41m' },
+      { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', scorePct: 0.84, time: '42m' },
+      { roll: '110', name: 'Ritu Sen', phone: '98160 55101', scorePct: 0.78, time: '44m' },
+      { roll: '109', name: 'Karan Singhal', phone: '98160 55091', scorePct: 0.69, time: '45m' },
+      { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', scorePct: 0.53, time: '45m' },
+      { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', scorePct: 0.42, time: '45m' }
+    ];
+
+    const studentResults = baseStudents.map(b => {
+      const s = Math.round(tMarks * b.scorePct);
+      const pct = Math.round(b.scorePct * 100);
+      const tier = pct >= 80 ? 'Excellent' : (pct >= 50 ? 'Average' : 'Below Average');
+      return {
+        roll: b.roll,
+        name: b.name,
+        phone: b.phone,
+        score: s,
+        percentage: `${pct}%`,
+        tier: tier,
+        time: b.time
+      };
+    });
+
+    const avgScoreVal = (studentResults.reduce((sum, r) => sum + r.score, 0) / studentResults.length).toFixed(1);
+    const avgPctVal = `${((avgScoreVal / tMarks) * 100).toFixed(1)}%`;
+
     const newRecordedTest = {
       id: draft.id,
       code: draft.code || `Test ${String(RECORDED_CLASS_TESTS[classId].length + 1).padStart(2, '0')}`,
@@ -2549,49 +2582,49 @@ window.publishDraftTest = async function(testId) {
       topic: draft.topic,
       date: 'Nov 05, 2026',
       duration: draft.duration || '45 Mins',
-      totalMarks: draft.totalMarks,
-      totalQuestions: draft.totalQuestions,
-      attemptedCount: 0,
-      enrolledCount: CLASS_ROSTERS[classId]?.enrolled || 48,
-      attemptedRate: '0.0%',
-      averageScore: '--',
-      averagePercentage: '--',
+      totalMarks: tMarks,
+      totalQuestions: draft.totalQuestions || draft.questions.length,
+      attemptedCount: 44,
+      enrolledCount: enrolledNum,
+      attemptedRate: '91.7%',
+      averageScore: avgScoreVal,
+      averagePercentage: avgPctVal,
       status: 'PUBLISHED',
-      highestScore: { score: '--', percentage: '--', studentName: 'Pending Attempts' },
-      lowestScore: { score: '--', percentage: '--', studentName: 'Pending Attempts' },
+      highestScore: { score: studentResults[0].score, percentage: studentResults[0].percentage, studentName: studentResults[0].name },
+      lowestScore: { score: studentResults[studentResults.length - 1].score, percentage: studentResults[studentResults.length - 1].percentage, studentName: studentResults[studentResults.length - 1].name },
       mostWrongQuestion: {
-        questionIndex: 1,
-        statement: draft.questions[0]?.question_latex || 'Problem Statement',
-        topic: draft.questions[0]?.topic || draft.topic,
-        errorRate: '0%',
-        wrongCount: 0,
-        totalAttempted: 0,
-        dominantMistake: 'No submissions recorded yet.',
-        actionRecommendation: 'Encourage students to attempt this assessment.'
+        questionIndex: Math.min(4, draft.questions.length || 1),
+        statement: draft.questions[Math.min(3, (draft.questions.length || 1) - 1)]?.question_latex || draft.questions[0]?.question_latex || 'Problem Statement',
+        topic: draft.topic,
+        errorRate: '72.5%',
+        wrongCount: 32,
+        totalAttempted: 44,
+        dominantMistake: 'Formula inversion and algebraic sign slip during multi-step derivation.',
+        actionRecommendation: 'Review foundational derivation steps on Smart Board.'
       },
       mostCorrectQuestion: {
         questionIndex: 1,
-        statement: draft.questions[0]?.question_latex || 'Problem Statement',
-        topic: draft.questions[0]?.topic || draft.topic,
-        successRate: '0%',
-        correctCount: 0,
-        totalAttempted: 0,
-        masteryNotes: 'Pending student completion.'
+        statement: draft.questions[0]?.question_latex || 'Fundamental Principle',
+        topic: draft.topic,
+        successRate: '95.5%',
+        correctCount: 42,
+        totalAttempted: 44,
+        masteryNotes: 'High batch accuracy on standard definitions.'
       },
       tiers: {
-        excellent: { count: 0, percentage: '0%', range: '> 80%', label: 'Mastery' },
-        average: { count: 0, percentage: '0%', range: '50% - 80%', label: 'Passing' },
-        belowAverage: { count: 0, percentage: '0%', range: '< 50%', label: 'Remedial' }
+        excellent: { count: 16, percentage: '36.4%', range: `${Math.round(tMarks * 0.8)} – ${tMarks} Marks`, label: 'Advanced Mastery' },
+        average: { count: 22, percentage: '50.0%', range: `${Math.round(tMarks * 0.5)} – ${Math.round(tMarks * 0.8) - 1} Marks`, label: 'Passing' },
+        belowAverage: { count: 6, percentage: '13.6%', range: `&lt; ${Math.round(tMarks * 0.5)} Marks`, label: 'Remedial' }
       },
       questionAnalytics: (draft.questions || []).map((q, idx) => ({
         questionIndex: idx + 1,
         subtopic: q.subtopic || q.topic || `Q${idx + 1}`,
-        accuracyRate: 0,
-        errorRate: 0,
-        avgSeconds: 0,
+        accuracyRate: idx === 3 ? 28 : (idx === 0 ? 95 : Math.max(50, Math.round(90 - (idx * 4)))),
+        errorRate: idx === 3 ? 72 : (idx === 0 ? 5 : Math.min(50, Math.round(10 + (idx * 4)))),
+        avgSeconds: 70 + (idx * 2),
         benchmarkSeconds: 90
       })),
-      studentResults: []
+      studentResults: studentResults
     };
 
     RECORDED_CLASS_TESTS[classId] = RECORDED_CLASS_TESTS[classId] || [];
@@ -3852,7 +3885,8 @@ let activeReportCharts = {
   scoreDist: null,
   questionAccuracy: null,
   questionTime: null,
-  studentMastery: null
+  studentMastery: null,
+  studentRadar: null
 };
 
 window.switchClassProgressSubView = function(view) {
@@ -18487,20 +18521,17 @@ window.launchRemedialPracticeDrill = launchRemedialPracticeDrill;
 window.shareStudentReportWhatsApp = shareStudentReportWhatsApp;
 
 
-
-
-
 /* ==========================================================================
    STUDENT INDIVIDUAL PERFORMANCE, DIAGNOSTICS & WHATSAPP REMEDIAL ENGINE
    ========================================================================== */
 
 function renderRemedialQuestionsCard(questions) {
   return questions.map((q, idx) => `
-    <div style="border:1px solid #cbd5e1; border-radius:10px; padding:14px; background:#f8fafc; display:flex; flex-direction:column; gap:8px;">
+    <div style="border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; background:#f8fafc; display:flex; flex-direction:column; gap:6px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
         <span style="font-weight:800; font-size:0.84rem; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
           <span style="background:var(--accent-blue); color:#fff; font-size:0.72rem; padding:1px 7px; border-radius:4px;">
-            Q${idx + 1}
+            Problem ${idx + 1}
           </span>
           ${escapeHtml(q.title)}
         </span>
@@ -18511,7 +18542,7 @@ function renderRemedialQuestionsCard(questions) {
       <div style="font-size:0.83rem; color:var(--text-primary); line-height:1.55;" class="latex-content">
         ${q.statement}
       </div>
-      <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:8px 10px; border-radius:4px; font-size:0.78rem; color:#92400e;">
+      <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:7px 10px; border-radius:4px; font-size:0.78rem; color:#92400e;">
         <strong>💡 Pedagogical Hint &amp; Trap Warning:</strong> ${q.hint}
       </div>
       <details style="font-size:0.78rem; color:#334155; margin-top:2px;">
@@ -18538,7 +18569,7 @@ function formatWhatsAppText(test, student, focusPoints, questions) {
     `👤 *Scholar:* ${student.name} (Roll #${student.roll})\n` +
     `📋 *Assessment:* ${test.code} - ${test.title}\n` +
     `📊 *Score Obtained:* ${student.score} / ${test.totalMarks} (${student.percentage})\n` +
-    `⏱️ *Time Taken:* ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})\n` +
+    `⏱️ *Pacing & Speed:* ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})\n` +
     `🎯 *Performance Tier:* ${student.tier}\n` +
     `${line}\n\n` +
     `🎯 *WHAT TO FOCUS ON TO IMPROVE:*\n` +
@@ -18557,14 +18588,253 @@ function generateStudentDiagnosticPlan(test, student) {
   const isBelow = (!isExc && !isAvg);
 
   let subtopics = [];
+  let radar = {
+    labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+    studentData: [85, 80, 75, 80, 85],
+    classBenchmark: [80, 75, 70, 75, 80]
+  };
   let focusHtml = '';
   let questions = [];
   let focusBulletPoints = [];
 
-  // Tailored logic for Test 02 (Gauss's Law & Shells) as featured in screenshot
-  if (test.id === 'test_12_02' || (test.chapter && test.chapter.includes('Charges') && test.title.includes('Gauss'))) {
+  // ==========================================
+  // CASE A: TEST 01 (Coulomb's Law & Superposition)
+  // ==========================================
+  if (test.id === 'test_12_01' || (test.chapter && test.chapter.includes('Charges') && test.title.includes('Coulomb'))) {
+    if (roll === '101' || roll === '102') {
+      // Aryan Sharma (#101, 43/45, 95.6%) / Priya Verma (#102, 42/45, 93.3%)
+      subtopics = [
+        { name: 'Coulomb Law & Permittivity Dimension', studentPct: 100, classPct: 95 },
+        { name: 'Vector Superposition on Polygon Vertices', studentPct: 95, classPct: 86 },
+        { name: 'Dielectric Slab Polarization (E = E₀/κ)', studentPct: 90, classPct: 23 },
+        { name: 'Dipole Axial & Equatorial Fields (2:1)', studentPct: 96, classPct: 82 },
+        { name: 'Work Done Rotating Dipole W = pE(1-cosθ)', studentPct: 95, classPct: 75 }
+      ];
+
+      radar = {
+        labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+        studentData: [98, 96, 95, 94, 98],
+        classBenchmark: [85, 78, 72, 76, 80]
+      };
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:#059669; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟢 Advanced Distinction Standing (Top 2% Class Mastery)
+            </strong>
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              ${student.name} demonstrates exceptional conceptual precision across inverse square laws, permittivity dimensional formulas ($[\text{M}^{-1}\text{L}^{-3}\text{T}^4\text{A}^2]$), and vector superposition. Correctly navigated the dielectric screening reduction factor ($E = E_0/\kappa$) where 77% of the batch faltered.
+            </p>
+          </div>
+          <div>
+            <strong style="color:var(--accent-blue); font-size:0.84rem; display:block; margin-bottom:2px;">
+              🎯 High-Order Thinking (HOTS) Enrichment Area:
+            </strong>
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              Focus on <strong>unstable equilibrium points of collinear charge arrays</strong> and proof of Earnshaw's theorem (a collection of point charges cannot be maintained in stable equilibrium by electrostatics alone).
+            </p>
+          </div>
+          <div style="background:#ecfdf5; border-left:3px solid #10b981; padding:7px 12px; border-radius:4px;">
+            <strong style="color:#065f46; font-size:0.78rem; display:block; margin-bottom:2px;">
+              📋 Teacher Roadmap for ${student.name}:
+            </strong>
+            <span style="font-size:0.77rem; color:#334155;">Solve the 3 Olympiad/JEE-Advanced caliber extension problems below, focusing on rigorous vector component cancellation steps.</span>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Advanced Mastery: Flawless recall of Coulomb vector form and permittivity dimensions.",
+        "Dielectric Excellence: Correctly solved E = E₀/κ avoiding the multiplication trap.",
+        "Enrichment Goal: Master 3-charge equilibrium stability and non-collinear dipole torque integrals."
+      ];
+
+      questions = [
+        {
+          title: "Equilibrium Condition for 3 Collinear Point Charges",
+          marks: "3 Marks",
+          statement: "Two equal positive charges $+q$ are fixed at separation $2a$. A third charge $Q$ is placed at the midpoint. (a) Determine the sign and magnitude of $Q$ such that the entire three-charge system is in electrostatic equilibrium. (b) Is this equilibrium stable or unstable for small longitudinal displacements?",
+          plainStatement: "Two equal positive charges +q are fixed at separation 2a. A third charge Q is placed at midpoint. (a) Determine the sign and magnitude of Q for full system equilibrium. (b) Is this equilibrium stable or unstable?",
+          hint: "For the entire system to be in equilibrium, net electrostatic force on each $+q$ must vanish: $\frac{q^2}{4\pi\varepsilon_0(2a)^2} + \frac{q Q}{4\pi\varepsilon_0 a^2} = 0$.",
+          plainHint: "Equate net force on outer charge to 0: q²/(4a²) + qQ/a² = 0 ==> Q = -q/4.",
+          solution: "(a) Force on outer charge $+q$: $F_{\text{net}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{q^2}{4a^2} + \frac{q Q}{a^2}\right) = 0 \implies Q = -\frac{q}{4}$.<br>(b) For small displacement $x$ along line: $F_{\text{restoring}} \approx -\frac{q^2}{\pi\varepsilon_0 a^3}x$ (stable along line), but displacement perpendicular to line is unstable (Earnshaw's Theorem)."
+        },
+        {
+          title: "Work Done Rotating Electric Dipole by 180°",
+          marks: "3 Marks",
+          statement: "An electric dipole of dipole moment $\vec{p} = 4\times 10^{-9}\text{ C}\cdot\text{m}$ is initially aligned parallel to a uniform electric field $\vec{E} = 5\times 10^4\text{ N/C}$. (a) Calculate the work done by external torque to rotate the dipole by $180^\circ$ into antiparallel alignment. (b) What is its potential energy in this unstable state?",
+          plainStatement: "An electric dipole of moment p = 4x10^-9 C*m is aligned parallel to field E = 5x10^4 N/C. (a) Find work done to rotate it by 180°. (b) What is its potential energy in this antiparallel state?",
+          hint: "Work done $W = pE(\cos\theta_1 - \cos\theta_2) = pE(1 - (-1)) = 2pE$. Potential energy $U = -\vec{p}\cdot\vec{E} = +pE$.",
+          plainHint: "W = 2pE = 2 * (4x10^-9) * (5x10^4) = 4x10^-4 J. U = +pE = +2x10^-4 J.",
+          solution: "(a) $W = \int_0^\pi \tau_{\text{ext}} d\theta = pE[-\cos\theta]_0^\pi = pE(1 - (-1)) = 2pE = 2\times (4\times 10^{-9})\times (5\times 10^4) = 4\times 10^{-4}\text{ J}$.<br>(b) Potential Energy: $U = -pE\cos(180^\circ) = +pE = +2\times 10^{-4}\text{ J}$ (Maximum potential energy, unstable equilibrium)."
+        },
+        {
+          title: "Centroid Field Superposition for Equilateral Triangle",
+          marks: "3 Marks",
+          statement: "Three point charges $+2q$, $-q$, and $-q$ are situated at vertices $A$, $B$, and $C$ of an equilateral triangle of side $L$. Find the magnitude and direction of the net electric field at the centroid $O$ of the triangle.",
+          plainStatement: "Three point charges +2q, -q, and -q are at vertices A, B, and C of an equilateral triangle of side L. Find the magnitude and direction of net electric field at centroid O.",
+          hint: "Distance of centroid from each vertex is $r = \frac{L}{\sqrt{3}}$. Decompose $+2q$ into $+q$ and $+q$. Notice the symmetrical trio $(+q, -q, -q)$ cancels with dipole resolution along the altitude through $A$.",
+          plainHint: "Distance r = L/√3. Field due to +2q points away from A; fields due to -q point towards B and C. Vector sum adds along AO direction: E_net = 3q / (πε₀ L²).",
+          solution: "Distance from vertex to centroid: $r = \frac{L}{\sqrt{3}}$.<br>Field from $A$ ($+2q$): $E_A = \frac{2q}{4\pi\varepsilon_0 r^2}$ away from $A$ along altitude.<br>Fields from $B$ and $C$ ($-q$ each): $E_B = E_C = \frac{q}{4\pi\varepsilon_0 r^2}$ directed towards $B$ and $C$ (angle between them is $60^\circ$).<br>Their resultant along altitude is $2 E_B \cos(30^\circ) = \sqrt{3} E_B = \frac{\sqrt{3} q}{4\pi\varepsilon_0 r^2}$ pointing away from $A$.<br>Net Field: $E_{\text{net}} = E_A + \text{Resultant}_{BC} = \frac{3q}{\pi\varepsilon_0 L^2}$ directed along $AO$ produced."
+        }
+      ];
+    } else if (roll === '103' || roll === '105' || isBelow) {
+      // Rohit Thakur (#103, 29/45) / Sahil Mehta (#105, 21/45, Below Average)
+      subtopics = [
+        { name: 'Coulomb Law & Permittivity Dimension', studentPct: 75, classPct: 95 },
+        { name: 'Vector Superposition on Polygon Vertices', studentPct: 50, classPct: 86 },
+        { name: 'Dielectric Slab Polarization (E = E₀/κ)', studentPct: 20, classPct: 23 },
+        { name: 'Dipole Axial & Equatorial Fields (2:1)', studentPct: 60, classPct: 82 },
+        { name: 'Work Done Rotating Dipole W = pE(1-cosθ)', studentPct: 40, classPct: 75 }
+      ];
+
+      radar = {
+        labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+        studentData: [60, 48, 42, 52, 55],
+        classBenchmark: [85, 78, 72, 76, 80]
+      };
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:#b91c1c; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🔴 Critical Conceptual Blunder: Dielectric Multiplication Trap
+            </strong>
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              Failed on Question 4. ${student.name} computed $E = E_0 \times \kappa = 800 \times 4 = 3200\text{ N/C}$ instead of recognizing that dielectric polarization creates internal opposing bound charges that screen and reduce the field to $E = \frac{E_0}{\kappa} = \frac{800}{4} = 200\text{ N/C}$.
+            </p>
+          </div>
+          <div>
+            <strong style="color:#b91c1c; font-size:0.84rem; display:block; margin-bottom:2px;">
+              🔴 Vector Decomposition Deficit on 2D Superposition:
+            </strong>
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              Lost marks on Question 2 & Question 10. Added scalar magnitudes of forces ($F_1 + F_2$) instead of resolving vectors into rectangular Cartesian components $\sum F_x = F_1 \cos\theta_1 + F_2 \cos\theta_2$.
+            </p>
+          </div>
+          <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:7px 12px; border-radius:4px;">
+            <strong style="color:#9f1239; font-size:0.78rem; display:block; margin-bottom:2px;">
+              🎯 Immediate Remedial Action for ${student.name}:
+            </strong>
+            <span style="font-size:0.77rem; color:#334155;">Memorize dielectric screening rule ($E = E_0/\kappa$), redraw free-body vector diagrams, and complete the 3 remedial drills below.</span>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Multiplication Trap: Dielectrics REDUCE electric field: E = E₀ / κ (never multiply!).",
+        "Vector Superposition: Force is a vector quantity. Always resolve into Fx and Fy components.",
+        "Roadmap: Master dipole work done W = pE(1-cosθ) and solve 3 targeted remedial problems."
+      ];
+
+      questions = [
+        {
+          title: "Electric Field inside Dielectric Medium (Slab)",
+          marks: "2 Marks",
+          statement: "A parallel plate arrangement has an initial uniform electric field $E_0 = 1200\text{ N/C}$ in vacuum. A dielectric slab of dielectric constant $\kappa = 5$ is inserted to completely fill the space. (a) Calculate the reduced electric field $E$ inside the slab. (b) Find the magnitude of the induced polarization field $E_p$.",
+          plainStatement: "Initial electric field E₀ = 1200 N/C in vacuum. A dielectric slab with dielectric constant κ = 5 is inserted. (a) Calculate reduced electric field E. (b) Find induced polarization field Ep.",
+          hint: "The net field is reduced by factor $\kappa$: $E = \frac{E_0}{\kappa}$. The polarization bound field opposes $E_0$: $E_p = E_0 - E$.",
+          plainHint: "E = E₀ / κ = 1200 / 5 = 240 N/C. Ep = E₀ - E = 1200 - 240 = 960 N/C.",
+          solution: "(a) Reduced field: $E = \frac{E_0}{\kappa} = \frac{1200}{5} = 240\text{ N/C}$.<br>(b) Polarization field: $E = E_0 - E_p \implies E_p = E_0 - E = 1200 - 240 = 960\text{ N/C}$ directed opposite to external field."
+        },
+        {
+          title: "Superposition on Two Identical Charges",
+          marks: "3 Marks",
+          statement: "Two point charges $q_1 = +4\ \mu\text{C}$ and $q_2 = -4\ \mu\text{C}$ are placed at points $(0, 3\text{ cm})$ and $(0, -3\text{ cm})$. Find the magnitude and direction of the net electric field at $(4\text{ cm}, 0)$ on the x-axis.",
+          plainStatement: "Two charges +4 μC and -4 μC are at (0, 3cm) and (0, -3cm). Find net electric field at (4cm, 0) on x-axis.",
+          hint: "Distance to test point is $r = \sqrt{4^2 + 3^2} = 5\text{ cm} = 0.05\text{ m}$. Notice that horizontal x-components cancel out, while vertical y-components add downwards!",
+          plainHint: "Distance r = 0.05m. E_single = kq/r² = 1.44x10^7 N/C. Net Ey = 2 * E * sinθ = 2 * (1.44x10^7) * (3/5) = 1.73x10^7 N/C downwards.",
+          solution: "Distance $r = \sqrt{0.04^2 + 0.03^2} = 0.05\text{ m}$.<br>$E_1 = E_2 = \frac{(9\times 10^9)(4\times 10^{-6})}{(0.05)^2} = 1.44\times 10^7\text{ N/C}$.<br>Horizontal components: $E_{1x} - E_{2x} = 0$.<br>Vertical components add in $-\hat{j}$ direction: $E_{\text{net}} = 2 E_1 \sin\theta = 2(1.44\times 10^7)\left(\frac{3}{5}\right) = 1.73\times 10^7\text{ N/C}$ along $-\hat{j}$."
+        },
+        {
+          title: "Electric Dipole Torque and Stable Orientation",
+          marks: "3 Marks",
+          statement: "An electric dipole consists of charges $\pm 2\times 10^{-6}\text{ C}$ separated by $2\text{ cm}$. It is placed in an external field $E = 10^5\text{ N/C}$ at angle $30^\circ$ to the field lines. (a) Calculate the torque experienced by the dipole. (b) What torque acts when the dipole is aligned parallel to $\vec{E}$?",
+          plainStatement: "An electric dipole consists of charges ±2 μC separated by 2cm in field E = 10^5 N/C at 30°. (a) Calculate torque. (b) What is the torque when aligned parallel to field?",
+          hint: "Dipole moment $p = q(2a)$. Torque $\tau = p E \sin\theta$. When parallel, $\theta = 0^\circ \implies \tau = 0$.",
+          plainHint: "p = 2x10^-6 * 0.02 = 4x10^-8 C*m. Torque = pE sin(30°) = (4x10^-8)(10^5)(0.5) = 2x10^-3 N*m.",
+          solution: "(a) Dipole moment: $p = q(2a) = (2\times 10^{-6}\text{ C})(0.02\text{ m}) = 4\times 10^{-8}\text{ C}\cdot\text{m}$.<br>Torque: $\tau = pE\sin(30^\circ) = (4\times 10^{-8})(10^5)(0.5) = 2\times 10^{-3}\text{ N}\cdot\text{m}$.<br>(b) When parallel ($\theta = 0^\circ$): $\tau = pE\sin(0^\circ) = 0\text{ N}\cdot\text{m}$ (Stable equilibrium orientation)."
+        }
+      ];
+    } else {
+      // Average Scholars: Karan Singhal (#109, 35/45, 77.8%)
+      subtopics = [
+        { name: 'Coulomb Law & Permittivity Dimension', studentPct: 90, classPct: 95 },
+        { name: 'Vector Superposition on Polygon Vertices', studentPct: 75, classPct: 86 },
+        { name: 'Dielectric Slab Polarization (E = E₀/κ)', studentPct: 60, classPct: 23 },
+        { name: 'Dipole Axial & Equatorial Fields (2:1)', studentPct: 80, classPct: 82 },
+        { name: 'Work Done Rotating Dipole W = pE(1-cosθ)', studentPct: 70, classPct: 75 }
+      ];
+
+      radar = {
+        labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+        studentData: [82, 76, 70, 74, 78],
+        classBenchmark: [85, 78, 72, 76, 80]
+      };
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:var(--accent-blue); font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟡 Board Presentation &amp; Vector Calculation Precision
+            </strong>
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              ${student.name} demonstrates solid foundational knowledge (77.8% score) but dropped step marks on Question 7 (dipole rotation work done) by omitting the negative sign in $U = -\vec{p}\cdot\vec{E}$, and lost derivation marks on the axial electric field ratio.
+            </p>
+          </div>
+          <div style="background:#eff6ff; border-left:3px solid #2563eb; padding:7px 12px; border-radius:4px;">
+            <strong style="color:#1e40af; font-size:0.78rem; display:block; margin-bottom:2px;">
+              🎯 Action Plan to Cross 90% (Distinction):
+            </strong>
+            <span style="font-size:0.77rem; color:#334155;">Practice explicit step-by-step derivations for axial vs equatorial field ratio ($E_{\text{axial}} = 2 E_{\text{equatorial}}$) and solve the 3 practice problems below.</span>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Vector Precision: Draw unit normal vectors explicitly during polygon superposition.",
+        "Dipole Derivations: Maintain binomial approximation steps (1 + x)^n ≈ 1 + nx.",
+        "Goal: Master work done W = pE(cosθ₁ - cosθ₂) to elevate score to Distinction tier."
+      ];
+
+      questions = [
+        {
+          title: "Axial vs Equatorial Dipole Electric Field Ratio",
+          marks: "3 Marks",
+          statement: "Deduce the expression for electric field intensity due to a short electric dipole of dipole moment $p$ at: (a) An axial point at distance $r$, and (b) An equatorial point at distance $r$. Hence prove that $E_{\text{axial}} = 2 E_{\text{equatorial}}$ for $r \gg 2a$.",
+          plainStatement: "Deduce expressions for electric field of short dipole at axial point and equatorial point at distance r. Prove E_axial = 2 * E_equatorial.",
+          hint: "Axial: $E_{\text{axial}} = \frac{1}{4\pi\varepsilon_0}\frac{2pr}{(r^2 - a^2)^2} \approx \frac{2p}{4\pi\varepsilon_0 r^3}$. Equatorial: $E_{\text{equatorial}} \approx \frac{p}{4\pi\varepsilon_0 r^3}$.",
+          plainHint: "E_axial = 2p/(4πε₀r³), E_equatorial = p/(4πε₀r³). Ratio = 2:1.",
+          solution: "(a) Axial field: $E_{\text{axial}} = \frac{1}{4\pi\varepsilon_0}\frac{2p r}{(r^2 - a^2)^2} \\xrightarrow{r \gg a} \frac{2p}{4\pi\varepsilon_0 r^3}$.<br>(b) Equatorial field: $E_{\text{equatorial}} = \frac{1}{4\pi\varepsilon_0}\frac{p}{(r^2 + a^2)^{3/2}} \\xrightarrow{r \gg a} \frac{p}{4\pi\varepsilon_0 r^3}$.<br>Hence $\frac{E_{\text{axial}}}{E_{\text{equatorial}}} = 2$."
+        },
+        {
+          title: "Dielectric Constant from Force Reduction",
+          marks: "2 Marks",
+          statement: "The electrostatic force between two small charges placed $0.1\text{ m}$ apart in air is $0.18\text{ N}$. When immersed in an unknown oil at the same separation, the force drops to $0.03\text{ N}$. Find the dielectric constant $\kappa$ of the oil.",
+          plainStatement: "Force between two charges in air is 0.18 N. In oil at same separation, force drops to 0.03 N. Find dielectric constant κ.",
+          hint: "Recall Coulomb's Law in medium: $F_{\text{medium}} = \frac{F_{\text{air}}}{\kappa} \implies \kappa = \frac{F_{\text{air}}}{F_{\text{medium}}}$.",
+          plainHint: "κ = F_air / F_oil = 0.18 / 0.03 = 6.",
+          solution: "$\kappa = \frac{F_{\text{air}}}{F_{\text{oil}}} = \frac{0.18}{0.03} = 6$. The dielectric constant is $6$ (dimensionless)."
+        },
+        {
+          title: "Work Done Rotating Dipole by 90°",
+          marks: "3 Marks",
+          statement: "A dipole of moment $p = 5\times 10^{-8}\text{ C}\cdot\text{m}$ is initially in stable equilibrium in a uniform field $E = 2\times 10^4\text{ N/C}$. How much work must be done to rotate it to the position of zero potential energy?",
+          plainStatement: "A dipole p = 5x10^-8 C*m is in stable equilibrium in field E = 2x10^4 N/C. How much work is needed to rotate it to zero potential energy?",
+          hint: "Zero potential energy occurs at $\theta = 90^\circ$ where $U = -pE\cos(90^\circ) = 0$. $W = pE(\cos 0^\circ - \cos 90^\circ) = pE(1 - 0) = pE$.",
+          plainHint: "W = pE(1 - 0) = (5x10^-8)(2x10^4) = 1.0x10^-3 J.",
+          solution: "Initial position: $\theta_1 = 0^\circ$. Final position: $\theta_2 = 90^\circ$.<br>$W = pE(\cos\theta_1 - \cos\theta_2) = pE(1 - 0) = pE = (5\times 10^{-8})(2\times 10^4) = 1.0\times 10^{-3}\text{ J}$."
+        }
+      ];
+    }
+  }
+  // ==========================================
+  // CASE B: TEST 02 (Gauss's Law & Spherical Shells)
+  // ==========================================
+  else if (test.id === 'test_12_02' || (test.chapter && test.chapter.includes('Charges') && test.title.includes('Gauss'))) {
     if (roll === '103' || isBelow) {
-      // Rohit Thakur (#103, Below Average, 19/45)
+      // Rohit Thakur (#103, Below Average, 19/45, 42.2%)
       subtopics = [
         { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 75, classPct: 95 },
         { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 20, classPct: 72 },
@@ -18573,40 +18843,42 @@ function generateStudentDiagnosticPlan(test, student) {
         { name: 'Surface Charge Density & Shielding', studentPct: 45, classPct: 84 }
       ];
 
+      radar = {
+        labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+        studentData: [50, 42, 38, 45, 52],
+        classBenchmark: [85, 78, 72, 76, 80]
+      };
+
       focusHtml = `
         <div style="display:flex; flex-direction:column; gap:8px;">
           <div>
             <strong style="color:#b91c1c; font-size:0.86rem; display:block; margin-bottom:2px;">
               🔴 Critical Concept Gap: Electric Field Inside Conducting Shells (E = 0)
             </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
               Failed on Question 8. Rohit mistakenly applied dielectric volume charge formulas ($E \propto r$) to a hollow conducting shell. In electrostatic equilibrium, all mobile electrons redistribute such that interior net charge is zero, establishing $\vec{E}_{\text{inside}} = 0$ everywhere inside the conductor.
             </p>
           </div>
           <div>
-            <strong style="color:#b91c1c; font-size:0.86rem; display:block; margin-bottom:2px;">
+            <strong style="color:#b91c1c; font-size:0.84rem; display:block; margin-bottom:2px;">
               🔴 Geometric Trap: Corner Flux Partitioning &amp; Solid Angle Symmetries
             </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
               Failed on Question 14. When evaluating flux from a charge placed at a cube corner, Rohit omitted the 8-cube symmetry model and missed that the 3 adjacent faces have field lines parallel to their surfaces ($\vec{E} \perp \hat{n} \implies \Phi = 0$).
             </p>
           </div>
-          <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:8px 12px; border-radius:4px; margin-top:2px;">
-            <strong style="color:#9f1239; font-size:0.8rem; display:block; margin-bottom:2px;">
+          <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:7px 12px; border-radius:4px;">
+            <strong style="color:#9f1239; font-size:0.78rem; display:block; margin-bottom:2px;">
               🎯 Actionable Pedagogical Roadmap for Rohit:
             </strong>
-            <ol style="margin:0; padding-left:16px; font-size:0.78rem; color:#475569; line-height:1.5;">
-              <li><strong>Conductor Boundary Rule:</strong> Always identify conductor vs non-conductor. Inside a hollow metallic cavity, $\oint \vec{E}\cdot d\vec{A} = 0 \implies E = 0$.</li>
-              <li><strong>Cylindrical Gaussian Drill:</strong> Re-derive $E = \frac{\lambda}{2\pi \varepsilon_0 r}$ paying special attention to why flat end caps have zero flux.</li>
-              <li><strong>Remedial Practice:</strong> Complete the 3 targeted problems below in the physics assignment notebook.</li>
-            </ol>
+            <span style="font-size:0.77rem; color:#334155;">Always check conductor vs dielectric. Inside metal cavity, $\oint \vec{E}\cdot d\vec{A} = 0 \implies E = 0$. Complete the 3 targeted problems below.</span>
           </div>
         </div>
       `;
 
       focusBulletPoints = [
-        "Critical Concept Gap: Conductor Cavity Field (E = 0). Net charge on conductor resides strictly on exterior surface in equilibrium.",
-        "Geometric Trap: Cube corner flux partitioning. 3 adjacent faces have zero flux; 3 opposite faces share flux equally as Phi = q / 24ε₀.",
+        "Critical Gap: Conductor Cavity Field (E = 0). Net charge resides strictly on exterior surface.",
+        "Geometric Trap: Cube corner flux partitioning (3 opposite faces share flux = q / 24ε₀).",
         "Roadmap: Re-derive Gauss's cylindrical wire theorem and practice 8-cube symmetry drills."
       ];
 
@@ -18615,174 +18887,32 @@ function generateStudentDiagnosticPlan(test, student) {
           title: "Electrostatic Shielding & Conductor Cavity",
           marks: "2 Marks",
           statement: "A thin hollow spherical metallic shell of radius $R = 12\text{ cm}$ carries a net charge of $Q = +6\ \mu\text{C}$. Calculate the electric field intensity at: (i) radial distance $r = 4\text{ cm}$ (inside cavity), and (ii) $r = 24\text{ cm}$ (in exterior space). State the physical law justifying part (i).",
-          plainStatement: "A thin hollow spherical metallic shell of radius R = 12cm carries a net charge of Q = +6 μC. Calculate the electric field intensity at: (i) radial distance r = 4cm (inside cavity), and (ii) r = 24cm (in exterior space). State the physical law justifying part (i).",
+          plainStatement: "A thin hollow spherical metallic shell of radius R = 12cm carries net charge Q = +6 μC. Calculate electric field at: (i) r = 4cm (inside cavity), and (ii) r = 24cm (outside). State the justifying law.",
           hint: "Construct a concentric spherical Gaussian surface of radius $r < R$. How much net charge is enclosed? Recall $\oint \vec{E}\cdot d\vec{A} = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
-          plainHint: "Construct a concentric spherical Gaussian surface of radius r < R. Net enclosed charge is 0! E = 0 N/C inside (shielding).",
+          plainHint: "q_enc = 0 inside cavity ==> E = 0 N/C (shielding). Outside: E = kq/r².",
           solution: "(i) Inside cavity ($r = 4\text{ cm} < R$): $q_{\text{enc}} = 0 \implies E = 0\text{ N/C}$ (Electrostatic Shielding).<br>(ii) Outside shell ($r = 0.24\text{ m}$): $E = \frac{1}{4\pi\varepsilon_0}\frac{Q}{r^2} = (9\times 10^9)\times\frac{6\times 10^{-6}}{(0.24)^2} = 9.38\times 10^5\text{ N/C}$ radially outwards."
         },
         {
           title: "Point Charge at Corner of a Cube",
           marks: "3 Marks",
-          statement: "A point charge $q = 8.85\ \mu\text{C}$ is placed at one corner of an imaginary cube of side $a = 10\text{ cm}$. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces that do not touch the corner charge.",
-          plainStatement: "A point charge q = 8.85 μC is placed at one corner of an imaginary cube of side a = 10cm. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces that do not touch the corner charge.",
+          statement: "A point charge $q = 8.85\ \mu\text{C}$ is placed at one corner of an imaginary cube of side $a = 10\text{ cm}$. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces not touching the corner charge.",
+          plainStatement: "A charge q = 8.85 μC is at the corner of a cube of side 10cm. Find (a) total flux through cube, and (b) flux through each of the 3 faces not touching the charge.",
           hint: "By 3D symmetry, assemble 8 identical cubes around the corner to fully enclose $q$. Total flux through all 8 cubes is $\frac{q}{\varepsilon_0}$. For the 3 touching faces, $\vec{E}$ is parallel to the surface, so their flux is zero!",
-          plainHint: "Enclose corner charge with 8 cubes (total flux = q / ε₀). Each cube gets q / 8ε₀. Adjacent 3 faces have flux = 0; remaining 3 opposite faces share flux = q / 24ε₀.",
-          solution: "(a) Total flux through 1 cube = $\frac{1}{8}\frac{q}{\varepsilon_0} = \frac{8.85\times 10^{-6}}{8\times 8.85\times 10^{-12}} = 1.25\times 10^5\text{ N}\cdot\text{m}^2/\text{C}$.<br>(b) The 3 adjacent faces have $\Phi = 0$ because field lines graze them without piercing. Hence the 3 opposite faces share the flux equally: $\Phi_{\text{each}} = \frac{1}{3}\left(\frac{q}{8\varepsilon_0}\right) = \frac{q}{24\varepsilon_0} = 4.17\times 10^4\text{ N}\cdot\text{m}^2/\text{C}$."
+          plainHint: "Total flux = q / 8ε₀ = 1.25x10^5 N*m²/C. Each opposite face receives (1/3)(q/8ε₀) = q/24ε₀ = 4.17x10^4 N*m²/C.",
+          solution: "(a) Total flux through 1 cube = $\frac{1}{8}\frac{q}{\varepsilon_0} = \frac{8.85\times 10^{-6}}{8\times 8.85\times 10^{-12}} = 1.25\times 10^5\text{ N}\cdot\text{m}^2/\text{C}$.<br>(b) The 3 adjacent faces have $\Phi = 0$. Hence the 3 opposite faces share flux equally: $\Phi_{\text{each}} = \frac{q}{24\varepsilon_0} = 4.17\times 10^4\text{ N}\cdot\text{m}^2/\text{C}$."
         },
         {
           title: "Line Charge Cylindrical Gauss Derivation",
           marks: "3 Marks",
           statement: "An infinitely long straight wire has uniform linear charge density $\lambda = 2.4\times 10^{-7}\text{ C/m}$. (a) Using Gauss's theorem with a coaxial cylinder of radius $r$ and length $L$, derive the formula $E = \frac{\lambda}{2\pi \varepsilon_0 r}$. (b) Calculate the electric field magnitude at perpendicular distance $r = 15\text{ cm}$.",
-          plainStatement: "An infinitely long straight wire has uniform linear charge density λ = 2.4×10⁻⁷ C/m. (a) Using Gauss's theorem with a coaxial cylinder of radius r and length L, derive the formula E = λ / (2πε₀r). (b) Calculate the electric field magnitude at perpendicular distance r = 15cm.",
-          hint: "Total flux $\oint \vec{E}\cdot d\vec{A} = \Phi_{\text{ends}} + \Phi_{\text{curved}}$. Circular end caps have $\vec{E} \perp \hat{n} \implies \Phi_{\text{ends}} = 0$. Curved area is $2\pi r L$.",
-          plainHint: "Equate curved surface flux E(2πrL) = λL / ε₀. Flat end caps have 0 flux.",
-          solution: "(a) Derivation: $\oint \vec{E}\cdot d\vec{A} = E(2\pi r L) = \frac{q_{\text{enc}}}{\varepsilon_0} = \frac{\lambda L}{\varepsilon_0} \implies E = \frac{\lambda}{2\pi \varepsilon_0 r}$.<br>(b) At $r = 0.15\text{ m}$: $E = \frac{2\times (9\times 10^9)\times (2.4\times 10^{-7})}{0.15} = \frac{4320}{0.15} = 2.88\times 10^4\text{ N/C}$."
-        }
-      ];
-    } else if (roll === '105') {
-      // Sahil Mehta (#105, Average, 24/45, 53.3%)
-      subtopics = [
-        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 82, classPct: 95 },
-        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 40, classPct: 72 },
-        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 55, classPct: 78 },
-        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 45, classPct: 68 },
-        { name: 'Surface Charge Density & Shielding', studentPct: 45, classPct: 84 }
-      ];
-
-      focusHtml = `
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <div>
-            <strong style="color:#d97706; font-size:0.86rem; display:block; margin-bottom:2px;">
-              🟡 Focus 1: Conducting Plate vs Non-Conducting Thin Sheet Field
-            </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
-              Sahil interchanged the electric field formula for a thin dielectric plane sheet ($E = \frac{\sigma}{2\varepsilon_0}$) with a charged metallic conducting plate ($E = \frac{\sigma}{\varepsilon_0}$ due to charge distribution on both faces).
-            </p>
-          </div>
-          <div>
-            <strong style="color:#d97706; font-size:0.86rem; display:block; margin-bottom:2px;">
-              🟡 Focus 2: Flux through Curved Hemispherical Surfaces
-            </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
-              Failed on Question 12. Flux through a flat base was computed correctly, but Sahil forgot that for a closed hemispherical bowl enclosing no charge, total flux is zero: $\Phi_{\text{curved}} = -\Phi_{\text{base}}$.
-            </p>
-          </div>
-          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:8px 12px; border-radius:4px;">
-            <strong style="color:#92400e; font-size:0.8rem; display:block; margin-bottom:2px;">
-              🎯 Actionable Roadmap for Sahil:
-            </strong>
-            <ol style="margin:0; padding-left:16px; font-size:0.78rem; color:#475569; line-height:1.5;">
-              <li>Distinguish single-surface charge sheets vs two-surface conducting plates in board answers.</li>
-              <li>Practice projection method for open hemispherical flux in uniform fields.</li>
-              <li>Complete the 3 adaptive problems below.</li>
-            </ol>
-          </div>
-        </div>
-      `;
-
-      focusBulletPoints = [
-        "Conducting plate vs Non-conducting sheet: Remember E = σ / ε₀ for conductors and E = σ / 2ε₀ for thin sheets.",
-        "Hemispherical bowl flux: In uniform field, flux entering curved surface equals flux leaving flat circular cross-section (Phi = πR²E).",
-        "Roadmap: Solve derivation drills on infinite plane sheets and spherical conductors."
-      ];
-
-      questions = [
-        {
-          title: "Conducting Plate vs Non-Conducting Infinite Sheet",
-          marks: "2 Marks",
-          statement: "Two large parallel conducting plates carry surface charge densities $+\sigma$ and $-\sigma$ respectively. Using Gauss's Law, find the electric field in: (a) Region I (to the left of positive plate), (b) Region II (between the two plates), and (c) Region III (to the right of negative plate).",
-          plainStatement: "Two large parallel conducting plates carry surface charge densities +σ and -σ respectively. Using Gauss's Law, find the electric field in: (a) Region I (to the left of positive plate), (b) Region II (between the two plates), and (c) Region III (to the right of negative plate).",
-          hint: "Between the plates, fields due to both plates add constructively: $E = \frac{\sigma}{2\varepsilon_0} + \frac{\sigma}{2\varepsilon_0} = \frac{\sigma}{\varepsilon_0}$. Outside, they cancel to 0.",
-          plainHint: "Outside plates: E = 0. Between plates: E = σ / ε₀ directed from + to - plate.",
-          solution: "(a) Region I: $E = 0\text{ N/C}$ (opposing fields cancel).<br>(b) Region II: $E = \frac{\sigma}{2\varepsilon_0} + \frac{\sigma}{2\varepsilon_0} = \frac{\sigma}{\varepsilon_0}$ directed towards negative plate.<br>(c) Region III: $E = 0\text{ N/C}$ (cancelling fields)."
-        },
-        {
-          title: "Flux Entering a Hemispherical Body in Uniform Field",
-          marks: "3 Marks",
-          statement: "A uniform electric field $\vec{E} = E_0\hat{i}$ is directed along the symmetry axis of a hemispherical bowl of radius $R$. Determine the total electric flux passing through: (a) the circular flat face, and (b) the curved surface of the bowl.",
-          plainStatement: "A uniform electric field E = E₀ î is directed along the symmetry axis of a hemispherical bowl of radius R. Determine the total electric flux passing through: (a) the circular flat face, and (b) the curved surface of the bowl.",
-          hint: "Since the bowl encloses zero charge, Gauss's law dictates $\Phi_{\text{net}} = \Phi_{\text{flat}} + \Phi_{\text{curved}} = 0$.",
-          plainHint: "Total flux is 0 since q_enc = 0. Flat face flux is -E₀(πR²), so curved face flux is +E₀(πR²).",
-          solution: "(a) Flat circular face normal points outwards (opposite to field): $\Phi_{\text{flat}} = \vec{E}\cdot\vec{A} = -E_0(\pi R^2)$.<br>(b) Enclosed charge $q_{\text{enc}} = 0 \implies \Phi_{\text{total}} = 0 \implies \Phi_{\text{curved}} = -\Phi_{\text{flat}} = +\pi R^2 E_0$."
-        },
-        {
-          title: "Thin Spherical Shell with Surface Density σ",
-          marks: "3 Marks",
-          statement: "A thin conducting spherical shell of radius $R = 20\text{ cm}$ has a uniform surface charge density $\sigma = 0.2\ \mu\text{C/m}^2$. Calculate: (a) The total charge $Q$ on the shell, and (b) The electric field just outside the surface of the shell.",
-          plainStatement: "A thin conducting spherical shell of radius R = 20cm has uniform surface charge density σ = 0.2 μC/m². Calculate: (a) Total charge Q on the shell, and (b) Electric field just outside the surface.",
-          hint: "Surface area is $4\pi R^2$. Just outside, $E = \frac{\sigma}{\varepsilon_0}$ or $\frac{1}{4\pi\varepsilon_0}\frac{Q}{R^2}$.",
-          plainHint: "Q = σ × 4πR². Just outside, E = σ / ε₀ = 2.26×10⁴ N/C.",
-          solution: "(a) $Q = \sigma(4\pi R^2) = (0.2\times 10^{-6})\times 4\pi (0.2)^2 = 1.005\times 10^{-7}\text{ C} \approx 0.1\ \mu\text{C}$.<br>(b) $E = \frac{\sigma}{\varepsilon_0} = \frac{0.2\times 10^{-6}}{8.85\times 10^{-12}} = 2.26\times 10^4\text{ N/C}$."
-        }
-      ];
-    } else if (roll === '109') {
-      // Karan Singhal (#109, Average, 31/45, 68.9%)
-      subtopics = [
-        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 90, classPct: 95 },
-        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 55, classPct: 72 },
-        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 70, classPct: 78 },
-        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 60, classPct: 68 },
-        { name: 'Surface Charge Density & Shielding', studentPct: 70, classPct: 84 }
-      ];
-
-      focusHtml = `
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <div>
-            <strong style="color:var(--accent-blue); font-size:0.86rem; display:block; margin-bottom:2px;">
-              🟡 Focus: Speed on 3-Mark Derivations &amp; Graph Sketching
-            </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
-              Karan displays solid conceptual understanding but lost step marks on Question 9 (Graph of $E$ vs $r$ for charged spherical shell) by not clearly marking the discontinuity at $r = R$ and showing $E = 0$ for $r < R$.
-            </p>
-          </div>
-          <div style="background:#eff6ff; border-left:3px solid #2563eb; padding:8px 12px; border-radius:4px;">
-            <strong style="color:#1e40af; font-size:0.8rem; display:block; margin-bottom:2px;">
-              🎯 Actionable Roadmap for Karan:
-            </strong>
-            <p style="margin:0; font-size:0.78rem; color:#475569;">
-              Practice standard CBSE Board presentation: clearly draw Gaussian surfaces with dashed lines, state Gauss theorem explicitly, and label graphs with proper intercepts.
-            </p>
-          </div>
-        </div>
-      `;
-
-      focusBulletPoints = [
-        "Presentation & Derivations: Clearly draw dashed Gaussian surfaces with outward normal vectors.",
-        "Graph Precision: Highlight discontinuity at r = R in E vs r curves for metallic shells.",
-        "Practice: Complete 3 revision questions below to convert Average standing into Distinction (>80%)."
-      ];
-
-      questions = [
-        {
-          title: "Graph & Discontinuity of E vs r for Conducting Shell",
-          marks: "3 Marks",
-          statement: "Draw a neat graph showing the variation of electric field $E$ with radial distance $r$ from the center of a uniformly charged conducting spherical shell of radius $R$. Clearly indicate values for $r < R$, $r = R$, and $r > R$.",
-          plainStatement: "Draw a neat graph showing the variation of electric field E with radial distance r from center of a uniformly charged conducting spherical shell of radius R.",
-          hint: "For $r < R$, $E = 0$. At $r = R$, $E = \frac{\sigma}{\varepsilon_0}$ (maximum). For $r > R$, $E \propto 1/r^2$.",
-          plainHint: "E = 0 for r < R. Jumps to max at r = R, then decays as 1/r².",
-          solution: "Graph features:<br>• Region $r < R$: Coincident with horizontal axis ($E = 0$).<br>• Point $r = R$: Vertical step discontinuity to peak $E_{\text{max}} = \frac{1}{4\pi\varepsilon_0}\frac{Q}{R^2}$.<br>• Region $r > R$: Smooth hyperbolic decay asymptotic to horizontal axis ($E \propto \frac{1}{r^2}$)."
-        },
-        {
-          title: "Flux Through Disc from Point Charge on Axis",
-          marks: "3 Marks",
-          statement: "A point charge $q$ is situated on the axis of a flat circular disc of radius $R$ at a distance $d$ from its center. Find the electric flux passing through the disc using solid angle formula.",
-          plainStatement: "A point charge q is situated on the axis of a flat circular disc of radius R at distance d from center. Find electric flux through disc.",
-          hint: "The solid angle subtended by the disc at the charge is $\Omega = 2\pi(1 - \cos\theta)$ where $\cos\theta = \frac{d}{\sqrt{R^2 + d^2}}$. Flux is $\Phi = \frac{q}{4\pi\varepsilon_0}\Omega$.",
-          plainHint: "Flux = (q / 2ε₀) [ 1 - d / √(R² + d²) ].",
-          solution: "$\Phi = \frac{q}{\varepsilon_0}\frac{\Omega}{4\pi} = \frac{q}{2\varepsilon_0}\left(1 - \frac{d}{\sqrt{R^2 + d^2}}\right)$."
-        },
-        {
-          title: "Two Concentric Conducting Spherical Shells",
-          marks: "3 Marks",
-          statement: "Two concentric conducting spherical shells of radii $R_1$ and $R_2$ ($R_1 < R_2$) carry charges $Q_1$ and $Q_2$. Find the electric field at: (a) $r < R_1$, (b) $R_1 < r < R_2$, and (c) $r > R_2$.",
-          plainStatement: "Two concentric conducting spherical shells of radii R₁ and R₂ (R₁ < R₂) carry charges Q₁ and Q₂. Find electric field at: (a) r < R₁, (b) R₁ < r < R₂, and (c) r > R₂.",
-          hint: "Apply Gauss's law for concentric spheres: (a) $q_{\text{enc}} = 0$, (b) $q_{\text{enc}} = Q_1$, (c) $q_{\text{enc}} = Q_1 + Q_2$.",
-          plainHint: "(a) E = 0. (b) E = Q₁ / (4πε₀r²). (c) E = (Q₁ + Q₂) / (4πε₀r²).",
-          solution: "(a) $r < R_1$: $E = 0\text{ N/C}$.<br>(b) $R_1 < r < R_2$: $E = \frac{1}{4\pi\varepsilon_0}\frac{Q_1}{r^2}$.<br>(c) $r > R_2$: $E = \frac{1}{4\pi\varepsilon_0}\frac{Q_1 + Q_2}{r^2}$."
+          plainStatement: "An infinite straight wire has linear density λ = 2.4x10^-7 C/m. (a) Derive E = λ/(2πε₀r). (b) Calculate E at r = 15cm.",
+          hint: "Total flux $\oint \vec{E}\cdot d\vec{A} = \Phi_{\text{ends}} + \Phi_{\text{curved}}$. End faces have $\vec{E} \perp \hat{n} \implies \Phi_{\text{ends}} = 0$. Curved area is $2\pi r L$.",
+          plainHint: "E(2πrL) = λL / ε₀ ==> E = λ / (2πε₀r) = 2.88x10^4 N/C.",
+          solution: "(a) Derivation: $E(2\pi r L) = \frac{\lambda L}{\varepsilon_0} \implies E = \frac{\lambda}{2\pi \varepsilon_0 r}$.<br>(b) At $r = 0.15\text{ m}$: $E = \frac{2\times (9\times 10^9)\times (2.4\times 10^{-7})}{0.15} = 2.88\times 10^4\text{ N/C}$."
         }
       ];
     } else {
-      // Top Performers (Aryan Sharma, Priya Verma, Divya Rana, Ananya Chauhan, Ritu Sen)
+      // Top Performers for Test 02 (Aryan, Priya, Divya, Ananya, Ritu)
       subtopics = [
         { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 98, classPct: 95 },
         { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 92, classPct: 72 },
@@ -18791,23 +18921,27 @@ function generateStudentDiagnosticPlan(test, student) {
         { name: 'Surface Charge Density & Shielding', studentPct: 95, classPct: 84 }
       ];
 
+      radar = {
+        labels: ['Conceptual Recall', 'Calculation Accuracy', 'Vector / Geometry', 'Derivation Rigor', 'Time & Pacing'],
+        studentData: [96, 94, 92, 95, 96],
+        classBenchmark: [85, 78, 72, 76, 80]
+      };
+
       focusHtml = `
         <div style="display:flex; flex-direction:column; gap:8px;">
           <div>
             <strong style="color:#059669; font-size:0.86rem; display:block; margin-bottom:2px;">
-              🟢 Advanced Distinction Mastery (>90% Score)
+              🟢 High Distinction Standing (>90% Score)
             </strong>
-            <p style="margin:0; font-size:0.8rem; color:#475569;">
-              ${student.name} demonstrates exemplary command across all standard CBSE Class 12 Electrostatics criteria. To target a perfect 100/100 in Board examinations and JEE Advanced, focus is placed on advanced non-uniform charge volumes and grounded concentric spherical conductors.
+            <p style="margin:0; font-size:0.81rem; color:#475569;">
+              ${student.name} demonstrated comprehensive mastery across all standard Gaussian integrals and boundary conditions. Solved difficult questions on electrostatic shielding with full board step marks.
             </p>
           </div>
-          <div style="background:#ecfdf5; border-left:3px solid #10b981; padding:8px 12px; border-radius:4px;">
-            <strong style="color:#065f46; font-size:0.8rem; display:block; margin-bottom:2px;">
-              🎯 Enrichment Roadmap for ${student.name}:
+          <div style="background:#ecfdf5; border-left:3px solid #10b981; padding:7px 12px; border-radius:4px;">
+            <strong style="color:#065f46; font-size:0.78rem; display:block; margin-bottom:2px;">
+              🎯 Enrichment Challenge:
             </strong>
-            <p style="margin:0; font-size:0.78rem; color:#475569;">
-              Master volume integral derivations $\int_0^r \rho(r) 4\pi r^2 dr$ for non-uniform dielectric spheres and concentric shells with earthing boundary conditions.
-            </p>
+            <span style="font-size:0.77rem; color:#334155;">Master non-uniform volume charge distributions $\rho(r) = \rho_0(1 - r/R)$ and earthed concentric spherical conductors.</span>
           </div>
         </div>
       `;
@@ -18823,7 +18957,7 @@ function generateStudentDiagnosticPlan(test, student) {
           title: "Non-Uniform Volume Charge Distribution",
           marks: "3 Marks",
           statement: "A solid insulating sphere of radius $R$ has a non-uniform volume charge density $\rho(r) = \rho_0\left(1 - \frac{r}{R}\right)$ for $r \le R$. Find the electric field $E$ at distance $r < R$ inside the sphere.",
-          plainStatement: "A solid insulating sphere of radius R has non-uniform volume charge density ρ(r) = ρ₀(1 - r/R) for r <= R. Find electric field E at distance r < R.",
+          plainStatement: "A solid insulating sphere of radius R has non-uniform density ρ(r) = ρ₀(1 - r/R). Find E at distance r < R.",
           hint: "Enclosed charge $q_{\text{enc}} = \int_0^r \rho(r) 4\pi r'^2 dr' = 4\pi \rho_0 \left[\frac{r^3}{3} - \frac{r^4}{4R}\right]$. Then apply $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
           plainHint: "Integrate spherical shells dq = ρ(r) 4πr² dr. E = (ρ₀ r / ε₀) [ 1/3 - r / (4R) ].",
           solution: "$q_{\text{enc}} = 4\pi \rho_0 \int_0^r \left(r'^2 - \frac{r'^3}{R}\right)dr' = 4\pi\rho_0\left(\frac{r^3}{3} - \frac{r^4}{4R}\right)$.<br>Gauss Law: $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0} \implies E = \frac{\rho_0 r}{\varepsilon_0}\left(\frac{1}{3} - \frac{r}{4R}\right)$."
@@ -18832,24 +18966,27 @@ function generateStudentDiagnosticPlan(test, student) {
           title: "Concentric Shells with Earthing Boundary Condition",
           marks: "3 Marks",
           statement: "Two concentric conducting shells have radii $a$ and $b$ ($a < b$). The inner shell has charge $Q$, while the outer shell is connected to ground (earthed). Find: (a) The charge induced on the outer shell, and (b) The potential of the inner shell.",
-          plainStatement: "Two concentric conducting shells have radii a and b (a < b). Inner shell has charge Q, while outer shell is connected to ground (earthed). Find: (a) Charge induced on outer shell, and (b) Potential of inner shell.",
+          plainStatement: "Concentric shells radii a and b (a < b). Inner has charge Q, outer is earthed. Find: (a) Induced charge on outer, (b) Potential of inner shell.",
           hint: "Earthing outer shell means its net potential is zero: $V_b = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q + Q'}{b}\right) = 0 \implies Q' = -Q$.",
-          plainHint: "Outer shell potential V_b = 0 implies Q' = -Q. Potential of inner shell V_a = (Q / 4πε₀) [ 1/a - 1/b ].",
-          solution: "(a) Since outer shell is earthed, $V_{\text{outer}} = 0 \implies \frac{1}{4\pi\varepsilon_0}\left(\frac{Q + Q'}{b}\right) = 0 \implies Q' = -Q$.<br>(b) Potential of inner shell: $V_{\text{inner}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q}{a} + \frac{Q'}{b}\right) = \frac{Q}{4\pi\varepsilon_0}\left(\frac{1}{a} - \frac{1}{b}\right)$."
+          plainHint: "V_outer = 0 ==> Q' = -Q. V_inner = (Q/4πε₀)(1/a - 1/b).",
+          solution: "(a) Outer earthed $\implies V_{\text{outer}} = 0 \implies Q' = -Q$.<br>(b) $V_{\text{inner}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q}{a} + \frac{Q'}{b}\right) = \frac{Q}{4\pi\varepsilon_0}\left(\frac{1}{a} - \frac{1}{b}\right)$."
         },
         {
           title: "Electrostatic Pressure on Charged Conductor",
           marks: "3 Marks",
           statement: "Prove that the outward electrostatic pressure acting on the surface of a charged conductor with surface charge density $\sigma$ is given by $P = \frac{\sigma^2}{2\varepsilon_0}$.",
-          plainStatement: "Prove that outward electrostatic pressure on surface of charged conductor of density σ is P = σ² / (2ε₀).",
+          plainStatement: "Prove outward electrostatic pressure on surface of charged conductor of density σ is P = σ² / (2ε₀).",
           hint: "The field due to neighboring patch is $E_1 = \frac{\sigma}{2\varepsilon_0}$. Force on element $dF = dq \cdot E_1 = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right)$.",
-          plainHint: "Electric pressure = dF / dA = (σ dA)(σ / 2ε₀) / dA = σ² / (2ε₀).",
-          solution: "Total field just outside is $E = \frac{\sigma}{\varepsilon_0}$. Split into field of element $dA$ ($E_1 = \frac{\sigma}{2\varepsilon_0}$) and field of remainder ($E_2 = \frac{\sigma}{2\varepsilon_0}$).<br>Force on element: $dF = dq \times E_2 = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right) = \frac{\sigma^2}{2\varepsilon_0}dA$.<br>Pressure: $P = \frac{dF}{dA} = \frac{\sigma^2}{2\varepsilon_0}$."
+          plainHint: "Pressure = dF / dA = (σ dA)(σ / 2ε₀) / dA = σ² / (2ε₀).",
+          solution: "Force on surface element: $dF = dq \times E_{\text{other}} = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right)$.<br>Pressure $P = \frac{dF}{dA} = \frac{\sigma^2}{2\varepsilon_0}$."
         }
       ];
     }
-  } else {
-    // Universal dynamic generator for any other test or teacher-created assessment
+  }
+  // ==========================================
+  // CASE C: UNIVERSAL DYNAMIC ENGINE (Any Test)
+  // ==========================================
+  else {
     const qList = (test.questionAnalytics && test.questionAnalytics.length > 0) ? test.questionAnalytics : [
       { subtopic: 'Fundamental Definitions & Laws', accuracyRate: 85 },
       { subtopic: 'Formula Application & Substitution', accuracyRate: 70 },
@@ -18877,17 +19014,15 @@ function generateStudentDiagnosticPlan(test, student) {
           <strong style="color:${isBelow ? '#b91c1c' : (isAvg ? '#d97706' : '#059669')}; font-size:0.86rem; display:block; margin-bottom:2px;">
             ${isBelow ? '🔴 Critical Weak Point' : (isAvg ? '🟡 Key Concept Gap' : '🟢 Area of Distinction')}
           </strong>
-          <p style="margin:0; font-size:0.8rem; color:#475569;">
+          <p style="margin:0; font-size:0.81rem; color:#475569;">
             ${dominantMistake}
           </p>
         </div>
-        <div style="background:#f8fafc; border-left:3px solid var(--accent-blue); padding:8px 12px; border-radius:4px;">
-          <strong style="color:var(--accent-blue); font-size:0.8rem; display:block; margin-bottom:2px;">
+        <div style="background:#f8fafc; border-left:3px solid var(--accent-blue); padding:7px 12px; border-radius:4px;">
+          <strong style="color:var(--accent-blue); font-size:0.78rem; display:block; margin-bottom:2px;">
             🎯 Recommended Action Plan for ${student.name}:
           </strong>
-          <p style="margin:0; font-size:0.78rem; color:#475569;">
-            Review key definitions in <em>${test.topic || 'Subject Topic'}</em>, verify SI base dimensions, and practice the 3 targeted problems below.
-          </p>
+          <span style="font-size:0.77rem; color:#334155;">Review key definitions in <em>${test.topic || 'Subject Topic'}</em>, verify SI base dimensions, and practice the 3 targeted problems below.</span>
         </div>
       </div>
     `;
@@ -18904,7 +19039,7 @@ function generateStudentDiagnosticPlan(test, student) {
         marks: "2 Marks",
         statement: `State the fundamental principle governing <strong>${escapeHtml(test.topic || 'the topic')}</strong> and state its standard SI units.`,
         plainStatement: `State the fundamental principle governing ${test.topic || 'the topic'} and state its standard SI units.`,
-        hint: "Review CBSE textbook Chapter 1 & 2 definitions.",
+        hint: "Review CBSE textbook Chapter definitions.",
         plainHint: "Review basic definitions and dimensional formulas.",
         solution: "State the law accurately with appropriate vector notation and unit definitions."
       },
@@ -18934,6 +19069,7 @@ function generateStudentDiagnosticPlan(test, student) {
 
   return {
     subtopics,
+    radar,
     focusHtml,
     questionsHtml,
     whatsAppText
@@ -18973,23 +19109,26 @@ window.openStudentPerformanceModal = function(testId, studentRoll) {
   document.getElementById('modalStudentScore').textContent = `${student.score} / ${test.totalMarks}`;
   document.getElementById('modalStudentScorePct').textContent = `${student.percentage} Accuracy`;
   document.getElementById('modalStudentPacing').textContent = student.time || '40m';
-  document.getElementById('modalStudentBenchmarkSpeed').textContent = `Completed in ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})`;
+  document.getElementById('modalStudentBenchmarkSpeed').textContent = `(Benchmark: ${test.duration || '45m'})`;
   document.getElementById('modalStudentPhone').textContent = `+91 ${student.phone}`;
 
   const focusBadge = document.getElementById('modalStudentFocusBadge');
   const focusSub = document.getElementById('modalStudentFocusSub');
   if (student.tier === 'Excellent') {
     focusBadge.textContent = 'Advanced Mastery';
+    focusBadge.style.background = '#ecfdf5';
     focusBadge.style.color = '#059669';
-    focusSub.textContent = 'Enrichment problem sets & speed drills';
+    if (focusSub) focusSub.textContent = 'Olympiad & distinction enrichment analysis';
   } else if (student.tier === 'Average') {
     focusBadge.textContent = 'Concept Gaps Identified';
-    focusBadge.style.color = '#d97706';
-    focusSub.textContent = 'Targeted revision on moderate questions';
+    focusBadge.style.background = '#eff6ff';
+    focusBadge.style.color = '#2563eb';
+    if (focusSub) focusSub.textContent = 'Targeted revision on moderate questions';
   } else {
     focusBadge.textContent = 'Remedial Priority';
+    focusBadge.style.background = '#fff1f2';
     focusBadge.style.color = '#e11d48';
-    focusSub.textContent = 'Immediate intervention on foundational misconceptions';
+    if (focusSub) focusSub.textContent = 'Urgent remediation on foundational misconceptions';
   }
 
   // Generate diagnostic plan
@@ -19012,15 +19151,21 @@ window.openStudentPerformanceModal = function(testId, studentRoll) {
     qContainer.innerHTML = plan.questionsHtml;
   }
 
-  // Open modal
+  // Open modal FIRST so canvas dimensions are correctly computed by Chart.js
   modal.style.display = 'flex';
   initLucideIcons();
 
-  // Render Chart.js Subtopic Mastery
+  // Render Chart 1: Subtopic Mastery Horizontal Bar Chart
   renderStudentMasteryChart(plan.subtopics);
 
-  // Render KaTeX Math
-  renderMathInElement(document.getElementById('modalStudentBody'));
+  // Render Chart 2: Cognitive Competency Radar Chart
+  renderStudentRadarChart(plan.radar);
+
+  // Render KaTeX Math ONLY on text content containers (NEVER on modal body or canvas!)
+  if (typeof renderMathInElement === 'function') {
+    if (focusContainer) renderMathInElement(focusContainer);
+    if (qContainer) renderMathInElement(qContainer);
+  }
 };
 
 window.closeStudentPerformanceModal = function() {
@@ -19030,6 +19175,14 @@ window.closeStudentPerformanceModal = function() {
     try { activeReportCharts.studentMastery.destroy(); } catch(e) {}
     activeReportCharts.studentMastery = null;
   }
+  if (activeReportCharts.studentRadar) {
+    try { activeReportCharts.studentRadar.destroy(); } catch(e) {}
+    activeReportCharts.studentRadar = null;
+  }
+};
+
+window.printStudentPerformanceModal = function() {
+  window.print();
 };
 
 function renderStudentMasteryChart(subtopics) {
@@ -19060,18 +19213,18 @@ function renderStudentMasteryChart(subtopics) {
           label: 'Scholar Mastery',
           data: studentData,
           backgroundColor: bgColors,
-          borderRadius: 6,
-          barPercentage: 0.6,
+          borderRadius: 5,
+          barPercentage: 0.65,
           categoryPercentage: 0.8
         },
         {
           label: 'Class Benchmark',
           data: benchmarkData,
-          backgroundColor: 'rgba(148, 163, 184, 0.45)',
+          backgroundColor: 'rgba(148, 163, 184, 0.4)',
           borderColor: '#94a3b8',
           borderWidth: 1,
-          borderRadius: 6,
-          barPercentage: 0.6,
+          borderRadius: 5,
+          barPercentage: 0.65,
           categoryPercentage: 0.8
         }
       ]
@@ -19085,9 +19238,10 @@ function renderStudentMasteryChart(subtopics) {
           position: 'top',
           align: 'end',
           labels: {
-            boxWidth: 12,
+            boxWidth: 10,
             font: { family: 'Inter', size: 10, weight: '700' },
-            color: '#475569'
+            color: '#475569',
+            padding: 6
           }
         },
         tooltip: {
@@ -19101,18 +19255,102 @@ function renderStudentMasteryChart(subtopics) {
           min: 0,
           max: 100,
           ticks: {
-            font: { family: 'Inter', size: 10 },
+            font: { family: 'Inter', size: 9 },
             color: '#64748b',
             callback: (v) => `${v}%`
           },
-          grid: { color: 'rgba(15, 23, 42, 0.06)' }
+          grid: { color: 'rgba(15, 23, 42, 0.05)' }
         },
         y: {
           ticks: {
-            font: { family: 'Inter', size: 10, weight: '600' },
+            font: { family: 'Inter', size: 9, weight: '600' },
             color: '#334155'
           },
           grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderStudentRadarChart(radarData) {
+  if (!window.Chart) return;
+  const canvas = document.getElementById('chartStudentRadar');
+  if (!canvas) return;
+
+  if (activeReportCharts.studentRadar) {
+    try { activeReportCharts.studentRadar.destroy(); } catch(e) {}
+    activeReportCharts.studentRadar = null;
+  }
+
+  activeReportCharts.studentRadar = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: radarData.labels,
+      datasets: [
+        {
+          label: 'Scholar Competency',
+          data: radarData.studentData,
+          backgroundColor: 'rgba(16, 185, 129, 0.22)',
+          borderColor: '#10b981',
+          pointBackgroundColor: '#10b981',
+          pointBorderColor: '#ffffff',
+          pointHoverBackgroundColor: '#ffffff',
+          pointHoverBorderColor: '#10b981',
+          borderWidth: 2,
+          fill: true
+        },
+        {
+          label: 'Class Benchmark',
+          data: radarData.classBenchmark,
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: '#3b82f6',
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#ffffff',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 10,
+            font: { family: 'Inter', size: 10, weight: '700' },
+            color: '#475569',
+            padding: 6
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: {
+            display: false,
+            stepSize: 20
+          },
+          pointLabels: {
+            font: { family: 'Inter', size: 9, weight: '600' },
+            color: '#475569'
+          },
+          grid: {
+            color: 'rgba(15, 23, 42, 0.08)'
+          },
+          angleLines: {
+            color: 'rgba(15, 23, 42, 0.08)'
+          }
         }
       }
     }
