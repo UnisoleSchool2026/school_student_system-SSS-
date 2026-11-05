@@ -1661,6 +1661,23 @@ const CLASS_ROSTERS = {
   }
 };
 
+// Hydrate CLASS_ROSTERS from localStorage if available
+try {
+  const savedRosters = JSON.parse(localStorage.getItem('haps_class_rosters') || '{}');
+  Object.keys(savedRosters).forEach(key => {
+    if (CLASS_ROSTERS[key]) {
+      const existingRolls = new Set((CLASS_ROSTERS[key].students || []).map(s => String(s.roll || s.roll_number)));
+      const newStudents = (savedRosters[key].students || []).filter(s => !existingRolls.has(String(s.roll || s.roll_number)));
+      CLASS_ROSTERS[key].students = [...newStudents, ...(CLASS_ROSTERS[key].students || [])];
+      CLASS_ROSTERS[key].enrolled = CLASS_ROSTERS[key].students.length;
+    } else {
+      CLASS_ROSTERS[key] = savedRosters[key];
+    }
+  });
+} catch (e) {
+  console.warn('Could not hydrate CLASS_ROSTERS from localStorage:', e);
+}
+
 const FACULTY_SUBJECT_CLASSES = {
   PHYSICS: [
     { id: '12-NonMed', name: 'Class 12-A • Senior Physics (48 Students)' },
@@ -1926,7 +1943,20 @@ window.initPaperBuilderDropdowns = function() {
 
   // 2. Lock Class Dropdown strictly to classes assigned to this subject (No Class 10 for Physics teacher)
   const classSelect = document.getElementById('selectPaperClass');
-  const allowedClasses = FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS;
+  const allowedClasses = [...(FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS)];
+  try {
+    const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    customClasses.forEach(c => {
+      const cid = c.id || c.section;
+      if (!allowedClasses.some(x => x.id === cid)) {
+        const studentCount = (CLASS_ROSTERS[cid]?.students?.length) || 0;
+        allowedClasses.push({
+          id: cid,
+          name: `${c.name || cid} • Section ${c.section || cid} (${studentCount} Students)`
+        });
+      }
+    });
+  } catch (e) {}
   const currentClassId = teacherBuilderState.selectedClassId || allowedClasses[0].id;
   if (classSelect) {
     classSelect.innerHTML = allowedClasses.map((c, i) =>
@@ -2098,50 +2128,519 @@ window.handlePaperTopicChange = function(topicName) {
   window.updatePaperDefaultTitle(topicName);
 };
 
-window.createTeacherPaper = function(event) {
-  if (event) event.preventDefault();
-  const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
-  const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
+window.updatePaperMarksSummary = function() {
+  const c1 = Math.max(0, parseInt(document.getElementById('inputMarks1Count')?.value || 0, 10));
+  const c2 = Math.max(0, parseInt(document.getElementById('inputMarks2Count')?.value || 0, 10));
+  const c3 = Math.max(0, parseInt(document.getElementById('inputMarks3Count')?.value || 0, 10));
+  const c5 = Math.max(0, parseInt(document.getElementById('inputMarks5Count')?.value || 0, 10));
+
+  const totalQ = c1 + c2 + c3 + c5;
+  const totalMarks = (c1 * 1) + (c2 * 2) + (c3 * 3) + (c5 * 5);
+
+  const badge = document.getElementById('badgeTestTotalSummary');
+  if (badge) {
+    badge.innerHTML = `Total: ${totalQ} Questions &bull; ${totalMarks} Marks`;
+  }
+};
+
+window.handlePaperClassChange = function(classId) {
+  if (!classId) return;
+  teacherBuilderState.selectedClassId = classId;
+  const g = classId.includes('11') ? '11' : (classId.includes('10') ? '10' : '12');
+  teacherBuilderState.activeGrade = g;
+
   const classSelect = document.getElementById('selectPaperClass');
-  const targetClass = lockedText ? lockedText.split('•')[0]?.trim() : (classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A');
+  const className = classSelect?.options[classSelect.selectedIndex]?.text || classId;
+  const titleInput = document.getElementById('inputPaperTitle');
+  const chSelect = document.getElementById('selectPaperChapter');
+  const chName = chSelect?.value || 'Electric Charges and Fields';
+
+  if (titleInput) {
+    titleInput.value = `${className.split('•')[0].trim()} • Unit Test: ${chName}`;
+  }
+
+  // Sync with roster dropdown
+  const rosterSelect = document.getElementById('selectTeacherActiveRosterClass');
+  if (rosterSelect) rosterSelect.value = classId;
+
+  // Refresh chapters for new grade
   const subjSelect = document.getElementById('selectPaperSubject');
-  const subject = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text || 'Physics' : 'Physics';
+  const subjKey = subjSelect ? subjSelect.value : 'PHYSICS';
+  window.populatePaperChapters(subjKey);
+};
+
+window.createTeacherPaperDraft = async function(event) {
+  if (event) event.preventDefault();
+
+  const title = document.getElementById('inputPaperTitle')?.value?.trim() || 'Class Unit Test';
+  const classSelect = document.getElementById('selectPaperClass');
+  const classId = classSelect ? classSelect.value : (teacherBuilderState.selectedClassId || '12-NonMed');
+  const targetClassText = classSelect?.options[classSelect.selectedIndex]?.text || classId;
+
+  const subjSelect = document.getElementById('selectPaperSubject');
+  const subjectKey = subjSelect ? subjSelect.value : (teacherBuilderState.teacherSubjectKey || 'PHYSICS');
+  const subjectName = subjSelect ? subjSelect.options[subjSelect.selectedIndex]?.text : 'Physics';
+
+  const chapterSelect = document.getElementById('selectPaperChapter');
+  const chapter = chapterSelect ? chapterSelect.value : 'Electric Charges and Fields';
+
   const topicSelect = document.getElementById('selectPaperTopic');
-  const topic = topicSelect ? topicSelect.value : 'Target Concept';
+  const topic = topicSelect ? topicSelect.value : chapter;
+
   const formatSelect = document.getElementById('selectPaperFormat');
   const duration = formatSelect ? formatSelect.options[formatSelect.selectedIndex]?.text?.split('•')[0]?.replace(/^[^\w]*/, '').trim() || '45 Mins' : '45 Mins';
 
-  const newTest = {
-    id: `test_${Date.now()}`,
-    title,
-    targetClass,
-    subject,
-    topic,
-    duration,
-    submitted: '0 / 48',
-    submittedCount: 0,
-    totalCount: 48,
-    avg: '--',
-    status: 'LIVE',
-    statusBadge: '<span class="status-badge" style="background:rgba(52,211,153,0.18); color:#34d399; border:1px solid rgba(52,211,153,0.4);"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse 1.2s infinite; margin-right:4px;"></span>Active</span>'
-  };
+  const c1 = Math.max(0, parseInt(document.getElementById('inputMarks1Count')?.value || 5, 10));
+  const c2 = Math.max(0, parseInt(document.getElementById('inputMarks2Count')?.value || 3, 10));
+  const c3 = Math.max(0, parseInt(document.getElementById('inputMarks3Count')?.value || 3, 10));
+  const c5 = Math.max(0, parseInt(document.getElementById('inputMarks5Count')?.value || 1, 10));
 
-  assignedTestsState.unshift(newTest);
-  window.renderAssignedTestsTable();
+  const btn = document.getElementById('btnAssembleTestDraft');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:16px;height:16px;"></i> Assembling Draft Test...`;
+    initLucideIcons();
+  }
 
-  const liveTitle = document.getElementById('liveTestTitle');
-  if (liveTitle) liveTitle.innerText = `${targetClass} • ${title}`;
-  const liveCounter = document.getElementById('liveTestSubmissionsCounter');
-  if (liveCounter) liveCounter.innerText = `0 / 48`;
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/unit-test/generate-draft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        subject: subjectName,
+        grade: teacherBuilderState.activeGrade || (classId.includes('11') ? '11' : (classId.includes('10') ? '10' : '12')),
+        section: classId,
+        chapter,
+        topic,
+        durationMinutes: parseInt(duration, 10) || 45,
+        marksBreakdown: { count1M: c1, count2M: c2, count3M: c3, count5M: c5 },
+        teacherName: teacherBuilderState.activeTeacher?.name || 'Dr. Vikram Sharma'
+      })
+    });
 
-  const banner = document.createElement('div');
-  banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#34d399;"></i> <span><strong>Paper Assigned:</strong> "${escapeHtml(title)}" created for ${escapeHtml(targetClass)}. Switched to live test station.</span>`;
-  document.body.appendChild(banner);
+    const data = await res.json();
+    if (!data.success || !data.assessment) {
+      throw new Error(data.error || 'Failed to assemble draft test.');
+    }
+
+    const draftTest = data.assessment;
+    draftTest.targetClassText = targetClassText;
+    state.currentDraftTest = draftTest;
+
+    // Render interactive question preview and editing studio
+    window.renderUnitTestDraftStudio(draftTest);
+
+    // Smooth scroll to studio
+    const studioEl = document.getElementById('containerUnitTestDraftStudio');
+    if (studioEl) {
+      studioEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'role-switch-toast';
+    toast.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#10b981;"></i> <span><strong>Draft Assembled:</strong> "${escapeHtml(title)}" is ready. Review, swap, or publish below.</span>`;
+    document.body.appendChild(toast);
+    initLucideIcons();
+    setTimeout(() => toast.remove(), 4000);
+
+  } catch (err) {
+    console.error('Error generating draft test:', err);
+    alert('Error assembling draft test: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="sparkles" style="width:16px;height:16px;"></i> <span>Assemble Test &amp; Preview (Draft)</span>`;
+      initLucideIcons();
+    }
+  }
+};
+
+window.renderUnitTestDraftStudio = function(test) {
+  const container = document.getElementById('containerUnitTestDraftStudio');
+  if (!container || !test) return;
+
+  container.style.display = 'block';
+
+  const questionsHtml = (test.questions || []).map((q, idx) => {
+    const marksBadgeColor = q.marks === 1 ? '#2563eb' : (q.marks === 2 ? '#059669' : (q.marks === 3 ? '#d97706' : '#7c3aed'));
+    const marksBg = q.marks === 1 ? '#eff6ff' : (q.marks === 2 ? '#ecfdf5' : (q.marks === 3 ? '#fffbeb' : '#f5f3ff'));
+    const marksBorder = q.marks === 1 ? '#bfdbfe' : (q.marks === 2 ? '#a7f3d0' : (q.marks === 3 ? '#fde68a' : '#ddd6fe'));
+
+    const optionsHtml = (q.options_latex && q.options_latex.length > 0) ? `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+        ${q.options_latex.map(opt => `
+          <div style="padding:8px 12px; border-radius:6px; background:${opt.is_correct ? '#ecfdf5' : 'var(--bg-secondary)'}; border:1px solid ${opt.is_correct ? '#a7f3d0' : 'var(--border-subtle)'}; font-size:0.84rem; display:flex; align-items:center; gap:8px;">
+            <strong style="color:${opt.is_correct ? '#059669' : 'var(--text-secondary)'};">${opt.key}.</strong>
+            <span style="flex:1;">${renderLatexString(opt.latex || opt.text || '')}</span>
+            ${opt.is_correct ? '<span style="color:#059669; font-weight:800; font-size:0.75rem;">✓ Correct</span>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const solutionHtml = q.solution_latex ? `
+      <details style="margin-top:10px; background:rgba(2,132,199,0.04); border:1px solid rgba(2,132,199,0.18); border-radius:6px; padding:6px 12px;">
+        <summary style="font-size:0.75rem; font-weight:700; color:var(--accent-blue); cursor:pointer;">
+          View Step-by-Step Marking Rubric &amp; Solution ▾
+        </summary>
+        <div style="margin-top:8px; font-size:0.8rem; line-height:1.45; color:var(--text-primary);">
+          ${renderLatexString(q.solution_latex)}
+        </div>
+      </details>
+    ` : '';
+
+    return `
+      <div class="test-question-preview-card" id="draftQuestionCard_${idx + 1}" style="background:var(--bg-card); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px 18px; margin-bottom:12px; box-shadow:var(--shadow-sm); transition:all 0.15s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="background:var(--bg-secondary); border:1px solid var(--border-subtle); font-weight:800; font-size:0.82rem; padding:3px 10px; border-radius:6px; color:var(--text-primary);">
+              Question ${idx + 1}
+            </span>
+            <span style="background:${marksBg}; color:${marksBadgeColor}; border:1px solid ${marksBorder}; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:6px;">
+              ${q.marks} Mark${q.marks > 1 ? 's' : ''} &bull; ${escapeHtml(q.typeLabel || 'Problem')}
+            </span>
+            <span style="font-size:0.76rem; color:var(--text-muted);">
+              ${escapeHtml(q.chapter_name || test.chapter || '')}
+            </span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-secondary" onclick="window.openSwapQuestionModal(${idx + 1}, ${q.marks})" style="font-size:0.74rem; font-weight:700; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;" title="Swap with alternative matching question from Question Bank">
+              <i data-lucide="repeat" style="width:12px; height:12px;"></i> Swap Question
+            </button>
+            <button type="button" class="btn-secondary" onclick="window.deleteDraftQuestion(${idx + 1})" style="font-size:0.74rem; font-weight:700; padding:4px 8px; color:#e11d48; border-color:#fecdd3;" title="Delete question from test">
+              <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size:0.92rem; color:var(--text-primary); line-height:1.5; margin-bottom:6px;">
+          ${renderLatexString(q.question_latex || '')}
+        </div>
+
+        ${optionsHtml}
+        ${solutionHtml}
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="background:#ffffff; border:2px solid var(--accent-blue); border-radius:14px; padding:20px; box-shadow:0 8px 30px rgba(37,99,235,0.12);">
+      
+      <!-- Studio Header Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding-bottom:14px; margin-bottom:16px; border-bottom:1.5px solid var(--border-subtle);">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+            <span style="background:#fef3c7; color:#d97706; border:1px solid #fde68a; font-weight:800; font-size:0.74rem; padding:2px 8px; border-radius:4px; text-transform:uppercase;">
+              🟡 DRAFT &bull; UNPUBLISHED
+            </span>
+            <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800; font-size:0.74rem; padding:2px 8px; border-radius:4px;">
+              ${escapeHtml(test.code || 'Test 05')}
+            </span>
+            <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:700;">
+              Class: <span style="color:var(--text-primary);">${escapeHtml(test.targetClassText || test.section)}</span>
+            </span>
+          </div>
+          <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:var(--text-primary); letter-spacing:-0.2px;">
+            ${escapeHtml(test.title)}
+          </h3>
+          <p style="margin:4px 0 0 0; font-size:0.78rem; color:var(--text-secondary);">
+            ${escapeHtml(test.chapter || '')} &bull; Duration: <strong>${test.duration}</strong> &bull; Total: <strong style="color:var(--accent-blue);">${test.totalQuestions} Questions (${test.totalMarks} Marks)</strong>
+          </p>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" onclick="window.addDraftQuestion(2)" style="font-size:0.82rem; padding:8px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="plus-circle" style="width:14px; height:14px;"></i> Add Question
+          </button>
+          <button type="button" class="btn-primary" onclick="window.publishDraftTest('${test.id}')" style="font-size:0.84rem; padding:8px 18px; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+            <i data-lucide="send" style="width:15px; height:15px;"></i> Publish Test to Class
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice Bar -->
+      <div style="background:rgba(2,132,199,0.06); border:1px solid rgba(2,132,199,0.2); border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:center; gap:8px;">
+        <i data-lucide="info" style="width:16px; height:16px; color:var(--accent-blue); flex-shrink:0;"></i>
+        <span>
+          This test is currently in <strong>Draft mode</strong> and hidden from students. You can swap any question, add more questions, or delete unwanted questions. When ready, click <strong>"Publish Test to Class"</strong> so enrolled students can attempt it.
+        </span>
+      </div>
+
+      <!-- Questions List -->
+      <div id="draftStudioQuestionsList">
+        ${questionsHtml}
+      </div>
+
+      <!-- Bottom Studio Actions -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid var(--border-subtle); flex-wrap:wrap; gap:12px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">
+          Total: <span id="draftStudioTotalCount">${test.totalQuestions} Questions</span> &bull; <span id="draftStudioTotalMarks" style="color:var(--accent-blue);">${test.totalMarks} Marks</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper('${test.id}')" style="font-size:0.82rem; padding:8px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="printer" style="width:14px; height:14px;"></i> Print Paper View
+          </button>
+          <button type="button" class="btn-primary" onclick="window.publishDraftTest('${test.id}')" style="font-size:0.84rem; padding:8px 20px; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+            <i data-lucide="send" style="width:15px; height:15px;"></i> Publish Test to Class
+          </button>
+        </div>
+      </div>
+
+    </div>
+  `;
+
   initLucideIcons();
-  setTimeout(() => banner.remove(), 4000);
+};
 
-  switchTeacherTab('tabTeacherTakeTest');
+window.openSwapQuestionModal = async function(questionIndex, marks) {
+  const modal = document.getElementById('modalSwapQuestion');
+  const listEl = document.getElementById('swapQuestionsList');
+  const titleEl = document.getElementById('swapModalTitle');
+  const subtitleEl = document.getElementById('swapModalSubtitle');
+  if (!modal || !listEl) return;
+
+  const draft = state.currentDraftTest;
+  if (!draft) return;
+
+  titleEl.innerText = `Swap Question ${questionIndex} • ${marks} Marks`;
+  subtitleEl.innerText = `Select replacement from Question Bank (${draft.subject || 'Physics'} - ${draft.chapter || 'All Chapters'})`;
+  listEl.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);"><i data-lucide="loader-2" class="spin" style="width:20px; height:20px;"></i> Loading matching questions from bank...</div>`;
+  modal.style.display = 'flex';
+  initLucideIcons();
+
+  try {
+    const bankKey = draft.subjectKey || 'senior_physics';
+    const res = await fetch(`${getApiBaseUrl()}/api/questions/subject-banks/${bankKey}?grade=${draft.grade || '12'}`);
+    const data = await res.json();
+    const allQs = data.questions || [];
+
+    const existingIds = new Set((draft.questions || []).map(q => q.id));
+    // Filter candidates matching marks
+    const candidates = allQs.filter(q => !existingIds.has(q.id) && (Number(q.marks_weightage || q.marks || 1) === marks || (marks >= 2 && Number(q.marks_weightage || q.marks || 1) >= 2)));
+
+    if (candidates.length === 0) {
+      listEl.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">No alternative questions found matching ${marks} marks in Question Bank.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = candidates.slice(0, 10).map((cand, i) => `
+      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:8px; padding:14px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:800; color:var(--accent-blue); background:#eff6ff; padding:2px 8px; border-radius:4px;">
+            Option ${i + 1} &bull; ${cand.marks_weightage || marks} Marks
+          </span>
+          <button type="button" class="btn-primary" onclick="window.confirmSwapQuestion(${questionIndex}, '${cand.id}')" style="font-size:0.76rem; font-weight:700; padding:5px 12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; border-radius:6px; cursor:pointer;">
+            Use This Question
+          </button>
+        </div>
+        <div style="font-size:0.86rem; color:var(--text-primary); line-height:1.45; margin-bottom:6px;">
+          ${renderLatexString(cand.question_latex || cand.questionText || '')}
+        </div>
+        <span style="font-size:0.72rem; color:var(--text-muted); display:block;">
+          ${escapeHtml(cand.chapter_name || cand.chapter || '')} &bull; ${escapeHtml(cand.pyq_appearance || 'Verified CBSE/HP Bank')}
+        </span>
+      </div>
+    `).join('');
+
+    initLucideIcons();
+  } catch (err) {
+    console.error('Error fetching alternative questions:', err);
+    listEl.innerHTML = `<div style="color:#e11d48; padding:1rem;">Failed to load questions: ${escapeHtml(err.message)}</div>`;
+  }
+};
+
+window.closeSwapQuestionModal = function() {
+  const modal = document.getElementById('modalSwapQuestion');
+  if (modal) modal.style.display = 'none';
+};
+
+window.confirmSwapQuestion = async function(questionIndex, newQuestionId) {
+  const draft = state.currentDraftTest;
+  if (!draft) return;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/${draft.id}/swap-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIndex, newQuestionId })
+    });
+    const data = await res.json();
+    if (data.success && data.assessment) {
+      state.currentDraftTest = data.assessment;
+      window.renderUnitTestDraftStudio(data.assessment);
+      window.closeSwapQuestionModal();
+    }
+  } catch (e) {
+    console.error('Error swapping question:', e);
+  }
+};
+
+window.deleteDraftQuestion = async function(questionIndex) {
+  const draft = state.currentDraftTest;
+  if (!draft) return;
+  if (draft.questions && draft.questions.length <= 1) {
+    alert('Assessment must contain at least 1 question.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/${draft.id}/delete-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIndex })
+    });
+    const data = await res.json();
+    if (data.success && data.assessment) {
+      state.currentDraftTest = data.assessment;
+      window.renderUnitTestDraftStudio(data.assessment);
+    }
+  } catch (e) {
+    console.error('Error deleting question:', e);
+  }
+};
+
+window.addDraftQuestion = async function(marks = 2) {
+  const draft = state.currentDraftTest;
+  if (!draft) return;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/${draft.id}/add-question`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ marks })
+    });
+    const data = await res.json();
+    if (data.success && data.assessment) {
+      state.currentDraftTest = data.assessment;
+      window.renderUnitTestDraftStudio(data.assessment);
+    }
+  } catch (e) {
+    console.error('Error adding question:', e);
+  }
+};
+
+window.publishDraftTest = async function(testId) {
+  const draft = state.currentDraftTest;
+  if (!draft) return;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/${testId}/publish`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to publish assessment.');
+    }
+
+    const classId = draft.section || draft.targetClass || teacherBuilderState.selectedClassId || '12-NonMed';
+    
+    // Add to recorded tests table state
+    if (!RECORDED_CLASS_TESTS[classId]) {
+      RECORDED_CLASS_TESTS[classId] = [];
+    }
+
+    const newRecordedTest = {
+      id: draft.id,
+      code: draft.code || `Test ${String(RECORDED_CLASS_TESTS[classId].length + 1).padStart(2, '0')}`,
+      title: draft.title,
+      chapter: draft.chapter,
+      topic: draft.topic,
+      date: 'Nov 05, 2026',
+      duration: draft.duration || '45 Mins',
+      totalMarks: draft.totalMarks,
+      totalQuestions: draft.totalQuestions,
+      attemptedCount: 0,
+      enrolledCount: CLASS_ROSTERS[classId]?.enrolled || 48,
+      attemptedRate: '0.0%',
+      averageScore: '--',
+      averagePercentage: '--',
+      status: 'PUBLISHED',
+      highestScore: { score: '--', percentage: '--', studentName: 'Pending Attempts' },
+      lowestScore: { score: '--', percentage: '--', studentName: 'Pending Attempts' },
+      mostWrongQuestion: {
+        questionIndex: 1,
+        statement: draft.questions[0]?.question_latex || 'Problem Statement',
+        topic: draft.questions[0]?.topic || draft.topic,
+        errorRate: '0%',
+        wrongCount: 0,
+        totalAttempted: 0,
+        dominantMistake: 'No submissions recorded yet.',
+        actionRecommendation: 'Encourage students to attempt this assessment.'
+      },
+      mostCorrectQuestion: {
+        questionIndex: 1,
+        statement: draft.questions[0]?.question_latex || 'Problem Statement',
+        topic: draft.questions[0]?.topic || draft.topic,
+        successRate: '0%',
+        correctCount: 0,
+        totalAttempted: 0,
+        masteryNotes: 'Pending student completion.'
+      },
+      tiers: {
+        excellent: { count: 0, percentage: '0%', range: '> 80%', label: 'Mastery' },
+        average: { count: 0, percentage: '0%', range: '50% - 80%', label: 'Passing' },
+        belowAverage: { count: 0, percentage: '0%', range: '< 50%', label: 'Remedial' }
+      },
+      questionAnalytics: (draft.questions || []).map((q, idx) => ({
+        questionIndex: idx + 1,
+        subtopic: q.subtopic || q.topic || `Q${idx + 1}`,
+        accuracyRate: 0,
+        errorRate: 0,
+        avgSeconds: 0,
+        benchmarkSeconds: 90
+      })),
+      studentResults: []
+    };
+
+    RECORDED_CLASS_TESTS[classId].unshift(newRecordedTest);
+
+    // Save permanently in localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
+      stored[classId] = RECORDED_CLASS_TESTS[classId];
+      localStorage.setItem('haps_recorded_class_tests', JSON.stringify(stored));
+    } catch (e) {}
+
+    // Add to student published assessments
+    if (!state.publishedAssessments) state.publishedAssessments = [];
+    state.publishedAssessments.unshift(draft);
+
+    // Update student assigned test selector if in DOM
+    const studentSelect = document.getElementById('selectStudentAssignedTest');
+    if (studentSelect) {
+      const opt = document.createElement('option');
+      opt.value = draft.id;
+      opt.textContent = `${draft.title} (${draft.totalQuestions} Qs • ${draft.duration})`;
+      studentSelect.insertBefore(opt, studentSelect.firstChild);
+      studentSelect.value = draft.id;
+    }
+
+    // Hide draft studio
+    const studioEl = document.getElementById('containerUnitTestDraftStudio');
+    if (studioEl) studioEl.style.display = 'none';
+
+    // Show banner notification
+    const banner = document.createElement('div');
+    banner.className = 'role-switch-toast';
+    banner.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:#10b981;"></i> <span><strong>Test Published:</strong> "${escapeHtml(draft.title)}" is now live for ${escapeHtml(draft.targetClassText || classId)}.</span>`;
+    document.body.appendChild(banner);
+    initLucideIcons();
+    setTimeout(() => banner.remove(), 4000);
+
+    // Switch to Class Progress & Tests tab to view in recorded tests
+    window.switchTeacherTab('tabTeacherClasses');
+    window.renderRecordedTestsTable(classId);
+
+  } catch (err) {
+    console.error('Error publishing test:', err);
+    alert('Error publishing test: ' + err.message);
+  }
+};
+
+window.createTeacherPaper = function(event) {
+  return window.createTeacherPaperDraft(event);
 };
 
 // =============================================================================
@@ -3317,6 +3816,24 @@ const RECORDED_CLASS_TESTS = {
   ]
 };
 
+// Hydrate RECORDED_CLASS_TESTS from localStorage if available
+try {
+  const savedRecordedTests = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
+  Object.keys(savedRecordedTests).forEach(cid => {
+    if (Array.isArray(savedRecordedTests[cid])) {
+      if (!RECORDED_CLASS_TESTS[cid]) {
+        RECORDED_CLASS_TESTS[cid] = savedRecordedTests[cid];
+      } else {
+        const existingIds = new Set(RECORDED_CLASS_TESTS[cid].map(t => t.id));
+        const toAdd = savedRecordedTests[cid].filter(t => !existingIds.has(t.id));
+        RECORDED_CLASS_TESTS[cid] = [...toAdd, ...RECORDED_CLASS_TESTS[cid]];
+      }
+    }
+  });
+} catch (e) {
+  console.warn('Could not load recorded tests from localStorage:', e);
+}
+
 // Global active report chart references
 let activeReportCharts = {
   scoreDist: null,
@@ -3564,56 +4081,69 @@ window.viewTestReportDetail = function(testId) {
 
     <!-- 2. HIGH-IMPACT QUESTION DIAGNOSTIC CARDS (MOST WRONG vs MOST SOLVED) -->
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.5rem;">
-      <!-- CARD A: Question Jo Most of the Student Ne WRONG Kra Hai -->
-      <div class="diagnostic-highlight-card diagnostic-failed-card">
+      <!-- CARD A: Most Wrong Question (Clean, Prominent Question Number) -->
+      <div class="diagnostic-highlight-card diagnostic-failed-card" style="padding:16px 20px; border-radius:12px; background:linear-gradient(145deg, #fff5f5, #ffffff); border:1.5px solid #fecdd3; box-shadow:0 2px 6px rgba(225,29,72,0.06);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:0.75rem; font-weight:800; color:#e11d48; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
-            <i data-lucide="alert-triangle" style="width:15px; height:15px;"></i> Question Solved Wrong by Most Students
+          <span style="font-size:0.74rem; font-weight:800; color:#e11d48; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="alert-triangle" style="width:14px; height:14px;"></i> Most Wrong Question
           </span>
-          <span style="background:#ffe4e6; color:#e11d48; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.78rem;">
-            ${escapeHtml(test.mostWrongQuestion.errorRate)} Error Rate
+          <span style="background:#ffe4e6; color:#e11d48; border:1px solid #fecdd3; padding:2px 10px; border-radius:12px; font-weight:800; font-size:0.78rem;">
+            ${escapeHtml(test.mostWrongQuestion.errorRate || '77.3%')} Error Rate
           </span>
         </div>
-        <h4 style="margin:0 0 6px 0; font-size:0.96rem; font-weight:800; color:#881337;">
-          Q${test.mostWrongQuestion.questionIndex}: ${escapeHtml(test.mostWrongQuestion.statement)}
-        </h4>
-        <p style="font-size:0.8rem; color:#475569; margin:0 0 8px 0; line-height:1.4;">
-          <strong>Concept Focus:</strong> ${escapeHtml(test.mostWrongQuestion.topic)}
-        </p>
-        <div style="background:rgba(255,255,255,0.7); border:1px solid #fecdd3; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.78rem; color:#9f1239; line-height:1.45;">
-          <strong>⚠️ Stumble Breakdown (${test.mostWrongQuestion.wrongCount} of ${test.mostWrongQuestion.totalAttempted} Students Failed):</strong><br>
-          ${escapeHtml(test.mostWrongQuestion.dominantMistake)}
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:6px;">
+          <span style="font-size:1.8rem; font-weight:900; color:#881337; letter-spacing:-0.5px;">
+            Question ${test.mostWrongQuestion.questionIndex || 4}
+          </span>
+          <span style="font-size:0.8rem; color:#9f1239; font-weight:600;">
+            (${test.mostWrongQuestion.wrongCount || 34} of ${test.mostWrongQuestion.totalAttempted || 44} Students Failed)
+          </span>
         </div>
-        <div style="display:flex; align-items:center; gap:6px; font-size:0.76rem; color:#0f172a; font-weight:600;">
-          <i data-lucide="lightbulb" style="width:14px; height:14px; color:#e11d48;"></i>
-          <span><strong>Teacher Action:</strong> ${escapeHtml(test.mostWrongQuestion.actionRecommendation)}</span>
+        <div style="font-size:0.82rem; color:#475569; margin-bottom:8px;">
+          <strong style="color:var(--text-primary);">Concept Topic:</strong> ${escapeHtml(test.mostWrongQuestion.topic || 'Target Concept')}
         </div>
+        <details style="margin-top:6px; background:#fff; border:1px solid #fecdd3; border-radius:6px; padding:6px 10px;">
+          <summary style="font-size:0.75rem; font-weight:700; color:#e11d48; cursor:pointer;">
+            View Question Statement &amp; Dominant Mistake ▾
+          </summary>
+          <div style="margin-top:8px; font-size:0.78rem; color:#475569; line-height:1.45;">
+            <p style="margin:0 0 6px 0; font-weight:600; color:#881337;">${escapeHtml(test.mostWrongQuestion.statement || '')}</p>
+            <p style="margin:0 0 4px 0; color:#9f1239;"><strong>Mistake Breakdown:</strong> ${escapeHtml(test.mostWrongQuestion.dominantMistake || '')}</p>
+            <p style="margin:0; color:#0f172a;"><strong>Teacher Action:</strong> ${escapeHtml(test.mostWrongQuestion.actionRecommendation || '')}</p>
+          </div>
+        </details>
       </div>
 
-      <!-- CARD B: Question Jo Most of the Student Ne SHI Kra Hai -->
-      <div class="diagnostic-highlight-card diagnostic-solved-card">
+      <!-- CARD B: Most Corrected Question (Clean, Prominent Question Number) -->
+      <div class="diagnostic-highlight-card diagnostic-solved-card" style="padding:16px 20px; border-radius:12px; background:linear-gradient(145deg, #f0fdf4, #ffffff); border:1.5px solid #a7f3d0; box-shadow:0 2px 6px rgba(5,150,105,0.06);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:0.75rem; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
-            <i data-lucide="check-circle" style="width:15px; height:15px;"></i> Question Solved Correctly by Most Students
+          <span style="font-size:0.74rem; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="check-circle" style="width:14px; height:14px;"></i> Most Corrected Question
           </span>
-          <span style="background:#d1fae5; color:#059669; border:1px solid #a7f3d0; padding:2px 8px; border-radius:6px; font-weight:800; font-size:0.78rem;">
-            ${escapeHtml(test.mostCorrectQuestion.successRate)} Accuracy
+          <span style="background:#d1fae5; color:#059669; border:1px solid #a7f3d0; padding:2px 10px; border-radius:12px; font-weight:800; font-size:0.78rem;">
+            ${escapeHtml(test.mostCorrectQuestion.successRate || '95.5%')} Accuracy
           </span>
         </div>
-        <h4 style="margin:0 0 6px 0; font-size:0.96rem; font-weight:800; color:#064e3b;">
-          Q${test.mostCorrectQuestion.questionIndex}: ${escapeHtml(test.mostCorrectQuestion.statement)}
-        </h4>
-        <p style="font-size:0.8rem; color:#475569; margin:0 0 8px 0; line-height:1.4;">
-          <strong>Concept Focus:</strong> ${escapeHtml(test.mostCorrectQuestion.topic)}
-        </p>
-        <div style="background:rgba(255,255,255,0.7); border:1px solid #a7f3d0; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.78rem; color:#065f46; line-height:1.45;">
-          <strong>✅ Mastery Insight (${test.mostCorrectQuestion.correctCount} of ${test.mostCorrectQuestion.totalAttempted} Students Correct):</strong><br>
-          ${escapeHtml(test.mostCorrectQuestion.masteryNotes)}
+        <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:6px;">
+          <span style="font-size:1.8rem; font-weight:900; color:#064e3b; letter-spacing:-0.5px;">
+            Question ${test.mostCorrectQuestion.questionIndex || 1}
+          </span>
+          <span style="font-size:0.8rem; color:#065f46; font-weight:600;">
+            (${test.mostCorrectQuestion.correctCount || 42} of ${test.mostCorrectQuestion.totalAttempted || 44} Students Correct)
+          </span>
         </div>
-        <div style="display:flex; align-items:center; gap:6px; font-size:0.76rem; color:#0f172a; font-weight:600;">
-          <i data-lucide="award" style="width:14px; height:14px; color:#059669;"></i>
-          <span><strong>Teacher Action:</strong> Foundational retention is firm. Class is ready for higher-level problem extensions.</span>
+        <div style="font-size:0.82rem; color:#475569; margin-bottom:8px;">
+          <strong style="color:var(--text-primary);">Concept Topic:</strong> ${escapeHtml(test.mostCorrectQuestion.topic || 'Target Concept')}
         </div>
+        <details style="margin-top:6px; background:#fff; border:1px solid #a7f3d0; border-radius:6px; padding:6px 10px;">
+          <summary style="font-size:0.75rem; font-weight:700; color:#059669; cursor:pointer;">
+            View Question Statement &amp; Mastery Insight ▾
+          </summary>
+          <div style="margin-top:8px; font-size:0.78rem; color:#475569; line-height:1.45;">
+            <p style="margin:0 0 6px 0; font-weight:600; color:#064e3b;">${escapeHtml(test.mostCorrectQuestion.statement || '')}</p>
+            <p style="margin:0; color:#065f46;"><strong>Mastery Insight:</strong> ${escapeHtml(test.mostCorrectQuestion.masteryNotes || '')}</p>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -6199,6 +6729,49 @@ function setupNtaExamPaletteEngine() {
           if (data.results?.personalizedAssignment) {
             state.activeRemedialAssignment = data.results.personalizedAssignment;
           }
+
+          // Telemetry sync to teacher dashboard
+          try {
+            const sid = state.lastSubmittedAssessmentId;
+            Object.keys(RECORDED_CLASS_TESTS).forEach(cid => {
+              const testItem = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === sid);
+              if (testItem) {
+                testItem.attemptedCount = Math.min(testItem.enrolledCount || 48, (testItem.attemptedCount || 0) + 1);
+                testItem.attemptedRate = `${((testItem.attemptedCount / (testItem.enrolledCount || 48)) * 100).toFixed(1)}%`;
+                const sPct = data.results?.percentage ?? 88.5;
+                const sScore = data.results?.score ?? Math.round((testItem.totalMarks || 45) * 0.885);
+                const sTier = sPct >= 80 ? 'Excellent' : (sPct >= 50 ? 'Average' : 'Below Average');
+                if (!testItem.studentResults) testItem.studentResults = [];
+                if (!testItem.studentResults.some(r => r.name === 'Aryan Sharma')) {
+                  testItem.studentResults.unshift({
+                    roll: '101',
+                    name: 'Aryan Sharma',
+                    phone: '98160 55011',
+                    score: sScore,
+                    percentage: `${sPct}%`,
+                    tier: sTier,
+                    time: '38m'
+                  });
+                  if (testItem.tiers) {
+                    if (sTier === 'Excellent') testItem.tiers.excellent.count = (testItem.tiers.excellent.count || 0) + 1;
+                    else if (sTier === 'Average') testItem.tiers.average.count = (testItem.tiers.average.count || 0) + 1;
+                    else testItem.tiers.belowAverage.count = (testItem.tiers.belowAverage.count || 0) + 1;
+                  }
+                  const sumScores = testItem.studentResults.reduce((acc, r) => acc + (Number(r.score) || 0), 0);
+                  testItem.averageScore = (sumScores / testItem.studentResults.length).toFixed(1);
+                  testItem.averagePercentage = `${((testItem.averageScore / (testItem.totalMarks || 45)) * 100).toFixed(1)}%`;
+                }
+              }
+            });
+            const storedTests = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
+            Object.keys(RECORDED_CLASS_TESTS).forEach(cid => {
+              storedTests[cid] = RECORDED_CLASS_TESTS[cid];
+            });
+            localStorage.setItem('haps_recorded_class_tests', JSON.stringify(storedTests));
+          } catch (syncErr) {
+            console.warn('Telemetry update error:', syncErr);
+          }
+
           displayDiagnosticResults(data.results);
         } else {
           throw new Error('Fallback to local calculation');
@@ -6618,14 +7191,41 @@ async function loadStudentAssignedTests() {
   if (!selectEl) return;
 
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/assessments`);
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments?status=PUBLISHED`);
     if (res.ok) {
       const data = await res.json();
-      state.publishedAssessments = data.assessments || [];
+      state.publishedAssessments = (data.assessments || []).filter(a => a.status !== 'DRAFT');
     }
   } catch (e) {
     console.warn('Could not fetch assessments from backend, using default.');
   }
+
+  // Also include published tests from localStorage (synced with teacher dashboard)
+  try {
+    const saved = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
+    if (!state.publishedAssessments) state.publishedAssessments = [];
+    Object.values(saved).forEach(tests => {
+      if (Array.isArray(tests)) {
+        tests.forEach(t => {
+          if (t.status === 'LIVE' || t.status === 'PUBLISHED') {
+            if (!state.publishedAssessments.some(a => a.id === t.id)) {
+              state.publishedAssessments.push({
+                id: t.id,
+                title: t.title,
+                section: t.targetClass || t.section || '12-NonMed',
+                durationMinutes: parseInt(t.duration, 10) || 45,
+                questionCount: t.totalQuestions || 10,
+                status: 'PUBLISHED'
+              });
+            }
+          }
+        });
+      }
+    });
+  } catch (e) {}
+
+  // Filter out any draft tests
+  state.publishedAssessments = (state.publishedAssessments || []).filter(a => a.status !== 'DRAFT');
 
   selectEl.innerHTML = '';
   if (state.publishedAssessments.length === 0) {
@@ -10957,6 +11557,9 @@ async function submitCreateClass(event) {
         students: []
       };
     }
+    try {
+      localStorage.setItem('haps_class_rosters', JSON.stringify(CLASS_ROSTERS));
+    } catch (e) {}
 
     // 3. Add to FACULTY_SUBJECT_CLASSES
     if (!FACULTY_SUBJECT_CLASSES[activeSubjKey]) {
@@ -10994,13 +11597,22 @@ async function submitCreateClass(event) {
     // 7. Immediately switch faculty active scope to the newly created class
     await switchFacultyClassScope(section);
 
-    // 8. Update dropdowns
+    // 8. Update dropdowns across the application
+    if (window.initPaperBuilderDropdowns) {
+      window.initPaperBuilderDropdowns();
+    }
+
+    const paperSelect = document.getElementById('selectPaperClass');
+    if (paperSelect) paperSelect.value = section;
+
     const rosterSelect = document.getElementById('selectTeacherActiveRosterClass');
-    if (rosterSelect && !Array.from(rosterSelect.options).some(o => o.value === section)) {
-      const opt = document.createElement('option');
-      opt.value = section;
-      opt.textContent = `${name} (0 Students)`;
-      rosterSelect.appendChild(opt);
+    if (rosterSelect) {
+      if (!Array.from(rosterSelect.options).some(o => o.value === section)) {
+        const opt = document.createElement('option');
+        opt.value = section;
+        opt.textContent = `${name} (0 Students)`;
+        rosterSelect.appendChild(opt);
+      }
       rosterSelect.value = section;
     }
 
@@ -11013,7 +11625,12 @@ async function submitCreateClass(event) {
       drawerSelect.value = section;
     }
 
-    // 9. Re-render profile modal cards
+    // 9. Re-render class progress and roster
+    if (window.renderClassProgressDashboard) {
+      window.renderClassProgressDashboard(section);
+    }
+
+    // 10. Re-render profile modal cards
     renderFacultyClassSwitcherCards();
 
     // 10. Success Notification Toast
@@ -11038,11 +11655,27 @@ async function submitCreateClass(event) {
 
 function openAddStudentModal() {
   const modal = document.getElementById('modalAddStudentToClass');
-  if (modal) modal.style.display = 'flex';
-  const currentClass = teacherBuilderState.classes.find(c => c.id === teacherBuilderState.selectedClassId);
-  const selectSection = document.getElementById('selectNewStudentSection');
-  if (selectSection && currentClass) {
-    selectSection.value = currentClass.section || currentClass.id;
+  if (modal) {
+    const secSelect = document.getElementById('selectNewStudentSection');
+    if (secSelect) {
+      const subjKey = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+      const allowedClasses = [...(FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS)];
+      try {
+        const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+        customClasses.forEach(c => {
+          const cid = c.id || c.section;
+          if (!allowedClasses.some(x => x.id === cid)) {
+            allowedClasses.push({ id: cid, name: `${c.name || cid} (${c.section || cid})` });
+          }
+        });
+      } catch (e) {}
+      const curClassId = teacherBuilderState.selectedClassId || allowedClasses[0].id;
+      secSelect.innerHTML = allowedClasses.map(c => 
+        `<option value="${c.id}" ${c.id === curClassId ? 'selected' : ''}>${c.name}</option>`
+      ).join('');
+      secSelect.value = curClassId;
+    }
+    modal.style.display = 'flex';
   }
   const nameInput = document.getElementById('inputNewStudentName');
   if (nameInput) nameInput.focus();
@@ -11061,7 +11694,7 @@ async function submitAddStudentToClass(event) {
   const name = document.getElementById('inputNewStudentName')?.value?.trim();
   const rollNumber = document.getElementById('inputNewStudentRoll')?.value?.trim();
   const targetExam = document.getElementById('selectNewStudentTargetExam')?.value || 'JEE_MAIN';
-  const section = document.getElementById('selectNewStudentSection')?.value || teacherBuilderState.selectedClassId;
+  const section = document.getElementById('selectNewStudentSection')?.value || teacherBuilderState.selectedClassId || '12-NonMed';
   const parentPhone = document.getElementById('inputNewStudentPhone')?.value?.trim() || '+91 98160-XXXXX';
   const hostelResident = document.getElementById('selectNewStudentCategory')?.value === 'true';
 
@@ -11078,41 +11711,91 @@ async function submitAddStudentToClass(event) {
   }
 
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/curriculum/students`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        rollNumber,
-        section,
-        targetExam,
-        parentPhone,
-        hostelResident
-      })
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      // Add to local state classes
-      const targetClass = teacherBuilderState.classes.find(c => c.id === section || c.section === section);
-      if (targetClass) {
-        if (!targetClass.students) targetClass.students = [];
-        targetClass.students.push({
-          id: data.student.id || rollNumber,
-          name: data.student.full_name || name,
-          roll: data.student.roll_number || rollNumber
-        });
-      }
-
-      closeAddStudentModal();
-      updateTeacherClassScopeUI();
-      alert(`Student "${name}" (${rollNumber}) enrolled successfully into ${section} and recorded in database.`);
-    } else {
-      alert(`Enrollment Notice: ${data.error || 'Could not enroll student'}`);
+    // 1. Always update local CLASS_ROSTERS immediately
+    if (!CLASS_ROSTERS[section]) {
+      CLASS_ROSTERS[section] = {
+        name: section,
+        stream: 'Secondary Stream',
+        subject: teacherBuilderState.activeTeacher?.subjectName || 'Physics',
+        enrolled: 0,
+        attendance: '100%',
+        average: '--',
+        students: []
+      };
     }
+
+    const newStudentObj = {
+      roll: rollNumber,
+      name: name,
+      phone: parentPhone || '98160 99001',
+      parent: parentPhone || '98160 99002',
+      targetExam,
+      hostelResident,
+      turnIn: 'Enrolled Today',
+      score: '--',
+      status: 'Active'
+    };
+
+    CLASS_ROSTERS[section].students = CLASS_ROSTERS[section].students || [];
+    const dupIdx = CLASS_ROSTERS[section].students.findIndex(s => String(s.roll || s.roll_number) === String(rollNumber));
+    if (dupIdx >= 0) {
+      CLASS_ROSTERS[section].students[dupIdx] = newStudentObj;
+    } else {
+      CLASS_ROSTERS[section].students.unshift(newStudentObj);
+    }
+    CLASS_ROSTERS[section].enrolled = CLASS_ROSTERS[section].students.length;
+
+    try {
+      localStorage.setItem('haps_class_rosters', JSON.stringify(CLASS_ROSTERS));
+    } catch (e) {}
+
+    // Update teacherBuilderState.classes
+    if (!teacherBuilderState.classes) teacherBuilderState.classes = [];
+    const targetClass = teacherBuilderState.classes.find(c => c.id === section || c.section === section);
+    if (targetClass) {
+      if (!targetClass.students) targetClass.students = [];
+      targetClass.students.push({
+        id: rollNumber,
+        name: name,
+        roll: rollNumber
+      });
+    }
+
+    // 2. Try backend sync
+    try {
+      await fetch(`${getApiBaseUrl()}/api/curriculum/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          rollNumber,
+          section,
+          targetExam,
+          parentPhone,
+          hostelResident
+        })
+      });
+    } catch (apiErr) {
+      console.warn('Backend student sync warning:', apiErr);
+    }
+
+    // 3. Close modal & re-render UI
+    closeAddStudentModal();
+    if (window.renderClassRoster) window.renderClassRoster(section);
+    if (window.renderClassProgressDashboard) window.renderClassProgressDashboard(section);
+    if (window.initPaperBuilderDropdowns) window.initPaperBuilderDropdowns();
+
+    // 4. Toast notification
+    const toast = document.createElement('div');
+    toast.className = 'role-switch-toast';
+    toast.innerHTML = `<i data-lucide="user-check" style="width:16px; height:16px; color:#34d399;"></i> <span>Enrolled <strong>${escapeHtml(name)}</strong> (Roll #${escapeHtml(rollNumber)}) into <strong>${escapeHtml(CLASS_ROSTERS[section]?.name || section)}</strong>.</span>`;
+    document.body.appendChild(toast);
+    initLucideIcons();
+    setTimeout(() => toast.remove(), 4000);
+
   } catch (err) {
     console.error('Error adding student:', err);
-    alert('Failed to connect to backend server. Please verify backend is running.');
+    alert('Error enrolling student: ' + err.message);
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;

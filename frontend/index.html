@@ -1004,30 +1004,24 @@
               </span>
             </div>
 
-            <form id="formTeacherPaperBuilder" onsubmit="event.preventDefault(); window.createTeacherPaper(event);">
+            <form id="formTeacherPaperBuilder" onsubmit="event.preventDefault(); window.createTeacherPaperDraft(event);">
               <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.25rem;">
                 
-                <!-- Left Column: Curriculum & Topics (DROPDOWNS ONLY, NO LIST NOISE) -->
+                <!-- Left Column: Curriculum & Topics -->
                 <div style="display:flex; flex-direction:column; gap:12px;">
                   <div class="test-form-group">
-                    <label class="test-form-label">Target Class Section (Locked to Faculty Profile)</label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; background:var(--bg-card-hover); border:1px solid var(--border-subtle); border-radius:8px;">
-                      <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
-                        <strong style="font-size:0.86rem; color:var(--text-primary);" id="lockedTargetClassText">Class 12-A &bull; Senior Physics (48 Students)</strong>
-                      </div>
-                      <button type="button" onclick="openFacultyClassSwitcherModal()" class="btn-change-scope-link" style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); color:var(--accent-cyan); font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:4px; cursor:pointer;" title="Click to switch active teaching class in your profile">
-                        Switch in Profile ⇄
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <label class="test-form-label" for="selectPaperClass" style="font-weight:700; color:var(--text-primary); margin:0;">
+                        <i data-lucide="graduation-cap" style="width:15px; height:15px; color:var(--accent-blue); display:inline; vertical-align:middle;"></i> Select Class for Test *
+                      </label>
+                      <button type="button" onclick="window.openCreateClassModal()" style="background:transparent; border:none; color:var(--accent-blue); font-size:0.75rem; font-weight:700; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                        <i data-lucide="plus-circle" style="width:13px; height:13px;"></i> Create New Class
                       </button>
                     </div>
-                    <!-- Preserved select element for internal script compatibility -->
-                    <select class="form-select" id="selectPaperClass" style="display:none !important;">
-                      <option value="12-NonMed" selected>Class 12-A &bull; Senior Physics (48 Students)</option>
-                      <option value="11-NonMed">Class 11-NonMed &bull; Physics (42 Students)</option>
-                      <option value="11-Med">Class 11-Med &bull; Biology &amp; Physics (40 Students)</option>
-                      <option value="12-Med">Class 12-Med &bull; Senior Medical (38 Students)</option>
-                      <option value="10-Science-A">Class 10-Science &bull; Section A (45 Students)</option>
+                    <select class="form-select" id="selectPaperClass" onchange="window.handlePaperClassChange(this.value)" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.86rem; font-weight:700; background:var(--bg-secondary); border:1.5px solid var(--border-focus); color:var(--text-primary);">
+                      <!-- Populated dynamically with teacher's created & assigned classes -->
                     </select>
+                    <span id="lockedTargetClassText" style="display:none;"></span>
                   </div>
 
                   <div class="test-form-group">
@@ -1054,7 +1048,7 @@
                       Select Particular Topic / Concept (Dropdown) *
                     </label>
                     <select class="form-select" id="selectPaperTopic" onchange="window.handlePaperTopicChange(this.value)" style="width:100%; border:1.5px solid var(--border-focus); color:var(--text-primary); padding:10px 12px; border-radius:8px; font-size:0.88rem; font-weight:600;">
-                      <!-- Populated dynamically: Clean dropdown of specific topics, NO LIST NOISE -->
+                      <!-- Populated dynamically: Clean dropdown of specific topics -->
                     </select>
                   </div>
                 </div>
@@ -1062,22 +1056,24 @@
                 <!-- Right Column: Exam Format & Settings -->
                 <div style="display:flex; flex-direction:column; gap:12px;">
                   <div class="test-form-group">
-                    <label class="test-form-label" for="inputPaperTitle">Assessment Title *</label>
-                    <input type="text" id="inputPaperTitle" class="form-control" value="Class 12-A &bull; Unit Test: Electric Charges and Fields" placeholder="e.g. Unit Test: Electric Charges and Fields" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;" required>
+                    <label class="test-form-label" for="inputPaperTitle">Assessment Title / Topic *</label>
+                    <input type="text" id="inputPaperTitle" class="form-control" value="Class 12-A • Unit Test: Electric Charges and Fields" placeholder="e.g. Unit Test: Electric Charges and Fields" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;" required>
                   </div>
 
                   <div class="test-form-group">
-                    <label class="test-form-label" for="selectPaperFormat">Format &amp; Duration *</label>
+                    <label class="test-form-label" for="selectPaperFormat">Exam Duration *</label>
                     <select class="form-select" id="selectPaperFormat" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
-                      <option value="QUIZ_15">⚡ 15-Min Quick Quiz (5 Qs &bull; 20 Marks)</option>
-                      <option value="UNIT_45" selected>📝 45-Min Unit Test (15 Qs &bull; 45 Marks)</option>
-                      <option value="TERM_90">⏳ 90-Min Mid-Term Assessment (20 Qs &bull; 60 Marks)</option>
-                      <option value="MOCK_180">🎯 180-Min Full Board / NTA Mock (30 Qs &bull; 100 Marks)</option>
+                      <option value="QUIZ_15">⚡ 15-Min Quick Quiz (15 Mins)</option>
+                      <option value="RAPID_30">⏱️ 30-Min Rapid Test (30 Mins)</option>
+                      <option value="UNIT_45" selected>📝 45-Min Unit Test (45 Mins)</option>
+                      <option value="TERM_60">⏳ 60-Min Period Assessment (60 Mins)</option>
+                      <option value="TERM_90">⌛ 90-Min Mid-Term Assessment (90 Mins)</option>
+                      <option value="MOCK_180">🎯 180-Min Full Board / NTA Mock (180 Mins)</option>
                     </select>
                   </div>
 
                   <div class="test-form-group">
-                    <label class="test-form-label" for="selectPaperDifficulty">Difficulty Standard *</label>
+                    <label class="test-form-label" for="selectPaperDifficulty">Difficulty Standard</label>
                     <select class="form-select" id="selectPaperDifficulty" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="BOARD">CBSE / HP Board Standard (NCERT Step-by-Step)</option>
                       <option value="BALANCED" selected>Balanced Track (60% Board + 40% JEE Main)</option>
@@ -1086,7 +1082,7 @@
                   </div>
 
                   <div class="test-form-group">
-                    <label class="test-form-label" for="selectPaperQuestionTypes">Question Type Mix *</label>
+                    <label class="test-form-label" for="selectPaperQuestionTypes">Question Type Mix</label>
                     <select class="form-select" id="selectPaperQuestionTypes" style="width:100%; padding:9px 12px; border-radius:8px; font-size:0.85rem;">
                       <option value="MIXED" selected>Standard Balanced (MCQs + Short Answer + Derivation)</option>
                       <option value="OBJECTIVE">100% Objective (NTA Style MCQs &amp; Assertion-Reason)</option>
@@ -1095,25 +1091,62 @@
                   </div>
                 </div>
 
+                <!-- Marks Breakdown: 1M, 2M, 3M, 5M Questions Grid -->
+                <div class="test-form-group" style="grid-column: span 2; background:rgba(2, 132, 199, 0.05); border:1.5px solid rgba(2, 132, 199, 0.22); border-radius:10px; padding:14px 16px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                      <strong style="font-size:0.92rem; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="layers" style="width:16px; height:16px; color:var(--accent-blue);"></i> Questions Marks Weightage Distribution *
+                      </strong>
+                      <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:2px;">
+                        Specify how many questions of 1 mark, 2 marks, 3 marks, and 5 marks to include in this test:
+                      </span>
+                    </div>
+                    <div id="badgeTestTotalSummary" style="font-size:0.82rem; font-weight:800; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; padding:4px 14px; border-radius:20px; box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+                      Total: 12 Questions &bull; 25 Marks
+                    </div>
+                  </div>
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px;">
+                    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 12px; text-align:center;">
+                      <span style="font-size:0.74rem; font-weight:800; color:#2563eb; display:block; margin-bottom:4px;">1 Mark (MCQ / Obj)</span>
+                      <input type="number" id="inputMarks1Count" value="5" min="0" max="30" oninput="window.updatePaperMarksSummary()" class="form-control" style="width:100%; text-align:center; font-weight:800; font-size:1.05rem; padding:6px 8px; border-radius:6px;">
+                    </div>
+                    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 12px; text-align:center;">
+                      <span style="font-size:0.74rem; font-weight:800; color:#059669; display:block; margin-bottom:4px;">2 Marks (Short)</span>
+                      <input type="number" id="inputMarks2Count" value="3" min="0" max="20" oninput="window.updatePaperMarksSummary()" class="form-control" style="width:100%; text-align:center; font-weight:800; font-size:1.05rem; padding:6px 8px; border-radius:6px;">
+                    </div>
+                    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 12px; text-align:center;">
+                      <span style="font-size:0.74rem; font-weight:800; color:#d97706; display:block; margin-bottom:4px;">3 Marks (Numerical)</span>
+                      <input type="number" id="inputMarks3Count" value="3" min="0" max="15" oninput="window.updatePaperMarksSummary()" class="form-control" style="width:100%; text-align:center; font-weight:800; font-size:1.05rem; padding:6px 8px; border-radius:6px;">
+                    </div>
+                    <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; padding:10px 12px; text-align:center;">
+                      <span style="font-size:0.74rem; font-weight:800; color:#7c3aed; display:block; margin-bottom:4px;">5 Marks (Derivation)</span>
+                      <input type="number" id="inputMarks5Count" value="1" min="0" max="10" oninput="window.updatePaperMarksSummary()" class="form-control" style="width:100%; text-align:center; font-weight:800; font-size:1.05rem; padding:6px 8px; border-radius:6px;">
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               <!-- Action Bar -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid rgba(255,255,255,0.08); flex-wrap:wrap; gap:12px;">
                 <div style="font-size:0.8rem; color:#94a3b8;">
-                  Auto-generates questions with authentic step marking rubrics and solutions.
+                  Test will be assembled in <strong>Draft mode</strong> for teacher preview, question swap, addition, and deletion before publishing.
                 </div>
                 <div style="display:flex; gap:10px;">
-                  <button type="button" class="btn-secondary" onclick="window.previewTeacherPaper()" style="padding:10px 18px; font-size:0.85rem; font-weight:700; border-radius:8px; cursor:pointer; min-height:44px; display:inline-flex; align-items:center; gap:6px;">
-                    <i data-lucide="printer" style="width:15px; height:15px;"></i> Preview &amp; Print Paper
-                  </button>
-                  <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.85rem; padding:10px 22px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff; min-height:44px;">
-                    <i data-lucide="send" style="width:16px; height:16px;"></i>
-                    <span>Create &amp; Assign to Students</span>
+                  <button type="submit" class="btn-primary" id="btnAssembleTestDraft" style="background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; font-size:0.86rem; padding:10px 22px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none; color:#fff; min-height:44px; box-shadow:0 3px 10px rgba(37,99,235,0.3);">
+                    <i data-lucide="sparkles" style="width:16px; height:16px;"></i>
+                    <span>Assemble Test &amp; Preview (Draft)</span>
                   </button>
                 </div>
               </div>
             </form>
           </div>
+        </div>
+
+        <!-- DRAFT TEST PREVIEW & INTERACTIVE QUESTION STUDIO (Shown upon Assemble Test) -->
+        <div id="containerUnitTestDraftStudio" style="display:none; margin-bottom:1.5rem;">
+          <!-- Dynamically populated by window.renderUnitTestDraftStudio(test) -->
         </div>
         </div>
         <!-- End of Submode 1 (Unit Test) -->
@@ -3568,6 +3601,30 @@ _Unisole AI School Scholar Assistant_</div>
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Swap Question from Question Bank -->
+  <div class="modal-overlay" id="modalSwapQuestion" style="display: none; z-index: 10005;">
+    <div class="modal-card" style="max-width: 680px; max-height: 85vh; display:flex; flex-direction:column; box-shadow: 0 20px 45px rgba(0,0,0,0.6);">
+      <div style="background: linear-gradient(135deg, #0284c7, #2563eb); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i data-lucide="repeat" style="width:20px; height:20px;"></i>
+          <div>
+            <strong style="font-size:1.05rem; display:block;" id="swapModalTitle">Swap Question &bull; Select Replacement</strong>
+            <p style="font-size:0.75rem; margin:0; opacity:0.9;" id="swapModalSubtitle">Select an alternative question of matching marks from Question Bank</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeSwapQuestionModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      <div style="padding: 16px 20px; overflow-y:auto; flex:1; background: var(--bg-card);" id="swapQuestionsList">
+        <!-- Alternative questions populated dynamically -->
+      </div>
+      <div style="padding: 12px 20px; background:var(--bg-secondary); border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end;">
+        <button type="button" class="btn-secondary" onclick="window.closeSwapQuestionModal()" style="font-size:0.84rem; padding:6px 16px;">Cancel</button>
+      </div>
     </div>
   </div>
 

@@ -31,7 +31,7 @@ const {
 router.get('/', (req, res) => {
   try {
     let list = inMemoryStore.assessments || [];
-    const { subject, subjectKey } = req.query;
+    const { subject, subjectKey, section, classId, status } = req.query;
     const sKey = (subjectKey || subject || '').toUpperCase().trim();
     if (sKey) {
       list = list.filter(a => {
@@ -40,21 +40,44 @@ router.get('/', (req, res) => {
         return aKey === sKey || aSub === sKey || aSub.includes(sKey);
       });
     }
+
+    const secFilter = (section || classId || '').trim().toLowerCase();
+    if (secFilter) {
+      list = list.filter(a => {
+        const aSec = (a.section || a.targetClass || '').trim().toLowerCase();
+        return aSec === secFilter || aSec.includes(secFilter) || secFilter.includes(aSec);
+      });
+    }
+
+    const statusFilter = (status || '').toUpperCase().trim();
+    if (statusFilter) {
+      list = list.filter(a => {
+        const aStatus = (a.status || 'PUBLISHED').toUpperCase().trim();
+        return aStatus === statusFilter;
+      });
+    }
+
     res.json({
       success: true,
       count: list.length,
       assessments: list.map(a => ({
         id: a.id,
+        code: a.code || `Test ${a.id.slice(-2)}`,
         title: a.title,
         description: a.description,
         teacherName: a.teacherName,
         grade: a.grade,
-        section: a.section,
+        section: a.section || a.targetClass,
+        targetClass: a.targetClass || a.section,
         board: a.board,
         subject: a.subject,
-        durationMinutes: a.durationMinutes,
+        chapter: a.chapter,
+        topic: a.topic,
+        duration: a.duration || `${a.durationMinutes || 45} Mins`,
+        durationMinutes: a.durationMinutes || 45,
         totalMarks: a.totalMarks,
-        questionCount: a.questions ? a.questions.length : 0,
+        questionCount: a.questions ? a.questions.length : (a.totalQuestions || 0),
+        status: a.status || 'PUBLISHED',
         createdAt: a.createdAt
       }))
     });
@@ -630,6 +653,357 @@ router.post('/auto-generate', async (req, res) => {
       success: true,
       message: `Auto-generated ${examType} test paper with ${newAssessment.questions.length} questions.`,
       assessment: newAssessment
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ============================================================================
+// 5B. TEACHER UNIT TEST CREATOR: MARKS-DISTRIBUTED DRAFT GENERATOR & CUSTOMIZER
+// ============================================================================
+
+// POST /api/assessments/unit-test/generate-draft - Assemble draft test with marks breakdown
+router.post('/unit-test/generate-draft', (req, res) => {
+  try {
+    const {
+      title,
+      subject = 'Physics',
+      grade = '12',
+      section = '12-NonMed',
+      chapter,
+      topic,
+      durationMinutes = 45,
+      marksBreakdown = {},
+      teacherName = 'Dr. Vikram Sharma'
+    } = req.body;
+
+    const count1M = Math.max(0, parseInt(marksBreakdown.count1M ?? 5, 10));
+    const count2M = Math.max(0, parseInt(marksBreakdown.count2M ?? 3, 10));
+    const count3M = Math.max(0, parseInt(marksBreakdown.count3M ?? 3, 10));
+    const count5M = Math.max(0, parseInt(marksBreakdown.count5M ?? 1, 10));
+
+    const totalQuestions = count1M + count2M + count3M + count5M;
+    const totalMarks = (count1M * 1) + (count2M * 2) + (count3M * 3) + (count5M * 5);
+
+    if (totalQuestions === 0) {
+      return res.status(400).json({ success: false, error: 'Please specify at least 1 question across marks breakdown.' });
+    }
+
+    const sUpper = (subject || '').toUpperCase();
+    const isC10 = String(grade) === '10';
+    let bankKey = 'senior_physics';
+    if (isC10) {
+      bankKey = sUpper.includes('MATH') ? 'class10_maths' : 'class10_science';
+    } else {
+      if (sUpper.includes('PHYS')) bankKey = 'senior_physics';
+      else if (sUpper.includes('CHEM')) bankKey = 'senior_chemistry';
+      else if (sUpper.includes('BIO')) bankKey = 'senior_biology';
+      else if (sUpper.includes('MATH')) bankKey = 'senior_mathematics';
+    }
+
+    const allBankQuestions = (inMemoryStore.subjectBanks && inMemoryStore.subjectBanks[bankKey]) ? inMemoryStore.subjectBanks[bankKey] : [];
+
+    let candidatePool = allBankQuestions;
+    if (chapter) {
+      const chClean = chapter.toLowerCase().replace(/chapter\s*[0-9]+:?/i, '').trim();
+      const chapterMatches = allBankQuestions.filter(q => {
+        const qCh = (q.chapter_name || q.chapter || '').toLowerCase();
+        return qCh.includes(chClean) || chClean.includes(qCh);
+      });
+      if (chapterMatches.length > 0) {
+        candidatePool = chapterMatches;
+      }
+    }
+
+    const selectedQuestions = [];
+    const usedIds = new Set();
+
+    const pickQuestionsForMarks = (targetMarks, neededCount, typeLabel) => {
+      if (neededCount <= 0) return;
+      const exact = candidatePool.filter(q => !usedIds.has(q.id) && Number(q.marks_weightage || q.marks || 1) === targetMarks);
+      for (const q of exact) {
+        if (selectedQuestions.length >= totalQuestions) break;
+        usedIds.add(q.id);
+        selectedQuestions.push({
+          ...q,
+          marks: targetMarks,
+          marks_weightage: targetMarks,
+          typeLabel
+        });
+        if (selectedQuestions.filter(sq => sq.marks === targetMarks).length >= neededCount) break;
+      }
+
+      const currentOfThisMark = selectedQuestions.filter(sq => sq.marks === targetMarks).length;
+      if (currentOfThisMark < neededCount) {
+        const remaining = candidatePool.filter(q => !usedIds.has(q.id));
+        for (const q of remaining) {
+          usedIds.add(q.id);
+          selectedQuestions.push({
+            ...q,
+            marks: targetMarks,
+            marks_weightage: targetMarks,
+            typeLabel
+          });
+          if (selectedQuestions.filter(sq => sq.marks === targetMarks).length >= neededCount) break;
+        }
+      }
+    };
+
+    pickQuestionsForMarks(1, count1M, '1 Mark (Objective/MCQ)');
+    pickQuestionsForMarks(2, count2M, '2 Marks (Short Conceptual)');
+    pickQuestionsForMarks(3, count3M, '3 Marks (Numerical/Reasoning)');
+    pickQuestionsForMarks(5, count5M, '5 Marks (Long Derivation/Problem)');
+
+    const formattedQuestions = selectedQuestions.map((q, idx) => ({
+      id: q.id || `q_test_${Date.now()}_${idx + 1}`,
+      questionIndex: idx + 1,
+      marks: q.marks || 1,
+      marks_weightage: q.marks || 1,
+      typeLabel: q.typeLabel || `${q.marks} Mark${q.marks > 1 ? 's' : ''}`,
+      topic: q.topic || topic || chapter || 'Curriculum Focus',
+      subtopic: q.subtopic || 'Core Concept',
+      chapter_name: q.chapter_name || chapter || 'Main Chapter',
+      question_latex: q.question_latex || q.questionText || `Question ${idx + 1}`,
+      options_latex: q.options_latex || q.options || [],
+      correct_answer: q.correct_answer || q.correct_answer_latex || 'A',
+      correct_answer_latex: q.correct_answer_latex || q.correct_answer || 'A',
+      solution_latex: q.solution_latex || '',
+      socratic_hints: q.socratic_hints || []
+    }));
+
+    const testId = `test_unit_${Date.now()}`;
+    const testCode = `Test ${String((inMemoryStore.assessments || []).length + 1).padStart(2, '0')}`;
+    const finalTitle = title || `${chapter || subject} Assessment (${totalMarks} Marks)`;
+
+    const newAssessment = {
+      id: testId,
+      code: testCode,
+      title: finalTitle,
+      chapter: chapter || 'Unit Assessment',
+      topic: topic || chapter || 'Core Syllabus',
+      targetClass: section,
+      grade: String(grade),
+      section: section,
+      subject: subject,
+      subjectKey: bankKey,
+      duration: `${durationMinutes} Mins`,
+      durationMinutes: Number(durationMinutes),
+      totalMarks: totalMarks,
+      totalQuestions: formattedQuestions.length,
+      marksBreakdown: { count1M, count2M, count3M, count5M },
+      status: 'DRAFT', // Unpublished by default!
+      teacherName: teacherName,
+      questions: formattedQuestions,
+      createdAt: new Date().toISOString()
+    };
+
+    if (!inMemoryStore.assessments) inMemoryStore.assessments = [];
+    inMemoryStore.assessments.unshift(newAssessment);
+
+    res.status(201).json({
+      success: true,
+      message: 'Draft assessment assembled. Ready for teacher preview & custom question edits.',
+      assessment: newAssessment
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/assessments/:id/publish - Set status to PUBLISHED so class students can see and take test
+router.post('/:id/publish', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const assessment = (inMemoryStore.assessments || []).find(a => a.id === id);
+    if (!assessment) {
+      return res.status(404).json({ success: false, error: `Assessment "${id}" not found.` });
+    }
+
+    assessment.status = 'PUBLISHED';
+    assessment.publishedAt = new Date().toISOString();
+
+    // Emit event to Kafka/Telemetry
+    try {
+      await emitEvent('assessment.published', assessment.id, {
+        title: assessment.title,
+        grade: assessment.grade,
+        section: assessment.section || assessment.targetClass,
+        questionCount: assessment.questions ? assessment.questions.length : 0
+      });
+    } catch (e) {}
+
+    res.json({
+      success: true,
+      message: `Test "${assessment.title}" is now published to ${assessment.section || assessment.targetClass}!`,
+      assessment
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/assessments/:id/swap-question - Swap question in assessment
+router.post('/:id/swap-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionIndex, newQuestionId } = req.body;
+    const assessment = (inMemoryStore.assessments || []).find(a => a.id === id);
+    if (!assessment) {
+      return res.status(404).json({ success: false, error: `Assessment "${id}" not found.` });
+    }
+
+    const qIdx = parseInt(questionIndex, 10) - 1;
+    if (qIdx < 0 || qIdx >= (assessment.questions || []).length) {
+      return res.status(400).json({ success: false, error: 'Invalid questionIndex.' });
+    }
+
+    const currentQ = assessment.questions[qIdx];
+    const targetMarks = Number(currentQ.marks || 1);
+    const bankKey = assessment.subjectKey || 'senior_physics';
+    const bankPool = (inMemoryStore.subjectBanks && inMemoryStore.subjectBanks[bankKey]) ? inMemoryStore.subjectBanks[bankKey] : [];
+
+    const existingIds = new Set((assessment.questions || []).map(q => q.id));
+
+    let replacement = null;
+    if (newQuestionId) {
+      replacement = bankPool.find(q => q.id === newQuestionId);
+    }
+    if (!replacement) {
+      // Find candidate with same marks
+      replacement = bankPool.find(q => !existingIds.has(q.id) && Number(q.marks_weightage || q.marks || 1) === targetMarks);
+    }
+    if (!replacement) {
+      replacement = bankPool.find(q => !existingIds.has(q.id));
+    }
+
+    if (!replacement) {
+      return res.status(400).json({ success: false, error: 'No alternative questions available to swap.' });
+    }
+
+    const swapped = {
+      ...replacement,
+      id: replacement.id || `q_swap_${Date.now()}`,
+      questionIndex: qIdx + 1,
+      marks: targetMarks,
+      marks_weightage: targetMarks,
+      typeLabel: currentQ.typeLabel || `${targetMarks} Marks`,
+      question_latex: replacement.question_latex,
+      options_latex: replacement.options_latex || [],
+      correct_answer: replacement.correct_answer || replacement.correct_answer_latex || 'A',
+      correct_answer_latex: replacement.correct_answer_latex || replacement.correct_answer || 'A',
+      solution_latex: replacement.solution_latex || ''
+    };
+
+    assessment.questions[qIdx] = swapped;
+
+    res.json({
+      success: true,
+      message: `Question ${qIdx + 1} swapped successfully.`,
+      swappedQuestion: swapped,
+      assessment
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/assessments/:id/delete-question - Delete question from assessment
+router.post('/:id/delete-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionIndex } = req.body;
+    const assessment = (inMemoryStore.assessments || []).find(a => a.id === id);
+    if (!assessment) {
+      return res.status(404).json({ success: false, error: `Assessment "${id}" not found.` });
+    }
+
+    const qIdx = parseInt(questionIndex, 10) - 1;
+    if (qIdx < 0 || qIdx >= (assessment.questions || []).length) {
+      return res.status(400).json({ success: false, error: 'Invalid questionIndex.' });
+    }
+
+    if (assessment.questions.length <= 1) {
+      return res.status(400).json({ success: false, error: 'Assessment must contain at least 1 question.' });
+    }
+
+    const deletedQ = assessment.questions.splice(qIdx, 1)[0];
+    assessment.questions.forEach((q, idx) => { q.questionIndex = idx + 1; });
+    assessment.totalQuestions = assessment.questions.length;
+    assessment.totalMarks = assessment.questions.reduce((sum, q) => sum + Number(q.marks || 1), 0);
+
+    res.json({
+      success: true,
+      message: `Question ${qIdx + 1} deleted.`,
+      deletedQuestion: deletedQ,
+      assessment
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/assessments/:id/add-question - Add question to assessment
+router.post('/:id/add-question', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { marks = 2, customQuestion } = req.body;
+    const assessment = (inMemoryStore.assessments || []).find(a => a.id === id);
+    if (!assessment) {
+      return res.status(404).json({ success: false, error: `Assessment "${id}" not found.` });
+    }
+
+    let addedQ = null;
+    const targetMarks = Number(marks || 2);
+    if (customQuestion && customQuestion.question_latex) {
+      addedQ = {
+        id: `q_custom_${Date.now()}`,
+        questionIndex: assessment.questions.length + 1,
+        marks: targetMarks,
+        marks_weightage: targetMarks,
+        typeLabel: `${targetMarks} Mark${targetMarks > 1 ? 's' : ''}`,
+        topic: customQuestion.topic || assessment.topic,
+        chapter_name: customQuestion.chapter_name || assessment.chapter,
+        question_latex: customQuestion.question_latex,
+        options_latex: customQuestion.options_latex || [],
+        correct_answer: customQuestion.correct_answer || 'A',
+        correct_answer_latex: customQuestion.correct_answer || 'A',
+        solution_latex: customQuestion.solution_latex || ''
+      };
+    } else {
+      const bankKey = assessment.subjectKey || 'senior_physics';
+      const bankPool = (inMemoryStore.subjectBanks && inMemoryStore.subjectBanks[bankKey]) ? inMemoryStore.subjectBanks[bankKey] : [];
+      const existingIds = new Set((assessment.questions || []).map(q => q.id));
+      const candidate = bankPool.find(q => !existingIds.has(q.id) && Number(q.marks_weightage || q.marks || 1) === targetMarks) || bankPool.find(q => !existingIds.has(q.id));
+
+      if (!candidate) {
+        return res.status(400).json({ success: false, error: 'No available question found to add.' });
+      }
+
+      addedQ = {
+        ...candidate,
+        id: candidate.id || `q_add_${Date.now()}`,
+        questionIndex: assessment.questions.length + 1,
+        marks: targetMarks,
+        marks_weightage: targetMarks,
+        typeLabel: `${targetMarks} Mark${targetMarks > 1 ? 's' : ''}`,
+        question_latex: candidate.question_latex,
+        options_latex: candidate.options_latex || [],
+        correct_answer: candidate.correct_answer || candidate.correct_answer_latex || 'A',
+        correct_answer_latex: candidate.correct_answer_latex || candidate.correct_answer || 'A',
+        solution_latex: candidate.solution_latex || ''
+      };
+    }
+
+    assessment.questions.push(addedQ);
+    assessment.totalQuestions = assessment.questions.length;
+    assessment.totalMarks = assessment.questions.reduce((sum, q) => sum + Number(q.marks || 1), 0);
+
+    res.json({
+      success: true,
+      message: `Question added (${targetMarks} Marks).`,
+      addedQuestion: addedQ,
+      assessment
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
