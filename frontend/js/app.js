@@ -141,6 +141,7 @@ const state = {
     { student: 'Kavya Verma', subtopic: 'Torque Conservation', timeSpent: '48s', hesitation: '5s', status: 'CORRECT', category: 'FAST_ACCURATE', badge: 'badge-mastered' }
   ]
 };
+window.state = state;
 
 // DOM Content Loaded Handler
 document.addEventListener('DOMContentLoaded', () => {
@@ -2765,6 +2766,12 @@ window.publishDraftTest = async function(testId) {
       title: draft.title,
       chapter: draft.chapter,
       topic: draft.topic,
+      subject: draft.subject,
+      subjectKey: draft.subjectKey || teacherBuilderState.teacherSubjectKey,
+      targetClass: classId,
+      targetClassText: draft.targetClassText,
+      marksBreakdown: draft.marksBreakdown,
+      questions: draft.questions,
       date: 'Nov 05, 2026',
       duration: draft.duration || '45 Mins',
       totalMarks: tMarks,
@@ -3262,10 +3269,10 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
 
   // Blueprints
   if (formatKey === 'UNIT_45') {
-    // Exactly 15 Questions across Section A (5 MCQs), Section B (5 Short), Section C (5 Long Derivations/Numericals) = 45 Marks
+    // Exactly 15 Questions across Section A (5 MCQs, 1M each = 5M), Section B (5 Short, 2M each = 10M), Section C (5 Numericals, 3M each = 15M), Section D (3 Long Derivations, 5M each = 15M) = 45 Marks
     const questions = [];
     // Section A: 5 MCQs (1 Mark each = 5 Marks)
-    chData.mcqs.forEach((m, idx) => {
+    chData.mcqs.slice(0, 5).forEach((m, idx) => {
       questions.push({
         num: idx + 1,
         section: 'A',
@@ -3277,7 +3284,7 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
       });
     });
     // Section B: 5 Short Conceptual Questions (2 Marks each = 10 Marks)
-    chData.shorts.forEach((s, idx) => {
+    chData.shorts.slice(0, 5).forEach((s, idx) => {
       questions.push({
         num: idx + 6,
         section: 'B',
@@ -3286,25 +3293,38 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
         question: s
       });
     });
-    // Section C: 5 Long Derivations & Numericals (6 Marks each = 30 Marks)
-    chData.longs.forEach((l, idx) => {
+    // Section C: 5 Numerical & Analytical Reasoning Questions (3 Marks each = 15 Marks)
+    chData.longs.slice(0, 5).forEach((l, idx) => {
       questions.push({
         num: idx + 11,
         section: 'C',
-        type: 'LONG',
-        marks: 6,
+        type: 'NUMERICAL',
+        marks: 3,
         question: l
+      });
+    });
+    // Section D: 3 Long Derivations & Analytical Problems (5 Marks each = 15 Marks)
+    chData.longs.slice(0, 3).forEach((l, idx) => {
+      questions.push({
+        num: idx + 16,
+        section: 'D',
+        type: 'LONG',
+        marks: 5,
+        question: `Comprehensive Analytical Derivation: ${l}`
       });
     });
     return questions;
   } else if (formatKey === 'QUIZ_15') {
-    // 5 Questions (20 Marks): 3 MCQs (2M) + 2 Short (7M)
+    // 5 Questions (15 Marks): 3 MCQs (1M) + 3 Short (2M) + 2 Numerical (3M) = 15 Marks
     return [
-      { num: 1, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[0].question, options: chData.mcqs[0].options, ans: chData.mcqs[0].ans },
-      { num: 2, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[1].question, options: chData.mcqs[1].options, ans: chData.mcqs[1].ans },
-      { num: 3, section: 'A', type: 'MCQ', marks: 2, question: chData.mcqs[2].question, options: chData.mcqs[2].options, ans: chData.mcqs[2].ans },
-      { num: 4, section: 'B', type: 'SHORT', marks: 7, question: chData.shorts[0] },
-      { num: 5, section: 'B', type: 'SHORT', marks: 7, question: chData.shorts[1] }
+      { num: 1, section: 'A', type: 'MCQ', marks: 1, question: chData.mcqs[0].question, options: chData.mcqs[0].options, ans: chData.mcqs[0].ans },
+      { num: 2, section: 'A', type: 'MCQ', marks: 1, question: chData.mcqs[1].question, options: chData.mcqs[1].options, ans: chData.mcqs[1].ans },
+      { num: 3, section: 'A', type: 'MCQ', marks: 1, question: chData.mcqs[2].question, options: chData.mcqs[2].options, ans: chData.mcqs[2].ans },
+      { num: 4, section: 'B', type: 'SHORT', marks: 2, question: chData.shorts[0] },
+      { num: 5, section: 'B', type: 'SHORT', marks: 2, question: chData.shorts[1] },
+      { num: 6, section: 'B', type: 'SHORT', marks: 2, question: chData.shorts[2] || chData.shorts[0] },
+      { num: 7, section: 'C', type: 'NUMERICAL', marks: 3, question: chData.longs[0] },
+      { num: 8, section: 'C', type: 'NUMERICAL', marks: 3, question: chData.longs[1] || chData.longs[0] }
     ];
   } else if (formatKey === 'TERM_90') {
     // 20 Questions (60 Marks)
@@ -3323,26 +3343,26 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
     }
     for (let i = 9; i <= 14; i++) {
       const baseShort = chData.shorts[(i - 9) % chData.shorts.length];
-      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: baseShort });
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 2, question: baseShort });
     }
     for (let i = 15; i <= 18; i++) {
       const baseLong = chData.longs[(i - 15) % chData.longs.length];
-      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: baseLong });
+      qs.push({ num: i, section: 'C', type: 'NUMERICAL', marks: 3, question: baseLong });
     }
     for (let i = 19; i <= 20; i++) {
       qs.push({
         num: i,
         section: 'D',
-        type: 'CASE',
-        marks: 7,
-        question: `Case Study / Experimental Analysis Q${i}: Read the passage on laboratory investigation of ${topic || chData.name} and answer sub-parts (a), (b), and (c) with complete mathematical steps.`
+        type: 'LONG',
+        marks: 5,
+        question: `Case Study & Comprehensive Analysis Q${i}: Problem on ${topic || chData.name} with complete deduction, formulas, and final values.`
       });
     }
     return qs;
   } else {
-    // MOCK_180: 30 Questions (100 Marks)
+    // MOCK_180: Standard Board Paper (80 Marks)
     const qs = [];
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 16; i++) {
       const baseMcq = chData.mcqs[(i - 1) % chData.mcqs.length];
       qs.push({
         num: i,
@@ -3354,30 +3374,31 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
         ans: baseMcq.ans
       });
     }
-    for (let i = 13; i <= 20; i++) {
-      const baseShort = chData.shorts[(i - 13) % chData.shorts.length];
-      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 3, question: baseShort });
+    for (let i = 17; i <= 21; i++) {
+      const baseShort = chData.shorts[(i - 17) % chData.shorts.length];
+      qs.push({ num: i, section: 'B', type: 'SHORT', marks: 2, question: baseShort });
     }
-    for (let i = 21; i <= 26; i++) {
-      const baseLong = chData.longs[(i - 21) % chData.longs.length];
-      qs.push({ num: i, section: 'C', type: 'LONG', marks: 5, question: baseLong });
-    }
-    for (let i = 27; i <= 28; i++) {
-      qs.push({
-        num: i,
-        section: 'D',
-        type: 'CASE',
-        marks: 7,
-        question: `Section D Case Study Q${i}: Detailed experimental passage on ${topic || chData.name}. Answer sub-questions with CBSE step-marking criteria.`
-      });
+    for (let i = 22; i <= 28; i++) {
+      const baseLong = chData.longs[(i - 22) % chData.longs.length];
+      qs.push({ num: i, section: 'C', type: 'NUMERICAL', marks: 3, question: baseLong });
     }
     for (let i = 29; i <= 30; i++) {
       qs.push({
         num: i,
+        section: 'D',
+        type: 'CASE',
+        marks: 4,
+        question: `Section D Case-Based Study Q${i}: Detailed experimental passage on ${topic || chData.name}. Answer sub-questions with CBSE step-marking criteria.`
+      });
+    }
+    for (let i = 31; i <= 33; i++) {
+      const baseLong = chData.longs[(i - 31) % chData.longs.length];
+      qs.push({
+        num: i,
         section: 'E',
         type: 'LONG',
-        marks: 10,
-        question: `Section E Comprehensive Numerical & Theoretical Derivation Q${i}: Multi-part problem covering ${topic || chData.name} with complete deduction, formulas, and final values.`
+        marks: 5,
+        question: `Section E Comprehensive Long Derivation Q${i}: Detailed derivation of ${topic || chData.name} with labeled diagrams and step-marking evaluation.`
       });
     }
     return qs;
@@ -3385,30 +3406,57 @@ window.generateExamQuestions = function(formatKey, subject, chapter, topic) {
 };
 
 window.previewTeacherPaper = function(testId) {
-  let title = 'Class 12-A • Unit Assessment: Electric Charges and Fields';
-  let subject = 'Physics';
-  let chapter = 'Chapter 1: Electric Charges and Fields';
-  let topic = 'Electric Charge & Properties (Additivity, Conservation, Quantization)';
-  let formatVal = 'UNIT_45';
-  let duration = '45 Mins';
-  let className = 'Class 12-A';
-
+  let title = 'Class Unit Assessment';
+  let subject = teacherBuilderState.activeTeacher?.subjectName || 'Physics';
+  let chapter = 'Curriculum Focus';
+  let topic = '';
+  let duration = '45 Minutes';
+  let className = 'Class Cohort';
   let foundTest = null;
-  if (testId && typeof testId === 'string') {
+
+  // 1. Check state.currentDraftTest if testId matches or is absent
+  if (state.currentDraftTest && (!testId || state.currentDraftTest.id === testId)) {
+    foundTest = state.currentDraftTest;
+  }
+
+  // 2. Search in RECORDED_CLASS_TESTS
+  if (!foundTest && testId) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      const match = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === testId);
+      if (match) {
+        foundTest = match;
+        break;
+      }
+    }
+  }
+
+  // 3. Search in assignedTestsState
+  if (!foundTest && testId) {
     foundTest = assignedTestsState.find(t => t.id === testId);
   }
 
+  // 4. Search in state.publishedAssessments
+  if (!foundTest && testId && state.publishedAssessments) {
+    foundTest = state.publishedAssessments.find(t => t.id === testId);
+  }
+
+  // 5. Fallback to state.currentDraftTest if any exists
+  if (!foundTest && state.currentDraftTest) {
+    foundTest = state.currentDraftTest;
+  }
+
+  let questions = [];
+
   if (foundTest) {
     title = foundTest.title || 'Class Unit Test';
-    subject = foundTest.subject || 'Physics';
-    topic = foundTest.topic || 'Target Curriculum Focus';
-    chapter = foundTest.chapter || (foundTest.topic ? foundTest.topic : 'Chapter 1: Electric Charges and Fields');
-    duration = foundTest.duration || '45 Mins';
-    className = foundTest.targetClass || 'Class 12-A';
-    if (duration.includes('15')) formatVal = 'QUIZ_15';
-    else if (duration.includes('90')) formatVal = 'TERM_90';
-    else if (duration.includes('180')) formatVal = 'MOCK_180';
-    else formatVal = 'UNIT_45';
+    subject = foundTest.subject || teacherBuilderState.activeTeacher?.subjectName || 'Physics';
+    topic = foundTest.topic || foundTest.chapter || 'Target Curriculum Focus';
+    chapter = foundTest.chapter || (foundTest.topic ? foundTest.topic : 'Curriculum Focus');
+    duration = foundTest.duration || (foundTest.durationMinutes ? `${foundTest.durationMinutes} Minutes` : '45 Minutes');
+    className = foundTest.targetClassText || foundTest.targetClass || foundTest.className || 'Class 10-A';
+    if (foundTest.questions && Array.isArray(foundTest.questions) && foundTest.questions.length > 0) {
+      questions = foundTest.questions;
+    }
   } else {
     const titleInput = document.getElementById('inputPaperTitle') || document.getElementById('inputTeacherTestTitle');
     if (titleInput && titleInput.value.trim()) {
@@ -3434,65 +3482,142 @@ window.previewTeacherPaper = function(testId) {
 
     const formatSelect = document.getElementById('selectPaperFormat') || document.getElementById('selectTeacherTestType');
     if (formatSelect) {
-      formatVal = formatSelect.value || 'UNIT_45';
       const optText = formatSelect.options[formatSelect.selectedIndex]?.text || '';
-      if (formatVal === 'QUIZ_15' || optText.includes('15-Min')) duration = '15 Minutes';
-      else if (formatVal === 'UNIT_45' || optText.includes('45-Min')) duration = '45 Minutes';
-      else if (formatVal === 'TERM_90' || optText.includes('90-Min')) duration = '90 Minutes';
-      else if (formatVal === 'MOCK_180' || optText.includes('180-Min')) duration = '180 Minutes (3 Hours)';
-      else duration = '45 Minutes';
+      if (optText.includes('15-Min')) duration = '15 Minutes';
+      else if (optText.includes('30-Min')) duration = '30 Minutes';
+      else if (optText.includes('45-Min')) duration = '45 Minutes';
+      else if (optText.includes('60-Min')) duration = '60 Minutes';
+      else if (optText.includes('90-Min')) duration = '90 Minutes';
+      else if (optText.includes('180-Min')) duration = '180 Minutes (3 Hours)';
+      else duration = optText.split('•')[0]?.replace(/^[^\w]*/, '').trim() || '45 Minutes';
     }
 
     const classSelect = document.getElementById('selectPaperClass') || document.getElementById('selectTakeTestClass');
     if (classSelect && classSelect.options[classSelect.selectedIndex]) {
-      className = classSelect.options[classSelect.selectedIndex].text?.split('•')[0]?.trim() || 'Class 12-A';
+      className = classSelect.options[classSelect.selectedIndex].text?.split('•')[0]?.trim() || 'Class 10-A';
     }
   }
 
-  const questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
-  const totalQuestions = questions.length;
-  const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+  // Fallback questions if no draft is present
+  if (!questions || questions.length === 0) {
+    let formatVal = 'UNIT_45';
+    if (duration.includes('15')) formatVal = 'QUIZ_15';
+    else if (duration.includes('90')) formatVal = 'TERM_90';
+    else if (duration.includes('180')) formatVal = 'MOCK_180';
 
-  // Group by Section
-  const sections = {};
-  questions.forEach(q => {
-    const sec = q.section || 'A';
-    if (!sections[sec]) sections[sec] = [];
-    sections[sec].push(q);
+    questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
+  }
+
+  // Sort questions by marks ascending: 1M, 2M, 3M, 5M (or preserve explicit order if marks same)
+  const sortedQuestions = [...questions].sort((a, b) => {
+    const ma = Number(a.marks || a.marks_weightage || 1);
+    const mb = Number(b.marks || b.marks_weightage || 1);
+    return ma - mb;
   });
 
-  const secTitles = {
-    'A': 'SECTION A &bull; Objective Multiple Choice Questions (1 Mark Each)',
-    'B': 'SECTION B &bull; Conceptual Reasoning &amp; Short Answer Questions (2 Marks Each)',
-    'C': 'SECTION C &bull; Long Derivations, Proofs &amp; Analytical Numericals (6 Marks Each)',
-    'D': 'SECTION D &bull; Case-Study &amp; Data Interpretation Questions',
-    'E': 'SECTION E &bull; Comprehensive Problems'
-  };
+  // Assign sequential question numbers Q1..QN
+  sortedQuestions.forEach((q, idx) => {
+    q._renderNum = idx + 1;
+    q._renderMarks = Number(q.marks || q.marks_weightage || 1);
+  });
+
+  // Group into distinct marks
+  const markGroups = [];
+  const markMap = new Map();
+  sortedQuestions.forEach(q => {
+    const m = q._renderMarks;
+    if (!markMap.has(m)) {
+      const group = { marks: m, questions: [] };
+      markMap.set(m, group);
+      markGroups.push(group);
+    }
+    markMap.get(m).questions.push(q);
+  });
+
+  const secLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const sections = markGroups.map((grp, idx) => {
+    const secLetter = secLetters[idx] || String.fromCharCode(65 + idx);
+    const m = grp.marks;
+    const count = grp.questions.length;
+    let title = '';
+    let instruction = '';
+
+    if (m === 1) {
+      title = `SECTION ${secLetter} • OBJECTIVE & MULTIPLE CHOICE QUESTIONS (1 MARK EACH)`;
+      instruction = `Section ${secLetter} contains ${count} objective multiple choice question${count > 1 ? 's' : ''} of 1 mark each. Select the single correct option.`;
+    } else if (m === 2) {
+      title = `SECTION ${secLetter} • SHORT ANSWER & CONCEPTUAL QUESTIONS (2 MARKS EACH)`;
+      instruction = `Section ${secLetter} contains ${count} short answer question${count > 1 ? 's' : ''} of 2 marks each. Answer concisely in 30–50 words with scientific reasoning.`;
+    } else if (m === 3) {
+      title = `SECTION ${secLetter} • NUMERICAL & ANALYTICAL PROBLEMS (3 MARKS EACH)`;
+      instruction = `Section ${secLetter} contains ${count} numerical and analytical question${count > 1 ? 's' : ''} of 3 marks each. Complete step-by-step working with intermediate formulas and units is mandatory.`;
+    } else if (m === 4) {
+      title = `SECTION ${secLetter} • CASE-STUDY & APPLICATION QUESTIONS (4 MARKS EACH)`;
+      instruction = `Section ${secLetter} contains ${count} case-study based question${count > 1 ? 's' : ''} of 4 marks each with sub-parts.`;
+    } else if (m === 5) {
+      title = `SECTION ${secLetter} • LONG DERIVATIONS & COMPREHENSIVE PROBLEMS (5 MARKS EACH)`;
+      instruction = `Section ${secLetter} contains ${count} long-form derivation and problem-solving question${count > 1 ? 's' : ''} of 5 marks each. Complete step-by-step mathematical deduction and neat labeled diagrams are mandatory.`;
+    } else {
+      title = `SECTION ${secLetter} • COMPREHENSIVE QUESTIONS (${m} MARKS EACH)`;
+      instruction = `Section ${secLetter} contains ${count} question${count > 1 ? 's' : ''} carrying ${m} marks each. Complete step-by-step working is required.`;
+    }
+
+    return {
+      secLetter,
+      title,
+      instruction,
+      marks: m,
+      questions: grp.questions
+    };
+  });
+
+  const totalQuestions = sortedQuestions.length;
+  const totalMarks = sortedQuestions.reduce((sum, q) => sum + (q._renderMarks || 1), 0);
 
   let questionsHtml = '';
-  Object.keys(sections).forEach(secKey => {
-    const secQs = sections[secKey];
+  sections.forEach(sec => {
     questionsHtml += `
       <div style="margin: 24px 0 14px 0; background: #f1f5f9; padding: 10px 16px; border-radius: 6px; border-left: 4px solid #0284c7; font-weight: 800; font-size: 0.88rem; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-        ${secTitles[secKey] || `SECTION ${secKey}`} (${secQs.length} Questions)
+        ${sec.title} (${sec.questions.length} Question${sec.questions.length > 1 ? 's' : ''})
       </div>
     `;
 
-    secQs.forEach(q => {
+    sec.questions.forEach(q => {
+      const qText = q.question_latex || q.questionText || q.question || q.statement || `Question ${q._renderNum}`;
+      const renderedQText = renderLatexString(qText);
+
+      let opts = [];
+      if (Array.isArray(q.options_latex) && q.options_latex.length > 0) {
+        opts = q.options_latex;
+      } else if (Array.isArray(q.options) && q.options.length > 0) {
+        opts = q.options;
+      }
+
       let optHtml = '';
-      if (q.options && q.options.length > 0) {
+      if (opts.length > 0) {
         optHtml = `
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.88rem; color: #334155;">
-            ${q.options.map(opt => `<div style="padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">${opt}</div>`).join('')}
+            ${opts.map((opt, optIdx) => {
+              let key = '';
+              let val = '';
+              if (typeof opt === 'string') {
+                val = opt;
+              } else if (opt && typeof opt === 'object') {
+                key = opt.key || String.fromCharCode(65 + optIdx);
+                val = opt.latex || opt.text || '';
+              }
+              const prefix = key ? `<strong>(${key})</strong> ` : '';
+              return `<div style="padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">${prefix}${renderLatexString(val)}</div>`;
+            }).join('')}
           </div>
         `;
       }
 
       questionsHtml += `
         <div class="q-box" style="margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
-          <span class="marks" style="float: right; font-weight: 800; color: #0284c7; font-size: 0.85rem;">[${q.marks} Mark${q.marks > 1 ? 's' : ''}]</span>
+          <span class="marks" style="float: right; font-weight: 800; color: #0284c7; font-size: 0.85rem;">[${q._renderMarks} Mark${q._renderMarks > 1 ? 's' : ''}]</span>
           <div style="font-size: 0.95rem; line-height: 1.6; color: #0f172a;">
-            <strong>Q${q.num}.</strong> ${q.question}
+            <strong>Q${q._renderNum}.</strong> ${renderedQText}
           </div>
           ${optHtml}
         </div>
@@ -3501,14 +3626,18 @@ window.previewTeacherPaper = function(testId) {
   });
 
   let sectionInstructions = '';
-  if (sections['A'] && sections['A'].length > 0) {
-    sectionInstructions += `<li>Section A contains ${sections['A'].length} objective multiple choice questions of 1 mark each.</li>`;
-  }
-  if (sections['B'] && sections['B'].length > 0) {
-    sectionInstructions += `<li>Section B contains ${sections['B'].length} short conceptual questions of 2 marks each. Answer concisely in 30–50 words.</li>`;
-  }
-  if (sections['C'] && sections['C'].length > 0) {
-    sectionInstructions += `<li>Section C contains ${sections['C'].length} long derivation and numerical problems of 6 marks each. Clear step-by-step working with appropriate SI units is mandatory.</li>`;
+  sections.forEach(sec => {
+    sectionInstructions += `<li>${sec.instruction}</li>`;
+  });
+
+  let subjectRule = '<li>Calculators, mobile phones, or smart electronic devices are strictly prohibited inside the examination hall.</li>';
+  const subLower = (subject || '').toLowerCase();
+  if (subLower.includes('phys')) {
+    subjectRule = '<li>Physical calculators and smart devices are strictly prohibited. Standard physical constants: $g = 9.8\\text{ m/s}^2$, $c = 3\\times 10^8\\text{ m/s}$, $e = 1.6\\times 10^{-19}\\text{ C}$, $\\varepsilon_0 = 8.854\\times 10^{-12}\\text{ C}^2\\text{N}^{-1}\\text{m}^{-2}$.</li>';
+  } else if (subLower.includes('math')) {
+    subjectRule = '<li>Calculators and logarithmic tables are not permitted. Show all algebraic deductions, quadratic roots, and geometric constructions clearly.</li>';
+  } else if (subLower.includes('chem')) {
+    subjectRule = '<li>Calculators and mobile devices are prohibited. Atomic masses: $\\text{H}=1, \\text{C}=12, \\text{N}=14, \\text{O}=16, \\text{Na}=23, \\text{Cl}=35.5$. Gas constant $R = 8.314\\text{ J K}^{-1}\\text{mol}^{-1}$.</li>';
   }
 
   const fullPaperHtml = `<!DOCTYPE html>
@@ -3562,7 +3691,7 @@ window.previewTeacherPaper = function(testId) {
     <ol style="margin: 6px 0 0 16px; padding: 0; line-height: 1.6;">
       <li>All questions are compulsory. Total <strong>${totalQuestions} questions</strong> evaluating fundamental conceptual depth, formula derivation, and mathematical problem-solving.</li>
       ${sectionInstructions}
-      <li>Physical calculators and smart devices are strictly prohibited. Standard physical constants: $g = 9.8\\text{ m/s}^2$, $c = 3\\times 10^8\\text{ m/s}$, $e = 1.6\\times 10^{-19}\\text{ C}$, $\\varepsilon_0 = 8.854\\times 10^{-12}\\text{ C}^2\\text{N}^{-1}\\text{m}^{-2}$.</li>
+      ${subjectRule}
     </ol>
   </div>
 
