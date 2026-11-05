@@ -641,6 +641,159 @@ window.handleRoleBadgeClick = function() {
   window.openRoleGatewayModal();
 };
 
+window.loginAsFaculty = function(facultyKey) {
+  const FACULTY_DIRECTORY = {
+    PHYSICS: {
+      id: 'fac_phy_01',
+      name: 'Dr. Vikram Sharma',
+      full_name: 'Dr. Vikram Sharma',
+      phone: '98160 10001',
+      email: 'vikram.phy@haps.edu.in',
+      subjectKey: 'PHYSICS',
+      subjectName: 'Physics',
+      grade: '12',
+      role: 'TEACHER',
+      designation: 'Senior Physics Faculty & HOD',
+      defaultClass: '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Physics &bull; Classes 11 &amp; 12 (JEE Main/Adv, NEET &amp; CBSE Boards)'
+    },
+    CHEMISTRY: {
+      id: 'fac_chem_01',
+      name: 'Prof. Sunita Rao',
+      full_name: 'Prof. Sunita Rao',
+      phone: '98160 10002',
+      email: 'sunita.chem@haps.edu.in',
+      subjectKey: 'CHEMISTRY',
+      subjectName: 'Chemistry',
+      grade: '12',
+      role: 'TEACHER',
+      designation: 'Senior Chemistry Faculty & HOD',
+      defaultClass: '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Chemistry &bull; Classes 11 &amp; 12 (NEET, JEE Main &amp; CBSE Boards)'
+    },
+    MATHEMATICS: {
+      id: 'fac_math_01',
+      name: 'Dr. Rajesh Iyer',
+      full_name: 'Dr. Rajesh Iyer',
+      phone: '98160 10004',
+      email: 'rajesh.math@haps.edu.in',
+      subjectKey: 'MATHEMATICS',
+      subjectName: 'Mathematics',
+      grade: '12',
+      role: 'TEACHER',
+      designation: 'Senior Mathematics Faculty & HOD',
+      defaultClass: '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Mathematics &bull; Classes 11 &amp; 12 (JEE Main/Adv &amp; CBSE Boards)'
+    },
+    BIOLOGY: {
+      id: 'fac_bio_01',
+      name: 'Dr. Ananya Mukherjee',
+      full_name: 'Dr. Ananya Mukherjee',
+      phone: '98160 10003',
+      email: 'ananya.bio@haps.edu.in',
+      subjectKey: 'BIOLOGY',
+      subjectName: 'Biology',
+      grade: '12',
+      role: 'TEACHER',
+      designation: 'Senior Biology Faculty & NEET Coordinator',
+      defaultClass: '12-Med',
+      targetStream: 'NEET',
+      streamText: 'Assigned Subject: Biology &bull; Classes 11 &amp; 12 Medical (NEET UG &amp; CBSE Boards)'
+    },
+    CLASS10_SCIENCE: {
+      id: 'fac_c10_sci_01',
+      name: 'Er. Rakesh Thakur',
+      full_name: 'Er. Rakesh Thakur',
+      phone: '98160 10011',
+      email: 'rakesh.sci10@haps.edu.in',
+      subjectKey: 'CLASS10_SCIENCE',
+      subjectName: 'Science',
+      grade: '10',
+      role: 'TEACHER',
+      designation: 'Class 10th Science Faculty & Board Coordinator',
+      defaultClass: '10-Science-A',
+      targetStream: 'CBSE_CLASS_10',
+      streamText: 'Assigned Subject: Science &bull; Class 10 (CBSE &amp; HP Board Foundation)'
+    },
+    CLASS10_MATHEMATICS: {
+      id: 'fac_c10_math_01',
+      name: 'Mrs. Meenakshi Sharma',
+      full_name: 'Mrs. Meenakshi Sharma',
+      phone: '98160 10010',
+      email: 'meenakshi.math10@haps.edu.in',
+      subjectKey: 'CLASS10_MATHEMATICS',
+      subjectName: 'Mathematics',
+      grade: '10',
+      role: 'TEACHER',
+      designation: 'Class 10th Mathematics Faculty & Board Coordinator',
+      defaultClass: '10-Maths-A',
+      targetStream: 'CBSE_CLASS_10',
+      streamText: 'Assigned Subject: Mathematics &bull; Class 10 (CBSE &amp; HP Board Foundation)'
+    }
+  };
+
+  const prof = FACULTY_DIRECTORY[facultyKey] || FACULTY_DIRECTORY.PHYSICS;
+  teacherBuilderState.activeTeacher = prof;
+  teacherBuilderState.teacherSubjectKey = prof.subjectKey;
+  teacherBuilderState.selectedSubjectKey = prof.subjectKey;
+  teacherBuilderState.activeGrade = prof.grade;
+  teacherBuilderState.selectedClassId = prof.defaultClass;
+
+  try {
+    localStorage.setItem('haps_teacher_profile', JSON.stringify(prof));
+    localStorage.setItem('haps_active_teacher', JSON.stringify(prof));
+    localStorage.setItem('haps_active_role', 'teacher');
+  } catch (e) {}
+
+  if (typeof applyTeacherProfile === 'function') {
+    applyTeacherProfile(prof, false);
+  }
+
+  window.closeRoleGatewayModal();
+  state.activeTeacherTab = 'tabTeacherCreateTestAndPaper';
+  switchPortalRole('teacher');
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(prof.name)}</strong> (${prof.subjectName} Expert &bull; Class ${prof.grade}th Scope Active). Department scope isolated.</span>`;
+  document.body.appendChild(banner);
+  initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
+window.handleGatewayPhoneLookup = function(phoneVal) {
+  const clean = (phoneVal || '').replace(/\D/g, '');
+  const statusEl = document.getElementById('gatewayPhoneLookupStatus');
+  const nameInput = document.getElementById('inputGatewayTeacherName');
+  const subjSelect = document.getElementById('selectGatewayTeacherSubject');
+  const gradeSelect = document.getElementById('selectGatewayTeacherGrade');
+
+  const lookupMap = {
+    '9816010001': { name: 'Dr. Vikram Sharma', subj: 'PHYSICS', grade: '12' },
+    '9816010002': { name: 'Prof. Sunita Rao', subj: 'CHEMISTRY', grade: '12' },
+    '9816010004': { name: 'Dr. Rajesh Iyer', subj: 'MATHEMATICS', grade: '12' },
+    '9816010003': { name: 'Dr. Ananya Mukherjee', subj: 'BIOLOGY', grade: '12' },
+    '9816010011': { name: 'Er. Rakesh Thakur', subj: 'CLASS10_SCIENCE', grade: '10' },
+    '9816010010': { name: 'Mrs. Meenakshi Sharma', subj: 'CLASS10_MATHEMATICS', grade: '10' }
+  };
+
+  const found = lookupMap[clean];
+  if (found) {
+    if (nameInput) nameInput.value = found.name;
+    if (subjSelect) subjSelect.value = found.subj;
+    if (gradeSelect) gradeSelect.value = found.grade;
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `✓ Registered Faculty: <strong>${found.name}</strong> (${found.subj})`;
+    }
+  } else if (statusEl) {
+    statusEl.style.display = 'none';
+  }
+};
+
 window.fillGatewayFaculty = function(name, phone, subject) {
   const nameInput = document.getElementById('inputGatewayTeacherName');
   const phoneInput = document.getElementById('inputGatewayTeacherPhone');
@@ -648,10 +801,6 @@ window.fillGatewayFaculty = function(name, phone, subject) {
   if (nameInput) nameInput.value = name;
   if (phoneInput) phoneInput.value = phone;
   if (subjSelect) subjSelect.value = subject;
-
-  document.querySelectorAll('.faculty-quick-pill').forEach(pill => {
-    pill.classList.toggle('active', pill.textContent.includes(name.split(' ')[1] || name));
-  });
 };
 
 window.submitGatewayTeacherLogin = function(event) {
@@ -672,8 +821,9 @@ window.submitGatewayTeacherLogin = function(event) {
 
   const cleanPhone = phone.replace(/\D/g, '') || '9816010001';
   const isC10 = subjectKey.startsWith('CLASS10_') || subjectKey === 'SCIENCE';
-  const defaultGrade = isC10 ? '10' : '12';
-  const defaultClass = isC10 
+  const gradeSel = document.getElementById('selectGatewayTeacherGrade');
+  const defaultGrade = gradeSel ? gradeSel.value : (isC10 ? '10' : '12');
+  const defaultClass = (defaultGrade === '10' || isC10)
     ? (subjectKey === 'CLASS10_MATHEMATICS' ? '10-Maths-A' : '10-Science-A')
     : (subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed');
   const sName = subjectNames[subjectKey] || 'Physics';
@@ -729,10 +879,15 @@ window.submitGatewayTeacherLogin = function(event) {
 };
 
 window.handleTeacherSignOut = function() {
-  closeSidebarDrawer();
+  if (typeof closeSidebarDrawer === 'function') closeSidebarDrawer();
   try {
     localStorage.removeItem('haps_active_role');
+    localStorage.removeItem('haps_active_teacher');
+    localStorage.removeItem('haps_teacher_profile');
   } catch(e) {}
+  teacherBuilderState.activeTeacher = null;
+  state.questionBankData = [];
+  state.qbFilteredQuestions = [];
   document.body.classList.remove('role-teacher');
   const switchRoleBtn = document.getElementById('btnHeaderSwitchRole');
   if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
@@ -1643,8 +1798,32 @@ const CLASS_ROSTERS = {
     attendance: '96.2%',
     average: '81.5%',
     students: [
-      { roll: '401', name: 'Nikhil Sethi', phone: '98163 22001', parent: '98163 22002', turnIn: 'Submitted', score: '85%', status: 'Active' },
-      { roll: '402', name: 'Palak Gulati', phone: '98163 22003', parent: '98163 22004', turnIn: 'Submitted', score: '94%', status: 'Active' }
+      { roll: '401', name: 'Nikhil Sethi', phone: '98163 22001', parent: '98163 22002', turnIn: 'Submitted (09:40 AM)', score: '85%', status: 'Active' },
+      { roll: '402', name: 'Palak Gulati', phone: '98163 22003', parent: '98163 22004', turnIn: 'Submitted (09:35 AM)', score: '94%', status: 'Active' },
+      { roll: '403', name: 'Tanya Dogra', phone: '98163 22005', parent: '98163 22006', turnIn: 'Submitted (09:42 AM)', score: '91%', status: 'Active' },
+      { roll: '404', name: 'Rahul Chawla', phone: '98163 22007', parent: '98163 22008', turnIn: 'Submitted (09:48 AM)', score: '78%', status: 'Active' },
+      { roll: '405', name: 'Megha Sharma', phone: '98163 22009', parent: '98163 22010', turnIn: 'Submitted (09:45 AM)', score: '82%', status: 'Active' },
+      { roll: '406', name: 'Rohan Bhatia', phone: '98163 22011', parent: '98163 22012', turnIn: 'Submitted (09:52 AM)', score: '64%', status: 'Remedial' },
+      { roll: '407', name: 'Simran Sood', phone: '98163 22013', parent: '98163 22014', turnIn: 'Submitted (09:50 AM)', score: '88%', status: 'Active' },
+      { roll: '408', name: 'Vikas Negi', phone: '98163 22015', parent: '98163 22016', turnIn: 'Submitted (09:56 AM)', score: '52%', status: 'Focus Needed' }
+    ]
+  },
+  '10-Maths-A': {
+    name: 'Class 10-Maths (Sec A)',
+    stream: 'Secondary Mathematics Foundation',
+    subject: 'Mathematics',
+    enrolled: 44,
+    attendance: '96.5%',
+    average: '82.4%',
+    students: [
+      { roll: '601', name: 'Tanvi Kalsi', phone: '98165 11001', parent: '98165 11002', turnIn: 'Submitted (09:38 AM)', score: '93%', status: 'Active' },
+      { roll: '602', name: 'Kunal Verma', phone: '98165 11003', parent: '98165 11004', turnIn: 'Submitted (09:45 AM)', score: '76%', status: 'Active' },
+      { roll: '603', name: 'Arjun Sood', phone: '98165 11005', parent: '98165 11006', turnIn: 'Submitted (09:40 AM)', score: '87%', status: 'Active' },
+      { roll: '604', name: 'Bhavna Negi', phone: '98165 11007', parent: '98165 11008', turnIn: 'Submitted (09:42 AM)', score: '89%', status: 'Active' },
+      { roll: '605', name: 'Ritik Sharma', phone: '98165 11009', parent: '98165 11010', turnIn: 'Submitted (09:50 AM)', score: '62%', status: 'Remedial' },
+      { roll: '606', name: 'Neha Kapoor', phone: '98165 11011', parent: '98165 11012', turnIn: 'Submitted (09:44 AM)', score: '84%', status: 'Active' },
+      { roll: '607', name: 'Paras Dogra', phone: '98165 11013', parent: '98165 11014', turnIn: 'Submitted (09:46 AM)', score: '80%', status: 'Active' },
+      { roll: '608', name: 'Ishita Sen', phone: '98165 11015', parent: '98165 11016', turnIn: 'Submitted (09:55 AM)', score: '55%', status: 'Focus Needed' }
     ]
   },
   '10-Science-A': {
@@ -1655,8 +1834,14 @@ const CLASS_ROSTERS = {
     attendance: '97.1%',
     average: '83.0%',
     students: [
-      { roll: '501', name: 'Arjun Sood', phone: '98164 11001', parent: '98164 11002', turnIn: 'Submitted', score: '88%', status: 'Active' },
-      { roll: '502', name: 'Bhavna Negi', phone: '98164 11003', parent: '98164 11004', turnIn: 'Submitted', score: '90%', status: 'Active' }
+      { roll: '501', name: 'Arjun Sood', phone: '98164 11001', parent: '98164 11002', turnIn: 'Submitted (09:40 AM)', score: '88%', status: 'Active' },
+      { roll: '502', name: 'Bhavna Negi', phone: '98164 11003', parent: '98164 11004', turnIn: 'Submitted (09:36 AM)', score: '90%', status: 'Active' },
+      { roll: '503', name: 'Kunal Verma', phone: '98164 11005', parent: '98164 11006', turnIn: 'Submitted (09:48 AM)', score: '72%', status: 'Active' },
+      { roll: '504', name: 'Tanvi Kalsi', phone: '98164 11007', parent: '98164 11008', turnIn: 'Submitted (09:42 AM)', score: '92%', status: 'Active' },
+      { roll: '505', name: 'Ritik Sharma', phone: '98164 11009', parent: '98164 11010', turnIn: 'Submitted (09:51 AM)', score: '65%', status: 'Remedial' },
+      { roll: '506', name: 'Neha Kapoor', phone: '98164 11011', parent: '98164 11012', turnIn: 'Submitted (09:44 AM)', score: '85%', status: 'Active' },
+      { roll: '507', name: 'Paras Dogra', phone: '98164 11013', parent: '98164 11014', turnIn: 'Submitted (09:46 AM)', score: '79%', status: 'Active' },
+      { roll: '508', name: 'Ishita Sen', phone: '98164 11015', parent: '98164 11016', turnIn: 'Submitted (09:55 AM)', score: '54%', status: 'Focus Needed' }
     ]
   }
 };
@@ -3452,6 +3637,7 @@ const RECORDED_CLASS_TESTS = {
   '12-NonMed': [
     {
       id: 'test_12_01',
+      subjectKey: 'PHYSICS',
       code: 'Test 01',
       title: 'Electric Charges, Coulomb\'s Law & Superposition',
       chapter: 'Chapter 1: Electric Charges and Fields',
@@ -3521,6 +3707,7 @@ const RECORDED_CLASS_TESTS = {
     },
     {
       id: 'test_12_02',
+      subjectKey: 'PHYSICS',
       code: 'Test 02',
       title: 'Gauss\'s Law, Electric Flux & Spherical Shells',
       chapter: 'Chapter 1: Electric Charges and Fields',
@@ -3590,6 +3777,7 @@ const RECORDED_CLASS_TESTS = {
     },
     {
       id: 'test_12_03',
+      subjectKey: 'PHYSICS',
       code: 'Test 03',
       title: 'Electrostatic Potential & Capacitors with Dielectrics',
       chapter: 'Chapter 2: Electrostatic Potential and Capacitance',
@@ -3659,6 +3847,7 @@ const RECORDED_CLASS_TESTS = {
     },
     {
       id: 'test_12_04',
+      subjectKey: 'PHYSICS',
       code: 'Test 04',
       title: 'Current Electricity, Drift Velocity & Kirchhoff\'s Laws',
       chapter: 'Chapter 3: Current Electricity',
@@ -3726,11 +3915,1585 @@ const RECORDED_CLASS_TESTS = {
         { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', score: 24, percentage: '53.3%', tier: 'Average', time: '45m' }
       ]
     }
+  ,
+    {
+      "id": "test_chem_12_01",
+      "code": "Test 01",
+      "subjectKey": "CHEMISTRY",
+      "title": "Solutions, Raoult's Law & Colligative Properties",
+      "chapter": "Chapter 1: Solutions",
+      "topic": "Raoult's Law, Depression in Freezing Point & van 't Hoff Factor",
+      "date": "Nov 02, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 45,
+      "enrolledCount": 48,
+      "attemptedRate": "93.8%",
+      "averageScore": 35.2,
+      "averagePercentage": "78.2%",
+      "highestScore": {
+        "score": 44,
+        "percentage": "97.8%",
+        "studentName": "Priya Verma"
+      },
+      "lowestScore": {
+        "score": 20,
+        "percentage": "44.4%",
+        "studentName": "Sahil Mehta (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 7,
+        "statement": "Calculate the van 't Hoff factor i for 0.1 m BaCl₂ solution exhibiting 80% degree of dissociation α.",
+        "topic": "van 't Hoff Factor & Ionic Dissociation Degree",
+        "errorRate": "75.6%",
+        "wrongCount": 34,
+        "totalAttempted": 45,
+        "dominantMistake": "Formula Mistake: Substituted i = 1 + α = 1.8 instead of i = 1 + (n - 1)α = 1 + 2(0.8) = 2.6.",
+        "actionRecommendation": "Review relationship i = 1 + (n - 1)α where n is the total number of ions produced per formula unit."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Define Raoult's Law for a binary solution of volatile liquids.",
+        "topic": "Raoult's Law and Ideal Solutions",
+        "successRate": "95.6%",
+        "correctCount": 43,
+        "totalAttempted": 45,
+        "masteryNotes": "Excellent understanding of partial vapor pressures pA = pA° * xA."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 18,
+          "percentage": "40.0%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 21,
+          "percentage": "46.7%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 6,
+          "percentage": "13.3%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Raoult's Law for Volatile Solutes",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Positive & Negative Deviations from Raoult's Law",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Azeotropes (Minimum vs Maximum Boiling)",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Relative Lowering of Vapour Pressure Δp/p°",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Elevation of Boiling Point ΔTb = Kb · m",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 72,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Depression in Freezing Point ΔTf = Kf · m",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 84,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "van 't Hoff Factor for Dissociation i = 1 + (n-1)α",
+          "accuracyRate": 24,
+          "errorRate": 76,
+          "avgSeconds": 112,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Abnormal Molar Mass from Dimerization (Acetic Acid)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 95,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Osmotic Pressure π = CRT Formula & Units",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Reverse Osmosis Desalination Semi-permeable Membrane",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Molality vs Molarity Temperature Invariance",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Henry's Law p = KH · x Aquatic Respiration",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Calculation of Kb from Latent Heat of Vaporization",
+          "accuracyRate": 65,
+          "errorRate": 35,
+          "avgSeconds": 104,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Isotonic, Hypertonic, and Hypotonic Solutions",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Degree of Association α = (1 - i)/(1 - 1/n)",
+          "accuracyRate": 58,
+          "errorRate": 42,
+          "avgSeconds": 108,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 44,
+          "percentage": "97.8%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 34,
+          "percentage": "75.6%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 28,
+          "percentage": "62.2%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 20,
+          "percentage": "44.4%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_02",
+      "code": "Test 02",
+      "subjectKey": "CHEMISTRY",
+      "title": "Electrochemistry, Nernst Equation & Gibbs Energy",
+      "chapter": "Chapter 2: Electrochemistry",
+      "topic": "Galvanic Cells, Standard Potentials & Kohlrausch's Law",
+      "date": "Oct 29, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 46,
+      "enrolledCount": 48,
+      "attemptedRate": "95.8%",
+      "averageScore": 33.6,
+      "averagePercentage": "74.7%",
+      "highestScore": {
+        "score": 43,
+        "percentage": "95.6%",
+        "studentName": "Aryan Sharma"
+      },
+      "lowestScore": {
+        "score": 21,
+        "percentage": "46.7%",
+        "studentName": "Rohit Thakur (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 6,
+        "statement": "Compute equilibrium constant Kc at 298 K for cell: Zn + Cu²⁺ ⇌ Zn²⁺ + Cu where E°cell = 1.10 V.",
+        "topic": "Equilibrium Constant from Standard Cell Potential",
+        "errorRate": "71.7%",
+        "wrongCount": 33,
+        "totalAttempted": 46,
+        "dominantMistake": "Anti-logarithm calculation error in Kc = 10^(2 * 1.10 / 0.0591).",
+        "actionRecommendation": "Practice log and anti-log rules for electrochemistry equilibria."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 2,
+        "statement": "State Kohlrausch's Law of independent migration of ions.",
+        "topic": "Kohlrausch Law Formulation",
+        "successRate": "97.8%",
+        "correctCount": 45,
+        "totalAttempted": 46,
+        "masteryNotes": "Nearly 100% correct definition and molar conductivity addition."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 15,
+          "percentage": "32.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 23,
+          "percentage": "50.0%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 8,
+          "percentage": "17.4%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Standard Electrode Potential & Electrochemical Series",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Kohlrausch Law Formulation & Limiting Conductivity",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 44,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Nernst Equation for Single Electrode Potential",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Nernst Equation for Complete Galvanic Cell",
+          "accuracyRate": 76,
+          "errorRate": 24,
+          "avgSeconds": 84,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Gibbs Free Energy ΔG° = -nFE°cell",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Equilibrium Constant log Kc = nE°/0.0591",
+          "accuracyRate": 28,
+          "errorRate": 72,
+          "avgSeconds": 115,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Faraday's First & Second Laws of Electrolysis",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Molar Conductivity vs Concentration (Strong vs Weak)",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 88,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Lead Storage Battery Reactions (Discharge & Charge)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 98,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Fuel Cells (H₂-O₂ Cell Efficiency & Anode/Cathode Eqn)",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Corrosion Mechanism & Rusting Prevention (Galvanization)",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Conductivity Cell & Cell Constant Calculation G* = l/A",
+          "accuracyRate": 79,
+          "errorRate": 21,
+          "avgSeconds": 80,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Degree of Dissociation α = Λm / Λ°m for Weak Electrolyte",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 92,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Dry Cell (Leclanché Cell) MnO₂ Depolarization",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 75,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Mercury Cell Standard Voltage Constancy (1.35 V)",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 41,
+          "percentage": "91.1%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 35,
+          "percentage": "77.8%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 32,
+          "percentage": "71.1%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 21,
+          "percentage": "46.7%",
+          "tier": "Below Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 23,
+          "percentage": "51.1%",
+          "tier": "Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_03",
+      "code": "Test 03",
+      "subjectKey": "CHEMISTRY",
+      "title": "Chemical Kinetics, Integrated Rate Laws & Arrhenius Activation",
+      "chapter": "Chapter 3: Chemical Kinetics",
+      "topic": "First-Order Half-Life, Rate Constant & Temperature Dependence",
+      "date": "Oct 24, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 47,
+      "enrolledCount": 48,
+      "attemptedRate": "97.9%",
+      "averageScore": 36.1,
+      "averagePercentage": "80.2%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Priya Verma"
+      },
+      "lowestScore": {
+        "score": 22,
+        "percentage": "48.9%",
+        "studentName": "Sahil Mehta"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 9,
+        "statement": "Determine activation energy Ea if rate constant triples when temperature rises from 300 K to 320 K.",
+        "topic": "Arrhenius Equation Two-Temperature Logarithmic Form",
+        "errorRate": "68.1%",
+        "wrongCount": 32,
+        "totalAttempted": 47,
+        "dominantMistake": "Unit conversion mistake: Failed to multiply by R = 8.314 J/K·mol.",
+        "actionRecommendation": "Emphasize SI Joule to kJ conversions during Arrhenius slope evaluations."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 3,
+        "statement": "Identify the unit of rate constant for a first-order chemical reaction.",
+        "topic": "First-Order Rate Constant Units",
+        "successRate": "97.9%",
+        "correctCount": 46,
+        "totalAttempted": 47,
+        "masteryNotes": "Flawless recall that k has units of s⁻¹ or min⁻¹."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 20,
+          "percentage": "42.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 22,
+          "percentage": "46.8%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 5,
+          "percentage": "10.6%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Average vs Instantaneous Rate of Reaction",
+          "accuracyRate": 94,
+          "errorRate": 6,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Order vs Molecularity of Reaction Distinction",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "First-Order Rate Constant Units (s⁻¹)",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 42,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Zero-Order Integrated Rate Equation [R] = [R]₀ - kt",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 64,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "First-Order Integrated Equation k = (2.303/t)log([R]₀/[R])",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Half-life of First Order t₁/₂ = 0.693/k",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Half-life of Zero Order t₁/₂ = [R]₀/2k",
+          "accuracyRate": 79,
+          "errorRate": 21,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Pseudo First-Order Reactions (Hydrolysis of Cane Sugar)",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Arrhenius Equation Ea from Two Temperatures",
+          "accuracyRate": 32,
+          "errorRate": 68,
+          "avgSeconds": 110,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Collision Theory (Effective Collisions & Steric Factor)",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Catalyst Effect on Activation Energy (Alternate Pathway)",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Initial Rate Method for Determination of Rate Law",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 94,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Slope of log k vs 1/T (-Ea / 2.303R)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 98,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Radioactive Decay as First-Order Kinetic Process",
+          "accuracyRate": 90,
+          "errorRate": 10,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Fraction of Molecules with Energy ≥ Ea (e^(-Ea/RT))",
+          "accuracyRate": 65,
+          "errorRate": 35,
+          "avgSeconds": 102,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "36m"
+        },
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 41,
+          "percentage": "91.1%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 33,
+          "percentage": "73.3%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 26,
+          "percentage": "57.8%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 22,
+          "percentage": "48.9%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_04",
+      "code": "Test 04",
+      "subjectKey": "CHEMISTRY",
+      "title": "Coordination Compounds, IUPAC & Crystal Field Theory",
+      "chapter": "Chapter 5: Coordination Compounds",
+      "topic": "Crystal Field Splitting, CFSE, VBT Hybridization & Isomerism",
+      "date": "Oct 18, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 46,
+      "enrolledCount": 48,
+      "attemptedRate": "95.8%",
+      "averageScore": 34.8,
+      "averagePercentage": "77.3%",
+      "highestScore": {
+        "score": 44,
+        "percentage": "97.8%",
+        "studentName": "Aryan Sharma"
+      },
+      "lowestScore": {
+        "score": 21,
+        "percentage": "46.7%",
+        "studentName": "Rohit Thakur"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 8,
+        "statement": "Identify the electronic configuration and magnetic behavior of [CoF₆]³⁻ based on Crystal Field Theory.",
+        "topic": "Crystal Field High-Spin vs Low-Spin Complexes",
+        "errorRate": "73.9%",
+        "wrongCount": 34,
+        "totalAttempted": 46,
+        "dominantMistake": "Weak vs strong field confusion: Co³⁺ with fluoride F⁻ forms high-spin (t₂g⁴ eg²) complex, not paired (t₂g⁶ eg⁰).",
+        "actionRecommendation": "Review the spectrochemical series and halogen weak-field donor properties."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Write the IUPAC name of the complex [Co(NH₃)₆]Cl₃.",
+        "topic": "IUPAC Nomenclature of Coordination Complexes",
+        "successRate": "95.7%",
+        "correctCount": 44,
+        "totalAttempted": 46,
+        "masteryNotes": "Accurate formulation of hexaamminecobalt(III) chloride."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 17,
+          "percentage": "37.0%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 22,
+          "percentage": "47.8%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 7,
+          "percentage": "15.2%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "IUPAC Nomenclature of Cationic Complexes",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Werner's Coordination Theory (Primary vs Secondary Valence)",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Ionization and Hydrate Isomerism in Complexes",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Linkage Isomerism with Ambidentate Ligands (NO₂⁻, SCN⁻)",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Geometrical Isomerism (cis/trans in [Pt(NH₃)₂Cl₂])",
+          "accuracyRate": 83,
+          "errorRate": 17,
+          "avgSeconds": 74,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Optical Isomerism in Bidentate Complexes [Co(en)₃]³⁺",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 88,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Valence Bond Theory d²sp³ vs sp³d² Hybridization",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "CFT High-Spin [CoF₆]³⁻ vs Low-Spin [Co(NH₃)₆]³⁺",
+          "accuracyRate": 26,
+          "errorRate": 74,
+          "avgSeconds": 114,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Spectrochemical Series Ligand Field Strength",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Calculation of CFSE for Octahedral Complexes",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 96,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Tetrahedral Crystal Field Splitting Δt = (4/9)Δo",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 90,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Magnetic Moment Spin-Only Formula μ = √(n(n+2)) BM",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Synergic π-Backbonding in Metal Carbonyls Ni(CO)₄",
+          "accuracyRate": 75,
+          "errorRate": 25,
+          "avgSeconds": 85,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Chelate Effect and Thermodynamic Stability of EDTA⁴⁻",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Biological Importance: Chlorophyll (Mg) & Hemoglobin (Fe)",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 44,
+          "percentage": "97.8%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 36,
+          "percentage": "80.0%",
+          "tier": "Excellent",
+          "time": "44m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 31,
+          "percentage": "68.9%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 21,
+          "percentage": "46.7%",
+          "tier": "Below Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 24,
+          "percentage": "53.3%",
+          "tier": "Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_math_12_01",
+      "code": "Test 01",
+      "subjectKey": "MATHEMATICS",
+      "title": "Relations, Functions & Inverse Trigonometric Functions",
+      "chapter": "Chapter 1 & 2: Relations & ITF",
+      "topic": "Equivalence Relations, Bijective Maps & Principal Value Branches",
+      "date": "Nov 03, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 46,
+      "enrolledCount": 48,
+      "attemptedRate": "95.8%",
+      "averageScore": 35.8,
+      "averagePercentage": "79.6%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Aryan Sharma"
+      },
+      "lowestScore": {
+        "score": 22,
+        "percentage": "48.9%",
+        "studentName": "Sahil Mehta (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 6,
+        "statement": "Evaluate principal value of sin⁻¹(sin(3π/5)) + cos⁻¹(cos(7π/6)).",
+        "topic": "Principal Value Branch Reduction of Trigonometric Inverses",
+        "errorRate": "73.9%",
+        "wrongCount": 34,
+        "totalAttempted": 46,
+        "dominantMistake": "Wrote 3π/5 directly without observing that 3π/5 = 108° lies outside [-π/2, π/2].",
+        "actionRecommendation": "Practice quadrant angle reduction to bring arguments within principal ranges."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Define an equivalence relation on a non-empty set A.",
+        "topic": "Equivalence Relation Definition",
+        "successRate": "97.8%",
+        "correctCount": 45,
+        "totalAttempted": 46,
+        "masteryNotes": "Flawless recall of reflexive, symmetric, and transitive criteria."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 19,
+          "percentage": "41.3%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 21,
+          "percentage": "45.7%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 6,
+          "percentage": "13.0%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Reflexive, Symmetric & Transitive Criteria",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 42,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Equivalence Classes and Partition of a Set",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 64,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "One-One (Injective) Function Verification",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Onto (Surjective) Function Codomain Match",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 74,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Domain and Range of Inverse Trig Functions",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Principal Value Reduction sin⁻¹(sin x)",
+          "accuracyRate": 26,
+          "errorRate": 74,
+          "avgSeconds": 115,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Principal Value Reduction cos⁻¹(cos x)",
+          "accuracyRate": 75,
+          "errorRate": 25,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Simplification of tan⁻¹(cos x - sin x)/(cos x + sin x)",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Composition of Invertible Functions (fog)⁻¹ = g⁻¹of⁻¹",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 84,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Identity Relation vs Universal Relation",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Number of Equivalence Relations on Set with 3 Elements",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 98,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "tan⁻¹x + tan⁻¹y Formula Application Criteria",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 72,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Bijective Invertibility Condition for Functions",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Evaluation of sin(π/3 - sin⁻¹(-1/2))",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Greatest Integer Function Continuity & Bijectivity",
+          "accuracyRate": 70,
+          "errorRate": 30,
+          "avgSeconds": 95,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "36m"
+        },
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 33,
+          "percentage": "73.3%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 27,
+          "percentage": "60.0%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 22,
+          "percentage": "48.9%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_math_12_02",
+      "code": "Test 02",
+      "subjectKey": "MATHEMATICS",
+      "title": "Matrices, Determinants & System of Linear Equations",
+      "chapter": "Chapter 3 & 4: Algebra of Matrices & Determinants",
+      "topic": "Matrix Inversion Method, Adjoint & Cramer's Consistency",
+      "date": "Oct 30, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 45,
+      "enrolledCount": 48,
+      "attemptedRate": "93.8%",
+      "averageScore": 34.2,
+      "averagePercentage": "76.0%",
+      "highestScore": {
+        "score": 44,
+        "percentage": "97.8%",
+        "studentName": "Priya Verma"
+      },
+      "lowestScore": {
+        "score": 20,
+        "percentage": "44.4%",
+        "studentName": "Rohit Thakur (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 9,
+        "statement": "If A is a 3x3 non-singular matrix, find the value of |adj(adj A)| in terms of |A|.",
+        "topic": "Determinant of Double Adjoint Matrix Identity",
+        "errorRate": "77.8%",
+        "wrongCount": 35,
+        "totalAttempted": 45,
+        "dominantMistake": "Wrote |A|^(n-1) = |A|^2 instead of |A|^((n-1)^2) = |A|^4.",
+        "actionRecommendation": "Derive |adj(adj A)| = |A|^((n-1)²) step-by-step from adj(A) · A = |A|I."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 2,
+        "statement": "State the condition for matrix multiplication AB to be defined.",
+        "topic": "Matrix Conformability for Multiplication",
+        "successRate": "97.8%",
+        "correctCount": 44,
+        "totalAttempted": 45,
+        "masteryNotes": "All students correctly identified columns of A must equal rows of B."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 16,
+          "percentage": "35.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 23,
+          "percentage": "51.1%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 6,
+          "percentage": "13.3%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Matrix Addition & Scalar Multiplication Properties",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 46,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Matrix Multiplication Conformability & Non-commutativity",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 44,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Transpose of a Matrix (AB)^T = B^T A^T",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Symmetric and Skew-Symmetric Decomposition A = P + Q",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 74,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Evaluation of 3x3 Determinant by Row Expansion",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Singular Matrix Condition det(A) = 0",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Properties of Determinants (Scalar k^n |A|)",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Adjoint of a 3x3 Matrix via Transpose of Cofactors",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 92,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Double Adjoint Determinant |adj(adj A)| = |A|^4",
+          "accuracyRate": 22,
+          "errorRate": 78,
+          "avgSeconds": 118,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Matrix Inverse Formula A⁻¹ = (1/|A|) adj(A)",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Solving 3x3 Linear System AX = B via Inversion",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 104,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Consistency Criteria (Unique, Infinitely Many, No Solution)",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Trace of a Matrix & Identity Matrix Properties",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Orthogonal Matrix Identity A A^T = I",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 90,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Determinant of Skew-Symmetric Matrix of Odd Order is 0",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 44,
+          "percentage": "97.8%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 36,
+          "percentage": "80.0%",
+          "tier": "Excellent",
+          "time": "44m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 32,
+          "percentage": "71.1%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 20,
+          "percentage": "44.4%",
+          "tier": "Below Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 23,
+          "percentage": "51.1%",
+          "tier": "Average",
+          "time": "45m"
+        }
+      ]
+    }
   ],
 
   '11-NonMed': [
     {
       id: 'test_11_01',
+      subjectKey: 'PHYSICS',
       code: 'Test 01',
       title: 'Units, Dimensions & Error Propagation Analysis',
       chapter: 'Chapter 2: Units and Measurements',
@@ -3796,6 +5559,7 @@ const RECORDED_CLASS_TESTS = {
     },
     {
       id: 'test_11_02',
+      subjectKey: 'PHYSICS',
       code: 'Test 02',
       title: 'Motion in a Straight Line & Free Fall Kinematics',
       chapter: 'Chapter 3: Motion in a Straight Line',
@@ -3860,7 +5624,1850 @@ const RECORDED_CLASS_TESTS = {
       ]
     }
   ]
-};
+,
+
+  '12-Med': [
+    {
+      "id": "test_bio_12_01",
+      "code": "Test 01",
+      "subjectKey": "BIOLOGY",
+      "title": "Sexual Reproduction in Flowering Plants & Pollination",
+      "chapter": "Chapter 1: Sexual Reproduction in Flowering Plants",
+      "topic": "Microsporogenesis, Megasporogenesis & Double Fertilization",
+      "date": "Nov 02, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 37,
+      "enrolledCount": 38,
+      "attemptedRate": "97.4%",
+      "averageScore": 37.4,
+      "averagePercentage": "83.1%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Palak Gulati"
+      },
+      "lowestScore": {
+        "score": 23,
+        "percentage": "51.1%",
+        "studentName": "Vikas Negi (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 8,
+        "statement": "Identify the ploidy levels of: (i) Antipodal cells, (ii) Secondary nucleus before syngamy, and (iii) Primary Endosperm Nucleus (PEN).",
+        "topic": "Ploidy Transitions in Angiosperm Embryo Sac",
+        "errorRate": "70.3%",
+        "wrongCount": 26,
+        "totalAttempted": 37,
+        "dominantMistake": "Confused secondary nucleus (2n) with haploid polar nuclei (n + n) and PEN (3n).",
+        "actionRecommendation": "Review double fertilization chromosome counting diagrams on the smartboard."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Which chemical substance composes the resistant outer wall (exine) of pollen grains?",
+        "topic": "Sporopollenin Properties",
+        "successRate": "100%",
+        "correctCount": 37,
+        "totalAttempted": 37,
+        "masteryNotes": "100% correct response on sporopollenin."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 18,
+          "percentage": "48.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 15,
+          "percentage": "40.5%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 4,
+          "percentage": "10.8%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Sporopollenin & Exine Resistance",
+          "accuracyRate": 100,
+          "errorRate": 0,
+          "avgSeconds": 38,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Tapetum Layer Function (Enzyme & Ubisch Bodies)",
+          "accuracyRate": 95,
+          "errorRate": 5,
+          "avgSeconds": 46,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Microsporogenesis Meiotic Division into Tetrad",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Pollen Grain 2-Celled vs 3-Celled Shedding Stage",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 64,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Anatropous Ovule Structure (Micropyle, Chalaza, Hilum)",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Monosporic Polygonum-Type 7-Celled 8-Nucleate Sac",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Filiform Apparatus Role in Guiding Pollen Tube",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Ploidy of Embryo Sac Cells (n, 2n, 3n)",
+          "accuracyRate": 30,
+          "errorRate": 70,
+          "avgSeconds": 110,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Wind Pollination (Anemophily) Adaptations",
+          "accuracyRate": 95,
+          "errorRate": 5,
+          "avgSeconds": 45,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Cleistogamous vs Chasmogamous Flowers in Viola",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Outbreeding Devices Preventing Self-Pollination",
+          "accuracyRate": 81,
+          "errorRate": 19,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Double Fertilization (Syngamy + Triple Fusion)",
+          "accuracyRate": 94,
+          "errorRate": 6,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Free-Nuclear Endosperm in Tender Coconut Water",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 56,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "True Fruits vs False Fruits (Apple Thalamus)",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Apomixis and Polyembryony in Citrus Fruits",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "402",
+          "name": "Palak Gulati",
+          "phone": "98163 22003",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "35m"
+        },
+        {
+          "roll": "403",
+          "name": "Tanya Dogra",
+          "phone": "98163 22005",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "401",
+          "name": "Nikhil Sethi",
+          "phone": "98163 22001",
+          "score": 41,
+          "percentage": "91.1%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "407",
+          "name": "Simran Sood",
+          "phone": "98163 22013",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "405",
+          "name": "Megha Sharma",
+          "phone": "98163 22009",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "404",
+          "name": "Rahul Chawla",
+          "phone": "98163 22007",
+          "score": 35,
+          "percentage": "77.8%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "406",
+          "name": "Rohan Bhatia",
+          "phone": "98163 22011",
+          "score": 29,
+          "percentage": "64.4%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "408",
+          "name": "Vikas Negi",
+          "phone": "98163 22015",
+          "score": 23,
+          "percentage": "51.1%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_01",
+      "code": "Test 01",
+      "subjectKey": "CHEMISTRY",
+      "title": "Solutions, Raoult's Law & Colligative Properties",
+      "chapter": "Chapter 1: Solutions",
+      "topic": "Raoult's Law, Depression in Freezing Point & van 't Hoff Factor",
+      "date": "Nov 02, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 45,
+      "enrolledCount": 48,
+      "attemptedRate": "93.8%",
+      "averageScore": 35.2,
+      "averagePercentage": "78.2%",
+      "highestScore": {
+        "score": 44,
+        "percentage": "97.8%",
+        "studentName": "Priya Verma"
+      },
+      "lowestScore": {
+        "score": 20,
+        "percentage": "44.4%",
+        "studentName": "Sahil Mehta (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 7,
+        "statement": "Calculate the van 't Hoff factor i for 0.1 m BaCl₂ solution exhibiting 80% degree of dissociation α.",
+        "topic": "van 't Hoff Factor & Ionic Dissociation Degree",
+        "errorRate": "75.6%",
+        "wrongCount": 34,
+        "totalAttempted": 45,
+        "dominantMistake": "Formula Mistake: Substituted i = 1 + α = 1.8 instead of i = 1 + (n - 1)α = 1 + 2(0.8) = 2.6.",
+        "actionRecommendation": "Review relationship i = 1 + (n - 1)α where n is the total number of ions produced per formula unit."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Define Raoult's Law for a binary solution of volatile liquids.",
+        "topic": "Raoult's Law and Ideal Solutions",
+        "successRate": "95.6%",
+        "correctCount": 43,
+        "totalAttempted": 45,
+        "masteryNotes": "Excellent understanding of partial vapor pressures pA = pA° * xA."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 18,
+          "percentage": "40.0%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 21,
+          "percentage": "46.7%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 6,
+          "percentage": "13.3%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Raoult's Law for Volatile Solutes",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Positive & Negative Deviations from Raoult's Law",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Azeotropes (Minimum vs Maximum Boiling)",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Relative Lowering of Vapour Pressure Δp/p°",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Elevation of Boiling Point ΔTb = Kb · m",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 72,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Depression in Freezing Point ΔTf = Kf · m",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 84,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "van 't Hoff Factor for Dissociation i = 1 + (n-1)α",
+          "accuracyRate": 24,
+          "errorRate": 76,
+          "avgSeconds": 112,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Abnormal Molar Mass from Dimerization (Acetic Acid)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 95,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Osmotic Pressure π = CRT Formula & Units",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Reverse Osmosis Desalination Semi-permeable Membrane",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Molality vs Molarity Temperature Invariance",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Henry's Law p = KH · x Aquatic Respiration",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Calculation of Kb from Latent Heat of Vaporization",
+          "accuracyRate": 65,
+          "errorRate": 35,
+          "avgSeconds": 104,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Isotonic, Hypertonic, and Hypotonic Solutions",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Degree of Association α = (1 - i)/(1 - 1/n)",
+          "accuracyRate": 58,
+          "errorRate": 42,
+          "avgSeconds": 108,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 44,
+          "percentage": "97.8%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 34,
+          "percentage": "75.6%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 28,
+          "percentage": "62.2%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 20,
+          "percentage": "44.4%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_02",
+      "code": "Test 02",
+      "subjectKey": "CHEMISTRY",
+      "title": "Electrochemistry, Nernst Equation & Gibbs Energy",
+      "chapter": "Chapter 2: Electrochemistry",
+      "topic": "Galvanic Cells, Standard Potentials & Kohlrausch's Law",
+      "date": "Oct 29, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 46,
+      "enrolledCount": 48,
+      "attemptedRate": "95.8%",
+      "averageScore": 33.6,
+      "averagePercentage": "74.7%",
+      "highestScore": {
+        "score": 43,
+        "percentage": "95.6%",
+        "studentName": "Aryan Sharma"
+      },
+      "lowestScore": {
+        "score": 21,
+        "percentage": "46.7%",
+        "studentName": "Rohit Thakur (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 6,
+        "statement": "Compute equilibrium constant Kc at 298 K for cell: Zn + Cu²⁺ ⇌ Zn²⁺ + Cu where E°cell = 1.10 V.",
+        "topic": "Equilibrium Constant from Standard Cell Potential",
+        "errorRate": "71.7%",
+        "wrongCount": 33,
+        "totalAttempted": 46,
+        "dominantMistake": "Anti-logarithm calculation error in Kc = 10^(2 * 1.10 / 0.0591).",
+        "actionRecommendation": "Practice log and anti-log rules for electrochemistry equilibria."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 2,
+        "statement": "State Kohlrausch's Law of independent migration of ions.",
+        "topic": "Kohlrausch Law Formulation",
+        "successRate": "97.8%",
+        "correctCount": 45,
+        "totalAttempted": 46,
+        "masteryNotes": "Nearly 100% correct definition and molar conductivity addition."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 15,
+          "percentage": "32.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 23,
+          "percentage": "50.0%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 8,
+          "percentage": "17.4%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Standard Electrode Potential & Electrochemical Series",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Kohlrausch Law Formulation & Limiting Conductivity",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 44,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Nernst Equation for Single Electrode Potential",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Nernst Equation for Complete Galvanic Cell",
+          "accuracyRate": 76,
+          "errorRate": 24,
+          "avgSeconds": 84,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Gibbs Free Energy ΔG° = -nFE°cell",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Equilibrium Constant log Kc = nE°/0.0591",
+          "accuracyRate": 28,
+          "errorRate": 72,
+          "avgSeconds": 115,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Faraday's First & Second Laws of Electrolysis",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Molar Conductivity vs Concentration (Strong vs Weak)",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 88,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Lead Storage Battery Reactions (Discharge & Charge)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 98,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Fuel Cells (H₂-O₂ Cell Efficiency & Anode/Cathode Eqn)",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Corrosion Mechanism & Rusting Prevention (Galvanization)",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Conductivity Cell & Cell Constant Calculation G* = l/A",
+          "accuracyRate": 79,
+          "errorRate": 21,
+          "avgSeconds": 80,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Degree of Dissociation α = Λm / Λ°m for Weak Electrolyte",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 92,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Dry Cell (Leclanché Cell) MnO₂ Depolarization",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 75,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Mercury Cell Standard Voltage Constancy (1.35 V)",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 41,
+          "percentage": "91.1%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 35,
+          "percentage": "77.8%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 32,
+          "percentage": "71.1%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 21,
+          "percentage": "46.7%",
+          "tier": "Below Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 23,
+          "percentage": "51.1%",
+          "tier": "Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_03",
+      "code": "Test 03",
+      "subjectKey": "CHEMISTRY",
+      "title": "Chemical Kinetics, Integrated Rate Laws & Arrhenius Activation",
+      "chapter": "Chapter 3: Chemical Kinetics",
+      "topic": "First-Order Half-Life, Rate Constant & Temperature Dependence",
+      "date": "Oct 24, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 47,
+      "enrolledCount": 48,
+      "attemptedRate": "97.9%",
+      "averageScore": 36.1,
+      "averagePercentage": "80.2%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Priya Verma"
+      },
+      "lowestScore": {
+        "score": 22,
+        "percentage": "48.9%",
+        "studentName": "Sahil Mehta"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 9,
+        "statement": "Determine activation energy Ea if rate constant triples when temperature rises from 300 K to 320 K.",
+        "topic": "Arrhenius Equation Two-Temperature Logarithmic Form",
+        "errorRate": "68.1%",
+        "wrongCount": 32,
+        "totalAttempted": 47,
+        "dominantMistake": "Unit conversion mistake: Failed to multiply by R = 8.314 J/K·mol.",
+        "actionRecommendation": "Emphasize SI Joule to kJ conversions during Arrhenius slope evaluations."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 3,
+        "statement": "Identify the unit of rate constant for a first-order chemical reaction.",
+        "topic": "First-Order Rate Constant Units",
+        "successRate": "97.9%",
+        "correctCount": 46,
+        "totalAttempted": 47,
+        "masteryNotes": "Flawless recall that k has units of s⁻¹ or min⁻¹."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 20,
+          "percentage": "42.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 22,
+          "percentage": "46.8%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 5,
+          "percentage": "10.6%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Average vs Instantaneous Rate of Reaction",
+          "accuracyRate": 94,
+          "errorRate": 6,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Order vs Molecularity of Reaction Distinction",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "First-Order Rate Constant Units (s⁻¹)",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 42,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Zero-Order Integrated Rate Equation [R] = [R]₀ - kt",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 64,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "First-Order Integrated Equation k = (2.303/t)log([R]₀/[R])",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Half-life of First Order t₁/₂ = 0.693/k",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Half-life of Zero Order t₁/₂ = [R]₀/2k",
+          "accuracyRate": 79,
+          "errorRate": 21,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Pseudo First-Order Reactions (Hydrolysis of Cane Sugar)",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Arrhenius Equation Ea from Two Temperatures",
+          "accuracyRate": 32,
+          "errorRate": 68,
+          "avgSeconds": 110,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Collision Theory (Effective Collisions & Steric Factor)",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Catalyst Effect on Activation Energy (Alternate Pathway)",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Initial Rate Method for Determination of Rate Law",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 94,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Slope of log k vs 1/T (-Ea / 2.303R)",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 98,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Radioactive Decay as First-Order Kinetic Process",
+          "accuracyRate": 90,
+          "errorRate": 10,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Fraction of Molecules with Energy ≥ Ea (e^(-Ea/RT))",
+          "accuracyRate": 65,
+          "errorRate": 35,
+          "avgSeconds": 102,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "36m"
+        },
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 41,
+          "percentage": "91.1%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 33,
+          "percentage": "73.3%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 26,
+          "percentage": "57.8%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 22,
+          "percentage": "48.9%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    },
+    {
+      "id": "test_chem_12_04",
+      "code": "Test 04",
+      "subjectKey": "CHEMISTRY",
+      "title": "Coordination Compounds, IUPAC & Crystal Field Theory",
+      "chapter": "Chapter 5: Coordination Compounds",
+      "topic": "Crystal Field Splitting, CFSE, VBT Hybridization & Isomerism",
+      "date": "Oct 18, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 46,
+      "enrolledCount": 48,
+      "attemptedRate": "95.8%",
+      "averageScore": 34.8,
+      "averagePercentage": "77.3%",
+      "highestScore": {
+        "score": 44,
+        "percentage": "97.8%",
+        "studentName": "Aryan Sharma"
+      },
+      "lowestScore": {
+        "score": 21,
+        "percentage": "46.7%",
+        "studentName": "Rohit Thakur"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 8,
+        "statement": "Identify the electronic configuration and magnetic behavior of [CoF₆]³⁻ based on Crystal Field Theory.",
+        "topic": "Crystal Field High-Spin vs Low-Spin Complexes",
+        "errorRate": "73.9%",
+        "wrongCount": 34,
+        "totalAttempted": 46,
+        "dominantMistake": "Weak vs strong field confusion: Co³⁺ with fluoride F⁻ forms high-spin (t₂g⁴ eg²) complex, not paired (t₂g⁶ eg⁰).",
+        "actionRecommendation": "Review the spectrochemical series and halogen weak-field donor properties."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "Write the IUPAC name of the complex [Co(NH₃)₆]Cl₃.",
+        "topic": "IUPAC Nomenclature of Coordination Complexes",
+        "successRate": "95.7%",
+        "correctCount": 44,
+        "totalAttempted": 46,
+        "masteryNotes": "Accurate formulation of hexaamminecobalt(III) chloride."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 17,
+          "percentage": "37.0%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 22,
+          "percentage": "47.8%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 7,
+          "percentage": "15.2%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "IUPAC Nomenclature of Cationic Complexes",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Werner's Coordination Theory (Primary vs Secondary Valence)",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Ionization and Hydrate Isomerism in Complexes",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 66,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Linkage Isomerism with Ambidentate Ligands (NO₂⁻, SCN⁻)",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 62,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Geometrical Isomerism (cis/trans in [Pt(NH₃)₂Cl₂])",
+          "accuracyRate": 83,
+          "errorRate": 17,
+          "avgSeconds": 74,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Optical Isomerism in Bidentate Complexes [Co(en)₃]³⁺",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 88,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Valence Bond Theory d²sp³ vs sp³d² Hybridization",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "CFT High-Spin [CoF₆]³⁻ vs Low-Spin [Co(NH₃)₆]³⁺",
+          "accuracyRate": 26,
+          "errorRate": 74,
+          "avgSeconds": 114,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Spectrochemical Series Ligand Field Strength",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Calculation of CFSE for Octahedral Complexes",
+          "accuracyRate": 68,
+          "errorRate": 32,
+          "avgSeconds": 96,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Tetrahedral Crystal Field Splitting Δt = (4/9)Δo",
+          "accuracyRate": 72,
+          "errorRate": 28,
+          "avgSeconds": 90,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Magnetic Moment Spin-Only Formula μ = √(n(n+2)) BM",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Synergic π-Backbonding in Metal Carbonyls Ni(CO)₄",
+          "accuracyRate": 75,
+          "errorRate": 25,
+          "avgSeconds": 85,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Chelate Effect and Thermodynamic Stability of EDTA⁴⁻",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Biological Importance: Chlorophyll (Mg) & Hemoglobin (Fe)",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "101",
+          "name": "Aryan Sharma",
+          "phone": "98160 55011",
+          "score": 44,
+          "percentage": "97.8%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "102",
+          "name": "Priya Verma",
+          "phone": "98160 55021",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "39m"
+        },
+        {
+          "roll": "106",
+          "name": "Divya Rana",
+          "phone": "98160 55061",
+          "score": 39,
+          "percentage": "86.7%",
+          "tier": "Excellent",
+          "time": "41m"
+        },
+        {
+          "roll": "104",
+          "name": "Ananya Chauhan",
+          "phone": "98160 55041",
+          "score": 38,
+          "percentage": "84.4%",
+          "tier": "Excellent",
+          "time": "43m"
+        },
+        {
+          "roll": "110",
+          "name": "Ritu Sen",
+          "phone": "98160 55101",
+          "score": 36,
+          "percentage": "80.0%",
+          "tier": "Excellent",
+          "time": "44m"
+        },
+        {
+          "roll": "109",
+          "name": "Karan Singhal",
+          "phone": "98160 55091",
+          "score": 31,
+          "percentage": "68.9%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "103",
+          "name": "Rohit Thakur",
+          "phone": "98160 55031",
+          "score": 21,
+          "percentage": "46.7%",
+          "tier": "Below Average",
+          "time": "45m"
+        },
+        {
+          "roll": "105",
+          "name": "Sahil Mehta",
+          "phone": "98160 55051",
+          "score": 24,
+          "percentage": "53.3%",
+          "tier": "Average",
+          "time": "45m"
+        }
+      ]
+    }
+  ],
+
+  '10-Science-A': [
+    {
+      "id": "test_c10_sci_01",
+      "code": "Test 01",
+      "subjectKey": "CLASS10_SCIENCE",
+      "title": "Chemical Reactions, Balancing & Redox Processes",
+      "chapter": "Chapter 1: Chemical Reactions and Equations",
+      "topic": "Types of Chemical Reactions, Double Displacement & Corrosion",
+      "date": "Nov 01, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 43,
+      "enrolledCount": 45,
+      "attemptedRate": "95.6%",
+      "averageScore": 37.8,
+      "averagePercentage": "84.0%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Tanvi Kalsi"
+      },
+      "lowestScore": {
+        "score": 24,
+        "percentage": "53.3%",
+        "studentName": "Ishita Sen (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 6,
+        "statement": "In reaction: MnO₂ + 4HCl → MnCl₂ + 2H₂O + Cl₂, identify the substance oxidized and oxidizing agent.",
+        "topic": "Redox Reactions Identification of Oxidizing and Reducing Agents",
+        "errorRate": "67.4%",
+        "wrongCount": 29,
+        "totalAttempted": 43,
+        "dominantMistake": "Inverse Identification: Stated HCl as oxidizing agent instead of reducing agent.",
+        "actionRecommendation": "Clarify loss of hydrogen as oxidation and gain of oxygen as oxidation."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 1,
+        "statement": "What is observed when magnesium ribbon is burned in oxygen?",
+        "topic": "Magnesium Ribbon Combustion Observation",
+        "successRate": "97.7%",
+        "correctCount": 42,
+        "totalAttempted": 43,
+        "masteryNotes": "Excellent recall of dazzling white flame and white powder MgO."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 22,
+          "percentage": "51.2%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 17,
+          "percentage": "39.5%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 4,
+          "percentage": "9.3%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Magnesium Combustion & MgO Formation",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 40,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Balancing Chemical Equations by Hit and Trial",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 55,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Combination Reactions (Quicklime CaO + H₂O → Ca(OH)₂)",
+          "accuracyRate": 95,
+          "errorRate": 5,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Thermal Decomposition of Ferrous Sulphate Crystals",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 70,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Electrolytic Decomposition of Water H₂:O₂ 2:1 Ratio",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 64,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Redox Identification in MnO₂ + 4HCl",
+          "accuracyRate": 33,
+          "errorRate": 67,
+          "avgSeconds": 108,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Photochemical Decomposition of AgCl in Sunlight",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 52,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Displacement Reaction of Iron Nail in Copper Sulphate",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Double Displacement Precipitation Na₂SO₄ + BaCl₂",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Exothermic vs Endothermic Reactions Definition",
+          "accuracyRate": 96,
+          "errorRate": 4,
+          "avgSeconds": 44,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "Respiration as an Exothermic Process Justification",
+          "accuracyRate": 87,
+          "errorRate": 13,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Corrosion of Metals (Silver Tarnishing & Copper Green Coat)",
+          "accuracyRate": 85,
+          "errorRate": 15,
+          "avgSeconds": 68,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Rancidity Prevention by Nitrogen Flushing",
+          "accuracyRate": 93,
+          "errorRate": 7,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Limewater Test for Carbon Dioxide (Milkiness & Excess CO₂)",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 75,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Oxidation of Copper Powder to Black Copper(II) Oxide",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "504",
+          "name": "Tanvi Kalsi",
+          "phone": "98164 11007",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "35m"
+        },
+        {
+          "roll": "502",
+          "name": "Bhavna Negi",
+          "phone": "98164 11003",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "501",
+          "name": "Arjun Sood",
+          "phone": "98164 11001",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "506",
+          "name": "Neha Kapoor",
+          "phone": "98164 11011",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "507",
+          "name": "Paras Dogra",
+          "phone": "98164 11013",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "503",
+          "name": "Kunal Verma",
+          "phone": "98164 11005",
+          "score": 33,
+          "percentage": "73.3%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "505",
+          "name": "Ritik Sharma",
+          "phone": "98164 11009",
+          "score": 28,
+          "percentage": "62.2%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "508",
+          "name": "Ishita Sen",
+          "phone": "98164 11015",
+          "score": 24,
+          "percentage": "53.3%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    }
+  ],
+
+  '10-Maths-A': [
+    {
+      "id": "test_c10_math_01",
+      "code": "Test 01",
+      "subjectKey": "CLASS10_MATHEMATICS",
+      "title": "Real Numbers & Fundamental Theorem of Arithmetic",
+      "chapter": "Chapter 1: Real Numbers",
+      "topic": "Prime Factorization HCF/LCM & Irrationality Proofs of Root 5",
+      "date": "Nov 02, 2026",
+      "duration": "45 Mins",
+      "totalMarks": 45,
+      "totalQuestions": 15,
+      "attemptedCount": 42,
+      "enrolledCount": 44,
+      "attemptedRate": "95.5%",
+      "averageScore": 36.9,
+      "averagePercentage": "82.0%",
+      "highestScore": {
+        "score": 45,
+        "percentage": "100%",
+        "studentName": "Tanvi Kalsi"
+      },
+      "lowestScore": {
+        "score": 23,
+        "percentage": "51.1%",
+        "studentName": "Ishita Sen (Remedial Focus)"
+      },
+      "mostWrongQuestion": {
+        "questionIndex": 7,
+        "statement": "Prove that 3 + 2√5 is irrational, given that √5 is irrational.",
+        "topic": "Contradiction Proof of Irrationality for Linear Combinations",
+        "errorRate": "69.0%",
+        "wrongCount": 29,
+        "totalAttempted": 42,
+        "dominantMistake": "Logical Jump: Did not establish co-prime condition or equate rational = irrational contradiction.",
+        "actionRecommendation": "Provide structured 4-line contradiction template for board examinations."
+      },
+      "mostCorrectQuestion": {
+        "questionIndex": 2,
+        "statement": "Find HCF and LCM of 12 and 18 by prime factorization.",
+        "topic": "Fundamental Theorem of Arithmetic Factorization",
+        "successRate": "97.6%",
+        "correctCount": 41,
+        "totalAttempted": 42,
+        "masteryNotes": "Flawless calculation of HCF = 6 and LCM = 36."
+      },
+      "tiers": {
+        "excellent": {
+          "count": 20,
+          "percentage": "47.6%",
+          "range": "36 – 45 Marks",
+          "label": "Distinction & Advanced Mastery"
+        },
+        "average": {
+          "count": 18,
+          "percentage": "42.9%",
+          "range": "23 – 35 Marks",
+          "label": "Solid Board Passing Grasp"
+        },
+        "belowAverage": {
+          "count": 4,
+          "percentage": "9.5%",
+          "range": "< 23 Marks",
+          "label": "Remedial Attention Required"
+        }
+      },
+      "questionAnalytics": [
+        {
+          "questionIndex": 1,
+          "subtopic": "Fundamental Theorem of Arithmetic Statement",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 38,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 2,
+          "subtopic": "Prime Factorization HCF & LCM of Two Numbers",
+          "accuracyRate": 98,
+          "errorRate": 2,
+          "avgSeconds": 42,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 3,
+          "subtopic": "Verification HCF(a,b) × LCM(a,b) = a × b",
+          "accuracyRate": 95,
+          "errorRate": 5,
+          "avgSeconds": 48,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 4,
+          "subtopic": "Why 4ⁿ Cannot End with Digit 0 for Any Natural Number n",
+          "accuracyRate": 86,
+          "errorRate": 14,
+          "avgSeconds": 65,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 5,
+          "subtopic": "Explanation of Composite Numbers 7 × 11 × 13 + 13",
+          "accuracyRate": 91,
+          "errorRate": 9,
+          "avgSeconds": 54,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 6,
+          "subtopic": "Word Problems on Circular Track LCM Synchronization",
+          "accuracyRate": 84,
+          "errorRate": 16,
+          "avgSeconds": 72,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 7,
+          "subtopic": "Proof by Contradiction that 3 + 2√5 is Irrational",
+          "accuracyRate": 31,
+          "errorRate": 69,
+          "avgSeconds": 112,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 8,
+          "subtopic": "Proof that √2 or √3 is Irrational from Scratch",
+          "accuracyRate": 74,
+          "errorRate": 26,
+          "avgSeconds": 88,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 9,
+          "subtopic": "Finding Largest Number that Divides Leaving Remainder",
+          "accuracyRate": 78,
+          "errorRate": 22,
+          "avgSeconds": 82,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 10,
+          "subtopic": "Decimal Expansion of Rational Numbers (2ᵐ × 5ⁿ)",
+          "accuracyRate": 89,
+          "errorRate": 11,
+          "avgSeconds": 58,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 11,
+          "subtopic": "HCF of Three Numbers (6, 72, 120)",
+          "accuracyRate": 82,
+          "errorRate": 18,
+          "avgSeconds": 76,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 12,
+          "subtopic": "Non-applicability of HCF × LCM = Product for 3 Numbers",
+          "accuracyRate": 75,
+          "errorRate": 25,
+          "avgSeconds": 85,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 13,
+          "subtopic": "Co-prime Numbers Definition and Application",
+          "accuracyRate": 92,
+          "errorRate": 8,
+          "avgSeconds": 50,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 14,
+          "subtopic": "Rational vs Irrational Sum/Difference Nature",
+          "accuracyRate": 88,
+          "errorRate": 12,
+          "avgSeconds": 60,
+          "benchmarkSeconds": 90
+        },
+        {
+          "questionIndex": 15,
+          "subtopic": "Smallest Number Divisible by All Numbers 1 to 10",
+          "accuracyRate": 80,
+          "errorRate": 20,
+          "avgSeconds": 78,
+          "benchmarkSeconds": 90
+        }
+      ],
+      "studentResults": [
+        {
+          "roll": "601",
+          "name": "Tanvi Kalsi",
+          "phone": "98165 11001",
+          "score": 45,
+          "percentage": "100%",
+          "tier": "Excellent",
+          "time": "35m"
+        },
+        {
+          "roll": "604",
+          "name": "Bhavna Negi",
+          "phone": "98165 11007",
+          "score": 43,
+          "percentage": "95.6%",
+          "tier": "Excellent",
+          "time": "37m"
+        },
+        {
+          "roll": "603",
+          "name": "Arjun Sood",
+          "phone": "98165 11005",
+          "score": 42,
+          "percentage": "93.3%",
+          "tier": "Excellent",
+          "time": "38m"
+        },
+        {
+          "roll": "606",
+          "name": "Neha Kapoor",
+          "phone": "98165 11011",
+          "score": 40,
+          "percentage": "88.9%",
+          "tier": "Excellent",
+          "time": "40m"
+        },
+        {
+          "roll": "607",
+          "name": "Paras Dogra",
+          "phone": "98165 11013",
+          "score": 37,
+          "percentage": "82.2%",
+          "tier": "Excellent",
+          "time": "42m"
+        },
+        {
+          "roll": "602",
+          "name": "Kunal Verma",
+          "phone": "98165 11003",
+          "score": 34,
+          "percentage": "75.6%",
+          "tier": "Average",
+          "time": "44m"
+        },
+        {
+          "roll": "605",
+          "name": "Ritik Sharma",
+          "phone": "98165 11009",
+          "score": 28,
+          "percentage": "62.2%",
+          "tier": "Average",
+          "time": "45m"
+        },
+        {
+          "roll": "608",
+          "name": "Ishita Sen",
+          "phone": "98165 11015",
+          "score": 23,
+          "percentage": "51.1%",
+          "tier": "Below Average",
+          "time": "45m"
+        }
+      ]
+    }
+  ]};
 
 // Hydrate RECORDED_CLASS_TESTS from localStorage if available
 try {
@@ -3941,8 +7548,19 @@ window.renderClassProgressDashboard = function(classId = '12-NonMed') {
   const sel = document.getElementById('selectTeacherActiveRosterClass');
   if (sel && sel.value !== classId) sel.value = classId;
 
-  // Retrieve or fallback tests
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
+  const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+  const allClassTests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
+  let tests = allClassTests.filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
+  if (tests.length === 0) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      const match = (RECORDED_CLASS_TESTS[cid] || []).filter(t => t.subjectKey === currentTeacherSubject);
+      if (match.length > 0) {
+        tests = match;
+        break;
+      }
+    }
+    if (tests.length === 0) tests = allClassTests;
+  }
   const rosterData = CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed'];
 
   // Update Top KPI Cards
@@ -3955,7 +7573,7 @@ window.renderClassProgressDashboard = function(classId = '12-NonMed') {
   const statAttendance = document.getElementById('statClassAttendance');
   if (statAttendance) statAttendance.innerText = rosterData.attendance;
 
-  // Calculate overall average across all recorded tests
+  // Calculate overall average across all recorded tests for this subject
   let totalAvg = 0;
   tests.forEach(t => {
     totalAvg += parseFloat(t.averagePercentage) || 75;
@@ -3976,7 +7594,20 @@ window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = 
   const tbody = document.getElementById('tbodyRecordedTests');
   if (!tbody) return;
 
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
+  const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+  const allClassTests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
+  let tests = allClassTests.filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
+  if (tests.length === 0) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      const match = (RECORDED_CLASS_TESTS[cid] || []).filter(t => t.subjectKey === currentTeacherSubject);
+      if (match.length > 0) {
+        tests = match;
+        break;
+      }
+    }
+    if (tests.length === 0) tests = allClassTests;
+  }
+
   let filtered = tests;
   if (filterQuery) {
     const q = filterQuery.toLowerCase().trim();
@@ -4066,14 +7697,41 @@ window.filterRecordedTests = function(query) {
 
 window.viewTestReportDetail = function(testId) {
   const classId = teacherBuilderState.selectedClassId || '12-NonMed';
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'];
-  const test = tests.find(t => t.id === testId) || tests[0];
+  const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
+
+  // Find test across active class or any class
+  let test = (RECORDED_CLASS_TESTS[classId] || []).find(t => t.id === testId);
+  if (!test) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      test = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === testId);
+      if (test) break;
+    }
+  }
+  if (!test) {
+    const list = (RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || []).filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
+    test = list[0] || (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
+  }
+  if (!test) return;
 
   const reportContainer = document.getElementById('viewTestReportDetail');
   if (!reportContainer) return;
 
-  // Options for switching tests right inside the report
-  const switchTestOptions = tests.map(t => `
+  // Gather switch options strictly for this test's subject
+  const tSubject = test.subjectKey || currentTeacherSubject;
+  let relatedTests = [];
+  for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+    const match = (RECORDED_CLASS_TESTS[cid] || []).filter(t => (t.subjectKey || 'PHYSICS') === tSubject);
+    relatedTests.push(...match);
+  }
+  const seenIds = new Set();
+  relatedTests = relatedTests.filter(t => {
+    if (seenIds.has(t.id)) return false;
+    seenIds.add(t.id);
+    return true;
+  });
+  if (relatedTests.length === 0) relatedTests = [test];
+
+  const switchTestOptions = relatedTests.map(t => `
     <option value="${t.id}" ${t.id === test.id ? 'selected' : ''}>
       ${t.code}: ${t.title} (${t.averagePercentage} Avg)
     </option>
@@ -11420,6 +15078,8 @@ function applyTeacherProfile(prof, notify = false) {
 
   try {
     localStorage.setItem('haps_active_teacher', JSON.stringify(prof));
+    localStorage.setItem('haps_teacher_profile', JSON.stringify(prof));
+    localStorage.setItem('haps_active_role', 'teacher');
   } catch (e) {}
 
   const nameEl = document.getElementById('teacherFacultyName');
@@ -11429,6 +15089,12 @@ function applyTeacherProfile(prof, notify = false) {
   if (nameEl) nameEl.innerText = prof.name || prof.full_name;
   if (badgeEl) badgeEl.innerHTML = `${prof.designation} &bull; Department of ${prof.subjectName}`;
   if (textEl) textEl.innerHTML = prof.streamText;
+
+  // Welcome strip elements in Teacher Workspace
+  const stripTeacherName = document.getElementById('stripTeacherName');
+  const stripTeacherDept = document.getElementById('stripTeacherDept');
+  if (stripTeacherName) stripTeacherName.innerText = prof.name || prof.full_name;
+  if (stripTeacherDept) stripTeacherDept.innerText = `${prof.subjectName} Expert`;
 
   // Compact strip update on main teacher workspace
   const stripFacultyName = document.getElementById('stripFacultyName');
@@ -11452,22 +15118,23 @@ function applyTeacherProfile(prof, notify = false) {
   const headerFacultyName = document.getElementById('headerFacultyName');
   if (headerFacultyName) headerFacultyName.innerText = prof.name || prof.full_name;
   const headerFacultyTag = document.getElementById('headerFacultyTag');
-  if (headerFacultyTag) headerFacultyTag.innerText = prof.subjectName;
+  if (headerFacultyTag) headerFacultyTag.innerText = `FACULTY • ${prof.subjectKey}`;
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
   if (headerClassBadge) headerClassBadge.innerText = `Class ${defaultGrade}th ▼`;
 
   const headerTitle = document.getElementById('headerNavTitle');
   if (headerTitle && (!state.activeRole || state.activeRole === 'teacher')) {
     const tabTitles = {
-      'tabGenerator': `Create Tests & Quizzes • Department of ${prof.subjectName}`,
-      'tabQuestionBank': `Question Bank & PYQ Repository • Department of ${prof.subjectName}`,
-      'tabClassAnalytics': `Class Progress Dashboard • Department of ${prof.subjectName}`,
-      'tabStudents': `Students & Smart Cards • Department of ${prof.subjectName}`,
-      'tabSmartReports': `Weekly Smart Report • Department of ${prof.subjectName}`,
-      'tabHandwritten': `Scan Paper Sheets • Department of ${prof.subjectName}`
+      'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • Department of ${prof.subjectName}`,
+      'tabTeacherClasses': `Class Progress & Recorded Tests • Department of ${prof.subjectName}`,
+      'tabQuestionBank': `Question Bank & PYQ Repository • Department of ${prof.subjectName}`
     };
     headerTitle.innerText = tabTitles[state.activeTeacherTab] || `Teacher Portal • Department of ${prof.subjectName}`;
   }
+
+  // Student Smartboard header sync
+  const sbHeader = document.getElementById('smartboardFacultyHeader');
+  if (sbHeader) sbHeader.innerText = `${prof.name || 'Faculty'} Live AI Smartboard Session`;
 
   // Drawer faculty info update
   const drawerName = document.getElementById('drawerFacultyName');
@@ -11490,25 +15157,42 @@ function applyTeacherProfile(prof, notify = false) {
   const lockedText = document.getElementById('lockedTargetClassText');
   if (lockedText) lockedText.innerText = activeClassObj.name;
 
+  // Lock Paper Studio subject & classes
+  const selectPaperSubject = document.getElementById('selectPaperSubject');
+  if (selectPaperSubject) {
+    selectPaperSubject.innerHTML = `<option value="${prof.subjectKey}" selected>${prof.subjectName}</option>`;
+    selectPaperSubject.value = prof.subjectKey;
+    selectPaperSubject.disabled = true;
+  }
+
   const selectPaperClass = document.getElementById('selectPaperClass');
-  if (selectPaperClass) selectPaperClass.value = teacherBuilderState.selectedClassId;
+  if (selectPaperClass) {
+    selectPaperClass.innerHTML = allowedClasses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    selectPaperClass.value = teacherBuilderState.selectedClassId;
+  }
+
   const drawerSelectClass = document.getElementById('drawerSelectClassScope');
   if (drawerSelectClass) drawerSelectClass.value = teacherBuilderState.selectedClassId;
   const selectRosterClass = document.getElementById('selectTeacherActiveRosterClass');
   if (selectRosterClass) selectRosterClass.value = teacherBuilderState.selectedClassId;
+
+  // Ingestion studio sync
+  const inputInjectSubj = document.getElementById('inputInjectSubject');
+  if (inputInjectSubj) inputInjectSubj.value = prof.subjectName;
+  const injectSubjBadge = document.getElementById('injectFacultySubjectBadge');
+  if (injectSubjBadge) injectSubjBadge.innerText = `🔒 Locked: ${prof.subjectKey} (Class ${defaultGrade}th Scope)`;
+  const injectBName = document.getElementById('injectFacultyBannerName');
+  if (injectBName) injectBName.innerText = `${prof.name || 'Faculty'} • ${prof.designation || prof.subjectName + ' Faculty'}`;
 
   updateStreamSelectionUI(prof.targetStream || (isClass10 ? 'CBSE_CLASS_10' : (prof.subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE')));
 
   // 1. Reload classes filtered strictly by teacher subject
   loadTeacherClassesList();
 
-  // 2. Reload class analytics strictly scoped to teacher subject
-  loadClassAnalytics();
-
-  // 3. Reload curriculum chapters strictly for teacher subject and active grade
+  // 2. Reload curriculum chapters strictly for teacher subject and active grade
   loadCurriculumForClassAndSubject(prof.subjectKey, defaultGrade);
 
-  // 4. Update paper builder chapters & topics dropdown
+  // 3. Update paper builder chapters & topics dropdown
   if (typeof populatePaperChapters === 'function') {
     populatePaperChapters(prof.subjectKey);
   }
@@ -11516,14 +15200,22 @@ function applyTeacherProfile(prof, notify = false) {
     populateGenChapters(prof.subjectKey);
   }
 
-  // 5. Render roster for active class
+  // 4. Render roster for active class
   if (typeof window.renderClassRoster === 'function') {
     window.renderClassRoster(teacherBuilderState.selectedClassId);
   }
 
-  // 6. Reload question bank if active or prefetch
+  // 5. Render recorded tests scoped to this teacher
+  if (typeof window.renderRecordedTestsTable === 'function') {
+    window.renderRecordedTestsTable(teacherBuilderState.selectedClassId);
+  }
+
+  // 6. Reset question bank cache and reload if active
+  state.questionBankData = [];
+  state.currentQbSubjectKey = null;
+  state.currentQbGrade = null;
   if (state.activeTeacherTab === 'tabQuestionBank') {
-    loadQuestionBankView();
+    loadQuestionBankView(true);
   }
 
   if (notify) {
@@ -14334,7 +18026,10 @@ async function startRealtimeVoiceAssistant(qId) {
   const liveHint = document.getElementById(`voiceLiveHint_${qId}`);
 
   // Retrieve Question data
-  const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
+  const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) 
+            || (state.questionBankData || []).find(item => item.id === qId)
+            || (state.currentDraftTest?.questions || []).find(item => item.id === qId)
+            || {};
   const rawQ = qObj.question_latex || qObj.questionText || '';
   const rawS = qObj.solution_latex || '';
   const ch = qObj.chapter_name || qObj.chapter || '';
@@ -14510,14 +18205,11 @@ async function startUnifiedClassroomSession(qId) {
 }
 
 function buildLocalSmartboardPlan(qId) {
-  const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
-  const rawQ = qObj.question_latex || qObj.questionText || '';
-  const rawS = qObj.solution_latex || '';
-  const ch = qObj.chapter_name || qObj.chapter || 'Curriculum Concept';
-  const marks = qObj.marks_weightage || qObj.marks || 3;
-  const ans = qObj.correct_answer_latex || qObj.correct_answer || '';
+  let qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) 
+          || (state.questionBankData || []).find(item => item.id === qId)
+          || (state.currentDraftTest?.questions || []).find(item => item.id === qId);
+  if (!qObj) qObj = {};
 
-  // 1. Precise Subject & Discipline Isolation
   const profSubj = (teacherBuilderState.activeTeacher?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
   const qSubj = (qObj.subjectKey || qObj.subject || teacherBuilderState.selectedSubjectKey || profSubj).toUpperCase();
   const curGrade = String(qObj.grade || teacherBuilderState.activeGrade || '12');
@@ -14527,9 +18219,9 @@ function buildLocalSmartboardPlan(qId) {
   if (isC10) {
     discipline = (qSubj.includes('MATH') || profSubj.includes('MATH')) ? 'MATHEMATICS' : 'CLASS10_SCIENCE';
   } else {
-    if (qSubj.includes('CHEM')) discipline = 'CHEMISTRY';
-    else if (qSubj.includes('BIO')) discipline = 'BIOLOGY';
-    else if (qSubj.includes('MATH')) discipline = 'MATHEMATICS';
+    if (profSubj.includes('CHEM') || qSubj.includes('CHEM')) discipline = 'CHEMISTRY';
+    else if (profSubj.includes('BIO') || qSubj.includes('BIO')) discipline = 'BIOLOGY';
+    else if (profSubj.includes('MATH') || qSubj.includes('MATH')) discipline = 'MATHEMATICS';
     else discipline = 'PHYSICS';
   }
 
@@ -14538,8 +18230,33 @@ function buildLocalSmartboardPlan(qId) {
   if (!facultyName) {
     if (discipline === 'CHEMISTRY') facultyName = 'Prof. Sunita Rao';
     else if (discipline === 'BIOLOGY') facultyName = 'Dr. Ananya Mukherjee';
-    else if (discipline === 'MATHEMATICS') facultyName = 'Mr. Rajesh Bansal';
+    else if (discipline === 'MATHEMATICS') facultyName = 'Dr. Rajesh Iyer';
+    else if (discipline === 'CLASS10_SCIENCE') facultyName = 'Er. Rakesh Thakur';
+    else if (discipline === 'CLASS10_MATHEMATICS') facultyName = 'Mrs. Meenakshi Sharma';
     else facultyName = 'Dr. Vikram Sharma';
+  }
+
+  // Provide robust academic defaults if raw question was empty
+  let rawQ = qObj.question_latex || qObj.questionText || '';
+  let rawS = qObj.solution_latex || '';
+  let ch = qObj.chapter_name || qObj.chapter || (discipline === 'CHEMISTRY' ? 'Electrochemistry' : (discipline === 'BIOLOGY' ? 'Principles of Inheritance' : (discipline === 'MATHEMATICS' ? 'Integrals' : 'Electric Charges and Fields')));
+  let marks = qObj.marks_weightage || qObj.marks || 3;
+  let ans = qObj.correct_answer_latex || qObj.correct_answer || '';
+
+  if (!rawQ) {
+    if (discipline === 'CHEMISTRY') {
+      rawQ = 'For the cell reaction Zn(s) + Cu²⁺(aq) ⇌ Zn²⁺(aq) + Cu(s), standard potential E°cell is 1.10 V. Calculate standard Gibbs free energy ΔG°.';
+      rawS = 'ΔG° = -nFE°cell = -2 × 96500 × 1.10 = -212.3 kJ/mol.';
+      ans = '-212.3 kJ/mol';
+    } else if (discipline === 'MATHEMATICS') {
+      rawQ = 'Evaluate the definite integral ∫₀^(π/2) sin²(x) dx using standard integral properties.';
+      rawS = 'Using King property ∫₀ᵃ f(x)dx = ∫₀ᵃ f(a-x)dx: 2I = ∫₀^(π/2) 1 dx = π/2 ⇒ I = π/4.';
+      ans = 'π/4';
+    } else if (discipline === 'BIOLOGY') {
+      rawQ = 'Explain the law of segregation with a monohybrid cross and state the expected phenotypic ratio in F2 generation.';
+      rawS = 'Alleles segregate during gamete formation so each gamete carries only one allele. F2 phenotypic ratio is 3:1.';
+      ans = '3:1';
+    }
   }
 
   const textForDetection = (rawQ + ' ' + ch + ' ' + (qObj.topic || '') + ' ' + (qObj.subtopic || '') + ' ' + rawS).toLowerCase();
@@ -19078,8 +22795,14 @@ function generateStudentDiagnosticPlan(test, student) {
 
 window.openStudentPerformanceModal = function(testId, studentRoll) {
   const classId = teacherBuilderState.selectedClassId || '12-NonMed';
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
-  const test = tests.find(t => t.id === testId) || tests[0];
+  let test = (RECORDED_CLASS_TESTS[classId] || []).find(t => t.id === testId);
+  if (!test) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      test = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === testId);
+      if (test) break;
+    }
+  }
+  if (!test) test = (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
   if (!test) return;
 
   const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
@@ -19373,8 +23096,14 @@ function dispatchWhatsAppMessage(phone, text, studentName) {
 
 window.sendStudentWhatsAppPlan = function(testId, studentRoll) {
   const classId = teacherBuilderState.selectedClassId || '12-NonMed';
-  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
-  const test = tests.find(t => t.id === testId) || tests[0];
+  let test = (RECORDED_CLASS_TESTS[classId] || []).find(t => t.id === testId);
+  if (!test) {
+    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+      test = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === testId);
+      if (test) break;
+    }
+  }
+  if (!test) test = (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
   if (!test) return;
 
   const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
@@ -19413,13 +23142,14 @@ window.copyStudentPlanToClipboard = function() {
 window.sendRosterStudentWhatsApp = function(name, parentPhone, score, status) {
   const digits = String(parentPhone || '').replace(/\D/g, '');
   const cleanPhone = digits.length === 10 ? `91${digits}` : digits;
+  const senderName = teacherBuilderState.activeTeacher?.name || 'Department Faculty';
   const msg = `📚 *UNISOLE AI SCHOLAR ASSISTANT • PARENT UPDATE*\n` +
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
     `Dear Parent, regarding scholar *${name}*:\n` +
     `• *Attendance & Status:* ${status}\n` +
     `• *Current Subject Standing:* ${score}\n\n` +
     `Please review the diagnostic test report and complete the remedial assignments shared on the scholar portal.\n\n` +
-    `— Dr. Vikram Sharma, HAPS Senior Secondary School`;
+    `— ${senderName}, HAPS Senior Secondary School`;
 
   const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');

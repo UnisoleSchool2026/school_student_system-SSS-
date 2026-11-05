@@ -73,13 +73,13 @@ const inMemoryStore = {
     { id: 'b0000000-0000-0000-0000-000000000044', full_name: 'Kriti Dogra', roll_number: '11-M-04', grade: '11', section: '11-Med', board: 'HP_BOARD', target_exam: 'NEET_UG', role: 'STUDENT', hostel_resident: true },
 
     // Departmental Faculty (HAPS Senior Faculty Profiles)
-    { id: 'fac_phy_01', full_name: 'Dr. Vikram Sharma', role: 'TEACHER', phone: '9816010001', email: 'vikram.phy@haps.edu.in', subject: 'Physics', subjectKey: 'PHYSICS', department: 'PHYSICS', designation: 'Senior Physics Faculty & HOD', defaultClass: '11-NonMed', targetStream: 'JEE' },
-    { id: 'fac_chem_01', full_name: 'Prof. Sunita Rao', role: 'TEACHER', phone: '9816010002', email: 'sunita.chem@haps.edu.in', subject: 'Chemistry', subjectKey: 'CHEMISTRY', department: 'CHEMISTRY', designation: 'Senior Chemistry Faculty', defaultClass: '11-NonMed', targetStream: 'JEE' },
-    { id: 'fac_bio_01', full_name: 'Dr. Ananya Mukherjee', role: 'TEACHER', phone: '9816010003', email: 'ananya.bio@haps.edu.in', subject: 'Biology', subjectKey: 'BIOLOGY', department: 'BIOLOGY', designation: 'Senior Biology Faculty & NEET Coordinator', defaultClass: '11-Med', targetStream: 'NEET' },
-    { id: 'fac_math_01', full_name: 'Er. Rajesh Gupta', role: 'TEACHER', phone: '9816010004', email: 'rajesh.math@haps.edu.in', subject: 'Mathematics', subjectKey: 'MATHEMATICS', department: 'MATHEMATICS', designation: 'Senior Mathematics Faculty', defaultClass: '11-NonMed', targetStream: 'JEE' },
+    { id: 'fac_phy_01', full_name: 'Dr. Vikram Sharma', role: 'TEACHER', phone: '9816010001', email: 'vikram.phy@haps.edu.in', subject: 'Physics', subjectKey: 'PHYSICS', department: 'PHYSICS', designation: 'Senior Physics Faculty & HOD', defaultClass: '12-NonMed', targetStream: 'JEE' },
+    { id: 'fac_chem_01', full_name: 'Prof. Sunita Rao', role: 'TEACHER', phone: '9816010002', email: 'sunita.chem@haps.edu.in', subject: 'Chemistry', subjectKey: 'CHEMISTRY', department: 'CHEMISTRY', designation: 'Senior Chemistry Faculty & HOD', defaultClass: '12-NonMed', targetStream: 'JEE' },
+    { id: 'fac_bio_01', full_name: 'Dr. Ananya Mukherjee', role: 'TEACHER', phone: '9816010003', email: 'ananya.bio@haps.edu.in', subject: 'Biology', subjectKey: 'BIOLOGY', department: 'BIOLOGY', designation: 'Senior Biology Faculty & NEET Coordinator', defaultClass: '12-Med', targetStream: 'NEET' },
+    { id: 'fac_math_01', full_name: 'Dr. Rajesh Iyer', role: 'TEACHER', phone: '9816010004', email: 'rajesh.math@haps.edu.in', subject: 'Mathematics', subjectKey: 'MATHEMATICS', department: 'MATHEMATICS', designation: 'Senior Mathematics Faculty & HOD', defaultClass: '12-NonMed', targetStream: 'JEE' },
 
     // Class 10th Secondary Foundation Faculty (Maths & Science)
-    { id: 'fac_c10_math_01', full_name: 'Mrs. Meenakshi Sharma', role: 'TEACHER', phone: '9816010010', email: 'meenakshi.math10@haps.edu.in', subject: 'Mathematics', subjectKey: 'CLASS10_MATHEMATICS', department: 'MATHEMATICS', designation: 'Class 10th Mathematics Faculty & Board Coordinator', grade: '10', defaultClass: '10-Science-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Mathematics • Class 10 (CBSE & HP Board Foundation)' },
+    { id: 'fac_c10_math_01', full_name: 'Mrs. Meenakshi Sharma', role: 'TEACHER', phone: '9816010010', email: 'meenakshi.math10@haps.edu.in', subject: 'Mathematics', subjectKey: 'CLASS10_MATHEMATICS', department: 'MATHEMATICS', designation: 'Class 10th Mathematics Faculty & Board Coordinator', grade: '10', defaultClass: '10-Maths-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Mathematics • Class 10 (CBSE & HP Board Foundation)' },
     { id: 'fac_c10_sci_01', full_name: 'Er. Rakesh Thakur', role: 'TEACHER', phone: '9816010011', email: 'rakesh.sci10@haps.edu.in', subject: 'Science', subjectKey: 'CLASS10_SCIENCE', department: 'SCIENCE', designation: 'Class 10th Science Faculty & Board Coordinator', grade: '10', defaultClass: '10-Science-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Science • Class 10 (CBSE & HP Board Foundation)' }
   ],
   // Standard Institutional Classes
@@ -152,6 +152,18 @@ const inMemoryStore = {
         { key: 'CLASS10_SCIENCE', name: 'Science', totalChapters: 13, icon: 'atom' },
         { key: 'CLASS10_MATHEMATICS', name: 'Mathematics', totalChapters: 14, icon: 'calculator' }
       ]
+    },
+    {
+      key: '10-Maths-A',
+      id: '10-Maths-A',
+      name: 'Class 10th Maths (Section A)',
+      grade: '10',
+      section: '10-Maths-A',
+      stream: 'FOUNDATION',
+      defaultSubject: 'CLASS10_MATHEMATICS',
+      subjects: [
+        { key: 'CLASS10_MATHEMATICS', name: 'Mathematics', totalChapters: 14, icon: 'calculator' }
+      ]
     }
   ],
   // Subject-Wise Specialized Question Banks for:
@@ -214,6 +226,162 @@ const inMemoryStore = {
           socratic_hints: q.socratic_hints || [],
           step_rubric: q.step_rubric || []
         }))
+    ,
+      {
+        "id": "c10_s_07",
+        "grade": "10",
+        "stream": "FOUNDATION",
+        "target_exam": "CBSE_CLASS_10",
+        "subject": "Science",
+        "branch": "CHEMISTRY",
+        "chapter_number": 1,
+        "chapter_name": "Chemical Reactions and Equations",
+        "topic": "Types of Chemical Reactions",
+        "subtopic": "Precipitation and Double Displacement Reactions",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 10 Board 2024 & 2022",
+        "difficulty": "EASY",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 60,
+        "marks_weightage": 1,
+        "question_latex": "When an aqueous solution of sodium sulphate ($\\text{Na}_2\\text{SO}_4$) is mixed with barium chloride ($\\text{BaCl}_2$), an insoluble white precipitate of which compound is formed?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$\\text{BaSO}_4$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "B",
+            "latex": "$\\text{NaCl}$",
+            "is_correct": false,
+            "distractor_trap": "NaCl remains dissolved in aqueous solution"
+          },
+          {
+            "key": "C",
+            "latex": "$\\text{BaS}$",
+            "is_correct": false,
+            "distractor_trap": "Incorrect oxidation state and chemical species"
+          },
+          {
+            "key": "D",
+            "latex": "$\\text{Na}_2\\text{O}$",
+            "is_correct": false,
+            "distractor_trap": "Reacts violently with water, cannot precipitate"
+          }
+        ],
+        "correct_answer_latex": "A",
+        "solution_latex": "When aqueous solutions of sodium sulphate and barium chloride are combined, a double displacement precipitation reaction occurs: $$\\text{Na}_2\\text{SO}_4(aq) + \\text{BaCl}_2(aq) \\to \\text{BaSO}_4(s)\\downarrow + 2\\text{NaCl}(aq)$$. The white precipitate formed is insoluble barium sulphate ($\\text{BaSO}_4$).",
+        "socratic_hints": [
+          "Identify the mutual exchange of ions between Ba2+ and SO4(2-).",
+          "Which resulting salt is insoluble in water?"
+        ]
+      },
+      {
+        "id": "c10_s_08",
+        "grade": "10",
+        "stream": "FOUNDATION",
+        "target_exam": "CBSE_CLASS_10",
+        "subject": "Science",
+        "branch": "CHEMISTRY",
+        "chapter_number": 2,
+        "chapter_name": "Acids, Bases and Salts",
+        "topic": "Salts of Common Use",
+        "subtopic": "Chlor-Alkali Process & Plaster of Paris",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 10 Board 2023 & 2020",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "(a) Write the balanced chemical equation for the Chlor-Alkali process. (b) What chemical compound is Plaster of Paris? Why should it always be stored in moisture-proof containers?",
+        "options_latex": [],
+        "correct_answer_latex": "2NaCl + 2H2O -> 2NaOH + Cl2 + H2; CaSO4.1/2H2O turns into hard gypsum with water.",
+        "solution_latex": "(a) In the Chlor-Alkali process, electricity is passed through an aqueous solution of sodium chloride (brine): $$2\\text{NaCl}(aq) + 2\\text{H}_2\\text{O}(l) \\xrightarrow{\\text{Electricity}} 2\\text{NaOH}(aq) + \\text{Cl}_2(g)\\uparrow + \\text{H}_2(g)\\uparrow$$. (b) Plaster of Paris is Calcium Sulphate Hemihydrate ($\\text{CaSO}_4 \\cdot \\frac{1}{2}\\text{H}_2\\text{O}$). It must be stored in moisture-proof containers because upon absorbing moisture from atmospheric air, it hydrates and sets into a hard solid mass called Gypsum: $$\\text{CaSO}_4 \\cdot \\frac{1}{2}\\text{H}_2\\text{O} + 1\\frac{1}{2}\\text{H}_2\\text{O} \\to \\text{CaSO}_4 \\cdot 2\\text{H}_2\\text{O}\\text{ (Gypsum)}$$, losing its plastering properties.",
+        "socratic_hints": [
+          "Which gas is released at the anode vs cathode during electrolysis of brine?",
+          "What solid rock substance does Plaster of Paris transform into upon absorbing water?"
+        ]
+      },
+      {
+        "id": "c10_s_09",
+        "grade": "10",
+        "stream": "FOUNDATION",
+        "target_exam": "CBSE_CLASS_10",
+        "subject": "Science",
+        "branch": "BIOLOGY",
+        "chapter_number": 5,
+        "chapter_name": "Life Processes",
+        "topic": "Human Transportation System",
+        "subtopic": "Double Circulation in Human Heart",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 10 Board 2024 & 2021",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "What is double circulation in humans? Why is the separation of right and left sides of the human heart necessary for warm-blooded mammals and birds?",
+        "options_latex": [],
+        "correct_answer_latex": "Blood flows twice through heart in one cycle (pulmonary and systemic); ensures high energy efficiency.",
+        "solution_latex": "Double circulation means that for every complete cycle around the body, blood passes through the human heart twice: (1) Pulmonary Circulation: Deoxygenated blood from the right ventricle is pumped to the lungs for oxygenation, and oxygenated blood returns to the left atrium. (2) Systemic Circulation: Oxygenated blood from the left ventricle is pumped to all body tissues, and deoxygenated blood returns to the right atrium. The complete separation of the right and left sides by the septum prevents the mixing of oxygenated and deoxygenated blood. This ensures a highly efficient supply of oxygen to body cells, which is essential for warm-blooded animals (mammals and birds) that constantly require large amounts of energy to maintain a constant body temperature.",
+        "socratic_hints": [
+          "Distinguish between pulmonary and systemic circulation pathways.",
+          "Why do mammals require much higher oxygen supply than reptiles or amphibians?"
+        ]
+      },
+      {
+        "id": "c10_s_10",
+        "grade": "10",
+        "stream": "FOUNDATION",
+        "target_exam": "CBSE_CLASS_10",
+        "subject": "Science",
+        "branch": "PHYSICS",
+        "chapter_number": 9,
+        "chapter_name": "Light - Reflection and Refraction",
+        "topic": "Spherical Mirrors and Ray Optics",
+        "subtopic": "Mirror Formula & Magnification Calculation",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 10 Board 2023 & 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "NUMERICAL_INTEGER",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "An object is placed at a distance of $20\\,\\text{cm}$ in front of a concave mirror of focal length $15\\,\\text{cm}$. What is the image distance $v$ (in $\\text{cm}$)?",
+        "options_latex": [],
+        "correct_answer_latex": "-60",
+        "solution_latex": "Applying the Cartesian sign convention for a concave mirror: Focal length $f = -15\\,\\text{cm}$, Object distance $u = -20\\,\\text{cm}$. Using mirror formula: $$\\frac{1}{f} = \\frac{1}{v} + \\frac{1}{u} \\implies \\frac{1}{v} = \\frac{1}{f} - \\frac{1}{u}$$. $$\\frac{1}{v} = -\\frac{1}{15} - \\left(-\\frac{1}{20}\\right) = -\\frac{1}{15} + \\frac{1}{20} = \\frac{-4 + 3}{60} = -\\frac{1}{60}$$. Therefore, image distance $v = -60\\,\\text{cm}$. The negative sign indicates that the real, inverted, magnified image is formed at $60\\,\\text{cm}$ in front of the concave mirror.",
+        "socratic_hints": [
+          "What are the Cartesian signs for focal length and object distance of a concave mirror?",
+          "Compute 1/v = 1/f - 1/u."
+        ]
+      },
+      {
+        "id": "c10_s_11",
+        "grade": "10",
+        "stream": "FOUNDATION",
+        "target_exam": "CBSE_CLASS_10",
+        "subject": "Science",
+        "branch": "PHYSICS",
+        "chapter_number": 11,
+        "chapter_name": "Electricity",
+        "topic": "Resistance and Ohm's Law",
+        "subtopic": "Equivalent Resistance of Series and Parallel Networks",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 10 Board 2024 & 2020",
+        "difficulty": "MEDIUM",
+        "question_format": "NUMERICAL_INTEGER",
+        "benchmark_time_seconds": 120,
+        "marks_weightage": 2,
+        "question_latex": "Three resistors of resistances $2\\,\\Omega$, $3\\,\\Omega$, and $6\\,\\Omega$ are connected in parallel across a battery. What is the equivalent resistance $R_p$ (in $\\Omega$)?",
+        "options_latex": [],
+        "correct_answer_latex": "1",
+        "solution_latex": "For resistors connected in parallel, the reciprocal of the equivalent resistance is the sum of the reciprocals of the individual resistances: $$\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2} + \\frac{1}{R_3} = \\frac{1}{2} + \\frac{1}{3} + \\frac{1}{6} = \\frac{3 + 2 + 1}{6} = \\frac{6}{6} = 1\\,\\Omega^{-1}$$. Therefore, equivalent resistance $R_p = 1\\,\\Omega$.",
+        "socratic_hints": [
+          "Use the parallel resistance formula 1/Rp = 1/R1 + 1/R2 + 1/R3.",
+          "Take common denominator 6 for 1/2 + 1/3 + 1/6."
+        ]
+      }
     ],
     senior_physics: [
       {
@@ -1007,6 +1175,342 @@ const inMemoryStore = {
           "Which level of protein structure survives denaturation?"
         ]
       }
+    ,
+      {
+        "id": "snr_c_11",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "ORGANIC",
+        "chapter_number": 6,
+        "chapter_name": "Haloalkanes and Haloarenes",
+        "topic": "Nucleophilic Substitution Reactions",
+        "subtopic": "SN1 vs SN2 Mechanisms and Stereochemical Inversion",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2021",
+        "difficulty": "MEDIUM",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 90,
+        "marks_weightage": 1,
+        "question_latex": "Which of the following alkyl halides undergoes nucleophilic substitution primarily via an $S_N1$ mechanism with the highest reaction rate?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$\\text{CH}_3\\text{CH}_2\\text{Cl}$",
+            "is_correct": false,
+            "distractor_trap": "Primary alkyl halide follows SN2 pathway"
+          },
+          {
+            "key": "B",
+            "latex": "$(\\text{CH}_3)_2\\text{CHBr}$",
+            "is_correct": false,
+            "distractor_trap": "Secondary alkyl halide reacts slower than tertiary carbocation"
+          },
+          {
+            "key": "C",
+            "latex": "$(\\text{CH}_3)_3\\text{C-Br}$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "D",
+            "latex": "$\\text{CH}_3\\text{Cl}$",
+            "is_correct": false,
+            "distractor_trap": "Methyl halide reacts purely via SN2"
+          }
+        ],
+        "correct_answer_latex": "C",
+        "solution_latex": "In an $S_N1$ mechanism, the rate-determining step is the formation of a carbocation intermediate. The tertiary carbocation $(\\text{CH}_3)_3\\text{C}^+$ formed from tert-butyl bromide is strongly stabilized by nine hyperconjugative $\\alpha$-hydrogens and $+I$ inductive effects. Hence, $(\\text{CH}_3)_3\\text{C-Br}$ undergoes $S_N1$ substitution most rapidly.",
+        "socratic_hints": [
+          "Recall the rate-determining step of an SN1 reaction.",
+          "Compare the relative stabilities of primary, secondary, and tertiary carbocations."
+        ]
+      },
+      {
+        "id": "snr_c_12",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "ORGANIC",
+        "chapter_number": 7,
+        "chapter_name": "Alcohols, Phenols and Ethers",
+        "topic": "Phenols & Acidity",
+        "subtopic": "Electrophilic Aromatic Substitution & Reimer-Tiemann Reaction",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2020",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "(a) Give chemical equations for the Reimer-Tiemann reaction of phenol. (b) Explain why phenol is significantly more acidic than ethanol.",
+        "options_latex": [],
+        "correct_answer_latex": "Phenol + CHCl3 + aq NaOH -> Salicylaldehyde; phenoxide ion resonance stabilization.",
+        "solution_latex": "(a) When phenol reacts with chloroform ($\\text{CHCl}_3$) in the presence of aqueous $\\text{NaOH}$ at $340\\,\\text{K}$, followed by acid hydrolysis, an aldehyde ($-\\text{CHO}$) group is introduced at the ortho position, producing salicylaldehyde (2-hydroxybenzaldehyde): $$\\text{C}_6\\text{H}_5\\text{OH} + \\text{CHCl}_3 + 3\\text{NaOH} \\xrightarrow{\\text{H}^+} o\\text{-}\\text{HO-C}_6\\text{H}_4\\text{-CHO} + 3\\text{NaCl} + 2\\text{H}_2\\text{O}$$. The electrophile involved is dichlorocarbene ($:\\text{CCl}_2$). (b) Phenol is more acidic than ethanol because the phenoxide ion ($\\text{C}_6\\text{H}_5\\text{O}^-$) formed upon deprotonation is resonance stabilized over the aromatic ring, whereas the ethoxide ion ($\\text{C}_2\\text{H}_5\\text{O}^-$) cannot delocalize its negative charge and is destabilized by the $+I$ inductive effect of the ethyl group.",
+        "socratic_hints": [
+          "Identify the reactive intermediate generated by chloroform in alkaline medium.",
+          "Draw the resonance structures of the phenoxide ion to analyze negative charge dispersion."
+        ]
+      },
+      {
+        "id": "snr_c_13",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "ORGANIC",
+        "chapter_number": 8,
+        "chapter_name": "Aldehydes, Ketones and Carboxylic Acids",
+        "topic": "Carbonyl Condensation Reactions",
+        "subtopic": "Aldol Condensation vs Cannizzaro Reaction",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2022",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 240,
+        "marks_weightage": 3,
+        "question_latex": "Differentiate between Aldol Condensation and Cannizzaro Reaction with respect to: (i) Structural requirement of the carbonyl compound, (ii) Reagent concentration used, (iii) Nature of final organic product(s) formed.",
+        "options_latex": [],
+        "correct_answer_latex": "Presence vs absence of alpha-hydrogen, dilute vs concentrated alkali, beta-hydroxy aldehyde vs disproportionation products.",
+        "solution_latex": "(i) Structural Requirement: Aldol condensation requires aldehydes or ketones having at least one $\\alpha$-hydrogen atom (e.g. $\\text{CH}_3\\text{CHO}$). Cannizzaro reaction requires aldehydes lacking any $\\alpha$-hydrogen atom (e.g. $\\text{HCHO}$, $\\text{C}_6\\text{H}_5\\text{CHO}$). (ii) Reagent: Aldol condensation uses dilute alkali (e.g. $10\\%\\,\\text{NaOH}$ or $\\text{Ba(OH)}_2$). Cannizzaro reaction requires concentrated alkali (e.g. $50\\%\\,\\text{NaOH}$ or $\\text{KOH}$). (iii) Products: Aldol yields $\\beta$-hydroxy aldehydes/ketones (aldols/ketols) which dehydrate to $\\alpha,\\beta$-unsaturated carbonyl compounds. Cannizzaro undergoes self redox disproportionation producing one molecule of alcohol and one molecule of carboxylic acid salt.",
+        "socratic_hints": [
+          "What type of hydrogen is acidic and abstracted by dilute base in aldol formation?",
+          "Can benzaldehyde form an enolate ion in the absence of alpha-hydrogens?"
+        ]
+      },
+      {
+        "id": "snr_c_14",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "ORGANIC",
+        "chapter_number": 9,
+        "chapter_name": "Amines",
+        "topic": "Preparation and Distinction of Amines",
+        "subtopic": "Gabriel Phthalimide Synthesis & Carbylamine Test",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & NEET 2023",
+        "difficulty": "MEDIUM",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 75,
+        "marks_weightage": 1,
+        "question_latex": "Which of the following amines gives a positive Carbylamine test (releasing an offensive foul-smelling isocyanide)?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$\\text{CH}_3\\text{NHCH}_3$",
+            "is_correct": false,
+            "distractor_trap": "Secondary amine does not give carbylamine reaction"
+          },
+          {
+            "key": "B",
+            "latex": "$\\text{C}_6\\text{H}_5\\text{NH}_2$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "$(\\text{CH}_3)_3\\text{N}$",
+            "is_correct": false,
+            "distractor_trap": "Tertiary amine does not react"
+          },
+          {
+            "key": "D",
+            "latex": "$(\\text{C}_2\\text{H}_5)_2\\text{NH}$",
+            "is_correct": false,
+            "distractor_trap": "Secondary aliphatic amine cannot form isocyanide"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "The Carbylamine test is a specific diagnostic test given exclusively by primary amines (both aliphatic and aromatic) upon warming with chloroform ($\\text{CHCl}_3$) and alcoholic potassium hydroxide ($\\text{KOH}$). Aniline ($\\text{C}_6\\text{H}_5\\text{NH}_2$) is a primary aromatic amine and reacts to form phenyl isocyanide ($\\text{C}_6\\text{H}_5\\text{NC}$), emitting an extremely foul odour: $$\\text{C}_6\\text{H}_5\\text{NH}_2 + \\text{CHCl}_3 + 3\\text{KOH} \\xrightarrow{\\Delta} \\text{C}_6\\text{H}_5\\text{NC} + 3\\text{KCl} + 3\\text{H}_2\\text{O}$$.",
+        "socratic_hints": [
+          "Which class of amine (primary, secondary, or tertiary) undergoes the carbylamine reaction?",
+          "Classify aniline in terms of amine degree."
+        ]
+      },
+      {
+        "id": "snr_c_15",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "ORGANIC",
+        "chapter_number": 10,
+        "chapter_name": "Biomolecules",
+        "topic": "Proteins & Nucleic Acids",
+        "subtopic": "Denaturation of Proteins & Structural Hierarchy",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2019",
+        "difficulty": "EASY",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 120,
+        "marks_weightage": 2,
+        "question_latex": "What is denaturation of proteins? Which levels of protein structure (primary, secondary, tertiary, or quaternary) remain intact during denaturation?",
+        "options_latex": [],
+        "correct_answer_latex": "Loss of biological activity and native conformation; primary structure remains intact.",
+        "solution_latex": "Denaturation of proteins occurs when a protein in its native state is subjected to physical changes (like change in temperature) or chemical changes (like change in pH). Hydrogen bonds and hydrophobic interactions are disrupted, causing globules to uncoil and helixes to unroll, leading to loss of its biological activity (e.g. coagulation of egg white on boiling). During denaturation, secondary, tertiary, and quaternary structures are destroyed, but the primary structure (the linear sequence of amino acids linked by covalent peptide bonds) remains completely intact.",
+        "socratic_hints": [
+          "Which chemical bonds are broken by mild heat vs strong enzymatic hydrolysis?",
+          "Does boiling break the peptide (-CONH-) backbone covalent bonds?"
+        ]
+      },
+      {
+        "id": "snr_c_16",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "PHYSICAL",
+        "chapter_number": 1,
+        "chapter_name": "Solutions",
+        "topic": "Gas Solubility in Liquids",
+        "subtopic": "Henry Law & Temperature Dependence",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2020",
+        "difficulty": "EASY",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 120,
+        "marks_weightage": 2,
+        "question_latex": "State Henry's Law. Why are aquatic species noticeably more comfortable in cold water than in warm water?",
+        "options_latex": [],
+        "correct_answer_latex": "p = K_H * x; Dissolution of gas is exothermic, so solubility increases at lower temperatures.",
+        "solution_latex": "Henry's Law states that at a constant temperature, the solubility of a gas in a liquid is directly proportional to the partial pressure of the gas present above the surface of the liquid or solution: $$p = K_H \\cdot x$$ where $p$ is partial pressure, $x$ is mole fraction of gas, and $K_H$ is Henry's Law constant. As temperature decreases, $K_H$ decreases, meaning the solubility of oxygen in water increases (dissolution of gas is exothermic, $\\Delta H < 0$). In cold water, the dissolved oxygen concentration is higher, providing optimal respiration conditions for aquatic species.",
+        "socratic_hints": [
+          "State the mathematical formula of Henry's Law.",
+          "How does Henry's constant K_H change with temperature, and how does it relate to gas solubility?"
+        ]
+      },
+      {
+        "id": "snr_c_17",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "PHYSICAL",
+        "chapter_number": 2,
+        "chapter_name": "Electrochemistry",
+        "topic": "Conductance in Electrolytic Solutions",
+        "subtopic": "Kohlrausch Law of Independent Migration of Ions",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "NUMERICAL_INTEGER",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "Given limiting molar conductivities: $\\Lambda_m^\\circ(\\text{NaCl}) = 126.4\\,\\text{S cm}^2\\text{mol}^{-1}$, $\\Lambda_m^\\circ(\\text{HCl}) = 425.9\\,\\text{S cm}^2\\text{mol}^{-1}$, and $\\Lambda_m^\\circ(\\text{CH}_3\\text{COONa}) = 91.0\\,\\text{S cm}^2\\text{mol}^{-1}$. Calculate $\\Lambda_m^\\circ$ for acetic acid $\\text{CH}_3\\text{COOH}$ (in $\\text{S cm}^2\\text{mol}^{-1}$).",
+        "options_latex": [],
+        "correct_answer_latex": "390.5",
+        "solution_latex": "According to Kohlrausch's law of independent migration of ions: $$\\Lambda_m^\\circ(\\text{CH}_3\\text{COOH}) = \\Lambda_m^\\circ(\\text{CH}_3\\text{COONa}) + \\Lambda_m^\\circ(\\text{HCl}) - \\Lambda_m^\\circ(\\text{NaCl})$$. Substituting the values: $$\\Lambda_m^\\circ(\\text{CH}_3\\text{COOH}) = 91.0 + 425.9 - 126.4 = 516.9 - 126.4 = 390.5\\,\\text{S cm}^2\\text{mol}^{-1}$$.",
+        "socratic_hints": [
+          "Express the limiting molar conductivity of acetic acid as a linear combination of the three strong electrolytes.",
+          "Which strong electrolyte needs to be subtracted to remove Na+ and Cl- spectator ions?"
+        ]
+      },
+      {
+        "id": "snr_c_18",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "PHYSICAL",
+        "chapter_number": 3,
+        "chapter_name": "Chemical Kinetics",
+        "topic": "Temperature Dependence of Reaction Rates",
+        "subtopic": "Arrhenius Equation and Activation Energy",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & NEET 2023",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 240,
+        "marks_weightage": 3,
+        "question_latex": "The rate of a chemical reaction doubles when the temperature increases from $300\\,\\text{K}$ to $310\\,\\text{K}$. Calculate the energy of activation ($E_a$) of the reaction. (Take $R = 8.314\\,\\text{J K}^{-1}\\text{mol}^{-1}$, $\\log 2 = 0.3010$).",
+        "options_latex": [],
+        "correct_answer_latex": "53.6 kJ/mol",
+        "solution_latex": "Using the integrated logarithmic form of the Arrhenius equation: $$\\log\\left(\\frac{k_2}{k_1}\\right) = \\frac{E_a}{2.303 R}\\left[\\frac{T_2 - T_1}{T_1 T_2}\\right]$$. Given $k_2 / k_1 = 2$, $T_1 = 300\\,\\text{K}$, $T_2 = 310\\,\\text{K}$. $$\\log 2 = \\frac{E_a}{2.303 \\times 8.314}\\left[\\frac{10}{300 \\times 310}\\right]$$ $$0.3010 = \\frac{E_a}{19.147}\\left[\\frac{10}{93000}\\right] = \\frac{E_a}{19.147 \\times 9300}$$ $$E_a = 0.3010 \\times 19.147 \\times 9300 \\approx 53598\\,\\text{J/mol} = 53.6\\,\\text{kJ/mol}$$.",
+        "socratic_hints": [
+          "Write down the two-temperature logarithmic Arrhenius equation.",
+          "Convert the final calculated activation energy from Joules into kilojoules."
+        ]
+      },
+      {
+        "id": "snr_c_19",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "INORGANIC",
+        "chapter_number": 5,
+        "chapter_name": "Coordination Compounds",
+        "topic": "Bonding in Coordination Compounds",
+        "subtopic": "Crystal Field Theory & High Spin vs Low Spin Complexes",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & NEET 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 90,
+        "marks_weightage": 1,
+        "question_latex": "For a $d^4$ metal ion in an octahedral crystal field, if the crystal field splitting energy $\\Delta_o$ is greater than the pairing energy $P$ ($\\Delta_o > P$), what is the ground-state electronic configuration?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$t_{2g}^3 e_g^1$",
+            "is_correct": false,
+            "distractor_trap": "Configuration when Delta_o < P (weak field / high spin)"
+          },
+          {
+            "key": "B",
+            "latex": "$t_{2g}^4 e_g^0$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "$t_{2g}^2 e_g^2$",
+            "is_correct": false,
+            "distractor_trap": "Violates Hunds rule without energetic justification"
+          },
+          {
+            "key": "D",
+            "latex": "$t_{2g}^1 e_g^3$",
+            "is_correct": false,
+            "distractor_trap": "Unfavourable higher orbital population"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "When $\\Delta_o > P$, the strong crystal field splitting energy exceeds the pairing energy cost. It is energetically more favourable for the 4th electron to pair up in the lower-energy $t_{2g}$ set rather than occupy the higher-energy $e_g$ set. This results in a low-spin complex with the configuration $t_{2g}^4 e_g^0$.",
+        "socratic_hints": [
+          "Compare the energy cost of pairing an electron versus promoting it to the eg orbitals.",
+          "Does strong field correspond to high spin or low spin?"
+        ]
+      },
+      {
+        "id": "snr_c_20",
+        "grade": "12",
+        "stream": "COMMON_SENIOR",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Chemistry",
+        "branch": "INORGANIC",
+        "chapter_number": 4,
+        "chapter_name": "The d- and f-Block Elements",
+        "topic": "Inner Transition Elements (f-Block)",
+        "subtopic": "Lanthanoid Contraction and Consequences",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2022",
+        "difficulty": "EASY",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 150,
+        "marks_weightage": 2,
+        "question_latex": "What is Lanthanoid Contraction? State two major chemical or physical consequences of this contraction on 5d-transition series elements.",
+        "options_latex": [],
+        "correct_answer_latex": "Steady decrease in atomic/ionic radii across lanthanoids due to poor 4f shielding; identical radii of 4d/5d pairs (Zr/Hf) and basicity gradient.",
+        "solution_latex": "Lanthanoid Contraction is the steady, cumulative decrease in the atomic and ionic radii of the lanthanoid elements with increasing atomic number from Lanthanum ($\\text{La}^{3+}$, $103\\,\\text{pm}$) to Lutetium ($\\text{Lu}^{3+}$, $86\\,\\text{pm}$). Cause: Imperfect shielding of nuclear charge by the diffuse $4f$ electrons as nuclear charge increases by one unit at each successive step. Two Major Consequences: (1) Similarity in atomic and ionic radii between second (4d) and third (5d) transition series elements (e.g. $\\text{Zr} = 160\\,\\text{pm}$ and $\\text{Hf} = 159\\,\\text{pm}$), making their separation in minerals exceptionally difficult. (2) Decrease in basic strength of hydroxides: $\\text{La(OH)}_3$ is the most basic, while $\\text{Lu(OH)}_3$ is the least basic.",
+        "socratic_hints": [
+          "Explain the shielding efficacy of 4f electrons compared to s, p, and d electrons.",
+          "Why do Zirconium (Zr) and Hafnium (Hf) have virtually identical chemical behaviour?"
+        ]
+      }
     ],
     senior_mathematics: [
       {
@@ -1199,6 +1703,291 @@ const inMemoryStore = {
           "Check reflexivity by substituting $(c, d) = (a, b)$. Does $a + b = b + a$ hold?",
           "Check symmetry: Does $a + d = b + c$ imply $c + b = d + a$?",
           "For transitivity, add the two equations $a + d = b + c$ and $c + f = d + e$ together and cancel common terms."
+        ]
+      }
+    ,
+      {
+        "id": "snr_m_08",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "ALGEBRA",
+        "chapter_number": 2,
+        "chapter_name": "Inverse Trigonometric Functions",
+        "topic": "Principal Value Branches",
+        "subtopic": "Evaluation of Composite ITF Expressions",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2021",
+        "difficulty": "MEDIUM",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 90,
+        "marks_weightage": 1,
+        "question_latex": "Find the principal value of $\\cos^{-1}\\left(\\cos\\frac{7\\pi}{6}\\right)$.",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$\\frac{7\\pi}{6}$",
+            "is_correct": false,
+            "distractor_trap": "Angle falls outside the principal value branch [0, pi]"
+          },
+          {
+            "key": "B",
+            "latex": "$\\frac{5\\pi}{6}$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "$\\frac{\\pi}{6}$",
+            "is_correct": false,
+            "distractor_trap": "Sign error in quadrant reduction"
+          },
+          {
+            "key": "D",
+            "latex": "$-\\frac{\\pi}{6}$",
+            "is_correct": false,
+            "distractor_trap": "cos^-1 output cannot be negative"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "The principal value branch of $\\cos^{-1} x$ is $[0, \\pi]$. Since $\\frac{7\\pi}{6} \\notin [0, \\pi]$, we rewrite $\\cos\\frac{7\\pi}{6} = \\cos\\left(2\\pi - \\frac{5\\pi}{6}\\right) = \\cos\\left(\\frac{5\\pi}{6}\\right)$. Since $\\frac{5\\pi}{6} \\in [0, \\pi]$, we have $\\cos^{-1}\\left(\\cos\\frac{5\\pi}{6}\\right) = \\frac{5\\pi}{6}$.",
+        "socratic_hints": [
+          "What is the principal value range for inverse cosine?",
+          "Use periodicity and symmetry of cos(theta) to bring 7pi/6 into [0, pi]."
+        ]
+      },
+      {
+        "id": "snr_m_09",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "ALGEBRA",
+        "chapter_number": 3,
+        "chapter_name": "Matrices",
+        "topic": "Types of Matrices & Operations",
+        "subtopic": "Decomposition into Symmetric and Skew-Symmetric Matrices",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "Express the matrix $A = \\begin{pmatrix} 3 & 5 \\\\ 1 & -1 \\end{pmatrix}$ as the sum of a symmetric and a skew-symmetric matrix.",
+        "options_latex": [],
+        "correct_answer_latex": "P = [[3, 3], [3, -1]] and Q = [[0, 2], [-2, 0]]",
+        "solution_latex": "Any square matrix $A$ can be uniquely expressed as $A = P + Q$ where $P = \\frac{1}{2}(A + A^T)$ is symmetric and $Q = \\frac{1}{2}(A - A^T)$ is skew-symmetric. Here $A^T = \\begin{pmatrix} 3 & 1 \\\\ 5 & -1 \\end{pmatrix}$. $P = \\frac{1}{2}\\left(\\begin{pmatrix} 3 & 5 \\\\ 1 & -1 \\end{pmatrix} + \\begin{pmatrix} 3 & 1 \\\\ 5 & -1 \\end{pmatrix}\\right) = \\begin{pmatrix} 3 & 3 \\\\ 3 & -1 \\end{pmatrix}$. $Q = \\frac{1}{2}\\left(\\begin{pmatrix} 3 & 5 \\\\ 1 & -1 \\end{pmatrix} - \\begin{pmatrix} 3 & 1 \\\\ 5 & -1 \\end{pmatrix}\\right) = \\begin{pmatrix} 0 & 2 \\\\ -2 & 0 \\end{pmatrix}$. Verifying: $P^T = P$, $Q^T = -Q$, and $P + Q = A$.",
+        "socratic_hints": [
+          "Recall the matrix formulas P = (A + A^T)/2 and Q = (A - A^T)/2.",
+          "Verify that P is symmetric and Q has zeroes on its main diagonal."
+        ]
+      },
+      {
+        "id": "snr_m_10",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "ALGEBRA",
+        "chapter_number": 4,
+        "chapter_name": "Determinants",
+        "topic": "Adjoint and Inverse of a Matrix",
+        "subtopic": "Matrix Inversion Method for System of Linear Equations",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 (5-Mark Section)",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_LONG",
+        "benchmark_time_seconds": 300,
+        "marks_weightage": 5,
+        "question_latex": "Solve the system of equations using matrix method: $2x + 3y + 3z = 5$, $x - 2y + z = -4$, $3x - y - 2z = 3$.",
+        "options_latex": [],
+        "correct_answer_latex": "x = 1, y = 2, z = -1",
+        "solution_latex": "Write in matrix form $AX = B$ where $A = \\begin{pmatrix} 2 & 3 & 3 \\\\ 1 & -2 & 1 \\\\ 3 & -1 & -2 \\end{pmatrix}$, $X = \\begin{pmatrix} x \\\\ y \\\\ z \\end{pmatrix}$, $B = \\begin{pmatrix} 5 \\\\ -4 \\\\ 3 \\end{pmatrix}$. $\\det(A) = 2(4 + 1) - 3(-2 - 3) + 3(-1 + 6) = 2(5) - 3(-5) + 3(5) = 10 + 15 + 15 = 40 \\neq 0$. Thus $A^{-1}$ exists. Computing cofactor matrix $C$: $C_{11} = 5, C_{12} = 5, C_{13} = 5$; $C_{21} = 3, C_{22} = -13, C_{23} = 11$; $C_{31} = 9, C_{32} = 1, C_{33} = -7$. $\\text{adj}(A) = C^T = \\begin{pmatrix} 5 & 3 & 9 \\\\ 5 & -13 & 1 \\\\ 5 & 11 & -7 \\end{pmatrix}$. $X = A^{-1}B = \\frac{1}{40}\\begin{pmatrix} 5 & 3 & 9 \\\\ 5 & -13 & 1 \\\\ 5 & 11 & -7 \\end{pmatrix} \\begin{pmatrix} 5 \\\\ -4 \\\\ 3 \\end{pmatrix} = \\frac{1}{40}\\begin{pmatrix} 25 - 12 + 27 \\\\ 25 + 52 + 3 \\\\ 25 - 44 - 21 \\end{pmatrix} = \\frac{1}{40}\\begin{pmatrix} 40 \\\\ 80 \\\\ -40 \\end{pmatrix} = \\begin{pmatrix} 1 \\\\ 2 \\\\ -1 \\end{pmatrix}$. Therefore, $x = 1$, $y = 2$, $z = -1$.",
+        "socratic_hints": [
+          "Find det(A) first to verify non-singularity.",
+          "Transpose the cofactor matrix to obtain adj(A) before multiplying with B."
+        ]
+      },
+      {
+        "id": "snr_m_11",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "CALCULUS",
+        "chapter_number": 5,
+        "chapter_name": "Continuity and Differentiability",
+        "topic": "Differentiability of Functions",
+        "subtopic": "Right and Left Hand Derivatives of Modulus Functions",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2020",
+        "difficulty": "EASY",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 150,
+        "marks_weightage": 2,
+        "question_latex": "Examine whether the function $f(x) = |x - 2|$ is differentiable at $x = 2$. Give mathematical justification.",
+        "options_latex": [],
+        "correct_answer_latex": "Continuous but not differentiable at x = 2 (LHD = -1, RHD = +1)",
+        "solution_latex": "Left Hand Derivative at $x = 2$: $$\\text{LHD} = \\lim_{h \\to 0^-} \\frac{f(2 - h) - f(2)}{-h} = \\lim_{h \\to 0} \\frac{|2 - h - 2| - 0}{-h} = \\lim_{h \\to 0} \\frac{|-h|}{-h} = \\lim_{h \\to 0} \\frac{h}{-h} = -1$$. Right Hand Derivative at $x = 2$: $$\\text{RHD} = \\lim_{h \\to 0^+} \\frac{f(2 + h) - f(2)}{h} = \\lim_{h \\to 0} \\frac{|2 + h - 2| - 0}{h} = \\lim_{h \\to 0} \\frac{h}{h} = +1$$. Since $\\text{LHD} \\neq \\text{RHD}$, the function $f(x) = |x - 2|$ has a sharp corner at $(2, 0)$ and is not differentiable at $x = 2$.",
+        "socratic_hints": [
+          "Write down the definition of LHD and RHD using limit as h -> 0.",
+          "Check if LHD equals RHD."
+        ]
+      },
+      {
+        "id": "snr_m_12",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "CALCULUS",
+        "chapter_number": 6,
+        "chapter_name": "Application of Derivatives",
+        "topic": "Maxima and Minima Optimization",
+        "subtopic": "Applied Volume Optimization of Given Surface Area",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 (5-Mark Section)",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_LONG",
+        "benchmark_time_seconds": 270,
+        "marks_weightage": 5,
+        "question_latex": "Show that the height of a closed cylinder of given surface area $S$ and maximum volume $V$ is equal to the diameter of its base.",
+        "options_latex": [],
+        "correct_answer_latex": "Height h = 2r (diameter of base)",
+        "solution_latex": "Let $r$ be the radius and $h$ be the height of the cylinder. Total Surface Area $S = 2\\pi r^2 + 2\\pi rh \\implies h = \\frac{S - 2\\pi r^2}{2\\pi r} = \\frac{S}{2\\pi r} - r$. Volume $V = \\pi r^2 h = \\pi r^2 \\left(\\frac{S}{2\\pi r} - r\\right) = \\frac{Sr}{2} - \\pi r^3$. Differentiating with respect to $r$: $$\\frac{dV}{dr} = \\frac{S}{2} - 3\\pi r^2$$. For maximum volume, $\\frac{dV}{dr} = 0 \\implies S = 6\\pi r^2$. Substitute $S$ into $h$: $$h = \\frac{6\\pi r^2 - 2\\pi r^2}{2\\pi r} = \\frac{4\\pi r^2}{2\\pi r} = 2r$$. Checking second derivative: $\\frac{d^2V}{dr^2} = -6\\pi r < 0$ for all $r > 0$. Hence volume is maximized when $h = 2r$ (height equals diameter).",
+        "socratic_hints": [
+          "Express height h in terms of given constant surface area S and radius r.",
+          "Substitute h into the volume formula V = pi*r^2*h and differentiate with respect to r."
+        ]
+      },
+      {
+        "id": "snr_m_13",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "CALCULUS",
+        "chapter_number": 7,
+        "chapter_name": "Integrals",
+        "topic": "Methods of Integration",
+        "subtopic": "Integration by Parts of Special Exponential Form",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2022",
+        "difficulty": "EASY",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 75,
+        "marks_weightage": 1,
+        "question_latex": "Evaluate $\\int e^x \\left(\\frac{1}{x} - \\frac{1}{x^2}\\right)\\,dx$.",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$\\frac{e^x}{x^2} + C$",
+            "is_correct": false,
+            "distractor_trap": "Integrated derivative instead of function"
+          },
+          {
+            "key": "B",
+            "latex": "$\\frac{e^x}{x} + C$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "$-\\frac{e^x}{x} + C$",
+            "is_correct": false,
+            "distractor_trap": "Sign confusion with derivative"
+          },
+          {
+            "key": "D",
+            "latex": "$e^x \\ln x + C$",
+            "is_correct": false,
+            "distractor_trap": "Confused 1/x with ln x integration"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "Using the standard integration by parts identity: $$\\int e^x [f(x) + f'(x)]\\,dx = e^x f(x) + C$$. Here, let $f(x) = \\frac{1}{x} = x^{-1}$, then $f'(x) = -x^{-2} = -\\frac{1}{x^2}$. Therefore, the integral evaluates to $\\frac{e^x}{x} + C$.",
+        "socratic_hints": [
+          "Recognize the form integral of e^x [f(x) + f'(x)] dx.",
+          "What is the derivative of 1/x?"
+        ]
+      },
+      {
+        "id": "snr_m_14",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "CALCULUS",
+        "chapter_number": 9,
+        "chapter_name": "Differential Equations",
+        "topic": "Linear Differential Equations",
+        "subtopic": "Integrating Factor and General Solution",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2023 & 2020",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "Find the general solution of the differential equation: $\\frac{dy}{dx} + y \\cot x = 2\\cos x$.",
+        "options_latex": [],
+        "correct_answer_latex": "y sin x = sin^2 x + C",
+        "solution_latex": "This is a first-order linear differential equation of the form $\\frac{dy}{dx} + P(x)y = Q(x)$ where $P(x) = \\cot x$ and $Q(x) = 2\\cos x$. Integrating Factor: $$\\text{I.F.} = e^{\\int P\\,dx} = e^{\\int \\cot x\\,dx} = e^{\\ln|\\sin x|} = \\sin x$$. Multiplying the differential equation by $\\text{I.F.}$: $$y \\cdot \\sin x = \\int Q(x) \\cdot \\text{I.F.}\\,dx + C = \\int 2\\cos x \\sin x\\,dx + C = \\int \\sin(2x)\\,dx + C = -\\frac{\\cos(2x)}{2} + C$$. Alternatively, since $\\int 2\\sin x \\cos x\\,dx = \\sin^2 x + C$, we write $$y \\sin x = \\sin^2 x + C$$.",
+        "socratic_hints": [
+          "Find the integrating factor e^(integral cot x dx).",
+          "Multiply both sides by sin x and integrate the product."
+        ]
+      },
+      {
+        "id": "snr_m_15",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "VECTORS_3D",
+        "chapter_number": 11,
+        "chapter_name": "Three Dimensional Geometry",
+        "topic": "Straight Lines in Space",
+        "subtopic": "Shortest Distance between Skew Lines",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & JEE Main 2023",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_LONG",
+        "benchmark_time_seconds": 240,
+        "marks_weightage": 5,
+        "question_latex": "Find the shortest distance between the skew lines: $\\vec{r} = (\\hat{i} + 2\\hat{j} + \\hat{k}) + \\lambda(\\hat{i} - \\hat{j} + \\hat{k})$ and $\\vec{r} = (2\\hat{i} - \\hat{j} - \\hat{k}) + \\mu(2\\hat{i} + \\hat{j} + 2\\hat{k})$.",
+        "options_latex": [],
+        "correct_answer_latex": "3 / sqrt(19) or 3*sqrt(19)/19",
+        "solution_latex": "The shortest distance between skew lines $\\vec{r} = \\vec{a}_1 + \\lambda\\vec{b}_1$ and $\\vec{r} = \\vec{a}_2 + \\mu\\vec{b}_2$ is given by: $$d = \\frac{|(\\vec{a}_2 - \\vec{a}_1) \\cdot (\\vec{b}_1 \\times \\vec{b}_2)|}{|\\vec{b}_1 \\times \\vec{b}_2|}$$. Here $\\vec{a}_1 = \\hat{i} + 2\\hat{j} + \\hat{k}$, $\\vec{b}_1 = \\hat{i} - \\hat{j} + \\hat{k}$, $\\vec{a}_2 = 2\\hat{i} - \\hat{j} - \\hat{k}$, $\\vec{b}_2 = 2\\hat{i} + \\hat{j} + 2\\hat{k}$. Vector $(\\vec{a}_2 - \\vec{a}_1) = \\hat{i} - 3\\hat{j} - 2\\hat{k}$. Cross Product $\\vec{b}_1 \\times \\vec{b}_2$: $$\\begin{vmatrix} \\hat{i} & \\hat{j} & \\hat{k} \\\\ 1 & -1 & 1 \\\\ 2 & 1 & 2 \\end{vmatrix} = \\hat{i}(-2 - 1) - \\hat{j}(2 - 2) + \\hat{k}(1 + 2) = -3\\hat{i} + 0\\hat{j} + 3\\hat{k}$$. Magnitude $|\\vec{b}_1 \\times \\vec{b}_2| = \\sqrt{(-3)^2 + 0^2 + 3^2} = \\sqrt{18} = 3\\sqrt{2}$. Dot product: $(\\vec{a}_2 - \\vec{a}_1) \\cdot (\\vec{b}_1 \\times \\vec{b}_2) = (1)(-3) + (-3)(0) + (-2)(3) = -3 - 6 = -9$. Therefore: $$d = \\frac{|-9|}{3\\sqrt{2}} = \\frac{9}{3\\sqrt{2}} = \\frac{3}{\\sqrt{2}} = \\frac{3\\sqrt{2}}{2}$$.",
+        "socratic_hints": [
+          "Compute vector a2 - a1.",
+          "Calculate cross product b1 x b2 using 3x3 determinant."
+        ]
+      },
+      {
+        "id": "snr_m_16",
+        "grade": "12",
+        "stream": "NON_MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Mathematics",
+        "math_branch": "PROBABILITY",
+        "chapter_number": 13,
+        "chapter_name": "Probability",
+        "topic": "Conditional Probability and Bayes Theorem",
+        "subtopic": "Bayes Theorem Application in Diagnostics",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & 2021",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_LONG",
+        "benchmark_time_seconds": 240,
+        "marks_weightage": 5,
+        "question_latex": "In an entrance examination, a student either knows the answer or guesses. Let $P(\\text{knows}) = \\frac{3}{4}$ and $P(\\text{guesses}) = \\frac{1}{4}$. Assuming that a student who guesses has a probability of $\\frac{1}{4}$ of getting it correct, while a student who knows the answer gets it correct with probability $1$. What is the probability that the student knew the answer, given that they answered it correctly?",
+        "options_latex": [],
+        "correct_answer_latex": "12 / 13",
+        "solution_latex": "Let $E_1$: student knows the answer, $E_2$: student guesses the answer, $A$: student answers correctly. $P(E_1) = \\frac{3}{4}$, $P(E_2) = \\frac{1}{4}$. $P(A|E_1) = 1$, $P(A|E_2) = \\frac{1}{4}$. Applying Bayes' Theorem: $$P(E_1|A) = \\frac{P(E_1)P(A|E_1)}{P(E_1)P(A|E_1) + P(E_2)P(A|E_2)} = \\frac{\\frac{3}{4} \\times 1}{\\left(\\frac{3}{4} \\times 1\\right) + \\left(\\frac{1}{4} \\times \\frac{1}{4}\\right)} = \\frac{\\frac{3}{4}}{\\frac{3}{4} + \\frac{1}{16}} = \\frac{\\frac{12}{16}}{\\frac{13}{16}} = \\frac{12}{13}$$.",
+        "socratic_hints": [
+          "Define hypotheses E1 (knows) and E2 (guesses).",
+          "Apply Bayes' Theorem formula P(E1|A) = P(E1)P(A|E1) / [P(E1)P(A|E1) + P(E2)P(A|E2)]."
         ]
       }
     ],
@@ -1559,201 +2348,213 @@ const inMemoryStore = {
                   "Why does the regression slope become steeper when analyzing continental scales?"
             ]
       }
-],
-    senior_mathematics: [
+,
       {
-        id: 'snr_m_01',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'JEE_MAIN',
-        subject: 'Mathematics',
-        math_branch: 'CALCULUS',
-        chapter_number: 7,
-        chapter_name: 'Integrals',
-        topic: 'Definite Integrals',
-        subtopic: 'King Property of Definite Integrals',
-        curriculum_board: 'JEE_MAIN',
-        pyq_appearance: 'JEE Main 2024 (Shift-1)',
-        difficulty: 'HARD',
-        question_format: 'NUMERICAL_INTEGER',
-        benchmark_time_seconds: 150,
-        marks_weightage: 4,
-        question_latex: 'Evaluate the definite integral $I = \\int_{0}^{\\pi/2} \\frac{\\sin^{2026} x}{\\sin^{2026} x + \\cos^{2026} x}\\,dx$. If $I = \\frac{\\pi}{k}$, what is the integer value of $k$?',
-        options_latex: [],
-        correct_answer_latex: '4',
-        solution_latex: 'Applying the King property $\\int_a^b f(x) dx = \\int_a^b f(a+b-x) dx$: $$I = \\int_0^{\\pi/2} \\frac{\\cos^{2026} x}{\\cos^{2026} x + \\sin^{2026} x} dx$$. Adding the two expressions: $$2I = \\int_0^{\\pi/2} 1\\,dx = \\frac{\\pi}{2} \\implies I = \\frac{\\pi}{4}$$. Therefore, $k = 4$.',
-        socratic_hints: [
-          "Apply the identity $\\int_0^a f(x)dx = \\int_0^a f(a-x)dx$.",
-          "What is $\\sin(\\frac{\\pi}{2} - x)$ and $\\cos(\\frac{\\pi}{2} - x)$?",
-          "Add the original integral and transformed integral."
+        "id": "snr_b_14",
+        "grade": "12",
+        "stream": "MEDICAL",
+        "target_exam": "NEET_UG",
+        "subject": "Biology",
+        "biology_branch": "BOTANY",
+        "chapter_number": 1,
+        "chapter_name": "Sexual Reproduction in Flowering Plants",
+        "topic": "Pollen Grain and Microsporogenesis",
+        "subtopic": "Exine Chemical Composition & Sporopollenin Properties",
+        "curriculum_board": "NEET_UG",
+        "pyq_appearance": "NEET 2023 & CBSE Board 2022",
+        "difficulty": "EASY",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 45,
+        "marks_weightage": 4,
+        "question_latex": "Which extremely resistant organic chemical substance comprises the outer wall (exine) of pollen grains, withstanding high temperatures, strong acids, and alkali?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "Cellulose and Pectin",
+            "is_correct": false,
+            "distractor_trap": "Comprises intine, not exine"
+          },
+          {
+            "key": "B",
+            "latex": "Sporopollenin",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "Lignin",
+            "is_correct": false,
+            "distractor_trap": "Found in xylem secondary wall"
+          },
+          {
+            "key": "D",
+            "latex": "Suberin",
+            "is_correct": false,
+            "distractor_trap": "Found in Casparian strips of endodermis"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "The exine of pollen grains is made of sporopollenin, which is one of the most resistant organic materials known in nature. It can withstand high temperatures, strong concentrated acids, and alkalis. No enzyme that degrades sporopollenin is so far known, which is why pollen grains are well-preserved as fossils.",
+        "socratic_hints": [
+          "Recall the substance that allows pollen to fossilize without enzymatic decay.",
+          "Distinguish between exine and intine chemical composition."
         ]
       },
       {
-        id: 'snr_m_02',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'ALGEBRA',
-        chapter_number: 4,
-        chapter_name: 'Determinants',
-        topic: 'Applications of Determinants & Matrices',
-        subtopic: 'Solving linear systems by Matrix Method: AX = B ⇒ X = A⁻¹B',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2023 & 2020 (5-Mark Guaranteed)',
-        difficulty: 'HARD',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 360,
-        marks_weightage: 5,
-        question_latex: 'Solve the following system of linear equations using the matrix inversion method: $$2x + 3y + 3z = 5$$ $$x - 2y + z = -4$$ $$3x - y - 2z = 3$$',
-        options_latex: [],
-        correct_answer_latex: '$x = 1, y = 2, z = -1$',
-        solution_latex: 'Write in matrix form $AX = B$ where $A = \\begin{bmatrix} 2 & 3 & 3 \\\\ 1 & -2 & 1 \\\\ 3 & -1 & -2 \\end{bmatrix}$, $X = \\begin{bmatrix} x \\\\ y \\\\ z \\end{bmatrix}$, $B = \\begin{bmatrix} 5 \\\\ -4 \\\\ 3 \\end{bmatrix}$. First, compute $|A| = 2(4+1) - 3(-2-3) + 3(-1+6) = 10 + 15 + 15 = 40 \\neq 0$. Next, calculate cofactors to obtain $\\text{adj}(A) = \\begin{bmatrix} 5 & 3 & 9 \\\\ 5 & -13 & 1 \\\\ 5 & 11 & -7 \\end{bmatrix}$. Finally, $X = A^{-1}B = \\frac{1}{40}\\text{adj}(A)B = \\begin{bmatrix} 1 \\\\ 2 \\\\ -1 \\end{bmatrix}$. Hence, $x = 1, y = 2, z = -1$.',
-        socratic_hints: [
-          "Express the system in the matrix form $AX = B$.",
-          "Calculate the determinant $|A|$ to verify that the matrix is non-singular.",
-          "Find the adjoint matrix by computing cofactors and transposing.",
-          "Multiply $A^{-1} = \\frac{1}{|A|}\\text{adj}(A)$ with $B$ to obtain $X$."
+        "id": "snr_b_15",
+        "grade": "12",
+        "stream": "MEDICAL",
+        "target_exam": "CBSE_CLASS_12",
+        "subject": "Biology",
+        "biology_branch": "ZOOLOGY",
+        "chapter_number": 2,
+        "chapter_name": "Human Reproduction",
+        "topic": "Gametogenesis",
+        "subtopic": "Hormonal Control of Spermatogenesis",
+        "curriculum_board": "CBSE_BOARD",
+        "pyq_appearance": "CBSE Class 12 Board 2024 & NEET 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 180,
+        "marks_weightage": 3,
+        "question_latex": "Describe the hormonal control of spermatogenesis in human males, highlighting the roles of GnRH, LH, FSH, Leydig cells, and Sertoli cells.",
+        "options_latex": [],
+        "correct_answer_latex": "GnRH stimulates LH (acts on Leydig to secrete testosterone) and FSH (acts on Sertoli for spermiogenesis).",
+        "solution_latex": "Spermatogenesis starts at puberty due to significant increase in the secretion of Gonadotropin Releasing Hormone (GnRH) by the hypothalamus. GnRH acts on the anterior pituitary gland, stimulating the secretion of two gonadotropins: (1) Luteinizing Hormone (LH): Acts on the Leydig (interstitial) cells and stimulates synthesis and secretion of androgens (testosterone). Androgens stimulate the process of spermatogenesis. (2) Follicle Stimulating Hormone (FSH): Acts on Sertoli cells and stimulates secretion of androgen-binding protein (ABP) and factors essential for spermiogenesis.",
+        "socratic_hints": [
+          "Which pituitary hormone specifically stimulates Leydig cells to produce testosterone?",
+          "What is the target cell for FSH in the seminiferous tubules?"
         ]
       },
       {
-        id: 'snr_m_03',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'VECTORS_3D',
-        chapter_number: 11,
-        chapter_name: 'Three-Dimensional Geometry (3D)',
-        topic: 'Shortest Distance Between Lines',
-        subtopic: 'Skew lines definition and shortest distance',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2024 & 2022 (5-Mark Guaranteed)',
-        difficulty: 'HARD',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 300,
-        marks_weightage: 5,
-        question_latex: 'Find the shortest distance between the skew lines: $$\\vec{r} = (\\hat{i} + 2\\hat{j} + 3\\hat{k}) + \\lambda(\\hat{i} - 3\\hat{j} + 2\\hat{k})$$ $$\\vec{r} = (4\\hat{i} + 5\\hat{j} + 6\\hat{k}) + \\mu(2\\hat{i} + 3\\hat{j} + \\hat{k})$$',
-        options_latex: [],
-        correct_answer_latex: '$d = \\frac{3\\sqrt{19}}{sqrt{19}} = \\frac{3}{\\sqrt{19}} \\text{ or } \\frac{3\\sqrt{19}}{19}$ units',
-        solution_latex: 'Identify points and direction vectors: $\\vec{a}_1 = \\hat{i}+2\\hat{j}+3\\hat{k}$, $\\vec{b}_1 = \\hat{i}-3\\hat{j}+2\\hat{k}$; $\\vec{a}_2 = 4\\hat{i}+5\\hat{j}+6\\hat{k}$, $\\vec{b}_2 = 2\\hat{i}+3\\hat{j}+\\hat{k}$. Then $\\vec{a}_2 - \\vec{a}_1 = 3\\hat{i}+3\\hat{j}+3\\hat{k}$. Vector cross product: $\\vec{b}_1 \\times \\vec{b}_2 = \\begin{vmatrix} \\hat{i} & \\hat{j} & \\hat{k} \\\\ 1 & -3 & 2 \\\\ 2 & 3 & 1 \\end{vmatrix} = -9\\hat{i} + 3\\hat{j} + 9\\hat{k}$. Its magnitude is $|\\vec{b}_1 \\times \\vec{b}_2| = \\sqrt{(-9)^2 + 3^2 + 9^2} = \\sqrt{171} = 3\\sqrt{19}$. Scalar triple product $(\\vec{a}_2 - \\vec{a}_1) \\cdot (\\vec{b}_1 \\times \\vec{b}_2) = 3(-9) + 3(3) + 3(9) = -27 + 9 + 27 = 9$. Shortest distance $d = \\left|\\frac{9}{3\\sqrt{19}}\\right| = \\frac{3}{\\sqrt{19}}$ units.',
-        socratic_hints: [
-          "Identify $\\vec{a}_1, \\vec{b}_1$ from the first line and $\\vec{a}_2, \\vec{b}_2$ from the second line.",
-          "Compute $\\vec{a}_2 - \\vec{a}_1$ and $\\vec{b}_1 \\times \\vec{b}_2$.",
-          "Apply the formula $d = \\left|\\frac{(\\vec{a}_2 - \\vec{a}_1) \\cdot (\\vec{b}_1 \\times \\vec{b}_2)}{|\\vec{b}_1 \\times \\vec{b}_2|}\\right|$."
+        "id": "snr_b_16",
+        "grade": "12",
+        "stream": "MEDICAL",
+        "target_exam": "NEET_UG",
+        "subject": "Biology",
+        "biology_branch": "GENETICS",
+        "chapter_number": 5,
+        "chapter_name": "Molecular Basis of Inheritance",
+        "topic": "DNA Replication",
+        "subtopic": "Semi-Conservative Nature & Meselson-Stahl Experiment",
+        "curriculum_board": "NEET_UG",
+        "pyq_appearance": "NEET 2023 & CBSE Board 2023",
+        "difficulty": "HARD",
+        "question_format": "SUBJECTIVE_SHORT",
+        "benchmark_time_seconds": 210,
+        "marks_weightage": 3,
+        "question_latex": "E. coli cells grown in $^{15}\\text{N}$ medium for several generations are transferred to a $^{14}\\text{N}$ medium. Calculate the proportion of light ($^{14}\\text{N}/^{14}\\text{N}$), hybrid ($^{15}\\text{N}/^{14}\\text{N}$), and heavy ($^{15}\\text{N}/^{15}\\text{N}$) DNA molecules after 40 minutes (two replication cycles).",
+        "options_latex": [],
+        "correct_answer_latex": "50% hybrid (15N/14N), 50% light (14N/14N), 0% heavy",
+        "solution_latex": "E. coli divides every 20 minutes. At $t = 0\\,\\text{min}$ (generation 0), all DNA molecules are heavy ($^{15}\\text{N}/^{15}\\text{N}$, $100\\%$). At $t = 20\\,\\text{min}$ (generation 1, 1 cycle), each DNA molecule replicates semi-conservatively to form two hybrid molecules ($^{15}\\text{N}/^{14}\\text{N}$, $100\\%$). At $t = 40\\,\\text{min}$ (generation 2, 2 cycles), the 2 hybrid DNA molecules yield 4 molecules: 2 hybrid ($^{15}\\text{N}/^{14}\\text{N}$) and 2 light ($^{14}\\text{N}/^{14}\\text{N}$). Therefore: Light DNA ($^{14}\\text{N}/^{14}\\text{N}$) $= 50\\%$, Hybrid DNA ($^{15}\\text{N}/^{14}\\text{N}$) $= 50\\%$, Heavy DNA ($^{15}\\text{N}/^{15}\\text{N}$) $= 0\\%$. Ratio is $1:1$.",
+        "socratic_hints": [
+          "How many replication cycles occur in 40 minutes if E. coli divides every 20 minutes?",
+          "Trace the separation of the 15N strands into newly synthesized 14N daughter duplexes."
         ]
       },
       {
-        id: 'snr_m_04',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'LINEAR_PROGRAMMING',
-        chapter_number: 12,
-        chapter_name: 'Linear Programming (LPP)',
-        topic: 'Corner Point Method',
-        subtopic: 'Bounded region: Evaluating Z at all corner points for max/min',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2023 (5-Mark Guaranteed)',
-        difficulty: 'MEDIUM',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 240,
-        marks_weightage: 5,
-        question_latex: 'Solve the following linear programming problem graphically: Maximize $Z = 4x + y$ subject to the constraints: $$x + y \\leq 50$$ $$3x + y \\leq 90$$ $$x \\geq 0, y \\geq 0$$',
-        options_latex: [],
-        correct_answer_latex: 'Maximum $Z = 120$ at $(30, 0)$',
-        solution_latex: '1. Plot boundary lines $x + y = 50$ (intercepts $(50,0), (0,50)$) and $3x + y = 90$ (intercepts $(30,0), (0,90)$). 2. Testing $(0,0)$ confirms origin lies in both half-planes. 3. Find intersection of boundary lines: $(3x+y) - (x+y) = 90 - 50 \\implies 2x = 40 \\implies x = 20, y = 30$. 4. Feasible corner points are $O(0, 0)$, $A(30, 0)$, $B(20, 30)$, $C(0, 50)$. 5. Evaluate $Z$: $Z(0,0)=0$, $Z(30,0)=4(30)+0=120$, $Z(20,30)=4(20)+30=110$, $Z(0,50)=0+50=50$. Hence, Maximum $Z = 120$ occurs at $(30, 0)$.',
-        socratic_hints: [
-          "Convert inequalities to equations and find the $x$ and $y$ intercepts.",
-          "Shade the region towards the origin since $(0,0)$ satisfies both inequalities.",
-          "Find the intersection coordinates of $x + y = 50$ and $3x + y = 90$.",
-          "Evaluate $Z$ at each vertex of the polygon."
+        "id": "snr_b_17",
+        "grade": "12",
+        "stream": "MEDICAL",
+        "target_exam": "NEET_UG",
+        "subject": "Biology",
+        "biology_branch": "BIOTECHNOLOGY",
+        "chapter_number": 9,
+        "chapter_name": "Biotechnology: Principles and Processes",
+        "topic": "Tools of Recombinant DNA Technology",
+        "subtopic": "Restriction Endonucleases & Recognition Palindromes",
+        "curriculum_board": "NEET_UG",
+        "pyq_appearance": "NEET 2024 & CBSE Board 2023",
+        "difficulty": "EASY",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 60,
+        "marks_weightage": 4,
+        "question_latex": "What is the specific 6-base pair palindromic recognition sequence cleaved by the restriction endonuclease EcoRI?",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "$5'\\text{-GAATTC-3'}$ and $3'\\text{-CTTAAG-5'}$",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "B",
+            "latex": "$5'\\text{-GGATCC-3'}$ and $3'\\text{-CCTAGG-5'}$",
+            "is_correct": false,
+            "distractor_trap": "Recognition sequence for BamHI"
+          },
+          {
+            "key": "C",
+            "latex": "$5'\\text{-AAGCTT-3'}$ and $3'\\text{-TTCGAA-5'}$",
+            "is_correct": false,
+            "distractor_trap": "Recognition sequence for HindIII"
+          },
+          {
+            "key": "D",
+            "latex": "$5'\\text{-AGCT-3'}$ and $3'\\text{-TCGA-5'}$",
+            "is_correct": false,
+            "distractor_trap": "Recognition sequence for AluI (4-base cutter)"
+          }
+        ],
+        "correct_answer_latex": "A",
+        "solution_latex": "EcoRI cuts DNA at the specific hexanucleotide palindromic sequence $5'\\text{-G}\\downarrow\\text{AATTC-3'}$ and $3'\\text{-CTTAA}\\uparrow\\text{G-5'}$ between G and A on both strands, leaving overhanging single-stranded ends termed sticky ends.",
+        "socratic_hints": [
+          "Recall the standard palindrome for the first isolated Escherichia coli RY13 endonuclease.",
+          "Check the orientation 5' -> 3' vs 3' -> 5'."
         ]
       },
       {
-        id: 'snr_m_05',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'CALCULUS',
-        chapter_number: 6,
-        chapter_name: 'Applications of Derivatives (AOD)',
-        topic: 'Maxima and Minima',
-        subtopic: 'Applied geometric optimization word problems',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2023 & 2019 (5-Mark / Case-Study)',
-        difficulty: 'HARD',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 300,
-        marks_weightage: 5,
-        question_latex: 'An open box with a square base is to be constructed out of a given quantity of cardboard of area $c^2$. Show that the maximum volume of the box is $\\frac{c^3}{6\\sqrt{3}}$.',
-        options_latex: [],
-        correct_answer_latex: '$V_{max} = \\frac{c^3}{6\\sqrt{3}}$',
-        solution_latex: 'Let length of base be $x$ and height be $h$. Total surface area of open box: $S = x^2 + 4xh = c^2 \\implies h = \\frac{c^2 - x^2}{4x}$. Volume $V = x^2 h = x^2 \\left(\\frac{c^2 - x^2}{4x}\\right) = \\frac{1}{4}(c^2 x - x^3)$. Differentiating with respect to $x$: $\\frac{dV}{dx} = \\frac{1}{4}(c^2 - 3x^2)$. Setting $\\frac{dV}{dx} = 0 \\implies x = \\frac{c}{\\sqrt{3}}$. Second derivative test: $\\frac{d^2V}{dx^2} = -\\frac{6x}{4} < 0$ at $x = \\frac{c}{\\sqrt{3}}$, confirming a maximum. Substituting $x = \\frac{c}{\\sqrt{3}}$: $V_{max} = \\frac{1}{4}\\left(c^2 \\cdot \\frac{c}{\\sqrt{3}} - \\frac{c^3}{3\\sqrt{3}}\\right) = \\frac{1}{4} \\cdot \\frac{2c^3}{3\\sqrt{3}} = \\frac{c^3}{6\\sqrt{3}}$.',
-        socratic_hints: [
-          "Express the surface area of the open box (bottom + 4 sides) in terms of $x$ and $h$.",
-          "Solve for $h$ in terms of $x$ and substitute into $V = x^2 h$.",
-          "Differentiate $V$ with respect to $x$ and equate to zero.",
-          "Check the second derivative to establish that $V$ is indeed maximized."
-        ]
-      },
-      {
-        id: 'snr_m_06',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'PROBABILITY',
-        chapter_number: 13,
-        chapter_name: 'Probability',
-        topic: 'Bayes\' Theorem',
-        subtopic: 'Cause-and-effect reversal problems (machine defects, medical diagnostic tests, truth/lie)',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2024 (4-Mark Case-Study)',
-        difficulty: 'MEDIUM',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 240,
-        marks_weightage: 4,
-        question_latex: 'In a factory, three machines $E_1, E_2, E_3$ produce $50\\%, 30\\%, 20\\%$ of the total output. Of their output, $2\\%, 2\\%, 3\\%$ are defective bolts respectively. A bolt is chosen at random and found to be defective. What is the probability that it was produced by machine $E_2$?',
-        options_latex: [],
-        correct_answer_latex: '$P(E_2|A) = \\frac{3}{11}$',
-        solution_latex: 'Let $A$ be the event that the bolt is defective. Probabilities: $P(E_1) = 0.5, P(E_2) = 0.3, P(E_3) = 0.2$. Conditional probabilities: $P(A|E_1) = 0.02, P(A|E_2) = 0.02, P(A|E_3) = 0.03$. Total probability $P(A) = (0.5)(0.02) + (0.3)(0.02) + (0.2)(0.03) = 0.010 + 0.006 + 0.006 = 0.022$. By Bayes\' Theorem: $$P(E_2|A) = \\frac{P(E_2)P(A|E_2)}{P(A)} = \\frac{0.3 \\times 0.02}{0.022} = \\frac{0.006}{0.022} = \\frac{6}{22} = \\frac{3}{11}$$.',
-        socratic_hints: [
-          "Define the partition events $E_1, E_2, E_3$ and the observed event $A$ (defective bolt).",
-          "Compute the total probability $P(A) = \\sum P(E_i)P(A|E_i)$.",
-          "Apply Bayes Theorem formula for $P(E_2|A)$."
-        ]
-      },
-      {
-        id: 'snr_m_07',
-        grade: '12',
-        stream: 'NON_MEDICAL',
-        target_exam: 'CBSE_CLASS_12',
-        subject: 'Mathematics',
-        math_branch: 'RELATIONS_FUNCTIONS',
-        chapter_number: 1,
-        chapter_name: 'Relations and Functions',
-        topic: 'Types of Relations',
-        subtopic: 'Equivalence Relations & Equivalence Classes [a]',
-        curriculum_board: 'CBSE_BOARD',
-        pyq_appearance: 'CBSE Class 12 Board 2023 (3-Mark Standard)',
-        difficulty: 'MEDIUM',
-        question_format: 'SUBJECTIVE_LONG',
-        benchmark_time_seconds: 180,
-        marks_weightage: 3,
-        question_latex: 'Let $\\mathbb{Z}$ be the set of all integers and $R$ be the relation on $\\mathbb{Z} \\times \\mathbb{Z}$ defined by $((a, b), (c, d)) \\in R \\iff a + d = b + c$. Prove that $R$ is an equivalence relation.',
-        options_latex: [],
-        correct_answer_latex: 'Equivalence relation proven (Reflexive, Symmetric, Transitive)',
-        solution_latex: '1. Reflexivity: For all $(a, b) \\in \\mathbb{Z} \\times \\mathbb{Z}$, $a + b = b + a \\implies ((a, b), (a, b)) \\in R$. Hence $R$ is reflexive. 2. Symmetry: Let $((a, b), (c, d)) \\in R \\implies a + d = b + c \\implies c + b = d + a \\implies c + b = a + d \\implies ((c, d), (a, b)) \\in R$. Hence $R$ is symmetric. 3. Transitivity: Let $((a, b), (c, d)) \\in R$ and $((c, d), (e, f)) \\in R$. Then $a + d = b + c$ and $c + f = d + e$. Adding the two equations: $(a + d) + (c + f) = (b + c) + (d + e) \\implies a + f = b + e \\implies ((a, b), (e, f)) \\in R$. Hence $R$ is transitive. Since $R$ is reflexive, symmetric, and transitive, it is an equivalence relation.',
-        socratic_hints: [
-          "Check reflexivity by substituting $(c, d) = (a, b)$. Does $a + b = b + a$ hold?",
-          "Check symmetry: Does $a + d = b + c$ imply $c + b = d + a$?",
-          "For transitivity, add the two equations $a + d = b + c$ and $c + f = d + e$ together and cancel common terms."
+        "id": "snr_b_18",
+        "grade": "12",
+        "stream": "MEDICAL",
+        "target_exam": "NEET_UG",
+        "subject": "Biology",
+        "biology_branch": "ECOLOGY",
+        "chapter_number": 11,
+        "chapter_name": "Organisms and Populations",
+        "topic": "Population Interactions",
+        "subtopic": "Mutualism, Commensalism and Amensalism",
+        "curriculum_board": "NEET_UG",
+        "pyq_appearance": "NEET 2023 & CBSE Board 2022",
+        "difficulty": "MEDIUM",
+        "question_format": "MCQ_SINGLE",
+        "benchmark_time_seconds": 75,
+        "marks_weightage": 4,
+        "question_latex": "An interaction where one species is harmed while the other species is neither benefited nor harmed (denoted as $-, 0$) is exemplified by:",
+        "options_latex": [
+          {
+            "key": "A",
+            "latex": "Barnacles growing on the back of a whale",
+            "is_correct": false,
+            "distractor_trap": "Commensalism (+, 0)"
+          },
+          {
+            "key": "B",
+            "latex": "Penicillium mould secreting penicillin that kills surrounding bacteria",
+            "is_correct": true,
+            "distractor_trap": null
+          },
+          {
+            "key": "C",
+            "latex": "Mycorrhizae associations between fungi and roots of higher plants",
+            "is_correct": false,
+            "distractor_trap": "Mutualism (+, +)"
+          },
+          {
+            "key": "D",
+            "latex": "Cuscuta growing on hedge plants",
+            "is_correct": false,
+            "distractor_trap": "Parasitism (+, -)"
+          }
+        ],
+        "correct_answer_latex": "B",
+        "solution_latex": "An interaction where one species is inhibited or harmed ($-$) while the second species remains unaffected ($0$) is termed Amensalism. Penicillium secreting penicillin inhibits the growth of Staphylococci bacteria without deriving any direct nutritional gain from the dead bacteria.",
+        "socratic_hints": [
+          "Review the signs: Mutualism (+,+), Commensalism (+,0), Amensalism (-,0), Parasitism (+,-).",
+          "Which pair shows antibiotic antagonism where the producer gains no direct metabolic benefit?"
         ]
       }
-    ]
+    ],
   },
   questions: [
     {

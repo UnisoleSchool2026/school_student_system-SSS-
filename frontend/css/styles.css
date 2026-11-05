@@ -6707,3 +6707,166 @@ body.role-teacher #drawerSectionPortalViews {
   background: rgba(20, 83, 45, 0.2);
   border-color: rgba(22, 163, 74, 0.35);
 }
+
+/* ==========================================================================
+   FACULTY DEPARTMENT SCOPE & LOGIN CARDS (PROPER DEDICATED TEACHER SYSTEM)
+   ========================================================================== */
+.faculty-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.faculty-dept-card {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+
+.faculty-dept-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.15);
+}
+
+.faculty-dept-card.card-physics { border-color: rgba(56, 189, 248, 0.3); }
+.faculty-dept-card.card-physics:hover { border-color: #38bdf8; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(56, 189, 248, 0.25); }
+
+.faculty-dept-card.card-chemistry { border-color: rgba(167, 139, 250, 0.3); }
+.faculty-dept-card.card-chemistry:hover { border-color: #a78bfa; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(167, 139, 250, 0.25); }
+
+.faculty-dept-card.card-mathematics { border-color: rgba(96, 165, 250, 0.3); }
+.faculty-dept-card.card-mathematics:hover { border-color: #60a5fa; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(96, 165, 250, 0.25); }
+
+.faculty-dept-card.card-biology { border-color: rgba(52, 211, 153, 0.3); }
+.faculty-dept-card.card-biology:hover { border-color: #34d399; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(52, 211, 153, 0.25); }
+
+.faculty-dept-card.card-class10-science { border-color: rgba(251, 146, 60, 0.3); }
+.faculty-dept-card.card-class10-science:hover { border-color: #fb923c; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(251, 146, 60, 0.25); }
+
+.faculty-dept-card.card-class10-maths { border-color: rgba(244, 63, 94, 0.3); }
+.faculty-dept-card.card-class10-maths:hover { border-color: #f43f5e; box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(244, 63, 94, 0.25); }
+
+.faculty-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.faculty-card-dept-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badge-physics { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+.badge-chemistry { background: rgba(167, 139, 250, 0.15); color: #c084fc; border: 1px solid rgba(167, 139, 250, 0.35); }
+.badge-mathematics { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.35); }
+.badge-biology { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35); }
+.badge-class10-science { background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.35); }
+.badge-class10-maths { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
+
+.faculty-profile-snippet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.faculty-avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.avatar-physics { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+.avatar-chemistry { background: rgba(167, 139, 250, 0.2); color: #c084fc; }
+.avatar-mathematics { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+.avatar-biology { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+.avatar-class10-science { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+.avatar-class10-maths { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+
+.faculty-name-title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #f8fafc;
+  display: block;
+  line-height: 1.25;
+}
+
+.faculty-designation-sub {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 2px;
+}
+
+.faculty-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-faculty-card-action {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.btn-faculty-physics { background: linear-gradient(135deg, #0284c7, #2563eb); }
+.btn-faculty-physics:hover { background: linear-gradient(135deg, #0369a1, #1d4ed8); }
+
+.btn-faculty-chemistry { background: linear-gradient(135deg, #7c3aed, #9333ea); }
+.btn-faculty-chemistry:hover { background: linear-gradient(135deg, #6d28d9, #7e22ce); }
+
+.btn-faculty-mathematics { background: linear-gradient(135deg, #2563eb, #4f46e5); }
+.btn-faculty-mathematics:hover { background: linear-gradient(135deg, #1d4ed8, #4338ca); }
+
+.btn-faculty-biology { background: linear-gradient(135deg, #059669, #10b981); }
+.btn-faculty-biology:hover { background: linear-gradient(135deg, #047857, #059669); }
+
+.btn-faculty-class10-science { background: linear-gradient(135deg, #ea580c, #f97316); }
+.btn-faculty-class10-science:hover { background: linear-gradient(135deg, #c2410c, #ea580c); }
+
+.btn-faculty-class10-maths { background: linear-gradient(135deg, #e11d48, #f43f5e); }
+.btn-faculty-class10-maths:hover { background: linear-gradient(135deg, #be123c, #e11d48); }

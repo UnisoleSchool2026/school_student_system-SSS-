@@ -185,14 +185,18 @@ router.get('/questions', (req, res) => {
     const banks = inMemoryStore.subjectBanks || {};
     let relevantBank = [];
 
-    if (sKeyUpper === 'BIOLOGY' || sKeyUpper.includes('BIO')) {
+    if (sKeyUpper === 'CLASS10_SCIENCE' || sKeyUpper === 'SCIENCE' || sKeyUpper.includes('SCI')) {
+      relevantBank = banks.class10_science || [];
+    } else if (sKeyUpper === 'CLASS10_MATHEMATICS' || (sKeyUpper.includes('MATH') && String(grade) === '10')) {
+      relevantBank = banks.class10_math_pyq_ncert || banks.class10_maths || [];
+    } else if (sKeyUpper === 'BIOLOGY' || sKeyUpper.includes('BIO')) {
       relevantBank = banks.senior_biology || [];
     } else if (sKeyUpper === 'PHYSICS' || sKeyUpper.includes('PHYS')) {
       relevantBank = banks.senior_physics || [];
     } else if (sKeyUpper === 'CHEMISTRY' || sKeyUpper.includes('CHEM')) {
       relevantBank = banks.senior_chemistry || [];
     } else if (sKeyUpper === 'MATHEMATICS' || sKeyUpper.includes('MATH')) {
-      relevantBank = String(grade) === '10' ? (banks.class10_maths || []) : (banks.senior_mathematics || []);
+      relevantBank = banks.senior_mathematics || [];
     } else {
       relevantBank = Object.values(banks).flat();
     }
@@ -591,26 +595,26 @@ function handleTeacherLogin(req, res) {
       if (sKeyUpper === 'PHYSICS') {
         sName = 'Physics';
         sDesignation = 'Senior Physics Faculty & HOD';
-        sDefaultClass = '11-NonMed';
+        sDefaultClass = '12-NonMed';
         sTargetStream = 'JEE';
         sStreamText = 'Assigned Subject: Physics • Classes 11 & 12 (NEET, JEE Main & CBSE Boards)';
       } else if (sKeyUpper === 'CHEMISTRY') {
         sName = 'Chemistry';
-        sDesignation = 'Senior Chemistry Faculty';
-        sDefaultClass = '11-NonMed';
+        sDesignation = 'Senior Chemistry Faculty & HOD';
+        sDefaultClass = '12-NonMed';
         sTargetStream = 'JEE';
         sStreamText = 'Assigned Subject: Chemistry • Classes 11 & 12 (NEET, JEE Main & CBSE Boards)';
       } else if (sKeyUpper === 'BIOLOGY') {
         sName = 'Biology';
         sDesignation = 'Senior Biology Faculty & NEET Coordinator';
-        sDefaultClass = '11-Med';
+        sDefaultClass = '12-Med';
         sTargetStream = 'NEET';
         sStreamText = 'Assigned Subject: Biology • Classes 11 & 12 Medical (NEET UG & CBSE Boards)';
       } else {
         sKey = 'MATHEMATICS';
         sName = 'Mathematics';
-        sDesignation = 'Senior Mathematics Faculty';
-        sDefaultClass = '11-NonMed';
+        sDesignation = 'Senior Mathematics Faculty & HOD';
+        sDefaultClass = '12-NonMed';
         sTargetStream = 'JEE';
         sStreamText = 'Assigned Subject: Mathematics • Classes 11 & 12 (JEE Main/Adv & CBSE Boards)';
       }

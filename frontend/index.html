@@ -348,142 +348,264 @@
 <body>
 
   <!-- ========================================================================
-       ROLE GATEWAY MODAL (PRINCIPAL / TEACHER / STUDENT AUTHENTICATION)
+       TEACHER AUTHENTICATION & DEPARTMENT SCOPE ISOLATION GATEWAY
        ======================================================================== -->
   <div class="role-gateway-overlay" id="portalRoleGatewayModal">
-    <div class="role-gateway-container">
-      <div class="role-gateway-header">
-        <div class="brand-logo-badge" style="width:46px; height:46px; font-size:1.15rem; margin:0 auto 12px; background:linear-gradient(135deg, #0284c7, #6366f1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900;">UNISOLE</div>
-        <div class="role-gateway-badge">
-          <i data-lucide="shield-check" style="width:14px; height:14px;"></i> Role-Based Scholar Gateway
+    <div class="role-gateway-container" style="max-width: 1100px; padding: 1.8rem 1.6rem; max-height: 94vh; overflow-y: auto;">
+      <div class="role-gateway-header" style="margin-bottom: 1.25rem;">
+        <div class="brand-logo-badge" style="width:44px; height:44px; font-size:1.1rem; margin:0 auto 10px; background:linear-gradient(135deg, #0284c7, #6366f1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900;">UNISOLE</div>
+        <div class="role-gateway-badge" style="background:rgba(56, 189, 248, 0.12); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.3);">
+          <i data-lucide="shield-check" style="width:14px; height:14px;"></i> Department Scope &amp; Faculty Isolation Gateway
         </div>
-        <h2 style="font-size:1.75rem; font-weight:800; color:#f8fafc; margin:0 0 6px 0;">Select Your Portal Access</h2>
-        <p style="color:#94a3b8; font-size:0.88rem; max-width:560px; margin:0 auto; line-height:1.5;">
-          Dedicated role-based portals for School Leadership, Academic Faculty, and Students.
+        <h2 style="font-size:1.6rem; font-weight:800; color:#f8fafc; margin:0 0 6px 0;">Teacher Sign-In &amp; Department Scope Access</h2>
+        <p style="color:#94a3b8; font-size:0.86rem; max-width:680px; margin:0 auto; line-height:1.45;">
+          Select your verified faculty profile for instant 1-click access. The portal strictly isolates your department's question bank, PYQs, AI voice tutor, and class telemetry.
         </p>
       </div>
 
-      <div class="role-gateway-grid" style="grid-template-columns: 1.6fr 1fr; gap: 18px;">
-        
-        <!-- 1. Dedicated Faculty / Teacher Login Card -->
-        <div class="role-gateway-card card-teacher" style="cursor: default; border: 1.5px solid rgba(56, 189, 248, 0.45); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9));">
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <span class="role-card-badge" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8;">
-                👨‍🏫 Faculty Workspace &bull; Sign-In
-              </span>
-              <span style="font-size:0.72rem; color:#94a3b8; font-weight:600;">Academic Session 2026–27</span>
-            </div>
-            
-            <h3 style="font-size:1.25rem; font-weight:800; color:#f8fafc; margin:0 0 4px 0;">Teacher Portal Sign-In</h3>
-            <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 14px 0; line-height:1.4;">
-              Sign in with your registered phone number, name, and subject expertise to access your classes, create test papers, and conduct assessments.
-            </p>
-
-            <form id="formGatewayTeacherLogin" onsubmit="event.preventDefault(); window.submitGatewayTeacherLogin(event);" style="display:flex; flex-direction:column; gap:12px;">
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <div>
-                  <label for="inputGatewayTeacherPhone" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
-                    Mobile Number *
-                  </label>
-                  <input type="tel" id="inputGatewayTeacherPhone" value="98160 10001" placeholder="e.g. 98160 10001" required pattern="[0-9\s+-]{10,15}" class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
-                </div>
-
-                <div>
-                  <label for="inputGatewayTeacherName" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
-                    Faculty Full Name *
-                  </label>
-                  <input type="text" id="inputGatewayTeacherName" value="Dr. Vikram Sharma" placeholder="e.g. Dr. Vikram Sharma" required class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
-                </div>
-              </div>
-
-              <div>
-                <label for="selectGatewayTeacherSubject" style="font-size:0.78rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:5px;">
-                  Subject Expert Of (Dropdown) *
-                </label>
-                <select id="selectGatewayTeacherSubject" required class="form-select" style="width:100%; padding:9px 12px; font-size:0.86rem; font-weight:700; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56, 189, 248, 0.45); color:#38bdf8; border-radius:8px;">
-                  <option value="PHYSICS" selected>⚡ Physics (Senior Secondary JEE / NEET / CBSE)</option>
-                  <option value="CHEMISTRY">🧪 Chemistry (Senior Secondary NEET / JEE / Boards)</option>
-                  <option value="MATHEMATICS">📐 Mathematics (Senior Secondary JEE / Boards)</option>
-                  <option value="BIOLOGY">🧬 Biology (Senior Secondary NEET UG / Boards)</option>
-                  <option value="CLASS10_MATHEMATICS">🔢 Class 10th Mathematics (CBSE &amp; HP Board)</option>
-                  <option value="CLASS10_SCIENCE">🔬 Class 10th Science (Physics, Chemistry, Biology)</option>
-                  <option value="COMPUTER_SCIENCE">💻 Computer Science &amp; Informatics</option>
-                </select>
-              </div>
-
-              <!-- Quick Faculty Select Pills -->
-              <div>
-                <span style="font-size:0.72rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
-                  Or 1-Click Quick Select Registered Faculty:
-                </span>
-                <div class="faculty-quick-pills">
-                  <button type="button" class="faculty-quick-pill active" onclick="window.fillGatewayFaculty('Dr. Vikram Sharma', '98160 10001', 'PHYSICS')">
-                    👨‍🏫 Dr. Vikram Sharma &bull; Physics
-                  </button>
-                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Prof. Sunita Rao', '98160 10002', 'CHEMISTRY')">
-                    👩‍🏫 Prof. Sunita Rao &bull; Chemistry
-                  </button>
-                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Mrs. Meenakshi Sharma', '98160 10010', 'CLASS10_MATHEMATICS')">
-                    👩‍🏫 Mrs. Meenakshi &bull; Class 10 Maths
-                  </button>
-                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Er. Rakesh Thakur', '98160 10011', 'CLASS10_SCIENCE')">
-                    👨‍🏫 Er. Rakesh &bull; Class 10 Science
-                  </button>
-                  <button type="button" class="faculty-quick-pill" onclick="window.fillGatewayFaculty('Dr. Ananya Mukherjee', '98160 10003', 'BIOLOGY')">
-                    👩‍⚕️ Dr. Ananya &bull; Biology
-                  </button>
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08);">
-                <span style="font-size:0.74rem; color:#94a3b8;">
-                  🔒 Role-locked: Teacher creates papers, conducts tests &amp; manages classes.
-                </span>
-                <button type="submit" class="btn-role-login" style="width:auto; padding:10px 22px; background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; min-height:44px;">
-                  <span>Sign In as Faculty</span> <i data-lucide="arrow-right" style="width:15px; height:15px;"></i>
-                </button>
-              </div>
-            </form>
-          </div>
+      <!-- 1. 6 VERIFIED FACULTY CARDS GRID (1-CLICK DIRECT LOGIN) -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:0.75rem; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.6px; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="award" style="width:13px; height:13px;"></i> Select Department Faculty (1-Click Instant Sign-In):
+          </span>
+          <span style="font-size:0.72rem; color:#94a3b8;">Academic Session 2026–27 &bull; HAPS Senior Wing</span>
         </div>
 
-        <!-- 2. Companion Student & Principal Cards (Right Column) -->
-        <div style="display:flex; flex-direction:column; gap:14px;">
-          <!-- Student Card -->
-          <div class="role-gateway-card card-student" onclick="loginWithRole('student')" style="margin:0; padding:18px;">
+        <div class="faculty-cards-grid">
+          
+          <!-- Card 1: Physics -->
+          <div class="faculty-dept-card card-physics" onclick="window.loginAsFaculty('PHYSICS')">
             <div>
-              <span class="role-card-badge" style="background:rgba(16, 185, 129, 0.2); color:#34d399;">Student Scholar</span>
-              <div class="role-card-avatar" style="background:rgba(16, 185, 129, 0.2); color:#34d399; width:38px; height:38px; font-size:1.2rem; margin-bottom:8px;">🎓</div>
-              <h4 style="font-size:1rem; font-weight:800; color:#f8fafc; margin:0 0 2px 0;">Student Portal</h4>
-              <div style="font-size:0.8rem; color:#34d399; font-weight:700;">Aryan Sharma &bull; Class 11A</div>
-              <p style="font-size:0.75rem; color:#94a3b8; margin:4px 0 10px 0; line-height:1.35;">
-                Active assignments, weekly smart report card, previous test records, and AI voice tutor.
-              </p>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-physics">⚡ Physics Department</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">HOD &bull; Class 11th &amp; 12th</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-physics">👨‍🏫</div>
+                <div>
+                  <strong class="faculty-name-title">Dr. Vikram Sharma</strong>
+                  <span class="faculty-designation-sub">Senior Physics Faculty &bull; HOD</span>
+                </div>
+              </div>
             </div>
-            <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('student');" style="padding:8px 14px; font-size:0.82rem; min-height:38px;">
-              <span>Enter Student Portal</span> <i data-lucide="arrow-right" style="width:13px; height:13px;"></i>
-            </button>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10001</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> 523 Questions</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-physics" onclick="event.stopPropagation(); window.loginAsFaculty('PHYSICS');">
+                <span>Sign In as Physics Faculty</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
           </div>
 
-          <!-- Principal Card -->
-          <div class="role-gateway-card card-principal" onclick="loginWithRole('director')" style="margin:0; padding:18px;">
+          <!-- Card 2: Chemistry -->
+          <div class="faculty-dept-card card-chemistry" onclick="window.loginAsFaculty('CHEMISTRY')">
             <div>
-              <span class="role-card-badge" style="background:rgba(168, 85, 247, 0.2); color:#c084fc;">Executive Leadership</span>
-              <div class="role-card-avatar" style="background:rgba(168, 85, 247, 0.2); color:#c084fc; width:38px; height:38px; font-size:1.2rem; margin-bottom:8px;">🏛️</div>
-              <h4 style="font-size:1rem; font-weight:800; color:#f8fafc; margin:0 0 2px 0;">Principal Portal</h4>
-              <div style="font-size:0.8rem; color:#c084fc; font-weight:700;">Dr. Anita Chandel &bull; Director</div>
-              <p style="font-size:0.75rem; color:#94a3b8; margin:4px 0 10px 0; line-height:1.35;">
-                School governance, 14-day pilot intelligence, class velocity, and syllabus audits.
-              </p>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-chemistry">🧪 Chemistry Department</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">HOD &bull; Class 11th &amp; 12th</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-chemistry">👩‍🏫</div>
+                <div>
+                  <strong class="faculty-name-title">Prof. Sunita Rao</strong>
+                  <span class="faculty-designation-sub">Senior Chemistry Faculty &bull; HOD</span>
+                </div>
+              </div>
             </div>
-            <button type="button" class="btn-role-login" onclick="event.stopPropagation(); loginWithRole('director');" style="padding:8px 14px; font-size:0.82rem; min-height:38px;">
-              <span>Enter Principal Portal</span> <i data-lucide="arrow-right" style="width:13px; height:13px;"></i>
-            </button>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10002</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> NCERT &amp; NEET Bank</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-chemistry" onclick="event.stopPropagation(); window.loginAsFaculty('CHEMISTRY');">
+                <span>Sign In as Chemistry Faculty</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
           </div>
+
+          <!-- Card 3: Mathematics -->
+          <div class="faculty-dept-card card-mathematics" onclick="window.loginAsFaculty('MATHEMATICS')">
+            <div>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-mathematics">📐 Mathematics Department</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">HOD &bull; Class 11th &amp; 12th</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-mathematics">👨‍🏫</div>
+                <div>
+                  <strong class="faculty-name-title">Dr. Rajesh Iyer</strong>
+                  <span class="faculty-designation-sub">Senior Mathematics Faculty &bull; HOD</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10004</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> JEE &amp; Board Bank</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-mathematics" onclick="event.stopPropagation(); window.loginAsFaculty('MATHEMATICS');">
+                <span>Sign In as Maths Faculty</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 4: Biology -->
+          <div class="faculty-dept-card card-biology" onclick="window.loginAsFaculty('BIOLOGY')">
+            <div>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-biology">🧬 Biology Department</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">NEET Coordinator &bull; 11th &amp; 12th</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-biology">👩‍⚕️</div>
+                <div>
+                  <strong class="faculty-name-title">Dr. Ananya Mukherjee</strong>
+                  <span class="faculty-designation-sub">Senior Biology Faculty &bull; NEET Lead</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10003</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> Medical UG Bank</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-biology" onclick="event.stopPropagation(); window.loginAsFaculty('BIOLOGY');">
+                <span>Sign In as Biology Faculty</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 5: Class 10th Science -->
+          <div class="faculty-dept-card card-class10-science" onclick="window.loginAsFaculty('CLASS10_SCIENCE')">
+            <div>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-class10-science">🔬 Class 10 Science</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Secondary Wing &bull; Sec A &amp; B</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-class10-science">👨‍🏫</div>
+                <div>
+                  <strong class="faculty-name-title">Er. Rakesh Thakur</strong>
+                  <span class="faculty-designation-sub">Class 10th Science Faculty &bull; Coordinator</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10011</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> Board Foundation</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-class10-science" onclick="event.stopPropagation(); window.loginAsFaculty('CLASS10_SCIENCE');">
+                <span>Sign In as Class 10 Science</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 6: Class 10th Mathematics -->
+          <div class="faculty-dept-card card-class10-maths" onclick="window.loginAsFaculty('CLASS10_MATHEMATICS')">
+            <div>
+              <div class="faculty-card-header">
+                <span class="faculty-card-dept-badge badge-class10-maths">🔢 Class 10 Maths</span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Secondary Wing &bull; Sec A &amp; B</span>
+              </div>
+              <div class="faculty-profile-snippet" style="margin-top:10px;">
+                <div class="faculty-avatar-circle avatar-class10-maths">👩‍🏫</div>
+                <div>
+                  <strong class="faculty-name-title">Mrs. Meenakshi Sharma</strong>
+                  <span class="faculty-designation-sub">Class 10th Maths Faculty &bull; Coordinator</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="faculty-meta-row" style="margin-bottom:10px;">
+                <span><i data-lucide="phone" style="width:11px; height:11px; vertical-align:middle;"></i> 98160 10010</span>
+                <span><i data-lucide="layers" style="width:11px; height:11px; vertical-align:middle;"></i> 438-PYQ Bank</span>
+              </div>
+              <button type="button" class="btn-faculty-card-action btn-faculty-class10-maths" onclick="event.stopPropagation(); window.loginAsFaculty('CLASS10_MATHEMATICS');">
+                <span>Sign In as Class 10 Maths</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
+          </div>
+
         </div>
-
       </div>
+
+      <!-- 2. COLLAPSIBLE CUSTOM CREDENTIAL SIGN-IN FORM -->
+      <details style="background:rgba(30, 41, 59, 0.4); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 16px; margin-bottom:1.25rem; text-align:left;">
+        <summary style="font-size:0.82rem; font-weight:700; color:#cbd5e1; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <span><i data-lucide="key" style="width:13px; height:13px; vertical-align:middle; color:#38bdf8;"></i> Or Sign In with Custom Mobile Number &amp; Department Credentials</span>
+          <span style="font-size:0.72rem; color:#38bdf8; text-decoration:underline;">Toggle Form ▼</span>
+        </summary>
+        <form id="formGatewayTeacherLogin" onsubmit="event.preventDefault(); window.submitGatewayTeacherLogin(event);" style="display:flex; flex-direction:column; gap:12px; margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.06);">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div>
+              <label for="inputGatewayTeacherPhone" style="font-size:0.76rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                Mobile Number *
+              </label>
+              <input type="tel" id="inputGatewayTeacherPhone" value="98160 10001" placeholder="e.g. 98160 10001" required pattern="[0-9\s+-]{10,15}" oninput="window.handleGatewayPhoneLookup(this.value)" class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
+              <div id="gatewayPhoneLookupStatus" style="font-size:0.7rem; color:#38bdf8; margin-top:3px; display:none;"></div>
+            </div>
+
+            <div>
+              <label for="inputGatewayTeacherName" style="font-size:0.76rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                Faculty Full Name *
+              </label>
+              <input type="text" id="inputGatewayTeacherName" value="Dr. Vikram Sharma" placeholder="e.g. Dr. Vikram Sharma" required class="form-control" style="width:100%; padding:9px 12px; font-size:0.86rem; background:rgba(15,23,42,0.9); border:1px solid rgba(255,255,255,0.18); color:#f8fafc; border-radius:8px;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:12px;">
+            <div>
+              <label for="selectGatewayTeacherSubject" style="font-size:0.76rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                Subject / Department Expertise *
+              </label>
+              <select id="selectGatewayTeacherSubject" required class="form-select" style="width:100%; padding:9px 12px; font-size:0.86rem; font-weight:700; background:rgba(15,23,42,0.95); border:1.5px solid rgba(56, 189, 248, 0.45); color:#38bdf8; border-radius:8px;">
+                <option value="PHYSICS" selected>⚡ Physics (Senior Secondary JEE / NEET / CBSE)</option>
+                <option value="CHEMISTRY">🧪 Chemistry (Senior Secondary NEET / JEE / Boards)</option>
+                <option value="MATHEMATICS">📐 Mathematics (Senior Secondary JEE / Boards)</option>
+                <option value="BIOLOGY">🧬 Biology (Senior Secondary NEET UG / Boards)</option>
+                <option value="CLASS10_MATHEMATICS">🔢 Class 10th Mathematics (CBSE &amp; HP Board)</option>
+                <option value="CLASS10_SCIENCE">🔬 Class 10th Science (Physics, Chemistry, Biology)</option>
+              </select>
+            </div>
+            <div>
+              <label for="selectGatewayTeacherGrade" style="font-size:0.76rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">
+                Target Class Scope *
+              </label>
+              <select id="selectGatewayTeacherGrade" class="form-select" style="width:100%; padding:9px 12px; font-size:0.86rem; font-weight:700; background:rgba(15,23,42,0.95); border:1.5px solid rgba(255,255,255,0.2); color:#f8fafc; border-radius:8px;">
+                <option value="12" selected>Class 12th (Senior)</option>
+                <option value="11">Class 11th (Senior)</option>
+                <option value="10">Class 10th (Secondary)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+            <button type="submit" class="btn-role-login" style="width:auto; padding:9px 24px; background:linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; min-height:40px; font-size:0.84rem;">
+              <span>Authenticate &amp; Lock Department Scope</span> <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+            </button>
+          </div>
+        </form>
+      </details>
+
+      <!-- 3. COMPANION PORTAL ENTRY STRIP (STUDENT & LEADERSHIP) -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding:12px 16px; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.06); border-radius:10px;">
+        <span style="font-size:0.75rem; color:#94a3b8;">
+          Switching to a different institutional role?
+        </span>
+        <div style="display:flex; gap:10px;">
+          <button type="button" onclick="loginWithRole('student')" style="padding:6px 14px; font-size:0.78rem; font-weight:700; border-radius:6px; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.35); color:#34d399; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+            🎓 Enter Student Portal (Aryan Sharma)
+          </button>
+          <button type="button" onclick="loginWithRole('director')" style="padding:6px 14px; font-size:0.78rem; font-weight:700; border-radius:6px; background:rgba(168, 85, 247, 0.15); border:1px solid rgba(168, 85, 247, 0.35); color:#c084fc; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+            🏛️ Enter Principal Portal (Dr. Anita Chandel)
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2896,7 +3018,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
             <div>
               <h3 style="font-size:1.1rem; font-weight:800; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
-                <i data-lucide="presentation" style="width:18px; height:18px; color:#38bdf8;"></i> Dr. Vikram Live AI Smartboard Session
+                <i data-lucide="presentation" style="width:18px; height:18px; color:#38bdf8;"></i> <span id="smartboardFacultyHeader">Live AI Smartboard Session</span>
               </h3>
               <p style="font-size:0.78rem; color:#94a3b8; margin:2px 0 0 0;">
                 Synchronized whiteboard visual diagram and step mathematical derivation.
