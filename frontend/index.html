@@ -3594,6 +3594,132 @@ _Unisole AI School Scholar Assistant_</div>
     </div>
   </div>
 
+  <!-- MODAL: STUDENT INDIVIDUAL DIAGNOSTIC & PERSONALIZED REMEDIAL PLAN -->
+  <div class="modal-overlay" id="modalStudentIndividualReport" style="display: none; z-index: 10006;">
+    <div class="modal-card" style="max-width: 900px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border-radius: 14px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-subtle);">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 1.35rem;">
+            🎓
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #fff;" id="modalStudentName">
+                Student Name
+              </h3>
+              <span id="modalStudentRollBadge" style="background: rgba(255,255,255,0.22); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                Roll #101
+              </span>
+              <span id="modalStudentTierBadge" style="background: #10b981; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">
+                Excellent
+              </span>
+            </div>
+            <p style="margin: 3px 0 0 0; font-size: 0.78rem; opacity: 0.9;" id="modalStudentTestContext">
+              Assessment Title &bull; Chapter Context
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeStudentPerformanceModal()" style="background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s ease;">
+          <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div style="padding: 18px 22px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px;" id="modalStudentBody">
+        
+        <!-- 1. KPI Summary Strip -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Score Obtained</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent-blue); margin-top: 2px;" id="modalStudentScore">41 / 45</div>
+            <div style="font-size: 0.74rem; color: #059669; font-weight: 600;" id="modalStudentScorePct">91.1% Accuracy</div>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Pacing &amp; Speed</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;" id="modalStudentPacing">40m</div>
+            <div style="font-size: 0.74rem; color: var(--text-secondary);" id="modalStudentBenchmarkSpeed">Benchmark: 45m</div>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Diagnostic Standing</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #e11d48; margin-top: 4px;" id="modalStudentFocusBadge">Weak Areas Identified</div>
+            <div style="font-size: 0.74rem; color: var(--text-secondary);" id="modalStudentFocusSub">Actionable remedial roadmap</div>
+          </div>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px;">
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Parent WhatsApp</div>
+            <div style="font-size: 1.05rem; font-weight: 700; color: #059669; margin-top: 4px;" id="modalStudentPhone">+91 98160 55011</div>
+            <div style="font-size: 0.74rem; color: var(--text-secondary);">Direct messaging ready</div>
+          </div>
+        </div>
+
+        <!-- 2. Charts Section: Topic-by-Topic Mastery & Retention -->
+        <div style="background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 3px rgba(15,23,42,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="bar-chart-2" style="width: 16px; height: 16px; color: var(--accent-blue);"></i>
+              Subtopic Mastery vs Class Benchmark
+            </h4>
+            <span style="font-size:0.72rem; font-weight:700; color:var(--text-muted);">
+              🟢 Mastered (&ge;80%) &nbsp;&bull;&nbsp; 🟡 Moderate (50-79%) &nbsp;&bull;&nbsp; 🔴 Weak Point (&lt;50%)
+            </span>
+          </div>
+          <div style="position: relative; height: 190px;">
+            <canvas id="chartStudentTopicMastery"></canvas>
+          </div>
+        </div>
+
+        <!-- 3. What Student Should Focus On (Clear, Actionable Diagnostic Guidance) -->
+        <div style="background: linear-gradient(145deg, #fff5f5, #ffffff); border: 1.5px solid #fecdd3; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 6px rgba(225,29,72,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+              🎯 Key Diagnostic Findings
+            </span>
+            <strong style="font-size: 0.95rem; color: #881337;">What This Student Should Focus On to Improve</strong>
+          </div>
+          <div id="modalStudentFocusContent" style="font-size: 0.82rem; color: #475569; line-height: 1.55;">
+            <!-- Dynamically populated based on student score and weak points -->
+          </div>
+        </div>
+
+        <!-- 4. Personalized Practice Assignment (Tailored to student's weak points) -->
+        <div style="background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 6px rgba(37,99,235,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+                📝 Personalized Remedial Assignment
+              </span>
+              <strong style="font-size: 0.95rem; color: var(--text-primary);">Adaptive Practice Problems Tailored to Weak Points</strong>
+            </div>
+            <span style="font-size: 0.75rem; color: #059669; font-weight: 700; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 4px;">
+              3 Targeted Problems
+            </span>
+          </div>
+          <div id="modalStudentRemedialQuestions" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Questions populated dynamically with KaTeX LaTeX -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Action Bar -->
+      <div style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          💬 Send this personalized diagnostic analysis and practice problems directly to student/parent on WhatsApp.
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" class="btn-secondary" onclick="window.copyStudentPlanToClipboard()" style="font-size: 0.82rem; padding: 8px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <i data-lucide="copy" style="width: 14px; height: 14px;"></i> Copy Plan Text
+          </button>
+          <button type="button" class="btn-primary" id="btnDispatchWhatsAppModal" onclick="window.dispatchCurrentStudentWhatsApp()" style="font-size: 0.85rem; padding: 8px 18px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; border-radius: 8px; cursor: pointer; box-shadow: 0 3px 8px rgba(5,150,105,0.3);">
+            <i data-lucide="message-circle" style="width: 16px; height: 16px;"></i> Send Remedial Plan on WhatsApp
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- MODAL: GENERATE TEST / QUIZ / ASSIGNMENT (TOP-LEVEL OVERLAY) -->
   <div class="drilldown-modal-backdrop" id="modalGenerateCurriculumTest" role="dialog" aria-modal="true" style="display: none; z-index: 10002;">
     <div class="drilldown-modal-content" style="max-width: 640px;">

@@ -3851,7 +3851,8 @@ try {
 let activeReportCharts = {
   scoreDist: null,
   questionAccuracy: null,
-  questionTime: null
+  questionTime: null,
+  studentMastery: null
 };
 
 window.switchClassProgressSubView = function(view) {
@@ -4339,9 +4340,12 @@ window.viewTestReportDetail = function(testId) {
                       ${escapeHtml(s.tier)}
                     </span>
                   </td>
-                  <td style="text-align:right;">
-                    <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.phone)}')" style="padding:4px 10px; font-size:0.74rem; font-weight:600;">
-                      <i data-lucide="message-square" style="width:12px; height:12px;"></i> Notice
+                  <td style="text-align:right; white-space:nowrap;">
+                    <button type="button" class="btn-primary" onclick="window.openStudentPerformanceModal('${test.id}', '${escapeHtml(s.roll)}')" style="padding:5px 12px; font-size:0.74rem; font-weight:700; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 5px rgba(37,99,235,0.25); transition:transform 0.15s ease;">
+                      <i data-lucide="bar-chart-2" style="width:13px; height:13px;"></i> View Report &amp; Remedial
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="window.sendStudentWhatsAppPlan('${test.id}', '${escapeHtml(s.roll)}')" title="Send Diagnostic Summary & Remedial Assignment to Student on WhatsApp" style="padding:5px 10px; font-size:0.74rem; font-weight:700; color:#059669; border-color:#a7f3d0; background:#ecfdf5; display:inline-flex; align-items:center; gap:4px; margin-left:6px; cursor:pointer;">
+                      <i data-lucide="message-circle" style="width:13px; height:13px;"></i> WhatsApp
                     </button>
                   </td>
                 </tr>
@@ -4574,9 +4578,9 @@ window.renderClassRoster = function(classId = '12-NonMed') {
             ${escapeHtml(s.status)}
           </span>
         </td>
-        <td style="text-align:right;">
-          <button type="button" class="btn-secondary" onclick="window.notifyStudentParent('${escapeHtml(s.name)}', '${escapeHtml(s.parent)}')" title="Send SMS Notice to Parent" style="padding:5px 10px; font-size:0.75rem; font-weight:600;">
-            <i data-lucide="message-square" style="width:13px; height:13px;"></i> Notice
+        <td style="text-align:right; white-space:nowrap;">
+          <button type="button" class="btn-secondary" onclick="window.sendRosterStudentWhatsApp('${escapeHtml(s.name)}', '${escapeHtml(s.parent)}', '${escapeHtml(s.score)}', '${escapeHtml(s.status)}')" title="Send Standing & Attendance Notice to Parent on WhatsApp" style="padding:5px 10px; font-size:0.75rem; font-weight:700; color:#059669; border-color:#a7f3d0; background:#ecfdf5; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+            <i data-lucide="message-circle" style="width:13px; height:13px;"></i> WhatsApp
           </button>
         </td>
       </tr>
@@ -4594,7 +4598,7 @@ window.filterClassRoster = function(query = '') {
 };
 
 window.notifyStudentParent = function(studentName, parentPhone) {
-  alert(`SMS Notification dispatched to parent (${parentPhone}) for scholar ${studentName}. Attendance and test records shared.`);
+  window.sendRosterStudentWhatsApp(studentName, parentPhone, 'Good', 'Active');
 };
 
 window.openCreateClassModal = function() {
@@ -18484,3 +18488,704 @@ window.shareStudentReportWhatsApp = shareStudentReportWhatsApp;
 
 
 
+
+
+/* ==========================================================================
+   STUDENT INDIVIDUAL PERFORMANCE, DIAGNOSTICS & WHATSAPP REMEDIAL ENGINE
+   ========================================================================== */
+
+function renderRemedialQuestionsCard(questions) {
+  return questions.map((q, idx) => `
+    <div style="border:1px solid #cbd5e1; border-radius:10px; padding:14px; background:#f8fafc; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span style="font-weight:800; font-size:0.84rem; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+          <span style="background:var(--accent-blue); color:#fff; font-size:0.72rem; padding:1px 7px; border-radius:4px;">
+            Q${idx + 1}
+          </span>
+          ${escapeHtml(q.title)}
+        </span>
+        <span style="font-size:0.72rem; font-weight:700; color:#475569; background:#e2e8f0; padding:2px 8px; border-radius:4px;">
+          ${escapeHtml(q.marks)}
+        </span>
+      </div>
+      <div style="font-size:0.83rem; color:var(--text-primary); line-height:1.55;" class="latex-content">
+        ${q.statement}
+      </div>
+      <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:8px 10px; border-radius:4px; font-size:0.78rem; color:#92400e;">
+        <strong>💡 Pedagogical Hint &amp; Trap Warning:</strong> ${q.hint}
+      </div>
+      <details style="font-size:0.78rem; color:#334155; margin-top:2px;">
+        <summary style="font-weight:700; color:var(--accent-blue); cursor:pointer; user-select:none;">
+          View Verified Marking Rubric &amp; Solution Steps
+        </summary>
+        <div style="margin-top:6px; padding:8px 10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; line-height:1.5;" class="latex-content">
+          ${q.solution}
+        </div>
+      </details>
+    </div>
+  `).join('');
+}
+
+function formatWhatsAppText(test, student, focusPoints, questions) {
+  const line = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  let qText = '';
+  questions.forEach((q, idx) => {
+    qText += `${idx + 1}️⃣ *${q.title} (${q.marks})*\n${q.plainStatement || q.statement}\n💡 *Hint:* ${q.plainHint || q.hint}\n\n`;
+  });
+
+  return `🎓 *UNISOLE AI SCHOLAR ASSISTANT • DIAGNOSTIC REPORT & REMEDIAL PLAN*\n` +
+    `${line}\n` +
+    `👤 *Scholar:* ${student.name} (Roll #${student.roll})\n` +
+    `📋 *Assessment:* ${test.code} - ${test.title}\n` +
+    `📊 *Score Obtained:* ${student.score} / ${test.totalMarks} (${student.percentage})\n` +
+    `⏱️ *Time Taken:* ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})\n` +
+    `🎯 *Performance Tier:* ${student.tier}\n` +
+    `${line}\n\n` +
+    `🎯 *WHAT TO FOCUS ON TO IMPROVE:*\n` +
+    focusPoints.map(p => `• ${p}`).join('\n') +
+    `\n\n${line}\n\n` +
+    `📝 *PERSONALIZED PRACTICE ASSIGNMENT (3 TARGETED PROBLEMS):*\n\n` +
+    qText +
+    `💡 *Instructions for ${student.name}:* Please solve these 3 practice problems in your physics homework notebook and submit your step-by-step working in class tomorrow for teacher verification.\n\n` +
+    `— Dr. Vikram Sharma, Senior Physics Faculty\nHAPS Senior Secondary School`;
+}
+
+function generateStudentDiagnosticPlan(test, student) {
+  const roll = String(student.roll);
+  const isExc = (student.tier === 'Excellent');
+  const isAvg = (student.tier === 'Average');
+  const isBelow = (!isExc && !isAvg);
+
+  let subtopics = [];
+  let focusHtml = '';
+  let questions = [];
+  let focusBulletPoints = [];
+
+  // Tailored logic for Test 02 (Gauss's Law & Shells) as featured in screenshot
+  if (test.id === 'test_12_02' || (test.chapter && test.chapter.includes('Charges') && test.title.includes('Gauss'))) {
+    if (roll === '103' || isBelow) {
+      // Rohit Thakur (#103, Below Average, 19/45)
+      subtopics = [
+        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 75, classPct: 95 },
+        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 20, classPct: 72 },
+        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 40, classPct: 78 },
+        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 30, classPct: 68 },
+        { name: 'Surface Charge Density & Shielding', studentPct: 45, classPct: 84 }
+      ];
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:#b91c1c; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🔴 Critical Concept Gap: Electric Field Inside Conducting Shells (E = 0)
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              Failed on Question 8. Rohit mistakenly applied dielectric volume charge formulas ($E \propto r$) to a hollow conducting shell. In electrostatic equilibrium, all mobile electrons redistribute such that interior net charge is zero, establishing $\vec{E}_{\text{inside}} = 0$ everywhere inside the conductor.
+            </p>
+          </div>
+          <div>
+            <strong style="color:#b91c1c; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🔴 Geometric Trap: Corner Flux Partitioning &amp; Solid Angle Symmetries
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              Failed on Question 14. When evaluating flux from a charge placed at a cube corner, Rohit omitted the 8-cube symmetry model and missed that the 3 adjacent faces have field lines parallel to their surfaces ($\vec{E} \perp \hat{n} \implies \Phi = 0$).
+            </p>
+          </div>
+          <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:8px 12px; border-radius:4px; margin-top:2px;">
+            <strong style="color:#9f1239; font-size:0.8rem; display:block; margin-bottom:2px;">
+              🎯 Actionable Pedagogical Roadmap for Rohit:
+            </strong>
+            <ol style="margin:0; padding-left:16px; font-size:0.78rem; color:#475569; line-height:1.5;">
+              <li><strong>Conductor Boundary Rule:</strong> Always identify conductor vs non-conductor. Inside a hollow metallic cavity, $\oint \vec{E}\cdot d\vec{A} = 0 \implies E = 0$.</li>
+              <li><strong>Cylindrical Gaussian Drill:</strong> Re-derive $E = \frac{\lambda}{2\pi \varepsilon_0 r}$ paying special attention to why flat end caps have zero flux.</li>
+              <li><strong>Remedial Practice:</strong> Complete the 3 targeted problems below in the physics assignment notebook.</li>
+            </ol>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Critical Concept Gap: Conductor Cavity Field (E = 0). Net charge on conductor resides strictly on exterior surface in equilibrium.",
+        "Geometric Trap: Cube corner flux partitioning. 3 adjacent faces have zero flux; 3 opposite faces share flux equally as Phi = q / 24ε₀.",
+        "Roadmap: Re-derive Gauss's cylindrical wire theorem and practice 8-cube symmetry drills."
+      ];
+
+      questions = [
+        {
+          title: "Electrostatic Shielding & Conductor Cavity",
+          marks: "2 Marks",
+          statement: "A thin hollow spherical metallic shell of radius $R = 12\text{ cm}$ carries a net charge of $Q = +6\ \mu\text{C}$. Calculate the electric field intensity at: (i) radial distance $r = 4\text{ cm}$ (inside cavity), and (ii) $r = 24\text{ cm}$ (in exterior space). State the physical law justifying part (i).",
+          plainStatement: "A thin hollow spherical metallic shell of radius R = 12cm carries a net charge of Q = +6 μC. Calculate the electric field intensity at: (i) radial distance r = 4cm (inside cavity), and (ii) r = 24cm (in exterior space). State the physical law justifying part (i).",
+          hint: "Construct a concentric spherical Gaussian surface of radius $r < R$. How much net charge is enclosed? Recall $\oint \vec{E}\cdot d\vec{A} = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
+          plainHint: "Construct a concentric spherical Gaussian surface of radius r < R. Net enclosed charge is 0! E = 0 N/C inside (shielding).",
+          solution: "(i) Inside cavity ($r = 4\text{ cm} < R$): $q_{\text{enc}} = 0 \implies E = 0\text{ N/C}$ (Electrostatic Shielding).<br>(ii) Outside shell ($r = 0.24\text{ m}$): $E = \frac{1}{4\pi\varepsilon_0}\frac{Q}{r^2} = (9\times 10^9)\times\frac{6\times 10^{-6}}{(0.24)^2} = 9.38\times 10^5\text{ N/C}$ radially outwards."
+        },
+        {
+          title: "Point Charge at Corner of a Cube",
+          marks: "3 Marks",
+          statement: "A point charge $q = 8.85\ \mu\text{C}$ is placed at one corner of an imaginary cube of side $a = 10\text{ cm}$. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces that do not touch the corner charge.",
+          plainStatement: "A point charge q = 8.85 μC is placed at one corner of an imaginary cube of side a = 10cm. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces that do not touch the corner charge.",
+          hint: "By 3D symmetry, assemble 8 identical cubes around the corner to fully enclose $q$. Total flux through all 8 cubes is $\frac{q}{\varepsilon_0}$. For the 3 touching faces, $\vec{E}$ is parallel to the surface, so their flux is zero!",
+          plainHint: "Enclose corner charge with 8 cubes (total flux = q / ε₀). Each cube gets q / 8ε₀. Adjacent 3 faces have flux = 0; remaining 3 opposite faces share flux = q / 24ε₀.",
+          solution: "(a) Total flux through 1 cube = $\frac{1}{8}\frac{q}{\varepsilon_0} = \frac{8.85\times 10^{-6}}{8\times 8.85\times 10^{-12}} = 1.25\times 10^5\text{ N}\cdot\text{m}^2/\text{C}$.<br>(b) The 3 adjacent faces have $\Phi = 0$ because field lines graze them without piercing. Hence the 3 opposite faces share the flux equally: $\Phi_{\text{each}} = \frac{1}{3}\left(\frac{q}{8\varepsilon_0}\right) = \frac{q}{24\varepsilon_0} = 4.17\times 10^4\text{ N}\cdot\text{m}^2/\text{C}$."
+        },
+        {
+          title: "Line Charge Cylindrical Gauss Derivation",
+          marks: "3 Marks",
+          statement: "An infinitely long straight wire has uniform linear charge density $\lambda = 2.4\times 10^{-7}\text{ C/m}$. (a) Using Gauss's theorem with a coaxial cylinder of radius $r$ and length $L$, derive the formula $E = \frac{\lambda}{2\pi \varepsilon_0 r}$. (b) Calculate the electric field magnitude at perpendicular distance $r = 15\text{ cm}$.",
+          plainStatement: "An infinitely long straight wire has uniform linear charge density λ = 2.4×10⁻⁷ C/m. (a) Using Gauss's theorem with a coaxial cylinder of radius r and length L, derive the formula E = λ / (2πε₀r). (b) Calculate the electric field magnitude at perpendicular distance r = 15cm.",
+          hint: "Total flux $\oint \vec{E}\cdot d\vec{A} = \Phi_{\text{ends}} + \Phi_{\text{curved}}$. Circular end caps have $\vec{E} \perp \hat{n} \implies \Phi_{\text{ends}} = 0$. Curved area is $2\pi r L$.",
+          plainHint: "Equate curved surface flux E(2πrL) = λL / ε₀. Flat end caps have 0 flux.",
+          solution: "(a) Derivation: $\oint \vec{E}\cdot d\vec{A} = E(2\pi r L) = \frac{q_{\text{enc}}}{\varepsilon_0} = \frac{\lambda L}{\varepsilon_0} \implies E = \frac{\lambda}{2\pi \varepsilon_0 r}$.<br>(b) At $r = 0.15\text{ m}$: $E = \frac{2\times (9\times 10^9)\times (2.4\times 10^{-7})}{0.15} = \frac{4320}{0.15} = 2.88\times 10^4\text{ N/C}$."
+        }
+      ];
+    } else if (roll === '105') {
+      // Sahil Mehta (#105, Average, 24/45, 53.3%)
+      subtopics = [
+        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 82, classPct: 95 },
+        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 40, classPct: 72 },
+        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 55, classPct: 78 },
+        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 45, classPct: 68 },
+        { name: 'Surface Charge Density & Shielding', studentPct: 45, classPct: 84 }
+      ];
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:#d97706; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟡 Focus 1: Conducting Plate vs Non-Conducting Thin Sheet Field
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              Sahil interchanged the electric field formula for a thin dielectric plane sheet ($E = \frac{\sigma}{2\varepsilon_0}$) with a charged metallic conducting plate ($E = \frac{\sigma}{\varepsilon_0}$ due to charge distribution on both faces).
+            </p>
+          </div>
+          <div>
+            <strong style="color:#d97706; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟡 Focus 2: Flux through Curved Hemispherical Surfaces
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              Failed on Question 12. Flux through a flat base was computed correctly, but Sahil forgot that for a closed hemispherical bowl enclosing no charge, total flux is zero: $\Phi_{\text{curved}} = -\Phi_{\text{base}}$.
+            </p>
+          </div>
+          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:8px 12px; border-radius:4px;">
+            <strong style="color:#92400e; font-size:0.8rem; display:block; margin-bottom:2px;">
+              🎯 Actionable Roadmap for Sahil:
+            </strong>
+            <ol style="margin:0; padding-left:16px; font-size:0.78rem; color:#475569; line-height:1.5;">
+              <li>Distinguish single-surface charge sheets vs two-surface conducting plates in board answers.</li>
+              <li>Practice projection method for open hemispherical flux in uniform fields.</li>
+              <li>Complete the 3 adaptive problems below.</li>
+            </ol>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Conducting plate vs Non-conducting sheet: Remember E = σ / ε₀ for conductors and E = σ / 2ε₀ for thin sheets.",
+        "Hemispherical bowl flux: In uniform field, flux entering curved surface equals flux leaving flat circular cross-section (Phi = πR²E).",
+        "Roadmap: Solve derivation drills on infinite plane sheets and spherical conductors."
+      ];
+
+      questions = [
+        {
+          title: "Conducting Plate vs Non-Conducting Infinite Sheet",
+          marks: "2 Marks",
+          statement: "Two large parallel conducting plates carry surface charge densities $+\sigma$ and $-\sigma$ respectively. Using Gauss's Law, find the electric field in: (a) Region I (to the left of positive plate), (b) Region II (between the two plates), and (c) Region III (to the right of negative plate).",
+          plainStatement: "Two large parallel conducting plates carry surface charge densities +σ and -σ respectively. Using Gauss's Law, find the electric field in: (a) Region I (to the left of positive plate), (b) Region II (between the two plates), and (c) Region III (to the right of negative plate).",
+          hint: "Between the plates, fields due to both plates add constructively: $E = \frac{\sigma}{2\varepsilon_0} + \frac{\sigma}{2\varepsilon_0} = \frac{\sigma}{\varepsilon_0}$. Outside, they cancel to 0.",
+          plainHint: "Outside plates: E = 0. Between plates: E = σ / ε₀ directed from + to - plate.",
+          solution: "(a) Region I: $E = 0\text{ N/C}$ (opposing fields cancel).<br>(b) Region II: $E = \frac{\sigma}{2\varepsilon_0} + \frac{\sigma}{2\varepsilon_0} = \frac{\sigma}{\varepsilon_0}$ directed towards negative plate.<br>(c) Region III: $E = 0\text{ N/C}$ (cancelling fields)."
+        },
+        {
+          title: "Flux Entering a Hemispherical Body in Uniform Field",
+          marks: "3 Marks",
+          statement: "A uniform electric field $\vec{E} = E_0\hat{i}$ is directed along the symmetry axis of a hemispherical bowl of radius $R$. Determine the total electric flux passing through: (a) the circular flat face, and (b) the curved surface of the bowl.",
+          plainStatement: "A uniform electric field E = E₀ î is directed along the symmetry axis of a hemispherical bowl of radius R. Determine the total electric flux passing through: (a) the circular flat face, and (b) the curved surface of the bowl.",
+          hint: "Since the bowl encloses zero charge, Gauss's law dictates $\Phi_{\text{net}} = \Phi_{\text{flat}} + \Phi_{\text{curved}} = 0$.",
+          plainHint: "Total flux is 0 since q_enc = 0. Flat face flux is -E₀(πR²), so curved face flux is +E₀(πR²).",
+          solution: "(a) Flat circular face normal points outwards (opposite to field): $\Phi_{\text{flat}} = \vec{E}\cdot\vec{A} = -E_0(\pi R^2)$.<br>(b) Enclosed charge $q_{\text{enc}} = 0 \implies \Phi_{\text{total}} = 0 \implies \Phi_{\text{curved}} = -\Phi_{\text{flat}} = +\pi R^2 E_0$."
+        },
+        {
+          title: "Thin Spherical Shell with Surface Density σ",
+          marks: "3 Marks",
+          statement: "A thin conducting spherical shell of radius $R = 20\text{ cm}$ has a uniform surface charge density $\sigma = 0.2\ \mu\text{C/m}^2$. Calculate: (a) The total charge $Q$ on the shell, and (b) The electric field just outside the surface of the shell.",
+          plainStatement: "A thin conducting spherical shell of radius R = 20cm has uniform surface charge density σ = 0.2 μC/m². Calculate: (a) Total charge Q on the shell, and (b) Electric field just outside the surface.",
+          hint: "Surface area is $4\pi R^2$. Just outside, $E = \frac{\sigma}{\varepsilon_0}$ or $\frac{1}{4\pi\varepsilon_0}\frac{Q}{R^2}$.",
+          plainHint: "Q = σ × 4πR². Just outside, E = σ / ε₀ = 2.26×10⁴ N/C.",
+          solution: "(a) $Q = \sigma(4\pi R^2) = (0.2\times 10^{-6})\times 4\pi (0.2)^2 = 1.005\times 10^{-7}\text{ C} \approx 0.1\ \mu\text{C}$.<br>(b) $E = \frac{\sigma}{\varepsilon_0} = \frac{0.2\times 10^{-6}}{8.85\times 10^{-12}} = 2.26\times 10^4\text{ N/C}$."
+        }
+      ];
+    } else if (roll === '109') {
+      // Karan Singhal (#109, Average, 31/45, 68.9%)
+      subtopics = [
+        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 90, classPct: 95 },
+        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 55, classPct: 72 },
+        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 70, classPct: 78 },
+        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 60, classPct: 68 },
+        { name: 'Surface Charge Density & Shielding', studentPct: 70, classPct: 84 }
+      ];
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:var(--accent-blue); font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟡 Focus: Speed on 3-Mark Derivations &amp; Graph Sketching
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              Karan displays solid conceptual understanding but lost step marks on Question 9 (Graph of $E$ vs $r$ for charged spherical shell) by not clearly marking the discontinuity at $r = R$ and showing $E = 0$ for $r < R$.
+            </p>
+          </div>
+          <div style="background:#eff6ff; border-left:3px solid #2563eb; padding:8px 12px; border-radius:4px;">
+            <strong style="color:#1e40af; font-size:0.8rem; display:block; margin-bottom:2px;">
+              🎯 Actionable Roadmap for Karan:
+            </strong>
+            <p style="margin:0; font-size:0.78rem; color:#475569;">
+              Practice standard CBSE Board presentation: clearly draw Gaussian surfaces with dashed lines, state Gauss theorem explicitly, and label graphs with proper intercepts.
+            </p>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Presentation & Derivations: Clearly draw dashed Gaussian surfaces with outward normal vectors.",
+        "Graph Precision: Highlight discontinuity at r = R in E vs r curves for metallic shells.",
+        "Practice: Complete 3 revision questions below to convert Average standing into Distinction (>80%)."
+      ];
+
+      questions = [
+        {
+          title: "Graph & Discontinuity of E vs r for Conducting Shell",
+          marks: "3 Marks",
+          statement: "Draw a neat graph showing the variation of electric field $E$ with radial distance $r$ from the center of a uniformly charged conducting spherical shell of radius $R$. Clearly indicate values for $r < R$, $r = R$, and $r > R$.",
+          plainStatement: "Draw a neat graph showing the variation of electric field E with radial distance r from center of a uniformly charged conducting spherical shell of radius R.",
+          hint: "For $r < R$, $E = 0$. At $r = R$, $E = \frac{\sigma}{\varepsilon_0}$ (maximum). For $r > R$, $E \propto 1/r^2$.",
+          plainHint: "E = 0 for r < R. Jumps to max at r = R, then decays as 1/r².",
+          solution: "Graph features:<br>• Region $r < R$: Coincident with horizontal axis ($E = 0$).<br>• Point $r = R$: Vertical step discontinuity to peak $E_{\text{max}} = \frac{1}{4\pi\varepsilon_0}\frac{Q}{R^2}$.<br>• Region $r > R$: Smooth hyperbolic decay asymptotic to horizontal axis ($E \propto \frac{1}{r^2}$)."
+        },
+        {
+          title: "Flux Through Disc from Point Charge on Axis",
+          marks: "3 Marks",
+          statement: "A point charge $q$ is situated on the axis of a flat circular disc of radius $R$ at a distance $d$ from its center. Find the electric flux passing through the disc using solid angle formula.",
+          plainStatement: "A point charge q is situated on the axis of a flat circular disc of radius R at distance d from center. Find electric flux through disc.",
+          hint: "The solid angle subtended by the disc at the charge is $\Omega = 2\pi(1 - \cos\theta)$ where $\cos\theta = \frac{d}{\sqrt{R^2 + d^2}}$. Flux is $\Phi = \frac{q}{4\pi\varepsilon_0}\Omega$.",
+          plainHint: "Flux = (q / 2ε₀) [ 1 - d / √(R² + d²) ].",
+          solution: "$\Phi = \frac{q}{\varepsilon_0}\frac{\Omega}{4\pi} = \frac{q}{2\varepsilon_0}\left(1 - \frac{d}{\sqrt{R^2 + d^2}}\right)$."
+        },
+        {
+          title: "Two Concentric Conducting Spherical Shells",
+          marks: "3 Marks",
+          statement: "Two concentric conducting spherical shells of radii $R_1$ and $R_2$ ($R_1 < R_2$) carry charges $Q_1$ and $Q_2$. Find the electric field at: (a) $r < R_1$, (b) $R_1 < r < R_2$, and (c) $r > R_2$.",
+          plainStatement: "Two concentric conducting spherical shells of radii R₁ and R₂ (R₁ < R₂) carry charges Q₁ and Q₂. Find electric field at: (a) r < R₁, (b) R₁ < r < R₂, and (c) r > R₂.",
+          hint: "Apply Gauss's law for concentric spheres: (a) $q_{\text{enc}} = 0$, (b) $q_{\text{enc}} = Q_1$, (c) $q_{\text{enc}} = Q_1 + Q_2$.",
+          plainHint: "(a) E = 0. (b) E = Q₁ / (4πε₀r²). (c) E = (Q₁ + Q₂) / (4πε₀r²).",
+          solution: "(a) $r < R_1$: $E = 0\text{ N/C}$.<br>(b) $R_1 < r < R_2$: $E = \frac{1}{4\pi\varepsilon_0}\frac{Q_1}{r^2}$.<br>(c) $r > R_2$: $E = \frac{1}{4\pi\varepsilon_0}\frac{Q_1 + Q_2}{r^2}$."
+        }
+      ];
+    } else {
+      // Top Performers (Aryan Sharma, Priya Verma, Divya Rana, Ananya Chauhan, Ritu Sen)
+      subtopics = [
+        { name: 'Gauss Law & Cube Flux (Φ = q/ε₀)', studentPct: 98, classPct: 95 },
+        { name: 'Field Inside Conducting Shell (E = 0)', studentPct: 92, classPct: 72 },
+        { name: 'Infinite Line Charge (λ / 2πε₀r)', studentPct: 90, classPct: 78 },
+        { name: 'Hemispherical & Corner Flux Symmetries', studentPct: 88, classPct: 68 },
+        { name: 'Surface Charge Density & Shielding', studentPct: 95, classPct: 84 }
+      ];
+
+      focusHtml = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <strong style="color:#059669; font-size:0.86rem; display:block; margin-bottom:2px;">
+              🟢 Advanced Distinction Mastery (>90% Score)
+            </strong>
+            <p style="margin:0; font-size:0.8rem; color:#475569;">
+              ${student.name} demonstrates exemplary command across all standard CBSE Class 12 Electrostatics criteria. To target a perfect 100/100 in Board examinations and JEE Advanced, focus is placed on advanced non-uniform charge volumes and grounded concentric spherical conductors.
+            </p>
+          </div>
+          <div style="background:#ecfdf5; border-left:3px solid #10b981; padding:8px 12px; border-radius:4px;">
+            <strong style="color:#065f46; font-size:0.8rem; display:block; margin-bottom:2px;">
+              🎯 Enrichment Roadmap for ${student.name}:
+            </strong>
+            <p style="margin:0; font-size:0.78rem; color:#475569;">
+              Master volume integral derivations $\int_0^r \rho(r) 4\pi r^2 dr$ for non-uniform dielectric spheres and concentric shells with earthing boundary conditions.
+            </p>
+          </div>
+        </div>
+      `;
+
+      focusBulletPoints = [
+        "Distinction Standing: Outstanding mastery across Gauss integrals and boundary conditions.",
+        "Enrichment Focus: Non-uniform charge distributions rho(r) = rho_0 (1 - r/R) and grounded concentric shells.",
+        "Challenge Assignment: Complete the 3 Olympiad/JEE-Advanced caliber problems below."
+      ];
+
+      questions = [
+        {
+          title: "Non-Uniform Volume Charge Distribution",
+          marks: "3 Marks",
+          statement: "A solid insulating sphere of radius $R$ has a non-uniform volume charge density $\rho(r) = \rho_0\left(1 - \frac{r}{R}\right)$ for $r \le R$. Find the electric field $E$ at distance $r < R$ inside the sphere.",
+          plainStatement: "A solid insulating sphere of radius R has non-uniform volume charge density ρ(r) = ρ₀(1 - r/R) for r <= R. Find electric field E at distance r < R.",
+          hint: "Enclosed charge $q_{\text{enc}} = \int_0^r \rho(r) 4\pi r'^2 dr' = 4\pi \rho_0 \left[\frac{r^3}{3} - \frac{r^4}{4R}\right]$. Then apply $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
+          plainHint: "Integrate spherical shells dq = ρ(r) 4πr² dr. E = (ρ₀ r / ε₀) [ 1/3 - r / (4R) ].",
+          solution: "$q_{\text{enc}} = 4\pi \rho_0 \int_0^r \left(r'^2 - \frac{r'^3}{R}\right)dr' = 4\pi\rho_0\left(\frac{r^3}{3} - \frac{r^4}{4R}\right)$.<br>Gauss Law: $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0} \implies E = \frac{\rho_0 r}{\varepsilon_0}\left(\frac{1}{3} - \frac{r}{4R}\right)$."
+        },
+        {
+          title: "Concentric Shells with Earthing Boundary Condition",
+          marks: "3 Marks",
+          statement: "Two concentric conducting shells have radii $a$ and $b$ ($a < b$). The inner shell has charge $Q$, while the outer shell is connected to ground (earthed). Find: (a) The charge induced on the outer shell, and (b) The potential of the inner shell.",
+          plainStatement: "Two concentric conducting shells have radii a and b (a < b). Inner shell has charge Q, while outer shell is connected to ground (earthed). Find: (a) Charge induced on outer shell, and (b) Potential of inner shell.",
+          hint: "Earthing outer shell means its net potential is zero: $V_b = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q + Q'}{b}\right) = 0 \implies Q' = -Q$.",
+          plainHint: "Outer shell potential V_b = 0 implies Q' = -Q. Potential of inner shell V_a = (Q / 4πε₀) [ 1/a - 1/b ].",
+          solution: "(a) Since outer shell is earthed, $V_{\text{outer}} = 0 \implies \frac{1}{4\pi\varepsilon_0}\left(\frac{Q + Q'}{b}\right) = 0 \implies Q' = -Q$.<br>(b) Potential of inner shell: $V_{\text{inner}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q}{a} + \frac{Q'}{b}\right) = \frac{Q}{4\pi\varepsilon_0}\left(\frac{1}{a} - \frac{1}{b}\right)$."
+        },
+        {
+          title: "Electrostatic Pressure on Charged Conductor",
+          marks: "3 Marks",
+          statement: "Prove that the outward electrostatic pressure acting on the surface of a charged conductor with surface charge density $\sigma$ is given by $P = \frac{\sigma^2}{2\varepsilon_0}$.",
+          plainStatement: "Prove that outward electrostatic pressure on surface of charged conductor of density σ is P = σ² / (2ε₀).",
+          hint: "The field due to neighboring patch is $E_1 = \frac{\sigma}{2\varepsilon_0}$. Force on element $dF = dq \cdot E_1 = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right)$.",
+          plainHint: "Electric pressure = dF / dA = (σ dA)(σ / 2ε₀) / dA = σ² / (2ε₀).",
+          solution: "Total field just outside is $E = \frac{\sigma}{\varepsilon_0}$. Split into field of element $dA$ ($E_1 = \frac{\sigma}{2\varepsilon_0}$) and field of remainder ($E_2 = \frac{\sigma}{2\varepsilon_0}$).<br>Force on element: $dF = dq \times E_2 = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right) = \frac{\sigma^2}{2\varepsilon_0}dA$.<br>Pressure: $P = \frac{dF}{dA} = \frac{\sigma^2}{2\varepsilon_0}$."
+        }
+      ];
+    }
+  } else {
+    // Universal dynamic generator for any other test or teacher-created assessment
+    const qList = (test.questionAnalytics && test.questionAnalytics.length > 0) ? test.questionAnalytics : [
+      { subtopic: 'Fundamental Definitions & Laws', accuracyRate: 85 },
+      { subtopic: 'Formula Application & Substitution', accuracyRate: 70 },
+      { subtopic: 'Derivation Steps & Boundary Conditions', accuracyRate: 50 },
+      { subtopic: 'Numerical Calculation & Units', accuracyRate: 65 },
+      { subtopic: 'HOTS Analytical Reasoning', accuracyRate: 60 }
+    ];
+
+    subtopics = qList.slice(0, 5).map(q => {
+      let stScore = 0;
+      if (isExc) stScore = Math.min(100, Math.round(q.accuracyRate * 1.15));
+      else if (isAvg) stScore = Math.max(30, Math.round(q.accuracyRate * 0.9));
+      else stScore = Math.max(15, Math.round(q.accuracyRate * 0.55));
+      return {
+        name: q.subtopic || 'Concept Mastery',
+        studentPct: stScore,
+        classPct: q.accuracyRate || 75
+      };
+    });
+
+    const dominantMistake = test.mostWrongQuestion?.dominantMistake || 'Conceptual confusion during multi-step derivation.';
+    focusHtml = `
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div>
+          <strong style="color:${isBelow ? '#b91c1c' : (isAvg ? '#d97706' : '#059669')}; font-size:0.86rem; display:block; margin-bottom:2px;">
+            ${isBelow ? '🔴 Critical Weak Point' : (isAvg ? '🟡 Key Concept Gap' : '🟢 Area of Distinction')}
+          </strong>
+          <p style="margin:0; font-size:0.8rem; color:#475569;">
+            ${dominantMistake}
+          </p>
+        </div>
+        <div style="background:#f8fafc; border-left:3px solid var(--accent-blue); padding:8px 12px; border-radius:4px;">
+          <strong style="color:var(--accent-blue); font-size:0.8rem; display:block; margin-bottom:2px;">
+            🎯 Recommended Action Plan for ${student.name}:
+          </strong>
+          <p style="margin:0; font-size:0.78rem; color:#475569;">
+            Review key definitions in <em>${test.topic || 'Subject Topic'}</em>, verify SI base dimensions, and practice the 3 targeted problems below.
+          </p>
+        </div>
+      </div>
+    `;
+
+    focusBulletPoints = [
+      `Diagnostic Note: ${dominantMistake}`,
+      `Pacing: ${student.time || '40m'} taken vs ${test.duration || '45m'} benchmark.`,
+      `Goal: Practice formula applications in ${test.topic || 'Class Syllabus'}.`
+    ];
+
+    questions = [
+      {
+        title: "Fundamental Concept & Formula Check",
+        marks: "2 Marks",
+        statement: `State the fundamental principle governing <strong>${escapeHtml(test.topic || 'the topic')}</strong> and state its standard SI units.`,
+        plainStatement: `State the fundamental principle governing ${test.topic || 'the topic'} and state its standard SI units.`,
+        hint: "Review CBSE textbook Chapter 1 & 2 definitions.",
+        plainHint: "Review basic definitions and dimensional formulas.",
+        solution: "State the law accurately with appropriate vector notation and unit definitions."
+      },
+      {
+        title: "Numerical Application Problem",
+        marks: "3 Marks",
+        statement: `Calculate the value required in <strong>${escapeHtml(test.topic || 'this topic')}</strong> under standard test conditions using given physical constants.`,
+        plainStatement: `Calculate the value required in ${test.topic || 'this topic'} under standard test conditions.`,
+        hint: "Write given values, write formula first, then substitute in SI units.",
+        plainHint: "Write formula first, convert units to SI, then substitute.",
+        solution: "Step 1: Formula statement (1M). Step 2: Substitution (1M). Step 3: Verified calculation with units (1M)."
+      },
+      {
+        title: "Analytical Step-by-Step Derivation",
+        marks: "3 Marks",
+        statement: `Provide the complete step-by-step derivation for <strong>${escapeHtml(test.title || 'the assessment problem')}</strong>, specifying all boundary conditions.`,
+        plainStatement: `Provide the complete step-by-step derivation for ${test.title || 'the assessment problem'}, specifying all boundary conditions.`,
+        hint: "Draw a neat labeled diagram before commencing mathematical steps.",
+        plainHint: "Draw diagram first, then write derivation steps clearly.",
+        solution: "Complete mathematical derivation as per NCERT CBSE rubric."
+      }
+    ];
+  }
+
+  const questionsHtml = renderRemedialQuestionsCard(questions);
+  const whatsAppText = formatWhatsAppText(test, student, focusBulletPoints, questions);
+
+  return {
+    subtopics,
+    focusHtml,
+    questionsHtml,
+    whatsAppText
+  };
+}
+
+window.openStudentPerformanceModal = function(testId, studentRoll) {
+  const classId = teacherBuilderState.selectedClassId || '12-NonMed';
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
+  const test = tests.find(t => t.id === testId) || tests[0];
+  if (!test) return;
+
+  const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
+  if (!student) return;
+
+  const modal = document.getElementById('modalStudentIndividualReport');
+  if (!modal) return;
+
+  // Header & KPI Badges
+  document.getElementById('modalStudentName').textContent = student.name;
+  document.getElementById('modalStudentRollBadge').textContent = `Roll #${student.roll}`;
+  
+  const tierBadge = document.getElementById('modalStudentTierBadge');
+  tierBadge.textContent = student.tier;
+  if (student.tier === 'Excellent') {
+    tierBadge.style.background = '#10b981';
+    tierBadge.style.color = '#fff';
+  } else if (student.tier === 'Average') {
+    tierBadge.style.background = '#2563eb';
+    tierBadge.style.color = '#fff';
+  } else {
+    tierBadge.style.background = '#f43f5e';
+    tierBadge.style.color = '#fff';
+  }
+
+  document.getElementById('modalStudentTestContext').textContent = `${test.code}: ${test.title} • ${test.chapter || ''}`;
+  document.getElementById('modalStudentScore').textContent = `${student.score} / ${test.totalMarks}`;
+  document.getElementById('modalStudentScorePct').textContent = `${student.percentage} Accuracy`;
+  document.getElementById('modalStudentPacing').textContent = student.time || '40m';
+  document.getElementById('modalStudentBenchmarkSpeed').textContent = `Completed in ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})`;
+  document.getElementById('modalStudentPhone').textContent = `+91 ${student.phone}`;
+
+  const focusBadge = document.getElementById('modalStudentFocusBadge');
+  const focusSub = document.getElementById('modalStudentFocusSub');
+  if (student.tier === 'Excellent') {
+    focusBadge.textContent = 'Advanced Mastery';
+    focusBadge.style.color = '#059669';
+    focusSub.textContent = 'Enrichment problem sets & speed drills';
+  } else if (student.tier === 'Average') {
+    focusBadge.textContent = 'Concept Gaps Identified';
+    focusBadge.style.color = '#d97706';
+    focusSub.textContent = 'Targeted revision on moderate questions';
+  } else {
+    focusBadge.textContent = 'Remedial Priority';
+    focusBadge.style.color = '#e11d48';
+    focusSub.textContent = 'Immediate intervention on foundational misconceptions';
+  }
+
+  // Generate diagnostic plan
+  const plan = generateStudentDiagnosticPlan(test, student);
+  window._currentStudentRemedialPlan = {
+    test,
+    student,
+    plan
+  };
+
+  // Render Focus Content HTML
+  const focusContainer = document.getElementById('modalStudentFocusContent');
+  if (focusContainer) {
+    focusContainer.innerHTML = plan.focusHtml;
+  }
+
+  // Render Remedial Questions HTML
+  const qContainer = document.getElementById('modalStudentRemedialQuestions');
+  if (qContainer) {
+    qContainer.innerHTML = plan.questionsHtml;
+  }
+
+  // Open modal
+  modal.style.display = 'flex';
+  initLucideIcons();
+
+  // Render Chart.js Subtopic Mastery
+  renderStudentMasteryChart(plan.subtopics);
+
+  // Render KaTeX Math
+  renderMathInElement(document.getElementById('modalStudentBody'));
+};
+
+window.closeStudentPerformanceModal = function() {
+  const modal = document.getElementById('modalStudentIndividualReport');
+  if (modal) modal.style.display = 'none';
+  if (activeReportCharts.studentMastery) {
+    try { activeReportCharts.studentMastery.destroy(); } catch(e) {}
+    activeReportCharts.studentMastery = null;
+  }
+};
+
+function renderStudentMasteryChart(subtopics) {
+  if (!window.Chart) return;
+  const canvas = document.getElementById('chartStudentTopicMastery');
+  if (!canvas) return;
+
+  if (activeReportCharts.studentMastery) {
+    try { activeReportCharts.studentMastery.destroy(); } catch(e) {}
+    activeReportCharts.studentMastery = null;
+  }
+
+  const labels = subtopics.map(s => s.name);
+  const studentData = subtopics.map(s => s.studentPct);
+  const benchmarkData = subtopics.map(s => s.classPct);
+  const bgColors = subtopics.map(s => {
+    if (s.studentPct >= 80) return 'rgba(16, 185, 129, 0.85)'; // Emerald
+    if (s.studentPct >= 50) return 'rgba(245, 158, 11, 0.85)'; // Amber
+    return 'rgba(244, 63, 94, 0.85)'; // Rose
+  });
+
+  activeReportCharts.studentMastery = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Scholar Mastery',
+          data: studentData,
+          backgroundColor: bgColors,
+          borderRadius: 6,
+          barPercentage: 0.6,
+          categoryPercentage: 0.8
+        },
+        {
+          label: 'Class Benchmark',
+          data: benchmarkData,
+          backgroundColor: 'rgba(148, 163, 184, 0.45)',
+          borderColor: '#94a3b8',
+          borderWidth: 1,
+          borderRadius: 6,
+          barPercentage: 0.6,
+          categoryPercentage: 0.8
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'end',
+          labels: {
+            boxWidth: 12,
+            font: { family: 'Inter', size: 10, weight: '700' },
+            color: '#475569'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          min: 0,
+          max: 100,
+          ticks: {
+            font: { family: 'Inter', size: 10 },
+            color: '#64748b',
+            callback: (v) => `${v}%`
+          },
+          grid: { color: 'rgba(15, 23, 42, 0.06)' }
+        },
+        y: {
+          ticks: {
+            font: { family: 'Inter', size: 10, weight: '600' },
+            color: '#334155'
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function dispatchWhatsAppMessage(phone, text, studentName) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  const cleanPhone = digits.length === 10 ? `91${digits}` : digits;
+  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+  
+  window.open(url, '_blank');
+  
+  if (typeof showToast === 'function') {
+    showToast(`📲 Opening WhatsApp with ${studentName}'s personalized diagnostic & remedial plan!`, 'success');
+  } else {
+    alert(`Opening WhatsApp with ${studentName}'s personalized diagnostic & remedial plan!`);
+  }
+}
+
+window.sendStudentWhatsAppPlan = function(testId, studentRoll) {
+  const classId = teacherBuilderState.selectedClassId || '12-NonMed';
+  const tests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
+  const test = tests.find(t => t.id === testId) || tests[0];
+  if (!test) return;
+
+  const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
+  if (!student) return;
+
+  const plan = generateStudentDiagnosticPlan(test, student);
+  window._currentStudentRemedialPlan = { test, student, plan };
+  dispatchWhatsAppMessage(student.phone, plan.whatsAppText, student.name);
+};
+
+window.dispatchCurrentStudentWhatsApp = function() {
+  if (!window._currentStudentRemedialPlan) return;
+  const { student, plan } = window._currentStudentRemedialPlan;
+  dispatchWhatsAppMessage(student.phone, plan.whatsAppText, student.name);
+};
+
+window.copyStudentPlanToClipboard = function() {
+  if (!window._currentStudentRemedialPlan) return;
+  const { student, plan } = window._currentStudentRemedialPlan;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(plan.whatsAppText).then(() => {
+      if (typeof showToast === 'function') {
+        showToast(`📋 Copied remedial plan for ${student.name} to clipboard!`, 'success');
+      } else {
+        alert(`Copied remedial plan for ${student.name} to clipboard!`);
+      }
+    }).catch(() => {
+      prompt('Copy the remedial plan text below:', plan.whatsAppText);
+    });
+  } else {
+    prompt('Copy the remedial plan text below:', plan.whatsAppText);
+  }
+};
+
+window.sendRosterStudentWhatsApp = function(name, parentPhone, score, status) {
+  const digits = String(parentPhone || '').replace(/\D/g, '');
+  const cleanPhone = digits.length === 10 ? `91${digits}` : digits;
+  const msg = `📚 *UNISOLE AI SCHOLAR ASSISTANT • PARENT UPDATE*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `Dear Parent, regarding scholar *${name}*:\n` +
+    `• *Attendance & Status:* ${status}\n` +
+    `• *Current Subject Standing:* ${score}\n\n` +
+    `Please review the diagnostic test report and complete the remedial assignments shared on the scholar portal.\n\n` +
+    `— Dr. Vikram Sharma, HAPS Senior Secondary School`;
+
+  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+  if (typeof showToast === 'function') {
+    showToast(`📲 Opening WhatsApp notification for parent of ${name}...`, 'success');
+  }
+};
