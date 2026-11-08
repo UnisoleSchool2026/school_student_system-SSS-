@@ -725,6 +725,20 @@
           </div>
           <span class="drawer-nav-card-badge teacher-nav-badge" style="background:rgba(6,182,212,0.2); color:#22d3ee;">438 Qs</span>
         </button>
+
+        <!-- 4. Scan Paper Sheets (Vision AI Step Evaluation) -->
+        <button type="button" class="drawer-nav-card" id="drawerNavScanSheets" data-tab="tabHandwritten" onclick="switchTeacherTab('tabHandwritten')">
+          <div class="drawer-nav-card-left">
+            <div class="drawer-nav-card-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">
+              <i data-lucide="scan-line" style="width:17px; height:17px;"></i>
+            </div>
+            <div class="drawer-nav-card-text">
+              <strong class="drawer-nav-card-title">Scan Paper Sheets</strong>
+              <span class="drawer-nav-card-sub">Vision AI Step-by-Step Marking</span>
+            </div>
+          </div>
+          <span class="drawer-nav-card-badge teacher-nav-badge" style="background:rgba(16,185,129,0.18); color:#059669;">Vision AI</span>
+        </button>
       </div>
     </div>
 
@@ -2092,125 +2106,195 @@
       </div>
 
       <!-- TAB 3: HANDWRITTEN ANSWER SHEET EVALUATOR -->
+      <!-- TAB: STEP-WISE HANDWRITTEN ANSWER SHEET EVALUATION & TEACHER AUDIT -->
       <div class="teacher-tab-content" id="tabHandwritten" style="display:none;">
-        <div class="sheet-evaluator-layout">
-          <!-- Physical Scanned Sheet Viewer with Bounding Box Overlays -->
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title-group">
-                <div class="card-icon"><i data-lucide="scan" style="width:20px; height:20px;"></i></div>
-                <div>
-                  <h2 class="card-title">Physical Answer Script Scanner</h2>
-                  <p class="card-subtitle">Student: Aryan Sharma &bull; Terminal Assessment #04</p>
-                </div>
+        
+        <!-- Header & KPI Overview Banner -->
+        <div class="glass-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 14px; padding: 1.25rem 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="pilot-tag" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); border-color: rgba(59, 130, 246, 0.4);">
+                  <i data-lucide="scan" style="width:12px; height:12px; display:inline-block; vertical-align:middle;"></i>
+                  Vision AI Engine
+                </span>
+                <span class="pilot-tag" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.4);">
+                  Step-by-Step Marking Rubric
+                </span>
+                <span class="pilot-tag" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: rgba(245, 158, 11, 0.4);">
+                  Human-in-the-Loop Audit
+                </span>
               </div>
-              <span class="pilot-tag">AI Confidence: 98%</span>
+              <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;">
+                Step-Wise Answer Sheet Evaluation &amp; Teacher Audit Console
+              </h2>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; max-width: 820px;">
+                Upload physical handwritten student answer scripts. The vision model faithfully transcribes mathematical deductions, awards step-by-step marks against the rubric, and flags low-confidence handwriting for teacher signoff.
+              </p>
             </div>
 
-            <!-- TASK-10: Live Drag & Drop File Upload Zone -->
-            <input type="file" id="handwrittenFileInput" accept="image/*,.pdf" style="display:none;">
-            <div class="drop-zone" id="sheetDropZone">
-              <i data-lucide="upload-cloud" style="width:28px;height:28px;color:var(--accent-cyan);margin-bottom:6px;"></i>
-              <div style="font-size:0.88rem; font-weight:600; color:var(--text-primary);">Drop student handwritten sheet here, or <span style="color:var(--accent-cyan); text-decoration:underline;">Browse Photo/PDF</span></div>
-              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Supports physical test papers, camera scans & PDF answer scripts ($300\text{ DPI}$)</p>
-            </div>
-
-            <div class="sheet-preview-pane" id="sheetScanContainer">
-              <div class="scanline-bar" id="sheetScanline"></div>
-              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80" alt="Scanned Student Physical Answer Script" class="sheet-img" id="scannedPaperImg">
-              
-              <!-- Bounding Box Overlays -->
-              <div id="dynamicBoundingBoxesContainer">
-                <div class="bounding-overlay-box" style="top: 25%; left: 10%; width: 78%; height: 20%;" title="Step 1: Definite Integral Formulation"></div>
-                <div class="bounding-overlay-box" style="top: 50%; left: 10%; width: 78%; height: 22%;" title="Step 2: Antiderivative Polynomial"></div>
-              </div>
-            </div>
-
-            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.78rem; color: var(--text-muted);">
-                <i data-lucide="info" style="width:14px; height:14px; vertical-align:middle;"></i>
-                Bounding boxes generated via Multi-Modal Vision AI
-              </span>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-secondary" id="btnUploadNewSheet" style="font-size:0.8rem; padding:6px 12px;">
-                  <i data-lucide="camera" style="width:14px; height:14px;"></i> Select File / Photo
-                </button>
-                <button class="btn-primary" id="btnRunVisionAiScan" style="font-size:0.8rem; padding:6px 12px;">
-                  <i data-lucide="sparkles" style="width:14px; height:14px;"></i> Run Vision AI Evaluation
-                </button>
-              </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn-secondary" onclick="window.loadHandwrittenSubmissions()" style="font-size: 0.82rem; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Refresh Queue
+              </button>
             </div>
           </div>
 
-          <!-- Step-by-Step Rubric Breakdown & Teacher Audit Station -->
-          <div class="glass-card">
-            <div class="card-header">
-              <div class="card-title-group">
-                <div class="card-icon" style="background:rgba(16, 185, 129, 0.12); color:#10b981;">
-                  <i data-lucide="check-circle-2" style="width:20px; height:20px;"></i>
-                </div>
-                <div>
-                  <h2 class="card-title">Step-by-Step Marking Rubric</h2>
-                  <p class="card-subtitle">Audited against CBSE & HPBOSE Step-Marking Guidelines</p>
-                </div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 1.25rem; font-weight: 800; color: var(--accent-emerald);" id="displayTotalMarks">4.0 / 4.0</div>
-                <span style="font-size: 0.72rem; color: var(--text-muted);">Marks Awarded</span>
-              </div>
+          <!-- Top 4 KPI Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 16px;">
+              <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Evaluated Sheets</span>
+              <div style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;" id="kpiHwTotalSheets">3 Sheets</div>
+              <span style="font-size: 0.72rem; color: #38bdf8;">Multi-page Vision Scans</span>
             </div>
 
-            <!-- Steps -->
-            <div id="rubricStepsList">
-              <div class="rubric-step-item">
-                <div class="rubric-step-header">
-                  <span class="step-num-badge">Step 1: Formula Setup (1.0 Pt)</span>
-                  <span style="color:var(--accent-emerald); font-weight:700; font-size:0.85rem;">+1.0</span>
-                </div>
-                <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 4px;">
-                  Formula: $W = \int_{1}^{3} (3x^2 - 2x + 5) dx$
-                </div>
-                <p style="font-size:0.75rem; color:var(--text-muted);">Status: Formula correctly specified with proper boundary limits.</p>
-              </div>
-
-              <div class="rubric-step-item">
-                <div class="rubric-step-header">
-                  <span class="step-num-badge">Step 2: Antiderivative Integration (1.5 Pts)</span>
-                  <span style="color:var(--accent-emerald); font-weight:700; font-size:0.85rem;">+1.5</span>
-                </div>
-                <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 4px;">
-                  Expression: $[x^3 - x^2 + 5x]_{1}^{3}$
-                </div>
-                <p style="font-size:0.75rem; color:var(--text-muted);">Status: Clean monomial integration; no missing negative signs.</p>
-              </div>
-
-              <div class="rubric-step-item">
-                <div class="rubric-step-header">
-                  <span class="step-num-badge">Step 3: Arithmetic & SI Units (1.5 Pts)</span>
-                  <span style="color:var(--accent-emerald); font-weight:700; font-size:0.85rem;">+1.5</span>
-                </div>
-                <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 4px;">
-                  Result: $33 - 5 = 28\text{ Joules (J)}$
-                </div>
-                <p style="font-size:0.75rem; color:var(--text-muted);">Status: Accurate arithmetic with correct SI energy unit.</p>
-              </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; padding: 12px 16px;">
+              <span style="font-size: 0.72rem; color: #f59e0b; text-transform: uppercase; font-weight: 700;">Flagged for Teacher Review</span>
+              <div style="font-size: 1.45rem; font-weight: 800; color: #f59e0b; margin-top: 2px;" id="kpiHwFlaggedSheets">2 Flagged</div>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Handwriting ambiguity / slips</span>
             </div>
 
-            <!-- Teacher Override & Final Signoff -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-              <label class="form-label" for="teacherCommentInput">Teacher Review Comments & Signoff</label>
-              <textarea class="form-control" id="teacherCommentInput" rows="2" placeholder="Add verified feedback for student...">Rigorous steps and clean mathematical presentation. Standard units verified.</textarea>
-              
-              <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button class="btn-secondary" id="btnOverrideMarks" style="font-size:0.82rem;">Adjust Marks</button>
-                <button class="btn-primary" id="btnApproveHandwritten" style="font-size:0.82rem;">
-                  <i data-lucide="check" style="width:14px; height:14px;"></i> Approve & Post to Gradebook
-                </button>
-              </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 12px 16px;">
+              <span style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 700;">Average Class Score</span>
+              <div style="font-size: 1.45rem; font-weight: 800; color: #10b981; margin-top: 2px;" id="kpiHwClassAvg">19.2 / 25M</div>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Step-marking average: 76.8%</span>
+            </div>
+
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 16px;">
+              <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Average AI Confidence</span>
+              <div style="font-size: 1.45rem; font-weight: 800; color: #38bdf8; margin-top: 2px;" id="kpiHwConfidence">91.4%</div>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Flash &amp; Pro Dual Escalation</span>
             </div>
           </div>
         </div>
+
+        <!-- Section 1: Upload & Batch Ingestion Form -->
+        <div class="glass-card" style="margin-bottom: 1.5rem; border-radius: 12px; padding: 1.25rem 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="upload-cloud" style="width: 18px; height: 18px; color: var(--accent-blue);"></i>
+                Upload Student Answer Sheet (Camera Photo / PDF Scan)
+              </h3>
+              <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: var(--text-muted);">
+                Select the target scholar and assessment. Local quality gate auto-checks blur, exposure, and orientation before sending to Gemini Vision.
+              </p>
+            </div>
+            <span class="pilot-tag" style="background:rgba(2,132,199,0.1); color:#38bdf8; border-color:rgba(56,189,248,0.3); font-size:0.75rem;">
+              Local Quality Gate Active
+            </span>
+          </div>
+
+          <form id="formUploadHandwrittenSheet" onsubmit="event.preventDefault(); window.submitHandwrittenSheetUpload(event);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 1rem;">
+              <div class="test-form-group">
+                <label class="test-form-label" for="selectHwClass">Select Class *</label>
+                <select class="form-select" id="selectHwClass" onchange="window.handleHwClassChange(this.value)" style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;">
+                  <option value="10-Maths-A" selected>Class 10-A • Foundation Mathematics (44 Students)</option>
+                  <option value="12-NonMed">Class 12-A • Senior Physics (48 Students)</option>
+                  <option value="12-Med">Class 12-B • Senior Chemistry &amp; Biology (42 Students)</option>
+                </select>
+              </div>
+
+              <div class="test-form-group">
+                <label class="test-form-label" for="selectHwTest">Select Assessment / Test *</label>
+                <select class="form-select" id="selectHwTest" style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;">
+                  <option value="test_demo_quad">Class 10-A • Unit Assessment: Roots of Quadratic Equations (25 Marks)</option>
+                  <option value="test_12_01">Test 01 • Electric Charges, Coulomb's Law &amp; Superposition (45 Marks)</option>
+                  <option value="test_12_02">Test 02 • Gauss's Law, Electric Flux &amp; Spherical Shells (45 Marks)</option>
+                </select>
+              </div>
+
+              <div class="test-form-group">
+                <label class="test-form-label" for="selectHwStudent">Select Student (Roll # &amp; Name) *</label>
+                <select class="form-select" id="selectHwStudent" style="width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">
+                  <option value="101" data-name="Aryan Sharma" data-id="SCH-2026-101" selected>Roll #101 • Aryan Sharma (Scholar ID: SCH-2026-101)</option>
+                  <option value="102" data-name="Priya Verma" data-id="SCH-2026-102">Roll #102 • Priya Verma (Scholar ID: SCH-2026-102)</option>
+                  <option value="103" data-name="Rohit Thakur" data-id="SCH-2026-103">Roll #103 • Rohit Thakur (Scholar ID: SCH-2026-103)</option>
+                  <option value="104" data-name="Ananya Chauhan" data-id="SCH-2026-104">Roll #104 • Ananya Chauhan (Scholar ID: SCH-2026-104)</option>
+                  <option value="105" data-name="Sahil Mehta" data-id="SCH-2026-105">Roll #105 • Sahil Mehta (Scholar ID: SCH-2026-105)</option>
+                  <option value="106" data-name="Divya Rana" data-id="SCH-2026-106">Roll #106 • Divya Rana (Scholar ID: SCH-2026-106)</option>
+                  <option value="109" data-name="Karan Singhal" data-id="SCH-2026-109">Roll #109 • Karan Singhal (Scholar ID: SCH-2026-109)</option>
+                  <option value="110" data-name="Ritu Sen" data-id="SCH-2026-110">Roll #110 • Ritu Sen (Scholar ID: SCH-2026-110)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Multiple Pages Zone -->
+            <input type="file" id="hwFileInput" multiple accept="image/*,.pdf" style="display:none;" onchange="window.handleHwFilesSelected(this.files)">
+            <div class="drop-zone" id="hwDropZone" onclick="document.getElementById('hwFileInput').click()" style="border: 2px dashed rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; background: rgba(15, 23, 42, 0.4); transition: all 0.2s ease;">
+              <i data-lucide="camera" style="width: 32px; height: 32px; color: var(--accent-blue); margin-bottom: 8px;"></i>
+              <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-primary);">
+                Click to browse or Drag &amp; Drop Page Images (Page 1, 2, 3...)
+              </div>
+              <p style="font-size: 0.76rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                Supports JPEG, PNG, HEIC photos &amp; PDF scans (Target long edge 1500–2000px, auto-rotated)
+              </p>
+              <div id="hwSelectedFilesList" style="margin-top: 10px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;"></div>
+            </div>
+
+            <!-- Upload Action Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 10px;">
+              <div id="hwQualityStatusText" style="font-size: 0.8rem; color: var(--text-muted);">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #10b981; vertical-align: middle;"></i>
+                Pre-flight quality gate active: Auto-blur, contrast normalization &amp; shadow removal.
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn-secondary" onclick="window.stageSampleAnswerSheet()" style="font-size: 0.82rem; padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <i data-lucide="file-check" style="width: 14px; height: 14px; color: #38bdf8;"></i>
+                  <span>Load Benchmark Sheet</span>
+                </button>
+                <button type="submit" class="btn-primary" id="btnHwStartEvaluation" style="background: linear-gradient(135deg, #0284c7, #2563eb); font-weight: 800; font-size: 0.86rem; padding: 10px 22px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                  <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                  <span>Evaluate Answer Script (Vision AI)</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Section 2: Submissions Queue & Ingested Sheets Roster -->
+        <div class="glass-card" style="margin-bottom: 1.5rem; border-radius: 12px; padding: 1.25rem 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="layers" style="width: 16px; height: 16px; color: var(--accent-emerald);"></i>
+              Ingested Submissions &amp; Evaluation Queue
+            </h3>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-secondary" onclick="window.filterHwSubmissions('ALL')" style="font-size: 0.74rem; padding: 4px 10px;">All</button>
+              <button type="button" class="btn-secondary" onclick="window.filterHwSubmissions('NEEDS_REVIEW')" style="font-size: 0.74rem; padding: 4px 10px; color: #f59e0b; border-color: rgba(245, 158, 11, 0.4);">⚠️ Flagged for Review</button>
+              <button type="button" class="btn-secondary" onclick="window.filterHwSubmissions('EVALUATED')" style="font-size: 0.74rem; padding: 4px 10px; color: #10b981; border-color: rgba(16, 185, 129, 0.4);">✓ Approved</button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="assigned-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: left;">ROLL #</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: left;">STUDENT NAME</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: left;">ASSESSMENT TITLE</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">PAGES</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">SCORE AWARDED</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">AI CONFIDENCE</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: center;">STATUS</th>
+                  <th style="padding: 10px 12px; font-size: 0.75rem; color: var(--text-muted); text-align: right;">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="hwSubmissionsTableBody">
+                <!-- Dynamically populated via window.renderHwSubmissionsTable() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 3: Interactive Side-by-Side Teacher Review Screen (Shown on "Review & Grade") -->
+        <div id="hwReviewStationContainer" style="display:none; margin-bottom: 2rem;">
+          <!-- Dynamically populated via window.openTeacherReviewConsole(submissionId) -->
+        </div>
+
       </div>
+      <!-- End of Tab: Handwritten Evaluation -->
 
       <!-- Preserved Hidden Tab for Selectors -->
       <div id="tabSmartReports" style="display:none !important;"></div>

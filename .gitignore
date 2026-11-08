@@ -25,6 +25,10 @@ build/
 dist/
 .vercel
 
+# Uploads & Temporary Media
+backend/uploads/**
+!backend/uploads/**/.gitkeep
+
 # Testing & Coverage
 coverage/
 .nyc_output/

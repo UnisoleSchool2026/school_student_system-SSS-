@@ -109,9 +109,11 @@ app.use('/api/voice-tutor', voiceTutorRouter);
 
 // Serve static frontend assets & HTML shell
 const frontendPath = path.resolve(__dirname, '../../frontend');
+const uploadsPath = path.resolve(__dirname, '../../backend/uploads');
 app.use(express.static(frontendPath));
+app.use('/uploads', express.static(uploadsPath));
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 

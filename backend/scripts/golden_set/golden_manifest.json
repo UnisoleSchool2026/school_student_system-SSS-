@@ -1,0 +1,106 @@
+[
+  {
+    "id": "gold_math_01",
+    "subject": "Mathematics",
+    "topic": "Quadratic Equations (Discriminant & Roots)",
+    "question": "Solve the quadratic equation $2x^2 + x - 6 = 0$ using the quadratic formula. State the discriminant and roots.",
+    "maxMarks": 3,
+    "teacherMarks": 3,
+    "handwritingClarity": "Average / Slightly cursive",
+    "studentWorkingText": "2x^2 + x - 6 = 0\na = 2, b = 1, c = -6\nD = b^2 - 4ac = (1)^2 - 4(2)(-6) = 1 + 48 = 49\nx = (-b ± √D) / 2a = (-1 ± √49) / (2*2) = (-1 ± 7) / 4\nx1 = (-1 + 7)/4 = 6/4 = 3/2\nx2 = (-1 - 7)/4 = -8/4 = -2\nRoots are 3/2 and -2.",
+    "rubricSteps": [
+      { "step": 1, "description": "Discriminant D = 49", "marks": 1 },
+      { "step": 2, "description": "Quadratic formula substitution: (-1 ± 7)/4", "marks": 1 },
+      { "step": 3, "description": "Roots x = 3/2 and x = -2", "marks": 1 }
+    ],
+    "teacherStepScores": [1, 1, 1],
+    "dominantMistake": "NONE"
+  },
+  {
+    "id": "gold_math_02",
+    "subject": "Mathematics",
+    "topic": "Quadratic Equations (Sign Error with Follow-Through)",
+    "question": "Solve $x^2 - 5x + 6 = 0$ by completing the square or factorization.",
+    "maxMarks": 3,
+    "teacherMarks": 2,
+    "handwritingClarity": "Messy / Slipped sign",
+    "studentWorkingText": "x^2 - 5x + 6 = 0\n(x - 2)(x + 3) = 0   [Sign slip: wrote +3 instead of -3]\nx = 2 or x = -3\nFollow-through roots evaluated from linear factors.",
+    "rubricSteps": [
+      { "step": 1, "description": "Factorization: (x-2)(x-3) = 0", "marks": 1 },
+      { "step": 2, "description": "Linear root 1: x - 2 = 0 -> x = 2", "marks": 1 },
+      { "step": 3, "description": "Linear root 2: x - 3 = 0 -> x = 3", "marks": 1 }
+    ],
+    "teacherStepScores": [0, 1, 1],
+    "dominantMistake": "CALCULATION_ERROR"
+  },
+  {
+    "id": "gold_math_03",
+    "subject": "Mathematics",
+    "topic": "Word Problem (Area of Rectangle)",
+    "question": "The area of a rectangle is 120 m² and its length exceeds breadth by 7 m. Find its dimensions.",
+    "maxMarks": 5,
+    "teacherMarks": 4,
+    "handwritingClarity": "Good / Missing SI unit on final breadth",
+    "studentWorkingText": "Let breadth = x\nLength = x + 7\nArea = x(x+7) = 120\nx^2 + 7x - 120 = 0\n(x + 15)(x - 8) = 0\nx = -15 (rejected, side cannot be negative) or x = 8\nBreadth = 8\nLength = 15 m",
+    "rubricSteps": [
+      { "step": 1, "description": "Setup quadratic equation x^2 + 7x - 120 = 0", "marks": 1 },
+      { "step": 2, "description": "Factorization (x+15)(x-8) = 0", "marks": 1.5 },
+      { "step": 3, "description": "Discard negative root and state x = 8", "marks": 1 },
+      { "step": 4, "description": "Final dimensions with SI units: Length 15 m, Breadth 8 m", "marks": 1.5 }
+    ],
+    "teacherStepScores": [1, 1.5, 1, 0.5],
+    "dominantMistake": "UNIT_MISSING"
+  },
+  {
+    "id": "gold_phys_01",
+    "subject": "Physics",
+    "topic": "Coulomb's Law & Electrostatics",
+    "question": "Two point charges q1 = +4 μC and q2 = +1 μC are separated by 30 cm in vacuum. Find the distance from q1 where the net electric field is zero.",
+    "maxMarks": 3,
+    "teacherMarks": 3,
+    "handwritingClarity": "Clear physics notation with vector diagram",
+    "studentWorkingText": "E1 = E2\nk * q1 / x^2 = k * q2 / (0.30 - x)^2\n4 * 10^-6 / x^2 = 1 * 10^-6 / (0.30 - x)^2\nTaking square root on both sides:\n2 / x = 1 / (0.30 - x)\n2(0.30 - x) = x\n0.60 - 2x = x => 3x = 0.60 => x = 0.20 m = 20 cm from q1.",
+    "rubricSteps": [
+      { "step": 1, "description": "Equating electric field magnitudes E1 = E2", "marks": 1 },
+      { "step": 2, "description": "Taking square root and solving linear equation", "marks": 1 },
+      { "step": 3, "description": "Distance x = 20 cm from q1 with SI units", "marks": 1 }
+    ],
+    "teacherStepScores": [1, 1, 1],
+    "dominantMistake": "NONE"
+  },
+  {
+    "id": "gold_phys_02",
+    "subject": "Physics",
+    "topic": "Gauss's Law & Electric Flux",
+    "question": "State Gauss's Law in electrostatics and derive an expression for the electric field due to an infinitely long straight wire.",
+    "maxMarks": 5,
+    "teacherMarks": 3.5,
+    "handwritingClarity": "Rushed / Formula substitution slip in linear charge density",
+    "studentWorkingText": "Gauss Law: The net electric flux through any closed Gaussian surface is 1/ε0 times total charge enclosed.\n∮ E . dA = q_enclosed / ε0\nGaussian cylinder of radius r, length L:\nE * (2πrL) = q / ε0\nq = λ * L\nE * 2πrL = λL / ε0\nE = λ / (2πε0 r)\nForgot to draw cylinder diagram.",
+    "rubricSteps": [
+      { "step": 1, "description": "Statement of Gauss Law & formula", "marks": 1 },
+      { "step": 2, "description": "Gaussian cylinder diagram & flux through curved surface", "marks": 1.5 },
+      { "step": 3, "description": "Charge enclosed substitution q = λL", "marks": 1 },
+      { "step": 4, "description": "Final field formula E = λ / (2πε0r)", "marks": 1.5 }
+    ],
+    "teacherStepScores": [1, 0, 1, 1.5],
+    "dominantMistake": "SKIPPED_STEP"
+  },
+  {
+    "id": "gold_chem_01",
+    "subject": "Chemistry",
+    "topic": "Chemical Kinetics (First Order Reaction)",
+    "question": "A first order reaction is 20% complete in 10 minutes. Calculate the time required for 75% completion of the reaction.",
+    "maxMarks": 3,
+    "teacherMarks": 2,
+    "handwritingClarity": "Scribbled log calculation",
+    "studentWorkingText": "k = (2.303 / t) * log(100 / (100 - x))\nk = (2.303 / 10) * log(100 / 80) = 0.2303 * log(1.25) = 0.2303 * 0.0969 = 0.0223 min^-1\nFor 75% completion:\nt = (2.303 / 0.0223) * log(100 / 25) = 103.2 * log(4) = 103.2 * 0.6021 = 62.1 mins\nTeacher noted log calculation decimal slip in rate constant k.",
+    "rubricSteps": [
+      { "step": 1, "description": "First order rate equation setup for 20%", "marks": 1 },
+      { "step": 2, "description": "Rate constant k calculation (0.0223 min^-1)", "marks": 1 },
+      { "step": 3, "description": "Time calculation for 75% completion (approx 62 mins)", "marks": 1 }
+    ],
+    "teacherStepScores": [1, 0.5, 0.5],
+    "dominantMistake": "CALCULATION_ERROR"
+  }
+]
