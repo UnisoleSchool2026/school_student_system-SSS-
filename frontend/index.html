@@ -1944,8 +1944,21 @@
             </div>
           </div>
 
-          <!-- CLEAN 3-DROPDOWN QUESTION SELECTOR (NO NOISE, DIRECT ACCESS) -->
-          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; align-items:center;">
+          <!-- CLEAN 4-DROPDOWN QUESTION SELECTOR (SUBJECT, CATEGORY, CHAPTER, TOPIC) -->
+          <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; align-items:center;">
+            <div>
+              <label for="selectQbSubject" style="font-size:0.75rem; font-weight:700; color:var(--accent-blue); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
+                <i data-lucide="layers" style="width:13px; height:13px; vertical-align:middle;"></i> Academic Subject / Discipline
+              </label>
+              <select id="selectQbSubject" class="form-select" onchange="window.handleQbSubjectChange(this.value)" style="width:100%; font-size:0.86rem; padding:8px 12px; background:var(--bg-card); color:var(--text-primary); border:1.5px solid var(--accent-blue); border-radius:8px; font-weight:700;">
+                <option value="PHYSICS" selected>Physics (Class 11th &amp; 12th)</option>
+                <option value="CHEMISTRY">Chemistry (Class 11th &amp; 12th)</option>
+                <option value="MATHEMATICS">Mathematics (Class 11th &amp; 12th)</option>
+                <option value="BIOLOGY">Biology (Class 11th &amp; 12th Medical)</option>
+                <option value="CLASS10_SCIENCE">Class 10th Science (Foundation)</option>
+                <option value="CLASS10_MATHEMATICS">Class 10th Mathematics (Foundation)</option>
+              </select>
+            </div>
             <div>
               <label for="selectQbQuestionType" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">
                 <i data-lucide="filter" style="width:13px; height:13px; vertical-align:middle;"></i> Question Category
@@ -4189,12 +4202,20 @@ _Unisole AI School Scholar Assistant_</div>
         <!-- Scope & Classification Form Grid -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; background: var(--bg-secondary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-subtle);">
           
-          <!-- Subject (Readonly locked to faculty profile) -->
+          <!-- Target Academic Subject / Discipline -->
           <div>
-            <label style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:4px;">
-              Subject (Faculty Locked)
+            <label for="selectInjectSubject" style="font-size:0.72rem; font-weight:700; color:var(--accent-blue); text-transform:uppercase; display:block; margin-bottom:4px;">
+              Target Subject / Discipline ★
             </label>
-            <input type="text" id="inputInjectSubject" class="form-input" readonly value="Physics" style="width:100%; font-size:0.85rem; font-weight:700; background:rgba(148,163,184,0.12); cursor:not-allowed; border:1px solid var(--border-subtle);" />
+            <select id="selectInjectSubject" class="form-select" onchange="window.handleInjectSubjectChange(this.value)" style="width:100%; font-size:0.85rem; font-weight:700; padding:7px 10px; border:1.5px solid var(--accent-blue); background:var(--bg-card); color:var(--text-primary); border-radius:6px;">
+              <option value="PHYSICS" selected>Physics (Class 11th &amp; 12th)</option>
+              <option value="CHEMISTRY">Chemistry (Class 11th &amp; 12th)</option>
+              <option value="MATHEMATICS">Mathematics (Class 11th &amp; 12th)</option>
+              <option value="BIOLOGY">Biology (Class 11th &amp; 12th Medical)</option>
+              <option value="CLASS10_SCIENCE">Class 10th Science (Foundation)</option>
+              <option value="CLASS10_MATHEMATICS">Class 10th Mathematics (Foundation)</option>
+            </select>
+            <input type="hidden" id="inputInjectSubject" value="Physics" />
           </div>
 
           <!-- Class / Grade -->

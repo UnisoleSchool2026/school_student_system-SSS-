@@ -1,0 +1,47 @@
+[
+  {
+    "id": "snr_b_inj_1794158735007_138",
+    "grade": "12",
+    "subject": "Biology",
+    "subjectKey": "BIOLOGY",
+    "stream": "MEDICAL",
+    "target_exam": "NEET_UG",
+    "chapter_name": "Molecular Basis of Inheritance",
+    "chapter": "Molecular Basis of Inheritance",
+    "topic": "Genetic Code",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "MEDIUM",
+    "question_format": "SUBJECTIVE_SHORT",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "question_latex": "Why is the genetic code described as degenerate and unambiguous?",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "$Option A$",
+    "correct_answer": "A",
+    "solution_latex": "(i) Unambiguous: One codon codes for only one amino acid. (ii) Degenerate: Some amino acids are coded by more than one codon.",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Molecular Basis of Inheritance",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_bio_01",
+      "faculty_name": "Dr. Rajesh Iyer",
+      "faculty_phone": "",
+      "faculty_subject": "Biology",
+      "department": "Biology",
+      "role": "faculty",
+      "timestamp": "2026-11-08T17:25:35.007Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-08T17:25:35.007Z"
+  }
+]

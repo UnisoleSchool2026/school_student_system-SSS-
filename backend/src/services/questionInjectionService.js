@@ -11,6 +11,12 @@ const path = require('path');
 const { inMemoryStore } = require('../config/database');
 const { sanitizeLatexString, sanitizeOptionFormula, sanitizeQuestionPayload } = require('./llmQuestionEngine');
 const { CURRICULUM_TAXONOMY } = require('./curriculumTaxonomy');
+const {
+  resolveBankKey,
+  savePersistedCustomQuestions,
+  loadPersistedQuestionsForBank,
+  loadAllPersistedQuestions
+} = require('./questionStorageService');
 
 // Universal Web Standards Polyfills for Serverless Node (Vercel / AWS Lambda)
 if (typeof globalThis.DOMMatrix === 'undefined') {
@@ -76,23 +82,7 @@ function validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey }
   const normTeacher = normalize(teacherSubj);
   const normTarget = normalize(reqSubj);
 
-  // Class 10 Science teachers can push Science (which includes Physics/Chemistry/Biology foundation)
-  if (normTeacher === 'SCIENCE') {
-    if (['SCIENCE', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY'].includes(normTarget)) {
-      return true;
-    }
-  }
-
-  // Senior secondary discipline locking
-  if (normTeacher && normTarget && normTeacher !== normTarget) {
-    if (normTarget === 'SCIENCE') {
-      return true; // Physics/Chem/Bio teachers can also inject into Foundation Science
-    }
-    throw new Error(
-      `Discipline Lock Violation: ${teacher.name || 'Faculty'} is registered as ${teacherSubj} faculty and is not permitted to inject questions into ${reqSubj}.`
-    );
-  }
-
+  // Authenticated faculty/teachers can inject into their own or any designated curriculum subject
   return true;
 }
 
@@ -1055,54 +1045,13 @@ function getCustomQuestionsStoragePaths() {
 }
 
 /**
- * Reads all custom injected questions from persistent JSON file
+ * Reads all custom injected questions from persistent storage
  */
-function loadPersistedCustomQuestions() {
-  const paths = getCustomQuestionsStoragePaths();
-  for (const p of paths) {
-    try {
-      if (fs.existsSync(p)) {
-        const raw = fs.readFileSync(p, 'utf8');
-        const list = JSON.parse(raw);
-        if (Array.isArray(list) && list.length > 0) {
-          return list.map(q => sanitizeQuestionPayload(q));
-        }
-      }
-    } catch (e) {
-      // Continue to next path
-    }
+function loadPersistedCustomQuestions(bankKey = null) {
+  if (bankKey) {
+    return loadPersistedQuestionsForBank(bankKey);
   }
-  return [];
-}
-
-/**
- * Writes custom injected questions to persistent JSON storage (with /tmp fallback)
- */
-function savePersistedCustomQuestions(newQuestions = []) {
-  if (!Array.isArray(newQuestions) || newQuestions.length === 0) return;
-  const existing = loadPersistedCustomQuestions();
-  const map = new Map();
-
-  // Deduplicate by question id, keeping newest versions
-  existing.forEach(q => { if (q && q.id) map.set(q.id, sanitizeQuestionPayload(q)); });
-  newQuestions.forEach(q => { if (q && q.id) map.set(q.id, sanitizeQuestionPayload(q)); });
-
-  const allQuestions = Array.from(map.values());
-  const paths = getCustomQuestionsStoragePaths();
-  let saved = false;
-
-  for (const p of paths) {
-    try {
-      const dir = path.dirname(p);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(p, JSON.stringify(allQuestions, null, 2), 'utf8');
-      saved = true;
-    } catch (e) {
-      // Continue to next path if filesystem is read-only
-    }
-  }
-
-  return saved;
+  return loadAllPersistedQuestions();
 }
 
 /**

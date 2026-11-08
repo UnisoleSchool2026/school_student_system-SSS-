@@ -12,6 +12,11 @@ const {
   loadPersistedCustomQuestions,
   savePersistedCustomQuestions
 } = require('../services/questionInjectionService');
+const {
+  paginateQuestions,
+  resolveBankKey,
+  loadPersistedQuestionsForBank
+} = require('../services/questionStorageService');
 
 // GET all questions from bank (queries inMemoryStore.questions and all subjectBanks)
 router.get('/', (req, res) => {
@@ -360,12 +365,15 @@ router.post('/inject', async (req, res) => {
   }
 });
 
-// GET /api/questions/injected-questions - Retrieve all custom injected questions from persistent disk storage
+// GET /api/questions/injected-questions - Retrieve custom injected questions (optionally filtered by subjectKey)
 router.get('/injected-questions', (req, res) => {
   try {
-    const list = loadPersistedCustomQuestions();
+    const { subjectKey, bankKey } = req.query;
+    const targetKey = bankKey || subjectKey;
+    const list = targetKey ? loadPersistedQuestionsForBank(resolveBankKey(targetKey)) : loadPersistedCustomQuestions();
     res.json({
       success: true,
+      subjectKey: targetKey || 'ALL',
       count: list.length,
       questions: list.map(q => sanitizeQuestionPayload(q))
     });
@@ -654,66 +662,28 @@ router.get('/class10-math-bank', (req, res) => {
   }
 });
 
-// GET /api/questions/subject-banks/:subjectKey - Fetch questions from specific subject table
+// GET /api/questions/subject-banks/:subjectKey - Fetch questions from specific subject table with high-performance pagination
 router.get('/subject-banks/:subjectKey', (req, res) => {
   try {
     const { subjectKey } = req.params;
-    const banks = inMemoryStore.subjectBanks || {};
+    const { page, limit, chapter, difficulty, targetExam, grade } = req.query;
 
-    const aliasMap = {
-      'PHYSICS': 'senior_physics',
-      'SENIOR_PHYSICS': 'senior_physics',
-      'CHEMISTRY': 'senior_chemistry',
-      'SENIOR_CHEMISTRY': 'senior_chemistry',
-      'BIOLOGY': 'senior_biology',
-      'SENIOR_BIOLOGY': 'senior_biology',
-      'MATHEMATICS': 'senior_mathematics',
-      'SENIOR_MATHEMATICS': 'senior_mathematics',
-      'CLASS10_MATHEMATICS': 'class10_math_pyq_ncert',
-      'CLASS10_MATHS': 'class10_math_pyq_ncert',
-      'CLASS10_SCIENCE': 'class10_science'
-    };
-
-    const targetKey = aliasMap[(subjectKey || '').toUpperCase()] || subjectKey;
-    const tableData = banks[targetKey];
-
-    if (!tableData) {
-      return res.status(404).json({
-        success: false,
-        error: `Subject bank "${subjectKey}" not found. Valid keys: PHYSICS, CHEMISTRY, BIOLOGY, MATHEMATICS, CLASS10_MATHEMATICS, CLASS10_SCIENCE, senior_physics, senior_chemistry, senior_mathematics, senior_biology, class10_science, class10_math_pyq_ncert.`
-      });
-    }
-
-    const { chapter, difficulty, targetExam, grade } = req.query;
-    let filtered = [...tableData];
-
-    if (grade && grade !== 'ALL') {
-      filtered = filtered.filter(q => String(q.grade) === String(grade));
-    }
-    if (chapter && chapter !== 'ALL') {
-      filtered = filtered.filter(q => {
-        if (q.chapter_number !== undefined && String(q.chapter_number) === String(chapter)) return true;
-        if (q.chapter && String(q.chapter) === String(chapter)) return true;
-        if (q.chapter_name && q.chapter_name.toLowerCase().includes(String(chapter).toLowerCase())) return true;
-        return false;
-      });
-    }
-    if (difficulty && difficulty !== 'ALL') {
-      filtered = filtered.filter(q => q.difficulty?.toUpperCase() === difficulty.toUpperCase());
-    }
-    if (targetExam && targetExam !== 'ALL') {
-      filtered = filtered.filter(q => 
-        (q.target_exam && q.target_exam.toLowerCase().includes(targetExam.toLowerCase())) ||
-        (q.curriculum_board && q.curriculum_board.toLowerCase().includes(targetExam.toLowerCase()))
-      );
-    }
+    const result = paginateQuestions(
+      subjectKey,
+      { page, limit: limit || 'ALL', chapter, difficulty, targetExam, grade },
+      inMemoryStore
+    );
 
     res.json({
       success: true,
       subjectKey,
-      tableKey: targetKey,
-      count: filtered.length,
-      questions: filtered
+      tableKey: result.targetKey,
+      count: result.questions.length,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      questions: result.questions
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

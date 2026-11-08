@@ -3500,12 +3500,34 @@ window.previewTeacherPaper = function(testId) {
 
   // Fallback questions if no draft is present
   if (!questions || questions.length === 0) {
-    let formatVal = 'UNIT_45';
-    if (duration.includes('15')) formatVal = 'QUIZ_15';
-    else if (duration.includes('90')) formatVal = 'TERM_90';
-    else if (duration.includes('180')) formatVal = 'MOCK_180';
+    const c1 = parseInt(document.getElementById('inputMarks1Count')?.value, 10);
+    const c2 = parseInt(document.getElementById('inputMarks2Count')?.value, 10);
+    const c3 = parseInt(document.getElementById('inputMarks3Count')?.value, 10);
+    const c5 = parseInt(document.getElementById('inputMarks5Count')?.value, 10);
 
-    questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
+    const hasUserMarksInput = (!isNaN(c1) && c1 >= 0) || (!isNaN(c2) && c2 >= 0) || (!isNaN(c3) && c3 >= 0) || (!isNaN(c5) && c5 >= 0);
+    if (hasUserMarksInput && (c1 > 0 || c2 > 0 || c3 > 0 || c5 > 0)) {
+      const pool = window.generateExamQuestions('UNIT_45', subject, chapter, topic) || [];
+      const customQList = [];
+      const p1 = pool.filter(q => Number(q.marks || q.marks_weightage || 1) === 1);
+      const p2 = pool.filter(q => Number(q.marks || q.marks_weightage || 1) === 2);
+      const p3 = pool.filter(q => Number(q.marks || q.marks_weightage || 1) === 3);
+      const p5 = pool.filter(q => Number(q.marks || q.marks_weightage || 1) === 5);
+
+      for (let i = 0; i < (c1 || 0); i++) customQList.push(p1[i % (p1.length || 1)] || { marks: 1, type: 'MCQ', question: `Objective Multiple Choice Question ${i + 1} on ${chapter}` });
+      for (let i = 0; i < (c2 || 0); i++) customQList.push(p2[i % (p2.length || 1)] || { marks: 2, type: 'SHORT', question: `Short Answer Conceptual Question ${i + 1} on ${chapter}` });
+      for (let i = 0; i < (c3 || 0); i++) customQList.push(p3[i % (p3.length || 1)] || { marks: 3, type: 'NUMERICAL', question: `Numerical & Analytical Reasoning Question ${i + 1} on ${chapter}` });
+      for (let i = 0; i < (c5 || 0); i++) customQList.push(p5[i % (p5.length || 1)] || { marks: 5, type: 'LONG', question: `Comprehensive Analytical Derivation ${i + 1} on ${chapter}` });
+
+      questions = customQList;
+    } else {
+      let formatVal = 'UNIT_45';
+      if (duration.includes('15')) formatVal = 'QUIZ_15';
+      else if (duration.includes('90')) formatVal = 'TERM_90';
+      else if (duration.includes('180')) formatVal = 'MOCK_180';
+
+      questions = window.generateExamQuestions(formatVal, subject, chapter, topic);
+    }
   }
 
   // Sort questions by marks ascending: 1M, 2M, 3M, 5M (or preserve explicit order if marks same)
@@ -17111,18 +17133,29 @@ async function loadQuestionBankView(forceReload = false) {
   teacherBuilderState.teacherSubjectKey = profSubj;
   teacherBuilderState.activeGrade = curGrade;
 
-  let activeSubj = profSubj;
+  // Dual-Layer Subject State Persistence: Respect explicitly chosen subject
+  const savedQbSubj = localStorage.getItem('haps_qb_selected_subject');
+  let chosenSubj = (teacherBuilderState.selectedSubjectKey || savedQbSubj || profSubj).toUpperCase();
+
+  let activeSubj = chosenSubj;
   if (isClass10) {
-    if (profSubj === 'MATHEMATICS' || profSubj === 'CLASS10_MATHEMATICS') {
+    if (chosenSubj.includes('MATH')) {
       activeSubj = 'CLASS10_MATHEMATICS';
     } else {
       activeSubj = 'CLASS10_SCIENCE';
     }
-    teacherBuilderState.selectedSubjectKey = activeSubj;
   } else {
-    activeSubj = (profSubj === 'CLASS10_SCIENCE' || profSubj === 'SCIENCE') ? 'PHYSICS' : (profSubj === 'CLASS10_MATHEMATICS' ? 'MATHEMATICS' : profSubj);
-    teacherBuilderState.selectedSubjectKey = activeSubj;
+    if (chosenSubj === 'CLASS10_SCIENCE' || chosenSubj === 'SCIENCE') {
+      activeSubj = 'PHYSICS';
+    } else if (chosenSubj === 'CLASS10_MATHEMATICS') {
+      activeSubj = 'MATHEMATICS';
+    }
   }
+
+  teacherBuilderState.selectedSubjectKey = activeSubj;
+  try {
+    localStorage.setItem('haps_qb_selected_subject', activeSubj);
+  } catch (e) {}
 
   const headerTitle = document.getElementById('qbHeaderTitle');
   const headerSubtitle = document.getElementById('qbHeaderSubtitle');
@@ -17328,8 +17361,12 @@ async function loadQuestionBankView(forceReload = false) {
 
 function handleQbSubjectChange(subjKey) {
   teacherBuilderState.selectedSubjectKey = subjKey;
+  try {
+    localStorage.setItem('haps_qb_selected_subject', subjKey);
+  } catch (e) {}
   loadQuestionBankView(true);
 }
+window.handleQbSubjectChange = handleQbSubjectChange;
 
 function resetQbFilters() {
   const chSelect = document.getElementById('selectQbChapter');
@@ -19954,8 +19991,14 @@ function openInjectQuestionModal() {
     role: 'TEACHER'
   };
 
-  const curSubj = (activeTeacher.subjectName || activeTeacher.subject || activeTeacher.subjectKey || 'Physics');
-  const curSubjKey = (activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+  const curSubjKey = (teacherBuilderState.selectedSubjectKey || activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+  const curSubj = curSubjKey === 'PHYSICS' ? 'Physics'
+    : curSubjKey === 'CHEMISTRY' ? 'Chemistry'
+    : curSubjKey === 'BIOLOGY' ? 'Biology'
+    : curSubjKey === 'MATHEMATICS' ? 'Mathematics'
+    : curSubjKey === 'CLASS10_SCIENCE' ? 'Science (Class 10th)'
+    : curSubjKey === 'CLASS10_MATHEMATICS' ? 'Mathematics (Class 10th)'
+    : (activeTeacher.subjectName || 'Physics');
 
   // Populate Discipline-Locked Banner
   const bannerName = document.getElementById('injectFacultyBannerName');
@@ -19967,9 +20010,13 @@ function openInjectQuestionModal() {
 
   const badge = document.getElementById('injectFacultySubjectBadge');
   if (badge) {
-    badge.innerText = `🔒 Locked: ${curSubjKey} (Class ${curGrade}th Scope)`;
+    badge.innerText = `Department: ${curSubjKey} (Class ${curGrade}th Scope)`;
   }
 
+  const selectSubj = document.getElementById('selectInjectSubject');
+  if (selectSubj) {
+    selectSubj.value = curSubjKey;
+  }
   const inputSubj = document.getElementById('inputInjectSubject');
   if (inputSubj) {
     inputSubj.value = curSubj;
@@ -20271,10 +20318,24 @@ async function triggerAiQuestionExtraction() {
     role: 'TEACHER'
   };
 
+  const chosenSubjKey = (document.getElementById('selectInjectSubject')?.value || teacherBuilderState.selectedSubjectKey || activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+  const chosenSubjName = chosenSubjKey === 'PHYSICS' ? 'Physics'
+    : chosenSubjKey === 'CHEMISTRY' ? 'Chemistry'
+    : chosenSubjKey === 'BIOLOGY' ? 'Biology'
+    : chosenSubjKey === 'MATHEMATICS' ? 'Mathematics'
+    : chosenSubjKey === 'CLASS10_SCIENCE' ? 'Science'
+    : chosenSubjKey === 'CLASS10_MATHEMATICS' ? 'Mathematics'
+    : (activeTeacher.subjectName || 'Physics');
+
   const payload = {
-    teacher: activeTeacher,
-    targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
-    targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
+    teacher: {
+      ...activeTeacher,
+      subjectKey: chosenSubjKey,
+      subject: chosenSubjName,
+      department: chosenSubjKey
+    },
+    targetSubject: chosenSubjName,
+    targetSubjectKey: chosenSubjKey,
     mode: mode,
     rawText: rawText,
     mediaData: mode === 'image' ? injectQuestionStudioState.imageBase64 : injectQuestionStudioState.pdfBase64,
@@ -20456,10 +20517,24 @@ async function commitInjectedQuestionToBank() {
     role: 'TEACHER'
   };
 
+  const chosenSubjKey = (document.getElementById('selectInjectSubject')?.value || teacherBuilderState.selectedSubjectKey || activeTeacher.subjectKey || 'PHYSICS').toUpperCase();
+  const chosenSubjName = chosenSubjKey === 'PHYSICS' ? 'Physics'
+    : chosenSubjKey === 'CHEMISTRY' ? 'Chemistry'
+    : chosenSubjKey === 'BIOLOGY' ? 'Biology'
+    : chosenSubjKey === 'MATHEMATICS' ? 'Mathematics'
+    : chosenSubjKey === 'CLASS10_SCIENCE' ? 'Science'
+    : chosenSubjKey === 'CLASS10_MATHEMATICS' ? 'Mathematics'
+    : 'Physics';
+
   const payload = {
-    teacher: activeTeacher,
-    targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
-    targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
+    teacher: {
+      ...activeTeacher,
+      subjectKey: chosenSubjKey,
+      subject: chosenSubjName,
+      department: chosenSubjKey
+    },
+    targetSubject: chosenSubjName,
+    targetSubjectKey: chosenSubjKey,
     mode: injectQuestionStudioState.mode,
     grade: document.getElementById('selectInjectGrade')?.value || '12',
     category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
@@ -20484,27 +20559,41 @@ async function commitInjectedQuestionToBank() {
       : (data.question ? [data.question] : []);
     const newQuestions = rawQuestions.map(q => sanitizeAcademicQuestionObject(q));
 
-    // 1. Immediately prepend to local question bank data so they are at the top
-    if (Array.isArray(state.questionBankData)) {
-      state.questionBankData.unshift(...newQuestions);
-    } else {
-      state.questionBankData = [...newQuestions];
+    // Ensure subject key on questions
+    newQuestions.forEach(q => {
+      if (!q.subjectKey) q.subjectKey = chosenSubjKey;
+      if (!q.subject) q.subject = chosenSubjName;
+    });
+
+    // 1. Immediately prepend to local question bank data if viewing this subject
+    teacherBuilderState.selectedSubjectKey = chosenSubjKey;
+    try {
+      localStorage.setItem('haps_qb_selected_subject', chosenSubjKey);
+    } catch (e) {}
+
+    if (state.currentQbSubjectKey === chosenSubjKey) {
+      if (Array.isArray(state.questionBankData)) {
+        state.questionBankData.unshift(...newQuestions);
+      } else {
+        state.questionBankData = [...newQuestions];
+      }
     }
 
-    // 2. Permanently persist into browser localStorage so questions survive refresh & restarts
+    // 2. Permanently persist into browser localStorage across unified and subject partitions
     try {
       const localKey = 'haps_injected_questions';
-      const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const subjKeyLocal = `haps_injected_questions_${chosenSubjKey.toLowerCase()}`;
+
+      // Update subject-specific partition
+      const existingSubj = JSON.parse(localStorage.getItem(subjKeyLocal) || '[]');
       const newIds = new Set(newQuestions.map(q => q.id));
-      const updated = [...newQuestions, ...existing.filter(q => !newIds.has(q.id))];
-      try {
-        localStorage.setItem(localKey, JSON.stringify(updated));
-      } catch (quotaErr) {
-        // If quota exceeded (5MB limit), prune to newest 100 questions
-        try {
-          localStorage.setItem(localKey, JSON.stringify(updated.slice(0, 100)));
-        } catch (e2) {}
-      }
+      const updatedSubj = [...newQuestions, ...existingSubj.filter(q => !newIds.has(q.id))];
+      localStorage.setItem(subjKeyLocal, JSON.stringify(updatedSubj));
+
+      // Update global store
+      const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+      const updatedGlobal = [...newQuestions, ...existing.filter(q => !newIds.has(q.id))];
+      localStorage.setItem(localKey, JSON.stringify(updatedGlobal));
     } catch (storeErr) {
       console.warn('[LOCAL STORAGE QB PERSIST ERROR]', storeErr);
     }
@@ -20538,6 +20627,18 @@ async function commitInjectedQuestionToBank() {
     }
   }
 }
+
+window.handleInjectSubjectChange = function(subjKey) {
+  const badge = document.getElementById('injectFacultySubjectBadge');
+  const grade = document.getElementById('selectInjectGrade')?.value || '12';
+  if (badge) {
+    badge.innerText = `Department: ${subjKey} (Class ${grade}th Scope)`;
+  }
+  const inputSubj = document.getElementById('inputInjectSubject');
+  if (inputSubj) {
+    inputSubj.value = subjKey;
+  }
+};
 
 window.openInjectQuestionModal = openInjectQuestionModal;
 window.closeInjectQuestionModal = closeInjectQuestionModal;

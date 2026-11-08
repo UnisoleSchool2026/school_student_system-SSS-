@@ -31,6 +31,34 @@ try {
   console.warn('[DATABASE] Failed to load class12PhysicsQuestionBank:', e.message);
 }
 
+let class12ChemistryQuestions = [];
+try {
+  class12ChemistryQuestions = require('../services/class12ChemistryQuestionBank').class12ChemistryQuestions || [];
+} catch (e) {
+  console.warn('[DATABASE] Failed to load class12ChemistryQuestionBank:', e.message);
+}
+
+let class12BiologyQuestions = [];
+try {
+  class12BiologyQuestions = require('../services/class12BiologyQuestionBank').class12BiologyQuestions || [];
+} catch (e) {
+  console.warn('[DATABASE] Failed to load class12BiologyQuestionBank:', e.message);
+}
+
+let class12MathematicsQuestions = [];
+try {
+  class12MathematicsQuestions = require('../services/class12MathematicsQuestionBank').class12MathematicsQuestions || [];
+} catch (e) {
+  console.warn('[DATABASE] Failed to load class12MathematicsQuestionBank:', e.message);
+}
+
+let class10ScienceQuestions = [];
+try {
+  class10ScienceQuestions = require('../services/class10ScienceQuestionBank').class10ScienceQuestions || [];
+} catch (e) {
+  console.warn('[DATABASE] Failed to load class10ScienceQuestionBank:', e.message);
+}
+
 let pool = null;
 let isConnected = false;
 
@@ -174,6 +202,7 @@ const inMemoryStore = {
     class10_maths: (class10MathQuestions && class10MathQuestions.length > 0) ? class10MathQuestions : [],
     class10_math_pyq_ncert: (class10MathQuestions && class10MathQuestions.length > 0) ? class10MathQuestions : [],
     class10_science: [
+      ...(class10ScienceQuestions || []),
       {
         id: 'c10_s_01',
         grade: '10',
@@ -906,6 +935,7 @@ const inMemoryStore = {
       ...(class12PhysicsQuestions || [])
     ],
     senior_chemistry: [
+      ...(class12ChemistryQuestions || []),
       {
         id: 'snr_c_01',
         grade: '12',
@@ -1513,6 +1543,7 @@ const inMemoryStore = {
       }
     ],
     senior_mathematics: [
+      ...(class12MathematicsQuestions || []),
       {
         id: 'snr_m_01',
         grade: '12',
@@ -1992,6 +2023,7 @@ const inMemoryStore = {
       }
     ],
     senior_biology: [
+      ...(class12BiologyQuestions || []),
       {
             "id": "snr_b_01",
             "grade": "12",
@@ -4425,78 +4457,12 @@ try {
   console.warn('[DATABASE] Options enrichment notice:', e.message);
 }
 
-// Hydrate custom questions permanently stored on disk (e.g. from faculty injection studio)
+// Hydrate custom questions permanently stored on disk across subject partitions
 try {
-  const fs = require('fs');
-  const path = require('path');
-  const { sanitizeQuestionPayload } = require('../services/llmQuestionEngine');
-  const storagePaths = [
-    path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
-    '/tmp/custom_injected_questions.json'
-  ];
-
-  let persistedCustom = [];
-  let loadedFromPath = null;
-  for (const sp of storagePaths) {
-    try {
-      if (fs.existsSync(sp)) {
-        const raw = fs.readFileSync(sp, 'utf8');
-        const list = JSON.parse(raw);
-        if (Array.isArray(list) && list.length > 0) {
-          persistedCustom = list.map(q => sanitizeQuestionPayload(q));
-          loadedFromPath = sp;
-          break;
-        }
-      }
-    } catch (e) {}
-  }
-
-  // Update persistent file with sanitized questions
-  if (loadedFromPath && persistedCustom.length > 0) {
-    try {
-      fs.writeFileSync(loadedFromPath, JSON.stringify(persistedCustom, null, 2), 'utf8');
-    } catch (e) {}
-  }
-
-  if (persistedCustom.length > 0 && inMemoryStore.subjectBanks) {
-    persistedCustom.forEach(rawQ => {
-      if (!rawQ || !rawQ.id) return;
-      const q = sanitizeQuestionPayload(rawQ);
-      const sUpper = (q.subjectKey || q.subject || '').toUpperCase();
-      const isC10 = String(q.grade) === '10';
-
-      let bankKey = 'senior_physics';
-      if (isC10) {
-        if (sUpper.includes('MATH')) bankKey = 'class10_maths';
-        else bankKey = 'class10_science';
-      } else {
-        if (sUpper.includes('PHYS')) bankKey = 'senior_physics';
-        else if (sUpper.includes('CHEM')) bankKey = 'senior_chemistry';
-        else if (sUpper.includes('BIO')) bankKey = 'senior_biology';
-        else if (sUpper.includes('MATH')) bankKey = 'senior_mathematics';
-      }
-
-      if (!inMemoryStore.subjectBanks[bankKey]) inMemoryStore.subjectBanks[bankKey] = [];
-      const alreadyExists = inMemoryStore.subjectBanks[bankKey].some(item => item.id === q.id);
-      if (!alreadyExists) {
-        inMemoryStore.subjectBanks[bankKey].unshift(q);
-      }
-
-      if (bankKey === 'class10_maths') {
-        if (!inMemoryStore.subjectBanks.class10_math_pyq_ncert) inMemoryStore.subjectBanks.class10_math_pyq_ncert = [];
-        if (!inMemoryStore.subjectBanks.class10_math_pyq_ncert.some(item => item.id === q.id)) {
-          inMemoryStore.subjectBanks.class10_math_pyq_ncert.unshift(q);
-        }
-      }
-
-      if (Array.isArray(inMemoryStore.questions) && !inMemoryStore.questions.some(item => item.id === q.id)) {
-        inMemoryStore.questions.unshift(q);
-      }
-    });
-    console.log(`[DATABASE] Successfully hydrated ${persistedCustom.length} custom injected questions from persistent disk storage.`);
-  }
+  const { hydrateAllSubjectBanks } = require('../services/questionStorageService');
+  hydrateAllSubjectBanks(inMemoryStore);
 } catch (e) {
-  console.warn('[DATABASE] Persisted questions hydration notice:', e.message);
+  console.warn('[DATABASE] Subject-partitioned hydration notice:', e.message);
 }
 
 module.exports = {

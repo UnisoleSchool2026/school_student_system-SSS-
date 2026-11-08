@@ -1,0 +1,47 @@
+[
+  {
+    "id": "snr_m_inj_1794158735013_867",
+    "grade": "12",
+    "subject": "Mathematics",
+    "subjectKey": "MATHEMATICS",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Integrals",
+    "chapter": "Integrals",
+    "topic": "Definite Integrals",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "MEDIUM",
+    "question_format": "SUBJECTIVE_SHORT",
+    "benchmark_time_seconds": 135,
+    "marks_weightage": 3,
+    "question_latex": "Evaluate $\\int_0^{\\pi/2} \\frac{\\sin x}{\\sin x + \\cos x}\\,dx$ using King\\x27s property.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "$Option A$",
+    "correct_answer": "A",
+    "solution_latex": "Applying King\\x27s property $\\int_a^b f(x)\\,dx = \\int_a^b f(a+b-x)\\,dx$: $I = \\int_0^{\\pi/2} \\frac{\\cos x}{\\cos x + \\sin x}\\,dx$. Adding $2I = \\int_0^{\\pi/2} 1\\,dx = [x]_0^{\\pi/2} = \\pi/2 \\implies I = \\pi/4$.",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Integrals",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_math_01",
+      "faculty_name": "Prof. Ramanathan",
+      "faculty_phone": "",
+      "faculty_subject": "Mathematics",
+      "department": "Mathematics",
+      "role": "faculty",
+      "timestamp": "2026-11-08T17:25:35.013Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-08T17:25:35.013Z"
+  }
+]

@@ -1,0 +1,114 @@
+[
+  {
+    "id": "snr_c_inj_1794158734992_392",
+    "grade": "12",
+    "subject": "Chemistry",
+    "subjectKey": "CHEMISTRY",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Solutions",
+    "chapter": "Solutions",
+    "topic": "Henry\\x27s Law",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "MEDIUM",
+    "question_format": "SUBJECTIVE_SHORT",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "question_latex": "State Henry\\x27s law and mention two important industrial applications.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "$Option A$",
+    "correct_answer": "A",
+    "solution_latex": "Henry\\x27s law states that at a constant temperature, the solubility of a gas in a liquid is directly proportional to the partial pressure of the gas present above the surface of liquid or solution: $p = K_H x$. Applications: (1) In soda bottles to increase solubility of CO2, (2) Deep sea diving tanks with He to prevent bends.",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Solutions",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_chem_01",
+      "faculty_name": "Prof. Sunita Rao",
+      "faculty_phone": "",
+      "faculty_subject": "Chemistry",
+      "department": "Chemistry",
+      "role": "faculty",
+      "timestamp": "2026-11-08T17:25:34.992Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-08T17:25:34.992Z"
+  },
+  {
+    "id": "snr_c_inj_1793801747344_553",
+    "grade": "12",
+    "subject": "Chemistry",
+    "subjectKey": "CHEMISTRY",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Electrochemistry",
+    "chapter": "Electrochemistry",
+    "topic": "Nernst Equation",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "HARD",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 225,
+    "marks_weightage": 5,
+    "question_latex": "Calculate the emf of the cell: $\\text{Zn} | \\text{Zn}^{2+}(0.01\\,\\text{M}) || \\text{Cu}^{2+}(0.1\\,\\text{M}) | \\text{Cu}$.",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$1.13\\,\\text{V}$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$1.07\\,\\text{V}$",
+        "is_correct": false
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$1.13\\,\\text{V}$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$1.07\\,\\text{V}$",
+        "is_correct": false
+      }
+    ],
+    "correct_answer_latex": "$1.13\\,\\text{V}$",
+    "correct_answer": "A",
+    "solution_latex": "$$E_{\\text{cell}} = E^\\circ_{\\text{cell}} - \\frac{0.059}{2}\\log\\left(\\frac{0.01}{0.1}\\right) = 1.10 - 0.0295(-1) = 1.1295\\,\\text{V}$$.",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Electrochemistry",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 5
+    },
+    "injected_by": {
+      "faculty_id": "fac_chem_01",
+      "faculty_name": "Prof. Sunita Rao",
+      "faculty_phone": "",
+      "faculty_subject": "Chemistry",
+      "department": "CHEMISTRY",
+      "role": "faculty",
+      "timestamp": "2026-11-04T14:15:47.344Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-04T14:15:47.344Z"
+  }
+]
