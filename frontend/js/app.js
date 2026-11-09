@@ -71,6 +71,18 @@ function setupGlobalModalDismissal() {
       closeCurriculumTestModal();
       closeWhatsAppModal();
       closeTestBuilderModal();
+      if (typeof closeFacultyClassSwitcherModal === 'function') {
+        closeFacultyClassSwitcherModal();
+      }
+      if (typeof closeTeacherSignInModal === 'function') {
+        closeTeacherSignInModal();
+      }
+      if (typeof closeCreateClassModal === 'function') {
+        closeCreateClassModal();
+      }
+      if (typeof closeAddStudentModal === 'function') {
+        closeAddStudentModal();
+      }
       if (typeof closeDiagnosticResultsModal === 'function') {
         closeDiagnosticResultsModal();
       }
@@ -88,6 +100,22 @@ function setupGlobalModalDismissal() {
       closeWhatsAppModal();
     } else if (e.target.id === 'modalTestBuilder') {
       closeTestBuilderModal();
+    } else if (e.target.id === 'modalFacultyClassSwitcher') {
+      if (typeof closeFacultyClassSwitcherModal === 'function') {
+        closeFacultyClassSwitcherModal();
+      }
+    } else if (e.target.id === 'modalTeacherSignIn') {
+      if (typeof closeTeacherSignInModal === 'function') {
+        closeTeacherSignInModal();
+      }
+    } else if (e.target.id === 'modalCreateClass') {
+      if (typeof closeCreateClassModal === 'function') {
+        closeCreateClassModal();
+      }
+    } else if (e.target.id === 'modalAddStudentToClass') {
+      if (typeof closeAddStudentModal === 'function') {
+        closeAddStudentModal();
+      }
     } else if (e.target.id === 'modalDiagnosticResults') {
       if (typeof closeDiagnosticResultsModal === 'function') {
         closeDiagnosticResultsModal();

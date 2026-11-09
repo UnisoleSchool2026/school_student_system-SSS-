@@ -3539,24 +3539,24 @@ _Unisole AI School Scholar Assistant_</div>
   </div>
 
   <!-- Modal: Faculty Profile & Active Class Switcher -->
-  <div class="modal-overlay" id="modalFacultyClassSwitcher" style="display: none; z-index: 10000;">
-    <div class="modal-card" style="max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+  <div class="modal-overlay" id="modalFacultyClassSwitcher" style="display: none; z-index: 10000; overflow-y: auto; padding: 1.5rem 1rem;" onclick="if(event.target === this) closeFacultyClassSwitcherModal()">
+    <div class="modal-card" style="max-width: 560px; width: 100%; max-height: min(90vh, 740px); margin: auto; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 14px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.15);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center;">
+          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink: 0;">
             <i data-lucide="user-check" style="width:20px; height:20px;"></i>
           </div>
           <div>
-            <strong style="font-size:1.05rem; display:block;">Faculty Profile &amp; Class Scope</strong>
+            <strong style="font-size:1.05rem; display:block; line-height: 1.2;">Faculty Profile &amp; Class Scope</strong>
             <p style="font-size:0.74rem; margin:0; opacity:0.9;">Unisole AI School &bull; Academic Portal</p>
           </div>
         </div>
-        <button type="button" onclick="closeFacultyClassSwitcherModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;" aria-label="Close">
-          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        <button type="button" onclick="closeFacultyClassSwitcherModal()" title="Close Profile (Esc)" aria-label="Close" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color:#fff; cursor:pointer; width:34px; height:34px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s ease; box-shadow:0 2px 6px rgba(0,0,0,0.25); flex-shrink: 0;">
+          <i data-lucide="x" style="width:18px; height:18px; stroke-width: 2.5;"></i>
         </button>
       </div>
 
-      <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px;">
+      <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px; overflow-y: auto; flex: 1 1 auto; max-height: calc(90vh - 120px);">
         
         <!-- Faculty Info Card -->
         <div style="background: var(--bg-card-hover); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
@@ -3589,7 +3589,7 @@ _Unisole AI School Scholar Assistant_</div>
           </div>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border-subtle); flex-shrink: 0;">
           <button type="button" class="btn-primary" onclick="closeFacultyClassSwitcherModal()" style="font-size: 0.85rem; padding: 8px 18px; font-weight:700;">
             Done &bull; Keep Current Scope
           </button>
@@ -3600,22 +3600,24 @@ _Unisole AI School Scholar Assistant_</div>
   </div>
 
   <!-- Modal: Teacher Sign-In & Department Authentication -->
-  <div class="modal-overlay" id="modalTeacherSignIn" style="display: none; z-index: 10000;">
-    <div class="modal-card" style="max-width: 540px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+  <div class="modal-overlay" id="modalTeacherSignIn" style="display: none; z-index: 10000; overflow-y: auto; padding: 1.5rem 1rem;" onclick="if(event.target === this) closeTeacherSignInModal()">
+    <div class="modal-card" style="max-width: 540px; width: 100%; max-height: min(90vh, 680px); margin: auto; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 14px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.15);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <i data-lucide="shield-check" style="width:22px; height:22px;"></i>
+          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink: 0;">
+            <i data-lucide="shield-check" style="width:20px; height:20px;"></i>
+          </div>
           <div>
-            <strong style="font-size:1.05rem; display:block;">Faculty Sign-In &amp; Department Portal</strong>
+            <strong style="font-size:1.05rem; display:block; line-height: 1.2;">Faculty Sign-In &amp; Department Portal</strong>
             <p style="font-size:0.74rem; margin:0; opacity:0.9;">Unisole AI School &bull; Academic Portal</p>
           </div>
         </div>
-        <button type="button" onclick="closeTeacherSignInModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;" aria-label="Close">
-          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        <button type="button" onclick="closeTeacherSignInModal()" title="Close (Esc)" aria-label="Close" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color:#fff; cursor:pointer; width:34px; height:34px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s ease; box-shadow:0 2px 6px rgba(0,0,0,0.25); flex-shrink: 0;">
+          <i data-lucide="x" style="width:18px; height:18px; stroke-width: 2.5;"></i>
         </button>
       </div>
 
-      <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px;">
+      <div style="padding: 20px; background: var(--bg-card); display:flex; flex-direction:column; gap:16px; overflow-y: auto; flex: 1 1 auto;">
         <p style="font-size:0.8rem; color:var(--text-secondary); margin:0; line-height:1.4;">
           Enter your mobile number, full name, and subject expertise. The portal will automatically load your department's NCERT curriculum, authentic question bank, PYQs, and enrolled students.
         </p>
@@ -3669,21 +3671,23 @@ _Unisole AI School Scholar Assistant_</div>
   </div>
 
   <!-- Modal: Create / Add New Class -->
-  <div class="modal-overlay" id="modalCreateClass" style="display: none; z-index: 10000;">
-    <div class="modal-card" style="max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div style="background: linear-gradient(135deg, #2563eb, #0284c7); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+  <div class="modal-overlay" id="modalCreateClass" style="display: none; z-index: 10000; overflow-y: auto; padding: 1.5rem 1rem;" onclick="if(event.target === this) closeCreateClassModal()">
+    <div class="modal-card" style="max-width: 500px; width: 100%; max-height: min(90vh, 650px); margin: auto; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+      <div style="background: linear-gradient(135deg, #2563eb, #0284c7); padding: 14px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.15);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <i data-lucide="plus-circle" style="width:22px; height:22px;"></i>
+          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink: 0;">
+            <i data-lucide="plus-circle" style="width:20px; height:20px;"></i>
+          </div>
           <div>
-            <strong style="font-size:1.1rem; display:block;">Create New Class Section</strong>
+            <strong style="font-size:1.05rem; display:block; line-height: 1.2;">Create New Class Section</strong>
             <p style="font-size:0.75rem; margin:0; opacity:0.9;">Add a class section to school curriculum &amp; roster</p>
           </div>
         </div>
-        <button type="button" onclick="closeCreateClassModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;">
-          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        <button type="button" onclick="closeCreateClassModal()" title="Close (Esc)" aria-label="Close" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color:#fff; cursor:pointer; width:34px; height:34px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s ease; box-shadow:0 2px 6px rgba(0,0,0,0.25); flex-shrink: 0;">
+          <i data-lucide="x" style="width:18px; height:18px; stroke-width: 2.5;"></i>
         </button>
       </div>
-      <form id="formCreateClass" onsubmit="submitCreateClass(event)" style="padding: 20px; display:flex; flex-direction:column; gap:12px; background: var(--bg-card);">
+      <form id="formCreateClass" onsubmit="submitCreateClass(event)" style="padding: 20px; display:flex; flex-direction:column; gap:12px; background: var(--bg-card); overflow-y: auto; flex: 1 1 auto;">
         <div>
           <label style="font-size:0.82rem; font-weight:600; margin-bottom:4px; display:block;">Class Display Name *</label>
           <input type="text" class="form-control" id="inputNewClassName" placeholder="e.g. Class 11th (Section C)" required style="width:100%; padding:8px 12px; background:var(--bg-secondary); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:6px; font-size:0.88rem;">
@@ -3721,18 +3725,20 @@ _Unisole AI School Scholar Assistant_</div>
   </div>
 
   <!-- Modal: Enroll / Add Student To Class -->
-  <div class="modal-overlay" id="modalAddStudentToClass" style="display: none; z-index: 10000;">
-    <div class="modal-card" style="max-width: 520px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div style="background: linear-gradient(135deg, #059669, #0d9488); padding: 16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius: var(--radius-md) var(--radius-md) 0 0;">
+  <div class="modal-overlay" id="modalAddStudentToClass" style="display: none; z-index: 10000; overflow-y: auto; padding: 1.5rem 1rem;" onclick="if(event.target === this) closeAddStudentModal()">
+    <div class="modal-card" style="max-width: 520px; width: 100%; max-height: min(90vh, 650px); margin: auto; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+      <div style="background: linear-gradient(135deg, #059669, #0d9488); padding: 14px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.15);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <i data-lucide="user-plus" style="width:22px; height:22px;"></i>
+          <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink: 0;">
+            <i data-lucide="user-plus" style="width:20px; height:20px;"></i>
+          </div>
           <div>
-            <strong style="font-size:1.1rem; display:block;">Enroll Student to Class Roster</strong>
+            <strong style="font-size:1.05rem; display:block; line-height: 1.2;">Enroll Student to Class Roster</strong>
             <p style="font-size:0.75rem; margin:0; opacity:0.9;">Add a student to active database and learning records</p>
           </div>
         </div>
-        <button type="button" onclick="closeAddStudentModal()" style="background:transparent; border:none; color:#fff; cursor:pointer; padding:4px;">
-          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        <button type="button" onclick="closeAddStudentModal()" title="Close (Esc)" aria-label="Close" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color:#fff; cursor:pointer; width:34px; height:34px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s ease; box-shadow:0 2px 6px rgba(0,0,0,0.25); flex-shrink: 0;">
+          <i data-lucide="x" style="width:18px; height:18px; stroke-width: 2.5;"></i>
         </button>
       </div>
       <form id="formAddStudentToClass" onsubmit="submitAddStudentToClass(event)" style="padding: 20px; display:flex; flex-direction:column; gap:14px; background: var(--bg-card);">

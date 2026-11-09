@@ -985,7 +985,9 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-overlay.active {
@@ -1000,8 +1002,12 @@ body {
   cursor: default;
   max-width: 520px;
   width: 100%;
+  max-height: calc(100vh - 3rem);
+  margin: auto;
   box-shadow: 0 20px 40px rgba(0,0,0,0.6);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .whatsapp-chat-preview {
