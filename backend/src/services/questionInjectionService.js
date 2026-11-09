@@ -185,7 +185,7 @@ function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '
   if (sUpper.includes('CHEM')) {
     if (lower.includes('raoult') || lower.includes('colligative') || lower.includes('osmotic') || lower.includes('molarity') || lower.includes('henry') || lower.includes('depression in freezing')) return 'Solutions';
     if (lower.includes('nernst') || lower.includes('kohlrausch') || lower.includes('electrochemical') || lower.includes('galvanic') || lower.includes('molar conductivity') || lower.includes('standard electrode')) return 'Electrochemistry';
-    if (lower.includes('rate constant') || lower.includes('rate law') || lower.includes('half-life') || lower.includes('order of reaction') || lower.includes('arrhenius') || lower.includes('activation energy')) return 'Chemical Kinetics';
+    if (lower.includes('rate constant') || lower.includes('rate law') || lower.includes('half-life') || lower.includes('order of reaction') || lower.includes('first order') || lower.includes('zero order') || lower.includes('second order') || lower.includes('arrhenius') || lower.includes('activation energy') || lower.includes('t_1/2') || lower.includes('decomposition') || lower.includes('integrated rate')) return 'Chemical Kinetics';
     if (lower.includes('lanthanoid') || lower.includes('actinoid') || lower.includes('transition metal') || lower.includes('d-block') || lower.includes('oxidation state')) return 'The d- and f-Block Elements';
     if (lower.includes('ligand') || lower.includes('coordination') || lower.includes('crystal field') || lower.includes('chelate') || lower.includes('iupac name')) return 'Coordination Compounds';
     if (lower.includes('sn1') || lower.includes('sn2') || lower.includes('haloalkane') || lower.includes('haloarene') || lower.includes('chirality')) return 'Haloalkanes and Haloarenes';
@@ -198,6 +198,26 @@ function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '
 
   // 3. MATHEMATICS
   if (sUpper.includes('MATH')) {
+    if (isC10 || sUpper.includes('CLASS10')) {
+      // Class 10th Mathematics (14 NCERT Chapters)
+      if (lower.includes('real number') || lower.includes('fundamental theorem of arithmetic') || lower.includes('irrational') || lower.includes('hcf') || lower.includes('lcm') || lower.includes('euclid')) return 'Real Numbers';
+      if (lower.includes('polynomial') || lower.includes('zeroes of') || lower.includes('quadratic polynomial') || lower.includes('alpha + beta') || lower.includes('alpha beta')) return 'Polynomials';
+      if (lower.includes('pair of linear') || lower.includes('linear equation') || lower.includes('substitution method') || lower.includes('elimination method') || lower.includes('infinitely many solutions') || lower.includes('no solution')) return 'Pair of Linear Equations in Two Variables';
+      if (lower.includes('quadratic equation') || lower.includes('roots of') || lower.includes('discriminant') || lower.includes('quadratic formula') || lower.includes('b^2 - 4ac') || lower.includes('nature of roots')) return 'Quadratic Equations';
+      if (lower.includes('arithmetic progression') || lower.includes(' ap ') || lower.includes('common difference') || lower.includes('nth term') || lower.includes('sum of first n terms') || lower.includes('a_n') || lower.includes('s_n')) return 'Arithmetic Progressions';
+      if (lower.includes('triangle') || lower.includes('similarity') || lower.includes('bpt') || lower.includes('basic proportionality') || lower.includes('thales theorem') || lower.includes('equilateral')) return 'Triangles';
+      if (lower.includes('coordinate') || lower.includes('distance formula') || lower.includes('section formula') || lower.includes('collinear') || lower.includes('midpoint')) return 'Coordinate Geometry';
+      if (lower.includes('trigonometr') || lower.includes('sin') || lower.includes('cos') || lower.includes('tan') || lower.includes('sec') || lower.includes('cosec') || lower.includes('cot') || lower.includes('identity')) return 'Introduction to Trigonometry';
+      if (lower.includes('heights and distances') || lower.includes('elevation') || lower.includes('depression') || lower.includes('tower') || lower.includes('building') || lower.includes('shadow')) return 'Some Applications of Trigonometry';
+      if (lower.includes('circle') || lower.includes('tangent') || lower.includes('secant') || lower.includes('length of tangent') || lower.includes('point of contact')) return 'Circles';
+      if (lower.includes('area related to circle') || lower.includes('sector') || lower.includes('segment of a circle') || lower.includes('arc length')) return 'Areas Related to Circles';
+      if (lower.includes('surface area') || lower.includes('volume') || lower.includes('cylinder') || lower.includes('cone') || lower.includes('sphere') || lower.includes('hemisphere') || lower.includes('frustum')) return 'Surface Areas and Volumes';
+      if (lower.includes('statistic') || lower.includes('mean') || lower.includes('median') || lower.includes('mode') || lower.includes('grouped data') || lower.includes('frequency table')) return 'Statistics';
+      if (lower.includes('probabilit') || lower.includes('deck of card') || lower.includes('dice') || lower.includes('coin') || lower.includes('favourable outcome')) return 'Probability';
+      return 'Quadratic Equations';
+    }
+
+    // Senior Secondary Class 12 / 11 Mathematics
     if (lower.includes('matrix') || lower.includes('matrices') || lower.includes('symmetric') || lower.includes('skew')) return 'Matrices';
     if (lower.includes('determinant') || lower.includes('cramer') || lower.includes('minor') || lower.includes('cofactor') || lower.includes('adjoint')) return 'Determinants';
     if (lower.includes('continuity') || lower.includes('differentiab') || lower.includes('derivative') || lower.includes('chain rule') || lower.includes('rolle')) return 'Continuity and Differentiability';
@@ -245,23 +265,55 @@ function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '
 
 /**
  * Intelligent Marks Auto-Detection
+ * Supports explicit brackets [2 Marks], (3M), section defaults, MCQ options, and content verbs
  */
-function detectMarksFromText(text = '') {
-  const match = text.match(/(?:\[|\()(\d+)\s*(?:marks?|pts?|points?)(?:\]|\))/i) ||
-                text.match(/(\d+)\s*(?:marks?|mark)\b/i);
-  if (match) {
-    const val = parseInt(match[1], 10);
+function detectMarksFromText(text = '', defaultMarks = null) {
+  if (defaultMarks && typeof defaultMarks === 'number' && defaultMarks >= 1 && defaultMarks <= 5) {
+    return defaultMarks;
+  }
+
+  // Explicit markers in brackets or parentheses: [1 Mark], (2 Marks), [3M], (5 Marks), [3 marks each], etc.
+  const bracketMatch = text.match(/(?:\[|\()(\d+)\s*(?:marks?|pts?|points?|m)\b(?:\]|\))/i) ||
+                       text.match(/(\d+)\s*(?:marks?|mark)\b/i);
+  if (bracketMatch) {
+    const val = parseInt(bracketMatch[1], 10);
     if (val >= 1 && val <= 5) return val;
   }
+
+  // Trailing marks digit at end of question e.g. "... in vacuum. [2]" or "... find x. (3)"
+  const trailingMatch = text.match(/[\[\(](\d+)[\]\)]\s*$/m);
+  if (trailingMatch) {
+    const val = parseInt(trailingMatch[1], 10);
+    if (val >= 1 && val <= 5) return val;
+  }
+
   // Check if standard MCQ choices present (A, B, C, D) -> 1 Mark
   if (text.match(/^[A-D]\)/m) || text.match(/^\([A-D]\)/m) || text.match(/[A-D]\.\s/)) {
     return 1;
   }
-  // Long derivation or multi-line proof -> 5 Marks
-  if (text.toLowerCase().includes('derive') || text.toLowerCase().includes('prove that') || text.toLowerCase().includes('show that')) {
-    return text.length > 220 ? 5 : 3;
+
+  const lower = text.toLowerCase();
+  // Long derivation or multi-line proof -> 5 Marks (or 3 Marks if concise)
+  if (lower.includes('derive') || lower.includes('prove that') || lower.includes('show that') || lower.includes('deduce the expression') || lower.includes('using gauss')) {
+    return text.length > 200 ? 5 : 3;
   }
-  return 3; // Standard 3 Marks
+
+  // Short definitions / state laws -> 2 Marks
+  if (lower.includes('state') || lower.includes('define') || lower.includes('what is meant by') || lower.includes('distinguish between') || lower.includes('give two differences') || lower.includes('explain briefly') || lower.includes('why do')) {
+    return 2;
+  }
+
+  // Numerical problems / calculations -> 3 Marks
+  if (lower.includes('calculate') || lower.includes('find the') || lower.includes('determine') || lower.includes('evaluate')) {
+    return 3;
+  }
+
+  // Case study / comprehensive passage -> 4 Marks
+  if (lower.includes('case study') || lower.includes('read the following passage') || lower.includes('comprehension')) {
+    return 4;
+  }
+
+  return 3; // Balanced standard default
 }
 
 /**
@@ -301,7 +353,7 @@ function cleanAndParseJson(raw) {
 /**
  * Parses a single question chunk into a structured KaTeX assessment question
  */
-function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12', category = 'CBSE_PYQ', qNumber = 1 }) {
+function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12', category = 'CBSE_PYQ', qNumber = 1, defaultMarks = null }) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let questionPrompt = '';
   const options = [];
@@ -380,19 +432,14 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
     questionPrompt = promptBlock;
   }
 
-  // Strip leading question number and trailing marks column digits, then normalize LaTeX
-  questionPrompt = questionPrompt.replace(/^(?:Q(?:uestion)?\.?\s*)?\d+[\.:\)]\s*/i, '').trim();
+  // Strip leading question number (e.g. "Q1.", "Question 1:", "1.", "(1)", "[1]") and trailing marks column digits
+  questionPrompt = questionPrompt.replace(/^(?:(?:Q(?:uestion)?|Prob(?:lem)?|Ex(?:ercise)?)\.?\s*)?(?:\(|\[)?\d{1,4}(?:\)|\]|\.|\:|\-)\s*/i, '').trim();
+  // Strip trailing marks tag from prompt e.g. "[2 Marks]" or "(3M)"
+  questionPrompt = questionPrompt.replace(/\s*(?:\[|\()\s*\d+\s*(?:marks?|pts?|points?|m)?\s*(?:\]|\))\s*$/i, '').trim();
   questionPrompt = sanitizeLatexString(questionPrompt);
 
-  // Auto-detect marks based on standard paper sections or explicit markers
-  let detectedMarks = detectMarksFromText(text);
-  if (qNumber >= 1 && qNumber <= 33 && (!text.includes('Mark') && !text.includes('mark'))) {
-    if (qNumber <= 16) detectedMarks = 1;
-    else if (qNumber <= 21) detectedMarks = 2;
-    else if (qNumber <= 28) detectedMarks = 3;
-    else if (qNumber <= 30) detectedMarks = 4;
-    else if (qNumber <= 33) detectedMarks = 5;
-  }
+  // Auto-detect marks based on explicit markers, section defaults, or question nature
+  let detectedMarks = detectMarksFromText(text, defaultMarks);
 
   // Auto-detect Chapter & Difficulty
   const detectedChapter = detectChapterFromText({ text: questionPrompt || text, targetSubject, grade });
@@ -456,77 +503,130 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
 }
 
 /**
- * Intelligent local multi-question parser supporting full board papers (Q1..33),
- * multi-section PDF extracts, and pasted worksheets.
+ * Universal multi-format local question parser.
+ * Handles ANY assessment PDF or worksheet format:
+ * - Numbered questions: "1.", "1)", "(1)", "[1]", "Q1.", "Q1:", "Q.1", "Question 1:", "Problem 1."
+ * - Section headers with marks inheritance: SECTION A (1M), SECTION B (2M), SECTION C (3M), SECTION D (4M), SECTION E (5M)
+ * - Multi-part questions: preserves (a), (b), (i), (ii) within parent question
+ * - Unnumbered worksheets: splits intelligently on paragraph boundaries
+ * - Accurately detects and returns the true question count
  */
 function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category = 'CBSE_PYQ', grade = '12' }) {
   if (!rawText || !rawText.trim()) {
     rawText = `Calculate the fundamental parameters for ${targetSubject} under standard atmospheric conditions.`;
   }
 
-  // Pre-clean PUA characters, symbol fonts, wave symbols and scientific exponents across raw document
   const normalizedRaw = sanitizeLatexString(rawText);
+  const lines = normalizedRaw.split(/\r?\n/);
 
-  // 1. Check if document has numbered questions like 1. ... 2. ... (CBSE / State Board paper)
-  const lines = normalizedRaw.split('\n');
-  const questionsMap = new Map();
-  let currentQ = null;
-  let isEnglish = true;
-  let hasNumberedStructure = false;
+  const questionsList = [];
+  let currentSectionMarks = null;
+  let currentQNumber = null;
+  let currentQLines = [];
+  let currentQDefaultMarks = null;
+
+  const commitCurrentQuestion = () => {
+    if (currentQLines.length > 0 && currentQNumber !== null) {
+      const qText = currentQLines.join('\n').trim();
+      if (qText.length >= 8) {
+        questionsList.push({
+          qNumber: currentQNumber,
+          text: qText,
+          defaultMarks: currentQDefaultMarks
+        });
+      }
+    }
+    currentQLines = [];
+    currentQNumber = null;
+  };
+
+  // Section header matcher: SECTION A, SECTION B, Section - C, Part A, etc.
+  const sectionRegex = /^(?:SECTION|PART)\s*[\-\–]?\s*([A-E])(?:\s*[:\-–]\s*|\s+|$)(.*)$/i;
+
+  // Question header matcher: Q1., Question 1:, 1., (1), [1], 1), Prob 1:, etc.
+  const qHeaderRegex = /^(?:(?:Q(?:uestion)?|Prob(?:lem)?|Ex(?:ercise)?)\.?\s*)?(?:\(|\[)?([0-9]{1,4})(?:\)|\]|\.|\:|\-)\s*(.*)$/i;
 
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i].trim();
     if (!rawLine) continue;
 
-    // Detect question header e.g. "1. A particle...", "Q1. ...", "Question 1: ..."
-    const qMatch = rawLine.match(/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+(.*)$/i);
-    if (qMatch) {
-      const qNum = parseInt(qMatch[1], 10);
-      const rest = qMatch[2].trim();
-      const isEngLine = /^[A-Za-z]/.test(rest) || /[a-zA-Z]{3,}/.test(rest);
+    // Filter out common paper watermarks, pagination boilerplate, and instructions
+    if (rawLine.includes('~55/3/1~') || rawLine.includes('P.T.O.') || rawLine.includes('खण्ड') || rawLine.includes('नोट NOTE') || rawLine.includes('General Instructions') || /^Page\s+\d+\s+of\s+\d+$/i.test(rawLine)) {
+      continue;
+    }
 
-      if (isEngLine && qNum >= 1 && qNum <= 1000) {
-        currentQ = qNum;
-        isEnglish = true;
-        hasNumberedStructure = true;
-        questionsMap.set(currentQ, [rawLine]);
-        continue;
-      } else if (!isEngLine) {
-        isEnglish = false;
+    // Check for Section Header (SECTION A, SECTION B, etc.)
+    const secMatch = rawLine.match(sectionRegex);
+    if (secMatch) {
+      commitCurrentQuestion();
+      const secLetter = secMatch[1].toUpperCase();
+      const secDetails = (secMatch[2] || '').toLowerCase();
+
+      // Check if section line explicitly specifies marks (e.g. "SECTION B (2 MARKS EACH)")
+      const explicitSecMarks = secDetails.match(/(\d+)\s*marks?/);
+      if (explicitSecMarks) {
+        currentSectionMarks = parseInt(explicitSecMarks[1], 10);
+      } else {
+        // Standard CBSE section blueprint mapping
+        if (secLetter === 'A') currentSectionMarks = 1;
+        else if (secLetter === 'B') currentSectionMarks = 2;
+        else if (secLetter === 'C') currentSectionMarks = 3;
+        else if (secLetter === 'D') currentSectionMarks = 4;
+        else if (secLetter === 'E') currentSectionMarks = 5;
+      }
+      continue;
+    }
+
+    // Check for Question Header
+    const qMatch = rawLine.match(qHeaderRegex);
+    if (qMatch) {
+      const numVal = parseInt(qMatch[1], 10);
+      const restText = qMatch[2].trim();
+
+      // Ensure it's a valid question number (1 to 1000)
+      if (numVal >= 1 && numVal <= 1000) {
+        commitCurrentQuestion();
+        currentQNumber = numVal;
+        currentQDefaultMarks = currentSectionMarks;
+        currentQLines.push(rawLine);
         continue;
       }
     }
 
-    if (currentQ && isEnglish) {
-      // Filter out header/footer boilerplate
-      if (rawLine.includes('~55/3/1~') || rawLine.includes('P.T.O.') || rawLine.includes('•') || rawLine.includes('खण्ड') || rawLine.includes('नोट NOTE') || rawLine.includes('General Instructions')) {
+    // Check if line is just a number alone on a line: e.g. "1." or "2)"
+    const numOnlyMatch = rawLine.match(/^([0-9]{1,4})[\.\)]$/);
+    if (numOnlyMatch) {
+      const numVal = parseInt(numOnlyMatch[1], 10);
+      if (numVal >= 1 && numVal <= 1000) {
+        commitCurrentQuestion();
+        currentQNumber = numVal;
+        currentQDefaultMarks = currentSectionMarks;
+        currentQLines.push(rawLine);
         continue;
       }
-      if (/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+[^\x00-\x7F]/.test(rawLine)) {
-        isEnglish = false;
-        continue;
-      }
-      questionsMap.get(currentQ).push(rawLine);
+    }
+
+    // Normal line: if inside a question, append it
+    if (currentQNumber !== null) {
+      currentQLines.push(rawLine);
     }
   }
 
-  // If structured numbered questions were found, map each to a structured question
-  if (hasNumberedStructure && questionsMap.size > 1) {
-    const structuredQuestions = [];
-    const sortedKeys = Array.from(questionsMap.keys()).sort((a, b) => a - b);
+  // Commit last accumulated question
+  commitCurrentQuestion();
 
-    for (const qNum of sortedKeys) {
-      const qLines = questionsMap.get(qNum);
-      const chunk = qLines.join('\n');
-      const parsedQ = parseSingleQuestionText({
-        text: chunk,
+  // If structured questions were identified (> 0), process each individually
+  if (questionsList.length > 0) {
+    const structuredQuestions = questionsList.map((item, idx) => {
+      return parseSingleQuestionText({
+        text: item.text,
         targetSubject,
         grade,
         category,
-        qNumber: qNum
+        qNumber: item.qNumber || (idx + 1),
+        defaultMarks: item.defaultMarks
       });
-      structuredQuestions.push(parsedQ);
-    }
+    });
 
     return {
       detected_question_count: structuredQuestions.length,
@@ -535,17 +635,17 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
     };
   }
 
-  // Fallback to standard split regex for shorter sheets / unnumbered questions
-  const splitRegex = /(?=(?:^|\n)(?:Q(?:uestion)?\.?\s*\d+[\.:\)]|\d+[\.:\)])\s+)/i;
-  const parts = rawText.split(splitRegex).map(p => p.trim()).filter(p => p.length > 5);
-  const questionChunks = parts.length > 0 ? parts : [rawText];
-  const structuredQuestions = questionChunks.map((chunk, idx) => {
+  // Fallback for completely unnumbered papers / sheets (paragraphs separated by blank lines)
+  const paragraphs = normalizedRaw.split(/\n\s*\n+/).map(p => p.trim()).filter(p => p.length >= 25);
+  const chunks = paragraphs.length > 0 ? paragraphs : [normalizedRaw];
+  const structuredQuestions = chunks.map((chunk, idx) => {
     return parseSingleQuestionText({
       text: chunk,
       targetSubject,
       grade,
       category,
-      qNumber: idx + 1
+      qNumber: idx + 1,
+      defaultMarks: currentSectionMarks
     });
   });
 
@@ -560,7 +660,7 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
  * Multimodal extraction using Google Gemini
  */
 async function callGeminiMultimodal({ apiKey, mediaData, mimeType, promptText }) {
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
   let lastError = null;
 
   let cleanData = mediaData;
@@ -572,7 +672,7 @@ async function callGeminiMultimodal({ apiKey, mediaData, mimeType, promptText })
     try {
       const cleanModel = model.replace(/^models\//, '');
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout guard
+      const timeoutId = setTimeout(() => controller.abort(), 18000); // 18s timeout guard
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
 
@@ -612,7 +712,7 @@ async function callGeminiMultimodal({ apiKey, mediaData, mimeType, promptText })
       }
 
       const json = await response.json();
-      const rawText = json.candidates[0].content.parts[0].text;
+      const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
       return cleanAndParseJson(rawText);
     } catch (err) {
       lastError = err;
@@ -621,6 +721,60 @@ async function callGeminiMultimodal({ apiKey, mediaData, mimeType, promptText })
   }
 
   throw lastError || new Error('All Gemini multimodal model attempts failed.');
+}
+
+/**
+ * Text extraction using Google Gemini Flash
+ */
+async function callGeminiTextExtraction({ apiKey, systemPrompt, userPrompt }) {
+  const models = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      const cleanModel = model.replace(/^models\//, '');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { text: `${systemPrompt}\n\n${userPrompt}` }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.2
+          }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini Text ${model} HTTP ${response.status}: ${errorText}`);
+      }
+
+      const json = await response.json();
+      const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      return cleanAndParseJson(rawText);
+    } catch (err) {
+      lastError = err;
+      console.warn(`[INJECTION SERVICE] Gemini text attempt with ${model} failed: ${err.message}. Trying next...`);
+    }
+  }
+
+  throw lastError || new Error('All Gemini text extraction models failed.');
 }
 
 /**
@@ -633,7 +787,7 @@ async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
   for (const model of models) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -649,7 +803,7 @@ async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.2,
-          max_tokens: 3000
+          max_tokens: 4000
         }),
         signal: controller.signal
       });
@@ -704,7 +858,7 @@ The teacher has uploaded an assessment document (PDF, test paper photo, or paste
 CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
 1. Extract ALL distinct questions present in the document. Do not stop at only 1 question.
 2. For EVERY question, AUTOMATICALLY IDENTIFY AND CLASSIFY:
-   - "chapter_name": The exact NCERT Chapter it belongs to (e.g. Electric Charges and Fields, Alternating Current, Solutions, Integrals).
+   - "chapter_name": The exact NCERT Chapter it belongs to (e.g. Electric Charges and Fields, Alternating Current, Solutions, Integrals, Quadratic Equations).
    - "marks_weightage": The marks weightage (1 for MCQ/Objective, 2 for Short, 3 for Standard Problem/Numerical, 4 for Case Study, 5 for Long Derivation/Proof).
    - "difficulty": "EASY", "MEDIUM", or "HARD" based on Bloom's taxonomy.
 3. Clean KaTeX LaTeX formatting: $...$ for inline math, $$...$$ for display equations.
@@ -737,7 +891,7 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
   ]
 }`;
 
-  // 1. PDF Mode: Use Native High-Fidelity PDF Engine First (handles 20-50+ page exam papers instantly)
+  // 1. PDF Mode: Use Native High-Fidelity PDF Engine First (handles any PDF document)
   let pdfText = '';
   if ((mode === 'pdf' || mimeType === 'application/pdf' || (mediaData && mediaData.startsWith('data:application/pdf'))) && mediaData) {
     try {
@@ -776,9 +930,50 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
     }
   }
 
-  // If PDF text was extracted, parse all questions directly
-  if (pdfText && pdfText.length > 50) {
-    console.log('[INJECTION SERVICE] Parsing structured questions from PDF text...');
+  // If PDF text was extracted and has meaningful content
+  if (pdfText && pdfText.trim().length >= 30) {
+    console.log(`[INJECTION SERVICE] PDF text extracted (${pdfText.length} chars). Invoking intelligent AI extraction pipeline...`);
+
+    // 1. First priority: Groq LPU (Sub-second extraction with full structure)
+    if (groqKey) {
+      try {
+        console.log('[INJECTION SERVICE] Parsing PDF text via Groq Cloud LPU...');
+        const userPrompt = `Extract, count, and auto-categorize all questions from this academic assessment document for discipline: ${targetSubject} (Class ${grade}).\n\nPDF TEXT CONTENT:\n${pdfText}`;
+        const groqResult = await callGroqTextExtraction({
+          apiKey: groqKey,
+          systemPrompt: systemInstructions,
+          userPrompt
+        });
+        if (groqResult && ((Array.isArray(groqResult.questions) && groqResult.questions.length > 0) || groqResult.question_latex)) {
+          console.log(`[INJECTION SERVICE] Groq successfully extracted ${groqResult.questions ? groqResult.questions.length : 1} question(s) from PDF!`);
+          return normalizeExtractedPayload(groqResult, targetSubject, grade, category);
+        }
+      } catch (gErr) {
+        console.warn(`[INJECTION SERVICE] Groq PDF text processing failed: ${gErr.message}. Trying Gemini...`);
+      }
+    }
+
+    // 2. Second priority: Gemini Flash (Deep comprehension & Math rendering)
+    if (geminiKey) {
+      try {
+        console.log('[INJECTION SERVICE] Parsing PDF text via Gemini Flash...');
+        const userPrompt = `Extract, count, and auto-categorize all questions from this academic assessment document for discipline: ${targetSubject} (Class ${grade}).\n\nPDF TEXT CONTENT:\n${pdfText}`;
+        const gemResult = await callGeminiTextExtraction({
+          apiKey: geminiKey,
+          systemPrompt: systemInstructions,
+          userPrompt
+        });
+        if (gemResult && ((Array.isArray(gemResult.questions) && gemResult.questions.length > 0) || gemResult.question_latex)) {
+          console.log(`[INJECTION SERVICE] Gemini successfully extracted ${gemResult.questions ? gemResult.questions.length : 1} question(s) from PDF!`);
+          return normalizeExtractedPayload(gemResult, targetSubject, grade, category);
+        }
+      } catch (gemErr) {
+        console.warn(`[INJECTION SERVICE] Gemini PDF text processing failed: ${gemErr.message}. Falling back to universal local parser.`);
+      }
+    }
+
+    // 3. Robust Local Universal Parser Fallback
+    console.log('[INJECTION SERVICE] Using enhanced universal multi-format local parser on PDF text...');
     const parsedPdf = parseRawTextLocally({
       rawText: pdfText,
       targetSubject,
@@ -786,8 +981,27 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
       grade
     });
     if (parsedPdf && parsedPdf.questions && parsedPdf.questions.length > 0) {
-      console.log(`[INJECTION SERVICE] Successfully extracted ${parsedPdf.questions.length} auto-categorized questions from PDF!`);
+      console.log(`[INJECTION SERVICE] Local universal parser successfully extracted ${parsedPdf.questions.length} questions from PDF!`);
       return normalizeExtractedPayload(parsedPdf, targetSubject, grade, category);
+    }
+  }
+
+  // If PDF has no text extracted (scanned/raster/image PDF) and mediaData is present, try Gemini Multimodal
+  if (mode === 'pdf' && mediaData && geminiKey) {
+    try {
+      console.log('[INJECTION SERVICE] PDF text was empty or scanned. Processing multimodal PDF via Gemini Flash...');
+      const prompt = `${systemInstructions}\n\nTask: Read the attached PDF document pages visually. Extract ALL questions present in this test paper for discipline: ${targetSubject} (Class ${grade}). Automatically categorize chapter, marks (1-5), and difficulty for each question. Return JSON strictly matching the requested schema.`;
+      const extracted = await callGeminiMultimodal({
+        apiKey: geminiKey,
+        mediaData,
+        mimeType: 'application/pdf',
+        promptText: prompt
+      });
+      if (extracted && ((Array.isArray(extracted.questions) && extracted.questions.length > 0) || extracted.question_latex)) {
+        return normalizeExtractedPayload(extracted, targetSubject, grade, category);
+      }
+    } catch (scannedErr) {
+      console.warn(`[INJECTION SERVICE] Multimodal PDF extraction failed: ${scannedErr.message}.`);
     }
   }
 
@@ -810,7 +1024,7 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
     }
   }
 
-  // 2. Text Mode: Use Groq Cloud first, then Gemini
+  // 3. Text Mode: Use Groq Cloud first, then Gemini
   if (rawText && rawText.trim()) {
     if (groqKey) {
       try {
@@ -832,15 +1046,14 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
     if (geminiKey) {
       try {
         console.log('[INJECTION SERVICE] Processing text via Google Gemini Flash...');
-        const { callGeminiApi } = require('./llmQuestionEngine');
         const userPrompt = `Extract and auto-categorize all questions from this teacher-provided text:\n\n${rawText}`;
-        const gemResult = await callGeminiApi({
+        const gemResult = await callGeminiTextExtraction({
           apiKey: geminiKey,
           systemPrompt: systemInstructions,
           userPrompt
         });
-        if (gemResult && gemResult.data && (gemResult.data.questions || gemResult.data.question_latex)) {
-          return normalizeExtractedPayload(gemResult.data, targetSubject, grade, category);
+        if (gemResult && (gemResult.questions || gemResult.question_latex)) {
+          return normalizeExtractedPayload(gemResult, targetSubject, grade, category);
         }
       } catch (err) {
         console.warn(`[INJECTION SERVICE] Gemini text processing failed: ${err.message}.`);
@@ -848,8 +1061,8 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
     }
   }
 
-  // 3. Fallback: Intelligent Local Multi-Question Parser
-  console.log('[INJECTION SERVICE] Using intelligent local KaTeX multi-question parser fallback.');
+  // 4. Fallback: Universal Local Multi-Question Parser
+  console.log('[INJECTION SERVICE] Using universal local KaTeX multi-question parser fallback.');
   const localParsed = parseRawTextLocally({
     rawText: rawText || `Calculate the fundamental parameters for ${targetSubject} under standard atmospheric conditions.`,
     targetSubject,
