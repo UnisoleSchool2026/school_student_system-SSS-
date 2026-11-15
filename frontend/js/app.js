@@ -615,6 +615,11 @@ window.openRoleGatewayModal = function() {
     modal.style.display = 'flex';
     modal.classList.add('active');
     initLucideIcons();
+    if (typeof window.selectFacultyCard === 'function') {
+      window.selectFacultyCard(window.CURRENT_SELECTED_DEPT || 'CHEMISTRY', false);
+    } else if (typeof window.selectDepartmentLogin === 'function') {
+      window.selectDepartmentLogin(window.CURRENT_SELECTED_DEPT || 'CHEMISTRY');
+    }
   }
 };
 
@@ -765,6 +770,415 @@ window.loginAsFaculty = function(facultyKey) {
   setTimeout(() => banner.remove(), 4000);
 };
 
+window.CURRENT_SELECTED_DEPT = 'CHEMISTRY';
+
+/**
+ * ==============================================================================
+ * FACULTY DEPARTMENT SELECTION & CREDENTIAL VERIFICATION SYSTEM
+ * ==============================================================================
+ * Feature: 2-Step Faculty Role Gateway & Department Scope Isolation
+ * 
+ * Flow:
+ * 1. Step 1 (Visual Card Selection):
+ *    - Teacher sees 6 Department Cards (Physics, Chemistry, Maths, Biology, Class 10 Sci/Math).
+ *    - Clicking a card triggers selectFacultyCard(deptKey).
+ *    - Prevents immediate auto-login so the user can inspect assigned credentials.
+ *    - Visually marks card with an active border & '✓ Selected' badge.
+ * 
+ * 2. Step 2 (Credential Verification & Form Population):
+ *    - Populates the dedicated department credentials form (Phone, Name, Scope, Grade).
+ *    - Keeps the Role Gateway modal open for inspection.
+ *    - Smoothly scrolls to the credentials form for user confirmation.
+ * 
+ * 3. Step 3 (Explicit Authentication Submission):
+ *    - On clicking "Sign In as [Department] Faculty" (submitDedicatedDepartmentLogin):
+ *      Profile is locked, saved to localStorage, department scopes are isolated,
+ *      modal is closed, and the Teacher Portal interface is rendered.
+ * ==============================================================================
+ */
+
+/**
+ * selectFacultyCard
+ * Called when a teacher clicks one of the 6 faculty cards in the role gateway modal.
+ * Highlights the chosen card, shows the "Selected" badge, populates the teacher's
+ * credentials in Step 2, and keeps the modal open for credential review.
+ *
+ * @param {string} deptKey - Department key ('PHYSICS' | 'CHEMISTRY' | 'MATHEMATICS' | 'BIOLOGY' | 'CLASS10_SCIENCE' | 'CLASS10_MATHEMATICS')
+ * @param {boolean} [autoScroll=true] - Whether to smoothly scroll to the credentials card
+ */
+window.selectFacultyCard = function(deptKey, autoScroll = true) {
+  if (!deptKey) deptKey = 'CHEMISTRY';
+  window.CURRENT_SELECTED_DEPT = deptKey;
+
+  // 1. Update Card selection UI (highlight active card, update badge)
+  const cardSelectorMap = {
+    'PHYSICS': '.faculty-dept-card.card-physics',
+    'CHEMISTRY': '.faculty-dept-card.card-chemistry',
+    'MATHEMATICS': '.faculty-dept-card.card-mathematics',
+    'BIOLOGY': '.faculty-dept-card.card-biology',
+    'CLASS10_SCIENCE': '.faculty-dept-card.card-class10-science',
+    'CLASS10_MATHEMATICS': '.faculty-dept-card.card-class10-maths'
+  };
+
+  // Remove previous selection states across all cards
+  document.querySelectorAll('.faculty-dept-card').forEach(card => {
+    card.classList.remove('selected');
+    const badge = card.querySelector('.card-selected-badge');
+    if (badge) badge.style.display = 'none';
+  });
+
+  // Apply active selection state to the clicked card
+  const activeSelector = cardSelectorMap[deptKey] || `.faculty-dept-card[data-dept="${deptKey}"]`;
+  if (activeSelector) {
+    const activeCard = document.querySelector(activeSelector);
+    if (activeCard) {
+      activeCard.classList.add('selected');
+      const badge = activeCard.querySelector('.card-selected-badge');
+      if (badge) badge.style.display = 'inline-flex';
+    }
+  }
+
+  // 2. Populate the credential inspection form with verified department data
+  if (typeof window.selectDepartmentLogin === 'function') {
+    window.selectDepartmentLogin(deptKey);
+  }
+
+  // 3. Smooth scroll down to the credentials card so the teacher credentials are immediately visible
+  if (autoScroll) {
+    const credCard = document.getElementById('deptCredentialsCard');
+    if (credCard) {
+      credCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      credCard.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+      credCard.style.borderColor = '#38bdf8';
+      credCard.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.4)';
+      setTimeout(() => {
+        credCard.style.boxShadow = '0 12px 30px rgba(0,0,0,0.4)';
+        credCard.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+      }, 700);
+    }
+  }
+};
+
+window.selectDepartmentLogin = function(deptKey) {
+  window.CURRENT_SELECTED_DEPT = deptKey;
+
+  // 1. Update Tabs styling
+  const tabIds = {
+    'CHEMISTRY': 'btnFilterChemistry',
+    'PHYSICS': 'btnFilterPhysics',
+    'MATHEMATICS': 'btnFilterMaths',
+    'BIOLOGY': 'btnFilterBiology',
+    'CLASS10': 'btnFilterClass10',
+    'CLASS10_SCIENCE': 'btnFilterClass10',
+    'CLASS10_MATHEMATICS': 'btnFilterClass10'
+  };
+
+  Object.entries(tabIds).forEach(([key, id]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (key === deptKey || (key === 'CLASS10' && (deptKey === 'CLASS10_SCIENCE' || deptKey === 'CLASS10_MATHEMATICS'))) {
+      btn.classList.add('active');
+      btn.style.background = 'rgba(56,189,248,0.2)';
+      btn.style.borderColor = '#38bdf8';
+      btn.style.color = '#38bdf8';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = 'rgba(15,23,42,0.6)';
+      btn.style.borderColor = 'rgba(255,255,255,0.15)';
+      btn.style.color = '#cbd5e1';
+    }
+  });
+
+  // 2. Department Data Presets
+  const DEPT_DATA = {
+    CHEMISTRY: {
+      avatar: '👩‍🏫',
+      name: 'Prof. Sunita Rao',
+      badge: 'CHEMISTRY HOD',
+      designation: 'Senior Chemistry Faculty &bull; Classes 11 &amp; 12 (NEET &amp; JEE Focus)',
+      bankInfo: '🧪 Physical, Organic &amp; Inorganic Bank',
+      phone: '98160 10002',
+      scopeText: 'CHEMISTRY ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '12', label: 'Class 12th (Senior Chemistry - 12-NonMed & 12-Med)' },
+        { val: '11', label: 'Class 11th (Senior Chemistry - 11-NonMed & 11-Med)' }
+      ],
+      btnText: 'Sign In as Chemistry Faculty',
+      statusText: '✓ Ready: Chemistry department scope isolated for Prof. Sunita Rao'
+    },
+    PHYSICS: {
+      avatar: '👨‍🏫',
+      name: 'Dr. Vikram Sharma',
+      badge: 'PHYSICS HOD',
+      designation: 'Senior Physics Faculty &bull; Classes 11 &amp; 12 (JEE Main/Adv &amp; Boards)',
+      bankInfo: '⚡ Mechanics, Electromagnetism &amp; Modern Physics',
+      phone: '98160 10001',
+      scopeText: 'PHYSICS ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '12', label: 'Class 12th (Senior Physics - 12-NonMed)' },
+        { val: '11', label: 'Class 11th (Senior Physics - 11-NonMed)' }
+      ],
+      btnText: 'Sign In as Physics Faculty',
+      statusText: '✓ Ready: Physics department scope isolated for Dr. Vikram Sharma'
+    },
+    MATHEMATICS: {
+      avatar: '👨‍🏫',
+      name: 'Dr. Rajesh Iyer',
+      badge: 'MATHEMATICS HOD',
+      designation: 'Senior Mathematics Faculty &bull; Classes 11 &amp; 12 (JEE Main/Adv &amp; Boards)',
+      bankInfo: '📐 Calculus, Algebra &amp; Vectors Bank',
+      phone: '98160 10004',
+      scopeText: 'MATHEMATICS ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '12', label: 'Class 12th (Senior Mathematics - 12-NonMed)' },
+        { val: '11', label: 'Class 11th (Senior Mathematics - 11-NonMed)' }
+      ],
+      btnText: 'Sign In as Mathematics Faculty',
+      statusText: '✓ Ready: Mathematics department scope isolated for Dr. Rajesh Iyer'
+    },
+    BIOLOGY: {
+      avatar: '👩‍⚕️',
+      name: 'Dr. Ananya Mukherjee',
+      badge: 'BIOLOGY LEAD',
+      designation: 'Senior Biology Faculty &amp; NEET Lead &bull; Classes 11 &amp; 12 Medical',
+      bankInfo: '🧬 Botany &amp; Zoology Medical Bank',
+      phone: '98160 10003',
+      scopeText: 'BIOLOGY ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '12', label: 'Class 12th (Medical Biology - 12-Med)' },
+        { val: '11', label: 'Class 11th (Medical Biology - 11-Med)' }
+      ],
+      btnText: 'Sign In as Biology Faculty',
+      statusText: '✓ Ready: Biology department scope isolated for Dr. Ananya Mukherjee'
+    },
+    CLASS10_SCIENCE: {
+      avatar: '👨‍🏫',
+      name: 'Er. Rakesh Thakur',
+      badge: 'CLASS 10 SCIENCE LEAD',
+      designation: 'Class 10th Science Faculty &bull; Board Coordinator',
+      bankInfo: '🔬 438 NCERT &amp; CBSE PYQs Bank (14 Chapters)',
+      phone: '98160 10011',
+      scopeText: 'CLASS 10 SCIENCE ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '10', label: 'Class 10th (Secondary Wing - 10-Science-A & B)' }
+      ],
+      btnText: 'Sign In as Class 10 Science Faculty',
+      statusText: '✓ Ready: Class 10 Science scope isolated for Er. Rakesh Thakur'
+    },
+    CLASS10_MATHEMATICS: {
+      avatar: '👩‍🏫',
+      name: 'Mrs. Meenakshi Sharma',
+      badge: 'CLASS 10 MATHS LEAD',
+      designation: 'Class 10th Mathematics Faculty &bull; Board Coordinator',
+      bankInfo: '🔢 438 NCERT &amp; CBSE PYQs Bank (15 Chapters)',
+      phone: '98160 10010',
+      scopeText: 'CLASS 10 MATHEMATICS ONLY (Strict Isolation)',
+      gradeOptions: [
+        { val: '10', label: 'Class 10th (Secondary Wing - 10-Maths-A & B)' }
+      ],
+      btnText: 'Sign In as Class 10 Mathematics Faculty',
+      statusText: '✓ Ready: Class 10 Maths scope isolated for Mrs. Meenakshi Sharma'
+    },
+    CLASS10: {
+      avatar: '👨‍🏫',
+      name: 'Er. Rakesh Thakur',
+      badge: 'CLASS 10 COORDINATOR',
+      designation: 'Class 10th Science &amp; Mathematics Faculty &bull; Board Coordinator',
+      bankInfo: '🔬 438 NCERT &amp; CBSE PYQs Bank (14 Chapters)',
+      phone: '98160 10011',
+      scopeText: 'CLASS 10 FOUNDATION ONLY',
+      gradeOptions: [
+        { val: '10', label: 'Class 10th (Secondary Wing - 10-Science-A & B)' }
+      ],
+      btnText: 'Sign In as Class 10 Faculty',
+      statusText: '✓ Ready: Class 10 Foundation scope isolated for Er. Rakesh Thakur'
+    }
+  };
+
+  const data = DEPT_DATA[deptKey] || DEPT_DATA.CHEMISTRY;
+
+  // 3. Update DOM elements
+  const avatarEl = document.getElementById('deptFacultyAvatar');
+  const nameEl = document.getElementById('deptFacultyName');
+  const badgeEl = document.getElementById('deptFacultyBadge');
+  const desigEl = document.getElementById('deptFacultyDesignation');
+  const bankEl = document.getElementById('deptBankInfo');
+  const phoneInput = document.getElementById('inputDeptPhone');
+  const nameInput = document.getElementById('inputDeptFacultyName');
+  const scopeTextEl = document.getElementById('textDeptScope');
+  const gradeSelect = document.getElementById('selectDeptGrade');
+  const btnSubmit = document.getElementById('btnSubmitDeptLogin');
+  const statusEl = document.getElementById('deptAuthStatusText');
+
+  if (avatarEl) avatarEl.innerText = data.avatar;
+  if (nameEl) nameEl.innerText = data.name;
+  if (badgeEl) badgeEl.innerText = data.badge;
+  if (desigEl) desigEl.innerHTML = data.designation;
+  if (bankEl) bankEl.innerText = data.bankInfo;
+  if (phoneInput) phoneInput.value = data.phone;
+  if (nameInput) nameInput.value = data.name;
+  if (scopeTextEl) scopeTextEl.innerText = data.scopeText;
+  if (statusEl) statusEl.innerText = data.statusText;
+  if (btnSubmit) {
+    btnSubmit.innerHTML = `<span>${data.btnText}</span> <i data-lucide="arrow-right" style="width:16px; height:16px;"></i>`;
+    if (typeof initLucideIcons === 'function') initLucideIcons();
+  }
+
+  if (gradeSelect) {
+    gradeSelect.innerHTML = data.gradeOptions.map(g => `<option value="${g.val}">${g.label}</option>`).join('');
+  }
+};
+
+window.submitDedicatedDepartmentLogin = function(event) {
+  if (event) event.preventDefault();
+  const deptKey = window.CURRENT_SELECTED_DEPT || 'CHEMISTRY';
+  const phone = document.getElementById('inputDeptPhone')?.value || '98160 10002';
+  const name = document.getElementById('inputDeptFacultyName')?.value || 'Prof. Sunita Rao';
+  const grade = document.getElementById('selectDeptGrade')?.value || '12';
+
+  const FACULTY_DIRECTORY = {
+    CHEMISTRY: {
+      id: 'fac_chem_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'sunita.chem@haps.edu.in',
+      subjectKey: 'CHEMISTRY',
+      subjectName: 'Chemistry',
+      grade: grade,
+      role: 'TEACHER',
+      designation: 'Senior Chemistry Faculty & HOD',
+      defaultClass: grade === '11' ? '11-NonMed' : '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Chemistry • Classes 11 & 12 (NEET, JEE Main & CBSE Boards)'
+    },
+    PHYSICS: {
+      id: 'fac_phy_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'vikram.phy@haps.edu.in',
+      subjectKey: 'PHYSICS',
+      subjectName: 'Physics',
+      grade: grade,
+      role: 'TEACHER',
+      designation: 'Senior Physics Faculty & HOD',
+      defaultClass: grade === '11' ? '11-NonMed' : '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Physics • Classes 11 & 12 (JEE Main/Adv & CBSE Boards)'
+    },
+    MATHEMATICS: {
+      id: 'fac_math_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'rajesh.math@haps.edu.in',
+      subjectKey: 'MATHEMATICS',
+      subjectName: 'Mathematics',
+      grade: grade,
+      role: 'TEACHER',
+      designation: 'Senior Mathematics Faculty & HOD',
+      defaultClass: grade === '11' ? '11-NonMed' : '12-NonMed',
+      targetStream: 'JEE',
+      streamText: 'Assigned Subject: Mathematics • Classes 11 & 12 (JEE Main/Adv & CBSE Boards)'
+    },
+    BIOLOGY: {
+      id: 'fac_bio_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'ananya.bio@haps.edu.in',
+      subjectKey: 'BIOLOGY',
+      subjectName: 'Biology',
+      grade: grade,
+      role: 'TEACHER',
+      designation: 'Senior Biology Faculty & NEET Coordinator',
+      defaultClass: grade === '11' ? '11-Med' : '12-Med',
+      targetStream: 'NEET',
+      streamText: 'Assigned Subject: Biology • Classes 11 & 12 Medical (NEET UG & CBSE Boards)'
+    },
+    CLASS10_SCIENCE: {
+      id: 'fac_c10_sci_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'rakesh.sci10@haps.edu.in',
+      subjectKey: 'CLASS10_SCIENCE',
+      subjectName: 'Science',
+      grade: '10',
+      role: 'TEACHER',
+      designation: 'Class 10th Science Faculty & Board Coordinator',
+      defaultClass: '10-Science-A',
+      targetStream: 'CBSE_CLASS_10',
+      streamText: 'Assigned Subject: Science • Class 10 (CBSE & HP Board Foundation)'
+    },
+    CLASS10_MATHEMATICS: {
+      id: 'fac_c10_math_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'meenakshi.math10@haps.edu.in',
+      subjectKey: 'CLASS10_MATHEMATICS',
+      subjectName: 'Mathematics',
+      grade: '10',
+      role: 'TEACHER',
+      designation: 'Class 10th Mathematics Faculty & Board Coordinator',
+      defaultClass: '10-Maths-A',
+      targetStream: 'CBSE_CLASS_10',
+      streamText: 'Assigned Subject: Mathematics • Class 10 (CBSE & HP Board Foundation)'
+    },
+    CLASS10: {
+      id: 'fac_c10_sci_01',
+      name: name,
+      full_name: name,
+      phone: phone,
+      email: 'rakesh.sci10@haps.edu.in',
+      subjectKey: 'CLASS10_SCIENCE',
+      subjectName: 'Science',
+      grade: '10',
+      role: 'TEACHER',
+      designation: 'Class 10th Science Faculty & Board Coordinator',
+      defaultClass: '10-Science-A',
+      targetStream: 'CBSE_CLASS_10',
+      streamText: 'Assigned Subject: Science • Class 10 (CBSE & HP Board Foundation)'
+    }
+  };
+
+  const prof = FACULTY_DIRECTORY[deptKey] || FACULTY_DIRECTORY.CHEMISTRY;
+  teacherBuilderState.activeTeacher = prof;
+  teacherBuilderState.teacherSubjectKey = prof.subjectKey;
+  teacherBuilderState.selectedSubjectKey = prof.subjectKey;
+  teacherBuilderState.activeGrade = prof.grade;
+  teacherBuilderState.selectedClassId = prof.defaultClass;
+
+  try {
+    localStorage.setItem('haps_teacher_profile', JSON.stringify(prof));
+    localStorage.setItem('haps_active_teacher', JSON.stringify(prof));
+    localStorage.setItem('haps_active_role', 'teacher');
+  } catch (e) {}
+
+  if (typeof applyTeacherProfile === 'function') {
+    applyTeacherProfile(prof, false);
+  }
+
+  window.closeRoleGatewayModal();
+  state.activeTeacherTab = 'tabTeacherCreateTestAndPaper';
+  switchPortalRole('teacher');
+
+  const banner = document.createElement('div');
+  banner.className = 'role-switch-toast';
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(prof.name)}</strong> (${prof.subjectName} Expert &bull; Class ${prof.grade}th Scope Active). Department scope isolated.</span>`;
+  document.body.appendChild(banner);
+  if (typeof initLucideIcons === 'function') initLucideIcons();
+  setTimeout(() => banner.remove(), 4000);
+};
+
+window.filterFacultyByDept = function(deptKey) {
+  if (typeof window.selectDepartmentLogin === 'function') {
+    window.selectDepartmentLogin(deptKey);
+  }
+};
+
 window.handleGatewayPhoneLookup = function(phoneVal) {
   const clean = (phoneVal || '').replace(/\D/g, '');
   const statusEl = document.getElementById('gatewayPhoneLookupStatus');
@@ -789,6 +1203,10 @@ window.handleGatewayPhoneLookup = function(phoneVal) {
     if (statusEl) {
       statusEl.style.display = 'block';
       statusEl.innerHTML = `✓ Registered Faculty: <strong>${found.name}</strong> (${found.subj})`;
+    }
+    const deptKey = (found.subj.startsWith('CLASS10')) ? 'CLASS10' : found.subj;
+    if (typeof window.filterFacultyByDept === 'function') {
+      window.filterFacultyByDept(deptKey, false);
     }
   } else if (statusEl) {
     statusEl.style.display = 'none';
@@ -1077,11 +1495,15 @@ function switchPortalRole(role) {
   } else {
     // Teacher Role (STRICT ROLE LOCK APPLIED)
     document.body.classList.add('role-teacher');
-    if (switchRoleBtn) switchRoleBtn.style.display = 'none';
+    if (switchRoleBtn) {
+      switchRoleBtn.style.display = 'inline-flex';
+      const switchSpan = switchRoleBtn.querySelector('span');
+      if (switchSpan) switchSpan.innerText = 'Switch Department ⇄';
+    }
     if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'inline-flex';
     if (headerRoleBadge) {
-      headerRoleBadge.style.cursor = 'default';
-      headerRoleBadge.title = 'Faculty Profile (Role-Locked)';
+      headerRoleBadge.style.cursor = 'pointer';
+      headerRoleBadge.title = 'Click to switch teaching class or department';
     }
     if (drawerPortalViews) drawerPortalViews.style.display = 'none';
 
@@ -15264,6 +15686,14 @@ function applyTeacherProfile(prof, notify = false) {
   // Student Smartboard header sync
   const sbHeader = document.getElementById('smartboardFacultyHeader');
   if (sbHeader) sbHeader.innerText = `${prof.name || 'Faculty'} Live AI Smartboard Session`;
+
+  // Syllabus tracking hero banner sync
+  const syllabusHeroTitle = document.getElementById('syllabusHeroTitle');
+  const syllabusHeroDept = document.getElementById('syllabusHeroDept');
+  const syllabusHeroFacultyName = document.getElementById('syllabusHeroFacultyName');
+  if (syllabusHeroTitle) syllabusHeroTitle.innerText = `Senior ${prof.subjectName} Curriculum • Syllabus Tracking`;
+  if (syllabusHeroDept) syllabusHeroDept.innerText = prof.subjectName;
+  if (syllabusHeroFacultyName) syllabusHeroFacultyName.innerText = prof.name || prof.full_name;
 
   // Drawer faculty info update
   const drawerName = document.getElementById('drawerFacultyName');
