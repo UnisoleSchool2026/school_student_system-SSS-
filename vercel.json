@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "outputDirectory": "frontend",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/whiteboard",
+      "destination": "/whiteboard.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+}
