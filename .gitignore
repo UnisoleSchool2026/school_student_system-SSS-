@@ -26,6 +26,8 @@ dist/
 .vercel
 _revert_backups/
 *.pdf
+.git_*
+*.bak
 
 # Testing & Coverage
 coverage/

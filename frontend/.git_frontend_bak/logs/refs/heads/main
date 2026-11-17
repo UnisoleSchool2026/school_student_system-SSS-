@@ -1,6 +1,0 @@
-0000000000000000000000000000000000000000 55f1b0c798dab10dd07b484d12e52f5b0bc39dbf Nitish-011 <nitishjoshi0554@gmail.com> 1794635140 +0530	commit (initial): feat(frontend): initialize standalone frontend with production CI/CD workflows
-55f1b0c798dab10dd07b484d12e52f5b0bc39dbf 6b604f17358efe79ceb124a1ba28217546aacdd9 Nitish-011 <nitishjoshi0554@gmail.com> 1794637359 +0530	commit: fix(ci): resolve gitleaks licensing and codeql permissions
-6b604f17358efe79ceb124a1ba28217546aacdd9 cf4d12bce4f137566f062f2ec348ab74be77b684 Nitish-011 <nitishjoshi0554@gmail.com> 1794639992 +0530	commit: fix(ci): make codeql non-blocking on private repositories without GHAS license
-cf4d12bce4f137566f062f2ec348ab74be77b684 af9bba78e029526c0cfb6d179bf275a8e7b54e98 Nitish-011 <nitishjoshi0554@gmail.com> 1794827402 +0530	pull origin main: Fast-forward
-af9bba78e029526c0cfb6d179bf275a8e7b54e98 2d61782a651c0fcd9f57278c830aa35343ff6018 Nitish-011 <nitishjoshi0554@gmail.com> 1794885620 +0530	pull origin main: Fast-forward
-2d61782a651c0fcd9f57278c830aa35343ff6018 3111a551407091bb6ceb5329bce35337b749373b rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918282 +0000	reset: moving to origin/main
