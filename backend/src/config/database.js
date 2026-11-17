@@ -79,7 +79,7 @@ const inMemoryStore = {
     { id: 'fac_math_01', full_name: 'Dr. Rajesh Iyer', role: 'TEACHER', phone: '9816010004', email: 'rajesh.math@haps.edu.in', subject: 'Mathematics', subjectKey: 'MATHEMATICS', department: 'MATHEMATICS', designation: 'Senior Mathematics Faculty & HOD', defaultClass: '12-NonMed', targetStream: 'JEE' },
 
     // Class 10th Secondary Foundation Faculty (Maths & Science)
-    { id: 'fac_c10_math_01', full_name: 'Mrs. Meenakshi Sharma', role: 'TEACHER', phone: '9816010010', email: 'meenakshi.math10@haps.edu.in', subject: 'Mathematics', subjectKey: 'CLASS10_MATHEMATICS', department: 'MATHEMATICS', designation: 'Class 10th Mathematics Faculty & Board Coordinator', grade: '10', defaultClass: '10-Maths-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Mathematics • Class 10 (CBSE & HP Board Foundation)' },
+    { id: 'fac_c10_math_01', full_name: 'Mrs. Meenakshi Sharma', role: 'TEACHER', phone: '9816010010', email: 'meenakshi.math10@haps.edu.in', subject: 'Mathematics', subjectKey: 'CLASS10_MATHEMATICS', department: 'MATHEMATICS', designation: 'Class 10th Mathematics Faculty & Board Coordinator', grade: '10', defaultClass: '10-Science-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Mathematics • Class 10 (CBSE & HP Board Foundation)' },
     { id: 'fac_c10_sci_01', full_name: 'Er. Rakesh Thakur', role: 'TEACHER', phone: '9816010011', email: 'rakesh.sci10@haps.edu.in', subject: 'Science', subjectKey: 'CLASS10_SCIENCE', department: 'SCIENCE', designation: 'Class 10th Science Faculty & Board Coordinator', grade: '10', defaultClass: '10-Science-A', targetStream: 'CBSE_CLASS_10', streamText: 'Assigned Subject: Science • Class 10 (CBSE & HP Board Foundation)' }
   ],
   // Standard Institutional Classes
@@ -2686,9 +2686,9 @@ const inMemoryStore = {
       id: 'asgn_10_sci_01',
       title: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
       description: 'CBSE & HP Board standard diagnostic assessment covering mirror formula, sign conventions, and image formation.',
-      teacherName: 'Er. Rajesh Kumar',
+      teacherName: 'Er. Rakesh Thakur',
       grade: '10',
-      section: 'Science-A',
+      section: '10-Science-A',
       board: 'CBSE',
       subject: 'Science',
       durationMinutes: 30,
@@ -3204,11 +3204,11 @@ const inMemoryStore = {
       submissionId: 'sub_10_sci_01_aryan',
       assessmentId: 'asgn_10_sci_01',
       assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000001',
-      studentName: 'Aryan Sharma',
-      rollNumber: '11-S-24',
+      studentId: 'b0000000-0000-0000-0000-000000000021',
+      studentName: 'Rohit Verma',
+      rollNumber: '10-A-01',
       grade: '10',
-      section: 'Science-A',
+      section: '10-Science-A',
       totalScore: 12,
       totalMarks: 12,
       percentage: 100,
@@ -3258,11 +3258,11 @@ const inMemoryStore = {
       submissionId: 'sub_10_sci_01_ananya',
       assessmentId: 'asgn_10_sci_01',
       assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000002',
-      studentName: 'Ananya Thakur',
-      rollNumber: '11-S-25',
+      studentId: 'b0000000-0000-0000-0000-000000000022',
+      studentName: 'Aditya Chauhan',
+      rollNumber: '10-A-02',
       grade: '10',
-      section: 'Science-A',
+      section: '10-Science-A',
       totalScore: 8,
       totalMarks: 12,
       percentage: 67,
@@ -3317,11 +3317,11 @@ const inMemoryStore = {
       submissionId: 'sub_10_sci_01_rohit',
       assessmentId: 'asgn_10_sci_01',
       assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000003',
-      studentName: 'Rohit Verma',
-      rollNumber: '11-S-26',
+      studentId: 'b0000000-0000-0000-0000-000000000023',
+      studentName: 'Tanvi Sood',
+      rollNumber: '10-A-03',
       grade: '10',
-      section: 'Science-A',
+      section: '10-Science-A',
       totalScore: 4,
       totalMarks: 12,
       percentage: 33,
@@ -3381,11 +3381,11 @@ const inMemoryStore = {
       submissionId: 'sub_10_sci_01_simran',
       assessmentId: 'asgn_10_sci_01',
       assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000004',
-      studentName: 'Simran Kaur',
-      rollNumber: '11-S-27',
+      studentId: 'b0000000-0000-0000-0000-000000000024',
+      studentName: 'Nikhil Rana',
+      rollNumber: '10-A-04',
       grade: '10',
-      section: 'Science-A',
+      section: '10-Science-A',
       totalScore: 8,
       totalMarks: 12,
       percentage: 67,
@@ -3436,129 +3436,8 @@ const inMemoryStore = {
       ],
       submittedAt: new Date(Date.now() - 3600000 * 3.5).toISOString()
     },
-    {
-      submissionId: 'sub_10_sci_01_aditya',
-      assessmentId: 'asgn_10_sci_01',
-      assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000005',
-      studentName: 'Aditya Chauhan',
-      rollNumber: '11-S-28',
-      grade: '10',
-      section: 'Science-A',
-      totalScore: 4,
-      totalMarks: 12,
-      percentage: 33,
-      totalTimeSpentSeconds: 360,
-      smartCardSummary: 'Significant time overrun on spherical mirrors (160s vs 90s). Needs concept re-teaching on mirror ray geometries.',
-      questionBreakdown: [
-        {
-          questionIndex: 1,
-          questionId: 'q_asgn_01',
-          topic: 'Light – Reflection and Refraction',
-          subtopic: 'Spherical Mirrors',
-          timeSpentSeconds: 160,
-          benchmarkSeconds: 90,
-          isCorrect: false,
-          selectedOption: 'A',
-          correctAnswer: 'B',
-          mistakeClassification: {
-            type: 'CONCEPTUAL',
-            label: 'Ray Geometry Confusion',
-            explanation: 'Substituted focal length $f$ as the image distance $v$ without applying equation.',
-            distractorTrap: 'Confused object placement at $2f$ with focus.'
-          }
-        },
-        {
-          questionIndex: 2,
-          questionId: 'q_asgn_02',
-          topic: 'Light – Reflection and Refraction',
-          subtopic: 'Refraction & Snell Law',
-          timeSpentSeconds: 85,
-          benchmarkSeconds: 75,
-          isCorrect: true,
-          selectedOption: 'A',
-          correctAnswer: 'A',
-          mistakeClassification: { type: 'NONE', label: 'Correct', explanation: 'Snell law calculated accurately.' }
-        },
-        {
-          questionIndex: 3,
-          questionId: 'q_asgn_03',
-          topic: 'Electricity',
-          subtopic: 'Joule Heating & Resistance',
-          timeSpentSeconds: 115,
-          benchmarkSeconds: 90,
-          isCorrect: false,
-          selectedOption: 'B',
-          correctAnswer: 'A',
-          mistakeClassification: {
-            type: 'CALCULATION',
-            label: 'Unit Conversion Failure',
-            explanation: 'Substituted raw hours into Joule formula without converting to SI seconds.',
-            distractorTrap: 'Selected option missing $3600\\text{s}$ factor.'
-          }
-        }
-      ],
-      submittedAt: new Date(Date.now() - 3600000 * 4).toISOString()
-    },
-    {
-      submissionId: 'sub_10_sci_01_mehak',
-      assessmentId: 'asgn_10_sci_01',
-      assessmentTitle: 'Class 10 Science: Light – Spherical Mirrors & Derivations',
-      studentId: 'b0000000-0000-0000-0000-000000000006',
-      studentName: 'Mehak Sharma',
-      rollNumber: '11-S-29',
-      grade: '10',
-      section: 'Science-A',
-      totalScore: 8,
-      totalMarks: 12,
-      percentage: 67,
-      totalTimeSpentSeconds: 245,
-      smartCardSummary: 'Swift problem solver (sub-benchmark on Q1 & Q3). Quick recap suggested on refractive index constants.',
-      questionBreakdown: [
-        {
-          questionIndex: 1,
-          questionId: 'q_asgn_01',
-          topic: 'Light – Reflection and Refraction',
-          subtopic: 'Spherical Mirrors',
-          timeSpentSeconds: 80,
-          benchmarkSeconds: 90,
-          isCorrect: true,
-          selectedOption: 'B',
-          correctAnswer: 'B',
-          mistakeClassification: { type: 'NONE', label: 'Correct', explanation: 'Proper mirror equation solved.' }
-        },
-        {
-          questionIndex: 2,
-          questionId: 'q_asgn_02',
-          topic: 'Light – Reflection and Refraction',
-          subtopic: 'Refraction & Snell Law',
-          timeSpentSeconds: 110,
-          benchmarkSeconds: 75,
-          isCorrect: false,
-          selectedOption: 'C',
-          correctAnswer: 'A',
-          mistakeClassification: {
-            type: 'CONCEPTUAL',
-            label: 'Material Constant Confusion',
-            explanation: 'Used glass refractive index ($1.5$) instead of water ($4/3$).',
-            distractorTrap: 'Confused refractive indices of dense flint glass and water.'
-          }
-        },
-        {
-          questionIndex: 3,
-          questionId: 'q_asgn_03',
-          topic: 'Electricity',
-          subtopic: 'Joule Heating & Resistance',
-          timeSpentSeconds: 55,
-          benchmarkSeconds: 90,
-          isCorrect: true,
-          selectedOption: 'A',
-          correctAnswer: 'A',
-          mistakeClassification: { type: 'NONE', label: 'Correct', explanation: 'Rapid and accurate calculation.' }
-        }
-      ],
-      submittedAt: new Date(Date.now() - 3600000 * 4.5).toISOString()
-    },
+    
+    
     {
       submissionId: 'sub_bio_01_riya',
       assessmentId: 'asgn_11_bio_01',
@@ -4355,6 +4234,7 @@ const inMemoryStore = {
 };
 
 function initDatabase() {
+  if (pool) return;
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     console.log('[DATABASE] No DATABASE_URL set. Initializing high-speed in-memory store for HAPS-AI Assistant.');
@@ -4362,13 +4242,17 @@ function initDatabase() {
   }
 
   try {
-    pool = new Pool({
+    // SSL: a "sslmode=..." in the URL decides; otherwise DATABASE_SSL=true/false, else on in production.
+    const sslEnv = String(process.env.DATABASE_SSL || '').toLowerCase();
+    const wantSsl = sslEnv === 'true' || (sslEnv !== 'false' && process.env.NODE_ENV === 'production');
+    const poolConfig = {
       connectionString,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000
-    });
+    };
+    if (!/[?&]sslmode=/.test(connectionString)) poolConfig.ssl = wantSsl ? { rejectUnauthorized: false } : false;
+    pool = new Pool(poolConfig);
 
     pool.on('connect', () => {
       isConnected = true;
@@ -4387,10 +4271,7 @@ function initDatabase() {
 async function query(text, params = []) {
   if (pool && isConnected) {
     try {
-      const start = Date.now();
       const res = await pool.query(text, params);
-      const duration = Date.now() - start;
-      console.log(`[DATABASE QUERY] ${text.slice(0, 40)}... took ${duration}ms, rows: ${res.rowCount}`);
       return res;
     } catch (err) {
       console.warn('[DATABASE QUERY ERROR] Falling back to in-memory store:', err.message);
@@ -4425,12 +4306,45 @@ try {
   console.warn('[DATABASE] Options enrichment notice:', e.message);
 }
 
+// Balance the answer key of bank MCQs. The bundled banks (and the option
+// synthesizer above) put the correct option first, so "always pick A" scored
+// 100%. Each bank MCQ gets a fixed, id-seeded order of its four options, so the
+// same question always shows the same order on every server and restart.
+// Teacher-added questions (ids containing "_inj_") keep the order the teacher gave.
+try {
+  const crypto = require('crypto');
+  const balanceOptions = q => {
+    if (!q || !q.id || String(q.id).includes('_inj_')) return;
+    const opts = Array.isArray(q.options_latex) ? q.options_latex : [];
+    if (opts.length !== 4 || opts.filter(o => o && o.is_correct).length !== 1) return;
+    const seed = crypto.createHash('sha1').update(String(q.id)).digest();
+    const order = [0, 1, 2, 3];
+    for (let n = 3; n > 0; n--) {
+      const r = seed[n] % (n + 1);
+      [order[n], order[r]] = [order[r], order[n]];
+    }
+    const keys = ['A', 'B', 'C', 'D'];
+    const next = order.map((from, idx) => Object.assign({}, opts[from], { key: keys[idx] }));
+    q.options_latex = next;
+    q.options = next;
+    const correct = next.find(o => o.is_correct);
+    q.correct_answer = correct.key;
+  };
+  Object.values(inMemoryStore.subjectBanks || {}).forEach(bank => {
+    if (Array.isArray(bank)) bank.forEach(balanceOptions);
+  });
+} catch (err) {
+  console.warn('[DATABASE] Could not balance bank option order:', err.message);
+}
+
 // Hydrate custom questions permanently stored on disk (e.g. from faculty injection studio)
 try {
   const fs = require('fs');
   const path = require('path');
   const { sanitizeQuestionPayload } = require('../services/llmQuestionEngine');
+  // Runtime copy first (backend/data), then the committed starting data, then /tmp.
   const storagePaths = [
+    require('./dataPaths').runtimePath('custom_injected_questions.json'),
     path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
     '/tmp/custom_injected_questions.json'
   ];
@@ -4451,14 +4365,16 @@ try {
     } catch (e) {}
   }
 
-  // Update persistent file with sanitized questions
-  if (loadedFromPath && persistedCustom.length > 0) {
+  // Re-save the sanitized questions, but only to the runtime copy (never to the committed file).
+  if (loadedFromPath && persistedCustom.length > 0 && loadedFromPath === storagePaths[0]) {
     try {
       fs.writeFileSync(loadedFromPath, JSON.stringify(persistedCustom, null, 2), 'utf8');
     } catch (e) {}
   }
 
   if (persistedCustom.length > 0 && inMemoryStore.subjectBanks) {
+    // Kept as a store collection so teacher-added questions are saved to PostgreSQL too.
+    inMemoryStore.injectedQuestions = persistedCustom.slice();
     persistedCustom.forEach(rawQ => {
       if (!rawQ || !rawQ.id) return;
       const q = sanitizeQuestionPayload(rawQ);
@@ -4499,8 +4415,36 @@ try {
   console.warn('[DATABASE] Persisted questions hydration notice:', e.message);
 }
 
+if (!Array.isArray(inMemoryStore.injectedQuestions)) inMemoryStore.injectedQuestions = [];
+
+// Puts teacher-added questions (loaded from PostgreSQL) into the subject banks they belong to.
+function hydrateInjectedQuestions(list = []) {
+  const { sanitizeQuestionPayload } = require('../services/llmQuestionEngine');
+  let added = 0;
+  list.forEach(rawQ => {
+    if (!rawQ || !rawQ.id) return;
+    const q = sanitizeQuestionPayload(rawQ);
+    const sUpper = String(q.subjectKey || q.subject || '').toUpperCase();
+    const isC10 = String(q.grade) === '10';
+    let bankKey = 'senior_physics';
+    if (isC10) bankKey = sUpper.includes('MATH') ? 'class10_maths' : 'class10_science';
+    else if (sUpper.includes('CHEM')) bankKey = 'senior_chemistry';
+    else if (sUpper.includes('BIO')) bankKey = 'senior_biology';
+    else if (sUpper.includes('MATH')) bankKey = 'senior_mathematics';
+    const targets = [bankKey].concat(bankKey === 'class10_maths' ? ['class10_math_pyq_ncert'] : []);
+    targets.forEach(key => {
+      if (!Array.isArray(inMemoryStore.subjectBanks[key])) inMemoryStore.subjectBanks[key] = [];
+      if (!inMemoryStore.subjectBanks[key].some(item => item.id === q.id)) { inMemoryStore.subjectBanks[key].unshift(q); added += 1; }
+    });
+  });
+  return added;
+}
+
 module.exports = {
   initDatabase,
   query,
-  inMemoryStore
+  inMemoryStore,
+  getPool: () => pool,
+  markConnected: (v) => { isConnected = Boolean(v); },
+  hydrateInjectedQuestions
 };

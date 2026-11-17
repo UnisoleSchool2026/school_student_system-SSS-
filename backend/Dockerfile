@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
 
 COPY . .
 
@@ -17,8 +17,8 @@ USER appuser
 COPY --from=builder --chown=appuser:appgroup /app /app
 
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5050
 
-EXPOSE 5000
+EXPOSE 5050
 
 CMD ["node", "src/server.js"]

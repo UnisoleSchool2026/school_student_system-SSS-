@@ -6,8 +6,11 @@
  * ==============================================================================
  */
 
-// Centralized Dynamic API and WebSocket Base Resolver
+// Centralized Dynamic API and WebSocket Base Resolver (delegates to js/config.js when loaded)
 function getApiBaseUrl() {
+  if (typeof window !== 'undefined' && typeof window.getHapsApiBaseUrl === 'function') {
+    return window.getHapsApiBaseUrl();
+  }
   if (window.HAPS_API_BASE) return window.HAPS_API_BASE.replace(/\/+$/, '');
   const hostname = window.location.hostname;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -20,6 +23,9 @@ function getApiBaseUrl() {
 }
 
 function getWsBaseUrl() {
+  if (typeof window !== 'undefined' && typeof window.getHapsWsBaseUrl === 'function') {
+    return window.getHapsWsBaseUrl();
+  }
   if (window.HAPS_WS_BASE) return window.HAPS_WS_BASE.replace(/\/+$/, '');
   const hostname = window.location.hostname;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -56,6 +62,31 @@ function closeWhatsAppModal() {
   if (modal) modal.classList.remove('active');
 }
 window.closeWhatsAppModal = closeWhatsAppModal;
+
+/**
+ * Global non-blocking notification toast (replaces native browser alert() dialogs)
+ */
+function showToast(message, type = 'info') {
+  try {
+    document.querySelectorAll('.role-switch-toast.app-toast-dynamic').forEach(el => el.remove());
+    const banner = document.createElement('div');
+    banner.className = 'role-switch-toast app-toast-dynamic';
+    const isErr = type === 'error' || type === 'danger';
+    const isWarn = type === 'warning';
+    const isOk = type === 'success';
+    const iconName = isErr ? 'alert-circle' : (isWarn ? 'alert-triangle' : (isOk ? 'check-circle' : 'info'));
+    const iconColor = isErr ? '#f87171' : (isWarn ? '#fbbf24' : (isOk ? '#34d399' : '#38bdf8'));
+    banner.innerHTML = `<i data-lucide="${iconName}" style="width:16px; height:16px; color:${iconColor}; flex-shrink:0;"></i> <span>${escapeHtml(String(message || ''))}</span>`;
+    document.body.appendChild(banner);
+    if (typeof initLucideIcons === 'function') initLucideIcons();
+    setTimeout(() => {
+      if (banner && banner.parentNode) banner.remove();
+    }, 4500);
+  } catch (e) {
+    console.log(`[TOAST ${type}] ${message}`);
+  }
+}
+window.showToast = showToast;
 
 function closeTestBuilderModal() {
   const modal = document.getElementById('modalTestBuilder');
@@ -186,6 +217,7 @@ function initApp() {
   try {
     const savedRole = localStorage.getItem('haps_active_role');
     if (savedRole && (savedRole === 'teacher' || savedRole === 'student' || savedRole === 'director' || savedRole === 'principal')) {
+      setSessionRole(savedRole);
       switchPortalRole(savedRole);
     } else {
       window.openRoleGatewayModal();
@@ -346,7 +378,10 @@ function isFormulaString(str) {
 
   // Check for presence of LaTeX commands or math relations/operators
   const hasMathCommands = /\\[a-zA-Z]+/.test(s);
-  const hasMathOperators = /[=><\approx\le\ge\pm\neq\equiv\propto\sim\times\div\^_\{\}]/.test(s);
+  const hasMathOperators = /(?:\\(?:approx|le|ge|pm|neq|equiv|propto|sim|times|div)\b|[=><^_{}])/.test(s);
+
+  // Never wrap Hindi/Devanagari bilingual sentences as LaTeX math unless genuine TeX commands exist
+  if (/[\u0900-\u097F]/.test(s) && !hasMathCommands) return false;
 
   if (!hasMathCommands && !hasMathOperators) return false;
 
@@ -489,8 +524,12 @@ function renderLatexString(rawText) {
     return key;
   }
 
+  // Figures cropped from uploaded photos: [[figure:<id>]] becomes the stored image.
+  const figureSource = rawText.replace(/\[\[figure:(fig_[a-z0-9]{8,32})\]\]/g, (m, id) => storeMath(
+    `<img class="q-figure" src="${getApiBaseUrl()}/api/questions/figures/${id}" alt="Figure for this question" loading="lazy">`));
+
   // 0. Smart LaTeX normalizer (repairs un-delimited math/Greek/symbols)
-  let content = normalizeLatexText(rawText);
+  let content = normalizeLatexText(figureSource);
 
   // 1. Normalize linebreaks from LaTeX notation: \newline, .\newline, or stray leading 'newline'
   content = content.replace(/\.?\\newline/gi, '<br/>');
@@ -559,20 +598,6 @@ function renderLatexString(rawText) {
     content = content.replace(new RegExp(`@@@KATEXBLOCK${i}@@@`, 'g'), () => html);
   });
 
-  // 7. Post-processing text outside rendered math:
-  content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  content = content.replace(/\\(\s*[\r\n]+)/g, '$1');
-  content = content.replace(/([:;,])\s*\\\s*/g, '$1 ');
-
-  // Format line breaks safely only in text portions
-  content = content.replace(/\n\s*\n/g, '<br/><br/>');
-  content = content.replace(/\n/g, '<br/>');
-
-  // 8. Restore preserved KaTeX blocks with pristine untouched SVG paths
-  mathPlaceholders.forEach((html, i) => {
-    content = content.replace(new RegExp(`@@@KATEXBLOCK${i}@@@`, 'g'), () => html);
-  });
-
   return content;
 }
 
@@ -602,7 +627,34 @@ function renderMathInElement(element) {
     return;
   }
 
-  element.innerHTML = renderLatexString(element.innerHTML);
+  // Walk ONLY text nodes so HTML attributes (like onclick / data-*) and live DOM listeners are never corrupted
+  const skipTags = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE', 'PRE', 'OPTION', 'NOSCRIPT', 'SVG']);
+  const textNodes = [];
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.nodeValue || (!node.nodeValue.includes('$') && !node.nodeValue.includes('\\(') && !node.nodeValue.includes('\\['))) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      let p = node.parentNode;
+      while (p && p !== element) {
+        if (skipTags.has(p.tagName) || (p.classList && p.classList.contains('katex')) || p.hasAttribute?.('data-no-math')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        p = p.parentNode;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  let cur;
+  while ((cur = walker.nextNode())) textNodes.push(cur);
+  textNodes.forEach(tNode => {
+    const html = renderLatexString(tNode.nodeValue);
+    if (html && html !== tNode.nodeValue) {
+      const span = document.createElement('span');
+      span.innerHTML = html;
+      tNode.parentNode.replaceChild(span, tNode);
+    }
+  });
 }
 
 
@@ -626,7 +678,36 @@ window.closeRoleGatewayModal = function() {
   }
 };
 
+// -----------------------------------------------------------------------------
+// ROLE LOCK: the role chosen at sign-in is the only portal this browser session
+// can open. Switching portal means signing out and signing in again.
+// -----------------------------------------------------------------------------
+function normalizePortalRole(role) {
+  return (role === 'principal' || role === 'director') ? 'director' : (role === 'student' ? 'student' : (role === 'teacher' ? 'teacher' : null));
+}
+function setSessionRole(role) {
+  state.sessionRole = normalizePortalRole(role);
+}
+function sessionAllows(role) {
+  return !state.sessionRole || state.sessionRole === normalizePortalRole(role);
+}
+window.signOutCurrentUser = function() {
+  if (typeof closeSidebarDrawer === 'function') closeSidebarDrawer();
+  if (state.sessionRole === 'teacher' && typeof window.handleTeacherSignOut === 'function') {
+    window.handleTeacherSignOut();
+    return;
+  }
+  try {
+    localStorage.removeItem('haps_active_role');
+    localStorage.removeItem('haps_active_teacher');
+    localStorage.removeItem('haps_teacher_profile');
+  } catch (e) {}
+  state.sessionRole = null;
+  window.openRoleGatewayModal();
+};
+
 window.loginWithRole = function(role) {
+  setSessionRole(role);
   try {
     localStorage.setItem('haps_active_role', role);
   } catch (e) {}
@@ -635,11 +716,10 @@ window.loginWithRole = function(role) {
 };
 
 window.handleRoleBadgeClick = function() {
-  if (state.activeRole === 'teacher') {
+  // Only teachers have something to switch here (their class). Students and the principal: no action.
+  if (state.activeRole === 'teacher' && sessionAllows('teacher')) {
     window.openFacultyClassSwitcherModal();
-    return;
   }
-  window.openRoleGatewayModal();
 };
 
 window.loginAsFaculty = function(facultyKey) {
@@ -730,7 +810,7 @@ window.loginAsFaculty = function(facultyKey) {
       grade: '10',
       role: 'TEACHER',
       designation: 'Class 10th Mathematics Faculty & Board Coordinator',
-      defaultClass: '10-Maths-A',
+      defaultClass: '10-Science-A',
       targetStream: 'CBSE_CLASS_10',
       streamText: 'Assigned Subject: Mathematics &bull; Class 10 (CBSE &amp; HP Board Foundation)'
     }
@@ -747,6 +827,7 @@ window.loginAsFaculty = function(facultyKey) {
     localStorage.setItem('haps_teacher_profile', JSON.stringify(prof));
     localStorage.setItem('haps_active_teacher', JSON.stringify(prof));
     localStorage.setItem('haps_active_role', 'teacher');
+    setSessionRole('teacher');
   } catch (e) {}
 
   if (typeof applyTeacherProfile === 'function') {
@@ -759,7 +840,7 @@ window.loginAsFaculty = function(facultyKey) {
 
   const banner = document.createElement('div');
   banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(prof.name)}</strong> (${prof.subjectName} Expert &bull; Class ${prof.grade}th Scope Active). Department scope isolated.</span>`;
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(prof.name)}</strong> &bull; ${prof.subjectName}, Class ${prof.grade}</span>`;
   document.body.appendChild(banner);
   initLucideIcons();
   setTimeout(() => banner.remove(), 4000);
@@ -825,7 +906,7 @@ window.submitGatewayTeacherLogin = function(event) {
   const gradeSel = document.getElementById('selectGatewayTeacherGrade');
   const defaultGrade = gradeSel ? gradeSel.value : (isC10 ? '10' : '12');
   const defaultClass = (defaultGrade === '10' || isC10)
-    ? (subjectKey === 'CLASS10_MATHEMATICS' ? '10-Maths-A' : '10-Science-A')
+    ? '10-Science-A'
     : (subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed');
   const sName = subjectNames[subjectKey] || 'Physics';
 
@@ -861,6 +942,7 @@ window.submitGatewayTeacherLogin = function(event) {
     localStorage.setItem('haps_teacher_profile', JSON.stringify(teacherProfile));
     localStorage.setItem('haps_active_teacher', JSON.stringify(teacherProfile));
     localStorage.setItem('haps_active_role', 'teacher');
+    setSessionRole('teacher');
   } catch (e) {}
 
   if (typeof applyTeacherProfile === 'function') {
@@ -873,7 +955,7 @@ window.submitGatewayTeacherLogin = function(event) {
 
   const banner = document.createElement('div');
   banner.className = 'role-switch-toast';
-  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(name)}</strong> (${sName} Expert &bull; Class ${defaultGrade}th Scope Active). Role locked to Teacher Portal.</span>`;
+  banner.innerHTML = `<i data-lucide="check-circle" style="width:16px; height:16px; color:#34d399;"></i> <span>Signed in as <strong>${escapeHtml(name)}</strong> &bull; ${sName}, Class ${defaultGrade}</span>`;
   document.body.appendChild(banner);
   initLucideIcons();
   setTimeout(() => banner.remove(), 4000);
@@ -881,6 +963,7 @@ window.submitGatewayTeacherLogin = function(event) {
 
 window.handleTeacherSignOut = function() {
   if (typeof closeSidebarDrawer === 'function') closeSidebarDrawer();
+  state.sessionRole = null;
   try {
     localStorage.removeItem('haps_active_role');
     localStorage.removeItem('haps_active_teacher');
@@ -898,6 +981,10 @@ window.handleTeacherSignOut = function() {
 };
 
 window.switchStudentTab = function(tabId) {
+  if (state.sessionRole && state.sessionRole !== 'student') {
+    console.warn('[ROLE LOCK] Student workspace blocked for the ' + state.sessionRole + ' portal.');
+    return;
+  }
   state.activeStudentTab = tabId;
   document.querySelectorAll('.student-nav-pill').forEach(pill => {
     pill.classList.toggle('active', pill.id === `studentPill${tabId.replace('tabStudent', '')}`);
@@ -916,6 +1003,17 @@ window.switchStudentTab = function(tabId) {
     } else if (window.loadAndRenderSmartReport) {
       window.loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
     }
+  } else if (tabId === 'tabStudentRemedial') {
+    if (window.TeacherDpp) window.TeacherDpp.renderStudentList();
+  } else if (tabId === 'tabStudentPreviousTests') {
+    const targetTabEl = document.getElementById(tabId);
+    if (targetTabEl && typeof renderMathInElement === 'function') {
+      renderMathInElement(targetTabEl);
+    }
+  } else if (tabId === 'tabStudentSmartboard') {
+    if (typeof window.initStudentSmartboardWorkspace === 'function') {
+      window.initStudentSmartboardWorkspace();
+    }
   }
 
   // Update header title for active student workspace
@@ -924,7 +1022,9 @@ window.switchStudentTab = function(tabId) {
     'tabStudentSmartReport': 'Student Learning Portal • Weekly Report Card & Diagnostics',
     'tabStudentPreviousTests': 'Student Learning Portal • Record of Previous Tests',
     'tabStudentRemedial': 'Student Learning Portal • Personalized Post-Test Drills',
-    'tabStudentSmartboard': 'Student Learning Portal • AI Voice Smartboard Tutor'
+    'tabStudentSmartboard': 'Student Learning Portal • AI Voice Smartboard Tutor',
+    'tabStudentStudyBoard': 'Student Learning Portal • Study Board',
+    'tabStudentClassDesk': 'Student Learning Portal • Class Desk'
   };
   const headerTitle = document.getElementById('headerNavTitle');
   if (headerTitle && studentTitles[tabId]) {
@@ -942,25 +1042,20 @@ window.selectStudentDrawerTab = function(tabId) {
 };
 
 window.handleStudentSignOut = function() {
-  if (typeof closeSidebarDrawer === 'function') {
-    closeSidebarDrawer();
-  }
-  window.openRoleGatewayModal();
+  window.signOutCurrentUser();
 };
 
 window.handleDrawerSignOut = function() {
-  if (typeof closeSidebarDrawer === 'function') {
-    closeSidebarDrawer();
-  }
-  if (state.activeRole === 'student') {
-    window.openRoleGatewayModal();
-  } else {
-    handleTeacherSignOut();
-  }
+  window.signOutCurrentUser();
 };
 
 function switchPortalRole(role) {
   const normalizedRole = (role === 'principal' || role === 'director') ? 'director' : role;
+  if (!sessionAllows(normalizedRole)) {
+    console.warn(`[ROLE LOCK] Blocked switch from the ${state.sessionRole} portal to ${normalizedRole}.`);
+    if (typeof showToast === 'function') showToast('That section is not part of your account. Sign out to use a different login.', 'warning');
+    return;
+  }
   state.activeRole = normalizedRole;
   try {
     localStorage.setItem('haps_active_role', normalizedRole);
@@ -1005,16 +1100,21 @@ function switchPortalRole(role) {
   const drawerTeacherClassScope = document.getElementById('drawerSectionTeacherClassScope');
   const drawerTeacherActions = document.getElementById('drawerSectionTeacherActions');
   const drawerSignOutLabel = document.getElementById('btnDrawerSignOutLabel');
+  const drawerPrincipalProfile = document.getElementById('drawerPrincipalProfileCard');
+  const drawerPrincipalNav = document.getElementById('drawerSectionPrincipalNav');
+  // Principal-only menu sections are hidden for every other role.
+  if (drawerPrincipalProfile) drawerPrincipalProfile.style.display = normalizedRole === 'director' ? 'block' : 'none';
+  if (drawerPrincipalNav) drawerPrincipalNav.style.display = normalizedRole === 'director' ? 'block' : 'none';
 
   if (normalizedRole === 'student') {
     document.body.classList.remove('role-teacher');
     if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
     if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'none';
     if (headerRoleBadge) {
-      headerRoleBadge.style.cursor = 'pointer';
-      headerRoleBadge.title = 'Current Active Portal. Click to switch.';
+      headerRoleBadge.style.cursor = 'default';
+      headerRoleBadge.title = 'Student profile';
     }
-    if (drawerPortalViews) drawerPortalViews.style.display = 'block';
+    if (drawerPortalViews) drawerPortalViews.style.display = 'none';
 
     // Show student drawer elements, hide teacher drawer elements
     if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'none';
@@ -1033,7 +1133,7 @@ function switchPortalRole(role) {
     if (headerTitle) headerTitle.innerText = 'Student Learning Portal • Adaptive Tests & Smartboard';
     if (facultyName) facultyName.innerText = 'Aryan Sharma';
     if (facultyTag) {
-      facultyTag.innerText = 'Student (Class 12A)';
+      facultyTag.innerText = 'Student';
       facultyTag.style.background = 'rgba(16, 185, 129, 0.2)';
       facultyTag.style.color = '#34d399';
     }
@@ -1042,25 +1142,37 @@ function switchPortalRole(role) {
     if (drawerRole) drawerRole.innerText = 'Class 12th Non-Med • Roll #101';
     if (drawerSubject) drawerSubject.innerText = 'Stream: Senior Secondary Non-Medical';
 
-    renderStudentQuestion();
+    if (typeof loadStudentAssignedTests === 'function' && !examState._assignedTestLoaded) {
+      loadStudentAssignedTests();
+    }
+    loadStudentPreviousTests();
+    if (examState && examState.questions && examState.questions.length > 0) {
+      if (typeof renderActiveNtaQuestion === 'function') renderActiveNtaQuestion();
+      if (typeof renderPaletteButtons === 'function') renderPaletteButtons();
+      if (typeof updatePaletteCounts === 'function') updatePaletteCounts();
+    } else {
+      renderStudentQuestion();
+    }
 
   } else if (normalizedRole === 'director') {
     document.body.classList.remove('role-teacher');
     if (switchRoleBtn) switchRoleBtn.style.display = 'inline-flex';
     if (teacherSignOutBtn) teacherSignOutBtn.style.display = 'none';
     if (headerRoleBadge) {
-      headerRoleBadge.style.cursor = 'pointer';
-      headerRoleBadge.title = 'Current Active Portal. Click to switch.';
+      headerRoleBadge.style.cursor = 'default';
+      headerRoleBadge.title = 'Principal profile';
     }
-    if (drawerPortalViews) drawerPortalViews.style.display = 'block';
+    if (drawerPortalViews) drawerPortalViews.style.display = 'none';
 
-    if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'block';
+    // Principal: read-only school overview. No teacher or student workspaces.
+    if (drawerTeacherProfile) drawerTeacherProfile.style.display = 'none';
     if (drawerStudentProfile) drawerStudentProfile.style.display = 'none';
-    if (drawerTeacherWorkspaces) drawerTeacherWorkspaces.style.display = 'block';
+    if (drawerTeacherWorkspaces) drawerTeacherWorkspaces.style.display = 'none';
     if (drawerStudentWorkspaces) drawerStudentWorkspaces.style.display = 'none';
-    if (drawerTeacherClassScope) drawerTeacherClassScope.style.display = 'block';
+    if (drawerTeacherClassScope) drawerTeacherClassScope.style.display = 'none';
     if (drawerTeacherActions) drawerTeacherActions.style.display = 'none';
-    if (drawerSignOutLabel) drawerSignOutLabel.innerText = 'Exit Leadership Portal';
+    if (drawerSignOutLabel) drawerSignOutLabel.innerText = 'Sign Out';
+    if (window.PrincipalDashboard) window.PrincipalDashboard.load();
 
     if (headerTitle) headerTitle.innerText = 'Principal Executive Portal • School Intelligence & Analytics';
     if (facultyName) facultyName.innerText = 'Dr. Anita Chandel';
@@ -1200,11 +1312,18 @@ function switchPaperCreationMode(mode) {
   if (mode === 'unit_test') {
     if (label) label.innerText = 'Mode 1 of 3: Create Paper / Unit Tests & Quizzes (15–45 Min)';
   } else if (mode === 'board_paper') {
-    if (label) label.innerText = 'Mode 2 of 3: Full Board Paper (CBSE & HP Board Studio - 33 Qs)';
     if (typeof syncBoardPaperStudioWithTeacher === 'function') {
       syncBoardPaperStudioWithTeacher();
     }
-    if (!boardPaperStudioState.currentPaper) {
+    if (label) {
+      label.innerText = `Mode 2 of 3: Full Board Paper Studio (${boardPaperStudioState.board || 'CBSE'} ${boardPaperStudioState.subject || ''} Class ${boardPaperStudioState.grade || '12'})`;
+    }
+    const curPaper = boardPaperStudioState.currentPaper;
+    const needsFreshPaper = !curPaper
+      || String(curPaper.subject || '').toLowerCase() !== String(boardPaperStudioState.subject || '').toLowerCase()
+      || String(curPaper.grade || '') !== String(boardPaperStudioState.grade || '')
+      || String(curPaper.board || '').toUpperCase() !== String(boardPaperStudioState.board || '').toUpperCase();
+    if (needsFreshPaper) {
       generateOrLoadBoardPaper();
     }
   } else if (mode === 'take_test') {
@@ -1218,9 +1337,15 @@ function switchPaperCreationMode(mode) {
 window.switchPaperCreationMode = switchPaperCreationMode;
 
 function switchTeacherTab(targetTabId) {
-  // Normalize individual submodes into unified tabTeacherCreateTestAndPaper
+  // Role lock: teacher workspaces open only in a teacher session.
+  if (state.sessionRole && state.sessionRole !== 'teacher') {
+    console.warn('[ROLE LOCK] Teacher workspace blocked for the ' + state.sessionRole + ' portal.');
+    return;
+  }
+  // Normalize individual submodes and retired legacy tab IDs into unified views
   let submodeToActivate = null;
-  if (targetTabId === 'tabTeacherCreatePaper') {
+  let progressSubviewToActivate = null;
+  if (targetTabId === 'tabTeacherCreatePaper' || targetTabId === 'tabGenerator') {
     targetTabId = 'tabTeacherCreateTestAndPaper';
     submodeToActivate = 'unit_test';
   } else if (targetTabId === 'tabTeacherBoardPaper') {
@@ -1229,12 +1354,20 @@ function switchTeacherTab(targetTabId) {
   } else if (targetTabId === 'tabTeacherTakeTest') {
     targetTabId = 'tabTeacherCreateTestAndPaper';
     submodeToActivate = 'take_test';
+  } else if (targetTabId === 'tabStudents') {
+    targetTabId = 'tabTeacherClasses';
+    progressSubviewToActivate = 'roster';
+  } else if (targetTabId === 'tabSmartReports') {
+    targetTabId = 'tabTeacherClasses';
+    progressSubviewToActivate = 'roster';
   }
 
   state.activeTeacherTab = targetTabId;
 
-  // Ensure Teacher view is visible
-  switchPortalRole('teacher');
+  if (state.activeRole !== 'teacher') {
+    switchPortalRole('teacher');
+    if (state.activeRole !== 'teacher') return;
+  }
 
   // Update pills
   document.querySelectorAll('.teacher-nav-pill').forEach(pill => {
@@ -1253,7 +1386,10 @@ function switchTeacherTab(targetTabId) {
     'tabTeacherBoardPaper': { label: 'Create Test & Paper', icon: 'scroll', color: '#f59e0b' },
     'tabTeacherTakeTest': { label: 'Create Test & Paper', icon: 'play-circle', color: '#34d399' },
     'tabTeacherClasses': { label: 'Class Progress & Recorded Tests', icon: 'bar-chart-3', color: '#c084fc' },
-    'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' }
+    'tabQuestionBank': { label: 'Question Bank & PYQ Repository', icon: 'database', color: '#22d3ee' },
+    'tabHandwritten': { label: 'Scan Paper Sheets', icon: 'scan-line', color: '#f59e0b' },
+    'tabTeacherClassDesk': { label: 'Class Desk', icon: 'messages-square', color: '#0f7a4d' },
+    'tabTeacherStudyBoard': { label: 'Study Board', icon: 'book-open', color: '#2563af' }
   };
   const ws = workspaceMap[targetTabId];
   if (ws) {
@@ -1273,14 +1409,22 @@ function switchTeacherTab(targetTabId) {
     tab.classList.toggle('active', isTarget);
   });
 
-  // Update header title
+  if (targetTabId === 'tabHandwritten') {
+    if (typeof renderMathInElement === 'function') {
+      const rubricEl = document.getElementById('rubricStepsList');
+      if (rubricEl) renderMathInElement(rubricEl);
+    }
+    if (typeof setupHandwrittenStation === 'function') setupHandwrittenStation();
+  }
+
+  // Update header title (preserve Principal/Director header when activeRole === 'director')
   const headerTitle = document.getElementById('headerNavTitle');
   const activeProf = teacherBuilderState.activeTeacher;
   const profSubj = (activeProf?.subjectKey || teacherBuilderState.teacherSubjectKey || 'PHYSICS').toUpperCase();
   const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId).startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId).startsWith('10') ? '10' : '12')));
   const isC10 = (curGrade === '10' || String(teacherBuilderState.selectedClassId || '').startsWith('10'));
   const curSubjName = isC10
-    ? (profSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
+    ? (profSubj.includes('MATH') ? 'Class 10th Mathematics' : 'Class 10th Science')
     : `Class ${curGrade}th ${activeProf?.subjectName || 'Physics'}`;
 
   const tabTitles = {
@@ -1295,9 +1439,11 @@ function switchTeacherTab(targetTabId) {
     'tabQuestionBank': `Question Bank & PYQ Repository • ${curSubjName}`,
     'tabStudents': `Students & Smart Cards • ${curSubjName}`,
     'tabSmartReports': `Weekly Smart Report • ${curSubjName}`,
-    'tabHandwritten': `Scan Paper Sheets • ${curSubjName}`
+    'tabHandwritten': `Scan Paper Sheets • ${curSubjName}`,
+    'tabTeacherClassDesk': `Class Desk • ${curSubjName}`,
+    'tabTeacherStudyBoard': `Study Board • ${curSubjName}`
   };
-  if (headerTitle && tabTitles[targetTabId]) {
+  if (headerTitle && tabTitles[targetTabId] && state.activeRole !== 'director') {
     headerTitle.innerText = tabTitles[targetTabId];
   }
 
@@ -1314,9 +1460,11 @@ function switchTeacherTab(targetTabId) {
     } else if (typeof window.renderClassRoster === 'function') {
       window.renderClassRoster(teacherBuilderState.selectedClassId || '12-NonMed');
     }
-  } else if (targetTabId === 'tabGenerator') {
-    if (!teacherBuilderState.currentTaxonomy) {
-      setupTeacherTestBuilder();
+    if (progressSubviewToActivate && typeof window.switchClassProgressSubView === 'function') {
+      window.switchClassProgressSubView(progressSubviewToActivate);
+    }
+    if (typeof loadAndRenderSmartReport === 'function') {
+      loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
     }
   } else if (targetTabId === 'tabQuestionBank') {
     if (typeof loadQuestionBankView === 'function') {
@@ -1745,7 +1893,7 @@ const CURRICULUM_CHAPTER_TOPICS = {
 
 const CLASS_ROSTERS = {
   '12-NonMed': {
-    name: 'Class 12-A',
+    name: 'Class 12 Non-Medical',
     stream: 'Senior Secondary Non-Medical',
     subject: 'Physics',
     enrolled: 48,
@@ -1864,43 +2012,43 @@ try {
   console.warn('Could not hydrate CLASS_ROSTERS from localStorage:', e);
 }
 
+// Classes each faculty teaches. Must match the backend class scope (GET /api/curriculum/classes?teacherSubjectKey=...).
+// Real student counts come from the live roster sync, so labels carry no hardcoded counts.
 const FACULTY_SUBJECT_CLASSES = {
   PHYSICS: [
-    { id: '12-NonMed', name: 'Class 12-A • Senior Physics (48 Students)' },
-    { id: '11-NonMed', name: 'Class 11-NonMed • Physics (42 Students)' },
-    { id: '10-Science-A', name: 'Class 10-Science • Foundation (45 Students)' },
-    { id: '11-Med', name: 'Class 11-Med • Physics (40 Students)' },
-    { id: '12-Med', name: 'Class 12-Med • Senior Medical Physics (38 Students)' }
+    { id: '12-NonMed', name: 'Class 12 Non-Medical • Senior Physics' },
+    { id: '11-NonMed', name: 'Class 11 Non-Medical • Physics' },
+    { id: '11-Med', name: 'Class 11 Medical • Physics' },
+    { id: '12-Med', name: 'Class 12 Medical • Senior Physics' }
   ],
   CHEMISTRY: [
-    { id: '12-NonMed', name: 'Class 12-B • Senior Chemistry (48 Students)' },
-    { id: '11-NonMed', name: 'Class 11-NonMed • Chemistry (42 Students)' },
-    { id: '11-Med', name: 'Class 11-Med • Chemistry (40 Students)' },
-    { id: '12-Med', name: 'Class 12-Med • Senior Medical Chemistry (38 Students)' }
+    { id: '12-NonMed', name: 'Class 12 Non-Medical • Senior Chemistry' },
+    { id: '11-NonMed', name: 'Class 11 Non-Medical • Chemistry' },
+    { id: '11-Med', name: 'Class 11 Medical • Chemistry' },
+    { id: '12-Med', name: 'Class 12 Medical • Senior Chemistry' }
   ],
   MATHEMATICS: [
-    { id: '12-NonMed', name: 'Class 12-A • Senior Mathematics (48 Students)' },
-    { id: '11-NonMed', name: 'Class 11-NonMed • Mathematics (42 Students)' }
+    { id: '12-NonMed', name: 'Class 12 Non-Medical • Senior Mathematics' },
+    { id: '11-NonMed', name: 'Class 11 Non-Medical • Mathematics' }
   ],
   BIOLOGY: [
-    { id: '12-Med', name: 'Class 12-Med • Senior Biology (38 Students)' },
-    { id: '11-Med', name: 'Class 11-Med • Biology (40 Students)' }
+    { id: '12-Med', name: 'Class 12 Medical • Senior Biology' },
+    { id: '11-Med', name: 'Class 11 Medical • Biology' }
   ],
   CLASS10_MATHEMATICS: [
-    { id: '10-Maths-A', name: 'Class 10-A • Foundation Mathematics (44 Students)' },
-    { id: '10-Maths-B', name: 'Class 10-B • Foundation Mathematics (42 Students)' }
+    { id: '10-Science-A', name: 'Class 10 Section A • Foundation Mathematics' },
+    { id: '10-Maths-A', name: 'Class 10 Maths-A • Foundation Mathematics' }
   ],
   CLASS10_SCIENCE: [
-    { id: '10-Science-A', name: 'Class 10-A • General Science (45 Students)' },
-    { id: '10-Science-B', name: 'Class 10-B • General Science (43 Students)' }
+    { id: '10-Science-A', name: 'Class 10 Section A • General Science' }
   ]
 };
 
 const assignedTestsState = [
   {
     id: 'test_live_charges',
-    title: 'Class 12-A • Diagnostic Test: Electric Charges & Gauss\'s Law',
-    targetClass: 'Class 12-A',
+    title: 'Class 12 Non-Medical • Diagnostic Test: Electric Charges & Gauss\'s Law',
+    targetClass: 'Class 12 Non-Medical',
     subject: 'Physics',
     topic: 'Electric Flux & Gauss\'s Law Applications',
     duration: '45 Mins',
@@ -1927,8 +2075,8 @@ const assignedTestsState = [
   },
   {
     id: 'test_past_drift',
-    title: 'Class 12-A • Unit Quiz: Microscopic Drift & Ohm\'s Law',
-    targetClass: 'Class 12-A',
+    title: 'Class 12 Non-Medical • Unit Quiz: Microscopic Drift & Ohm\'s Law',
+    targetClass: 'Class 12 Non-Medical',
     subject: 'Physics',
     topic: 'Electric Current, Drift Velocity and Electron Mobility',
     duration: '20 Mins',
@@ -1941,8 +2089,8 @@ const assignedTestsState = [
   },
   {
     id: 'test_past_capacitance',
-    title: 'Class 12-A • Term Assessment: Electrostatic Potential & Capacitance',
-    targetClass: 'Class 12-A',
+    title: 'Class 12 Non-Medical • Term Assessment: Electrostatic Potential & Capacitance',
+    targetClass: 'Class 12 Non-Medical',
     subject: 'Physics',
     topic: 'Capacitors & Capacitance of Parallel Plate Capacitor',
     duration: '90 Mins',
@@ -1955,8 +2103,8 @@ const assignedTestsState = [
   },
   {
     id: 'test_up_optics',
-    title: 'Class 12-A • Term Exam: Ray Optics & Optical Instruments',
-    targetClass: 'Class 12-A',
+    title: 'Class 12 Non-Medical • Term Exam: Ray Optics & Optical Instruments',
+    targetClass: 'Class 12 Non-Medical',
     subject: 'Physics',
     topic: 'Refraction at Spherical Surfaces & Lens Maker\'s Formula',
     duration: '45 Mins',
@@ -2024,7 +2172,7 @@ window.renderAssignedTestsTable = function() {
   const totalAll = assignedTestsState.length;
   const countLive = assignedTestsState.filter(t => t.status === 'LIVE').length;
   const countComp = assignedTestsState.filter(t => t.status === 'COMPLETED').length;
-  const countSched = assignedTestsState.filter(t => t.status === 'SCHEDULED').length;
+  const countSched = assignedTestsState.filter(t => t.status === 'SCHEDULED' || t.status === 'UPCOMING').length;
 
   const elAll = document.getElementById('countFilterAll');
   if (elAll) elAll.innerText = totalAll;
@@ -2036,7 +2184,13 @@ window.renderAssignedTestsTable = function() {
   if (elSched) elSched.innerText = countSched;
 
   let filtered = assignedTestsState.filter(t => {
-    if (assignedTestsStatusFilter !== 'ALL' && t.status !== assignedTestsStatusFilter) return false;
+    if (assignedTestsStatusFilter !== 'ALL') {
+      if (assignedTestsStatusFilter === 'SCHEDULED') {
+        if (t.status !== 'SCHEDULED' && t.status !== 'UPCOMING') return false;
+      } else if (t.status !== assignedTestsStatusFilter) {
+        return false;
+      }
+    }
     if (assignedTestsFilterQuery) {
       const matchText = `${t.title} ${t.targetClass} ${t.topic} ${t.duration}`.toLowerCase();
       if (!matchText.includes(assignedTestsFilterQuery)) return false;
@@ -2131,7 +2285,9 @@ window.initPaperBuilderDropdowns = function() {
   const classSelect = document.getElementById('selectPaperClass');
   const allowedClasses = [...(FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS)];
   try {
-    const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+    // Subject isolation: only classes created by a teacher of this same subject.
+    const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]')
+      .filter(c => String(c.subjectKey || '').toUpperCase() === String(subjKey).toUpperCase());
     customClasses.forEach(c => {
       const cid = c.id || c.section;
       if (!allowedClasses.some(x => x.id === cid)) {
@@ -2152,6 +2308,7 @@ window.initPaperBuilderDropdowns = function() {
   }
   teacherBuilderState.selectedClassId = currentClassId;
   const activeClassObj = allowedClasses.find(c => c.id === currentClassId) || allowedClasses[0];
+  refreshPaperClassOptions();
 
   // 3. Update Roster Class Dropdown
   const rosterClassSelect = document.getElementById('selectTeacherActiveRosterClass');
@@ -2232,7 +2389,7 @@ window.handleGenChapterChange = function(chName) {
 window.handleGenTopicChange = function(tName) {
   const titleInput = document.getElementById('inputTeacherTestTitle');
   const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
-  const className = lockedText ? lockedText.split('•')[0]?.trim() : (teacherBuilderState.activeGrade === '11' ? 'Class 11-NonMed' : 'Class 12-A');
+  const className = lockedText ? lockedText.split('•')[0]?.trim() : (teacherBuilderState.activeGrade === '11' ? 'Class 11 Non-Medical' : 'Class 12 Non-Medical');
   if (titleInput && tName) {
     titleInput.value = `${className} • Unit Assessment: ${tName}`;
   }
@@ -2283,7 +2440,7 @@ window.updatePaperDefaultTitle = function(topicName) {
   const titleInput = document.getElementById('inputPaperTitle');
   const classSelect = document.getElementById('selectPaperClass');
   const lockedText = document.getElementById('lockedTargetClassText')?.innerText || '';
-  const className = lockedText ? lockedText.split('•')[0]?.trim() : (classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12-A') : 'Class 12-A');
+  const className = lockedText ? lockedText.split('•')[0]?.trim() : (classSelect ? (classSelect.options[classSelect.selectedIndex]?.text?.split('•')[0]?.trim() || 'Class 12 Non-Medical') : 'Class 12 Non-Medical');
   if (titleInput) {
     titleInput.value = `${className} • Unit Assessment: ${topicName || 'Curriculum Focus'}`;
   }
@@ -2401,7 +2558,8 @@ window.createTeacherPaperDraft = async function(event) {
         topic,
         durationMinutes: parseInt(duration, 10) || 45,
         marksBreakdown: { count1M: c1, count2M: c2, count3M: c3, count5M: c5 },
-        teacherName: teacherBuilderState.activeTeacher?.name || 'Dr. Vikram Sharma'
+        teacherName: teacherBuilderState.activeTeacher?.name || 'Dr. Vikram Sharma',
+        teacherSubjectKey: teacherBuilderState.teacherSubjectKey
       })
     });
 
@@ -2432,7 +2590,7 @@ window.createTeacherPaperDraft = async function(event) {
 
   } catch (err) {
     console.error('Error generating draft test:', err);
-    alert('Error assembling draft test: ' + err.message);
+    showToast('Error assembling draft test: ' + err.message, 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -2456,9 +2614,9 @@ window.renderUnitTestDraftStudio = function(test) {
     const optionsHtml = (q.options_latex && q.options_latex.length > 0) ? `
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
         ${q.options_latex.map(opt => `
-          <div style="padding:8px 12px; border-radius:6px; background:${opt.is_correct ? '#ecfdf5' : 'var(--bg-secondary)'}; border:1px solid ${opt.is_correct ? '#a7f3d0' : 'var(--border-subtle)'}; font-size:0.84rem; display:flex; align-items:center; gap:8px;">
+          <div style="padding:8px 12px; border-radius:6px; background:${opt.is_correct ? '#ecfdf5' : 'var(--bg-secondary)'}; border:1px solid ${opt.is_correct ? '#a7f3d0' : 'var(--border-subtle)'}; font-size:0.84rem; display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-width:0;">
             <strong style="color:${opt.is_correct ? '#059669' : 'var(--text-secondary)'};">${opt.key}.</strong>
-            <span style="flex:1;">${renderLatexString(opt.latex || opt.text || '')}</span>
+            <span style="flex:1; min-width:0; overflow-wrap:anywhere;">${renderLatexString(opt.latex || opt.text || '')}</span>
             ${opt.is_correct ? '<span style="color:#059669; font-weight:800; font-size:0.75rem;">✓ Correct</span>' : ''}
           </div>
         `).join('')}
@@ -2479,7 +2637,7 @@ window.renderUnitTestDraftStudio = function(test) {
     return `
       <div class="test-question-preview-card" id="draftQuestionCard_${idx + 1}" style="background:var(--bg-card); border:1.5px solid var(--border-subtle); border-radius:10px; padding:16px 18px; margin-bottom:12px; box-shadow:var(--shadow-sm); transition:all 0.15s ease;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-width:0;">
             <span style="background:var(--bg-secondary); border:1px solid var(--border-subtle); font-weight:800; font-size:0.82rem; padding:3px 10px; border-radius:6px; color:var(--text-primary);">
               Question ${idx + 1}
             </span>
@@ -2517,7 +2675,7 @@ window.renderUnitTestDraftStudio = function(test) {
       <!-- Studio Header Bar -->
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding-bottom:14px; margin-bottom:16px; border-bottom:1.5px solid var(--border-subtle);">
         <div>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+          <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:4px;">
             <span style="background:#fef3c7; color:#d97706; border:1px solid #fde68a; font-weight:800; font-size:0.74rem; padding:2px 8px; border-radius:4px; text-transform:uppercase;">
               🟡 DRAFT &bull; UNPUBLISHED
             </span>
@@ -2667,7 +2825,7 @@ window.deleteDraftQuestion = async function(questionIndex) {
   const draft = state.currentDraftTest;
   if (!draft) return;
   if (draft.questions && draft.questions.length <= 1) {
-    alert('Assessment must contain at least 1 question.');
+    showToast('Assessment must contain at least 1 question.', 'warning');
     return;
   }
 
@@ -2721,119 +2879,10 @@ window.publishDraftTest = async function(testId) {
     }
 
     const classId = draft.section || draft.targetClass || teacherBuilderState.selectedClassId || '12-NonMed';
-    
-    // Add to recorded tests table state
-    if (!RECORDED_CLASS_TESTS[classId]) {
-      RECORDED_CLASS_TESTS[classId] = [];
-    }
 
-    const rosterStudents = (CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed']).students || [];
-    const tMarks = draft.totalMarks || 45;
-    const enrolledNum = CLASS_ROSTERS[classId]?.enrolled || 48;
-
-    const baseStudents = [
-      { roll: '102', name: 'Priya Verma', phone: '98160 55021', scorePct: 0.95, time: '36m' },
-      { roll: '101', name: 'Aryan Sharma', phone: '98160 55011', scorePct: 0.91, time: '39m' },
-      { roll: '106', name: 'Divya Rana', phone: '98160 55061', scorePct: 0.86, time: '41m' },
-      { roll: '104', name: 'Ananya Chauhan', phone: '98160 55041', scorePct: 0.84, time: '42m' },
-      { roll: '110', name: 'Ritu Sen', phone: '98160 55101', scorePct: 0.78, time: '44m' },
-      { roll: '109', name: 'Karan Singhal', phone: '98160 55091', scorePct: 0.69, time: '45m' },
-      { roll: '105', name: 'Sahil Mehta', phone: '98160 55051', scorePct: 0.53, time: '45m' },
-      { roll: '103', name: 'Rohit Thakur', phone: '98160 55031', scorePct: 0.42, time: '45m' }
-    ];
-
-    const studentResults = baseStudents.map(b => {
-      const s = Math.round(tMarks * b.scorePct);
-      const pct = Math.round(b.scorePct * 100);
-      const tier = pct >= 80 ? 'Excellent' : (pct >= 50 ? 'Average' : 'Below Average');
-      return {
-        roll: b.roll,
-        name: b.name,
-        phone: b.phone,
-        score: s,
-        percentage: `${pct}%`,
-        tier: tier,
-        time: b.time
-      };
-    });
-
-    const avgScoreVal = (studentResults.reduce((sum, r) => sum + r.score, 0) / studentResults.length).toFixed(1);
-    const avgPctVal = `${((avgScoreVal / tMarks) * 100).toFixed(1)}%`;
-
-    const newRecordedTest = {
-      id: draft.id,
-      code: draft.code || `Test ${String(RECORDED_CLASS_TESTS[classId].length + 1).padStart(2, '0')}`,
-      title: draft.title,
-      chapter: draft.chapter,
-      topic: draft.topic,
-      subject: draft.subject,
-      subjectKey: draft.subjectKey || teacherBuilderState.teacherSubjectKey,
-      targetClass: classId,
-      targetClassText: draft.targetClassText,
-      marksBreakdown: draft.marksBreakdown,
-      questions: draft.questions,
-      date: 'Nov 05, 2026',
-      duration: draft.duration || '45 Mins',
-      totalMarks: tMarks,
-      totalQuestions: draft.totalQuestions || draft.questions.length,
-      attemptedCount: 44,
-      enrolledCount: enrolledNum,
-      attemptedRate: '91.7%',
-      averageScore: avgScoreVal,
-      averagePercentage: avgPctVal,
-      status: 'PUBLISHED',
-      highestScore: { score: studentResults[0].score, percentage: studentResults[0].percentage, studentName: studentResults[0].name },
-      lowestScore: { score: studentResults[studentResults.length - 1].score, percentage: studentResults[studentResults.length - 1].percentage, studentName: studentResults[studentResults.length - 1].name },
-      mostWrongQuestion: {
-        questionIndex: Math.min(4, draft.questions.length || 1),
-        statement: draft.questions[Math.min(3, (draft.questions.length || 1) - 1)]?.question_latex || draft.questions[0]?.question_latex || 'Problem Statement',
-        topic: draft.topic,
-        errorRate: '72.5%',
-        wrongCount: 32,
-        totalAttempted: 44,
-        dominantMistake: 'Formula inversion and algebraic sign slip during multi-step derivation.',
-        actionRecommendation: 'Review foundational derivation steps on Smart Board.'
-      },
-      mostCorrectQuestion: {
-        questionIndex: 1,
-        statement: draft.questions[0]?.question_latex || 'Fundamental Principle',
-        topic: draft.topic,
-        successRate: '95.5%',
-        correctCount: 42,
-        totalAttempted: 44,
-        masteryNotes: 'High batch accuracy on standard definitions.'
-      },
-      tiers: {
-        excellent: { count: 16, percentage: '36.4%', range: `${Math.round(tMarks * 0.8)} – ${tMarks} Marks`, label: 'Advanced Mastery' },
-        average: { count: 22, percentage: '50.0%', range: `${Math.round(tMarks * 0.5)} – ${Math.round(tMarks * 0.8) - 1} Marks`, label: 'Passing' },
-        belowAverage: { count: 6, percentage: '13.6%', range: `&lt; ${Math.round(tMarks * 0.5)} Marks`, label: 'Remedial' }
-      },
-      questionAnalytics: (draft.questions || []).map((q, idx) => ({
-        questionIndex: idx + 1,
-        subtopic: q.subtopic || q.topic || `Q${idx + 1}`,
-        accuracyRate: idx === 3 ? 28 : (idx === 0 ? 95 : Math.max(50, Math.round(90 - (idx * 4)))),
-        errorRate: idx === 3 ? 72 : (idx === 0 ? 5 : Math.min(50, Math.round(10 + (idx * 4)))),
-        avgSeconds: 70 + (idx * 2),
-        benchmarkSeconds: 90
-      })),
-      studentResults: studentResults
-    };
-
-    RECORDED_CLASS_TESTS[classId] = RECORDED_CLASS_TESTS[classId] || [];
-    RECORDED_CLASS_TESTS[classId] = [newRecordedTest, ...RECORDED_CLASS_TESTS[classId].filter(t => t.id !== newRecordedTest.id)];
-
-    if (classId !== '12-NonMed') {
-      RECORDED_CLASS_TESTS['12-NonMed'] = RECORDED_CLASS_TESTS['12-NonMed'] || [];
-      RECORDED_CLASS_TESTS['12-NonMed'] = [newRecordedTest, ...RECORDED_CLASS_TESTS['12-NonMed'].filter(t => t.id !== newRecordedTest.id)];
-    }
-
-    // Save permanently in localStorage
-    try {
-      const stored = JSON.parse(localStorage.getItem('haps_recorded_class_tests') || '{}');
-      stored[classId] = RECORDED_CLASS_TESTS[classId];
-      if (classId !== '12-NonMed') stored['12-NonMed'] = RECORDED_CLASS_TESTS['12-NonMed'];
-      localStorage.setItem('haps_recorded_class_tests', JSON.stringify(stored));
-    } catch (e) {}
+    // Results come from real student submissions: re-sync this teacher's tests from the backend.
+    // (Previously a fabricated result set was inserted here and copied into 12-NonMed.)
+    await syncTeacherClassDataFromBackend();
 
     // Add to student published assessments
     if (!state.publishedAssessments) state.publishedAssessments = [];
@@ -2873,7 +2922,7 @@ window.publishDraftTest = async function(testId) {
 
   } catch (err) {
     console.error('Error publishing test:', err);
-    alert('Error publishing test: ' + err.message);
+    showToast('Error publishing test: ' + err.message, 'error');
   }
 };
 
@@ -3640,15 +3689,17 @@ window.previewTeacherPaper = function(testId) {
     subjectRule = '<li>Calculators and mobile devices are prohibited. Atomic masses: $\\text{H}=1, \\text{C}=12, \\text{N}=14, \\text{O}=16, \\text{Na}=23, \\text{Cl}=35.5$. Gas constant $R = 8.314\\text{ J K}^{-1}\\text{mol}^{-1}$.</li>';
   }
 
+  const originUrl = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null') ? window.location.origin : '';
+  const katexAssetBase = `${originUrl}/vendor/katex`;
   const fullPaperHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Examination Paper: ${escapeHtml(title)}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="if(window.renderMathInElement)renderMathInElement(document.body);"></script>
+  <link rel="stylesheet" href="${katexAssetBase}/katex.min.css">
+  <script defer src="${katexAssetBase}/katex.min.js"></script>
+  <script defer src="${katexAssetBase}/contrib/auto-render.min.js" onload="if(window.renderMathInElement)renderMathInElement(document.body);"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 36px 40px; color: #0f172a; max-width: 860px; margin: 0 auto; background: #fff; line-height: 1.5; }
     .header { text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
@@ -3729,13 +3780,22 @@ window.previewTeacherPaper = function(testId) {
       URL.revokeObjectURL(blobUrl);
     }, 15000);
   } catch (e) {
-    alert('Pop-up blocked. Please enable pop-ups in your browser to view the exam paper preview.');
+    showToast('Pop-up blocked. Please enable pop-ups in your browser to view the exam paper preview.', 'warning');
   }
 };
 
 window.finalizeCurrentTest = function() {
   const liveCounter = document.getElementById('liveTestSubmissionsCounter');
-  if (liveCounter) liveCounter.innerText = '48 / 48 (100%)';
+  if (liveCounter) liveCounter.innerText = '48 / 48';
+  const livePercent = document.getElementById('liveTestSubmissionsPercent');
+  if (livePercent) livePercent.innerText = 'Students Submitted (100%)';
+  const liveStatusBadge = document.getElementById('liveTestStatusBadge');
+  if (liveStatusBadge) {
+    liveStatusBadge.innerHTML = 'FINALIZED &amp; GRADED';
+    liveStatusBadge.style.background = 'rgba(56,189,248,0.15)';
+    liveStatusBadge.style.color = '#0284c7';
+    liveStatusBadge.style.borderColor = 'rgba(56,189,248,0.4)';
+  }
   if (assignedTestsState[0]) {
     assignedTestsState[0].submitted = '48 / 48';
     assignedTestsState[0].status = 'COMPLETED';
@@ -7671,6 +7731,262 @@ window.switchClassProgressSubView = function(view) {
   initLucideIcons();
 };
 
+// =============================================================================
+// LIVE CLASS DATA SYNC + SUBJECT ISOLATION (2026-11-16)
+// Recorded Tests, Assigned Tests and Enrolled Rosters are built from backend data
+// scoped to the signed-in teacher's subject and classes:
+//   GET /api/assessments?teacherSubjectKey=<KEY>
+//   GET /api/analytics/class-dashboard?assessmentId=<ID>&subjectKey=<KEY>
+//   GET /api/curriculum/students?subjectKey=<KEY>
+// The bundled demo arrays are used only if the backend is unreachable, and even
+// then strictly filtered to the teacher's own subject (no cross-subject fallback).
+// =============================================================================
+const liveClassSync = { requestId: 0, backendOk: false, lastSyncAt: 0, inFlight: null };
+
+function teacherSubjectKeyUpper() {
+  return String((teacherBuilderState && teacherBuilderState.teacherSubjectKey) || '').toUpperCase();
+}
+
+function getScopedRecordedTests(classId) {
+  const subj = teacherSubjectKeyUpper();
+  return (RECORDED_CLASS_TESTS[classId] || []).filter(t => String(t.subjectKey || '').toUpperCase() === subj);
+}
+
+function findScopedRecordedTest(testId) {
+  const subj = teacherSubjectKeyUpper();
+  for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
+    const t = (RECORDED_CLASS_TESTS[cid] || []).find(x => x.id === testId);
+    if (t) return String(t.subjectKey || '').toUpperCase() === subj ? t : null;
+  }
+  return null;
+}
+
+function getScopedRoster(classId) {
+  return CLASS_ROSTERS[classId] || { name: classId, stream: '', subject: '', enrolled: 0, attendance: '--', average: '--', students: [] };
+}
+window.getScopedRecordedTests = getScopedRecordedTests;
+window.findScopedRecordedTest = findScopedRecordedTest;
+
+function liveFmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return ''; }
+}
+
+function buildRecordedTestFromBackend(a, dash, code, enrolledCount) {
+  const tMarks = Number(a.totalMarks) || Number(dash && dash.assessment && dash.assessment.totalMarks) || 0;
+  const roster = dash && dash.hasSubmissions ? (dash.studentRoster || []) : [];
+  const results = roster
+    .filter(r => r && r.primaryMistake !== 'Pending Attempt')
+    .map(r => {
+      const pct = Math.round(Number(r.percentage) || 0);
+      return {
+        studentId: r.studentId,
+        roll: r.rollNumber || r.studentId,
+        name: r.studentName || 'Student',
+        phone: r.phone || '',
+        score: Number(r.score) || 0,
+        percentage: `${pct}%`,
+        tier: pct >= 80 ? 'Excellent' : (pct >= 50 ? 'Average' : 'Below Average'),
+        time: r.totalTimeSpentSeconds ? `${Math.max(1, Math.round(r.totalTimeSpentSeconds / 60))}m` : '--'
+      };
+    })
+    .sort((x, y) => y.score - x.score);
+  const attempted = results.length;
+  const enrolled = Math.max(Number(enrolledCount) || 0, Number(dash && dash.classSummary && dash.classSummary.classEnrolledCount) || 0, attempted);
+  const tier = name => results.filter(r => r.tier === name).length;
+  const share = n => (attempted ? `${((n / attempted) * 100).toFixed(1)}%` : '0%');
+  const qa = (dash && dash.questionAnalytics) || [];
+  const attemptedQs = qa.filter(q => Number(q.attemptCount) > 0);
+  const worst = attemptedQs.slice().sort((x, y) => (y.errorRate || 0) - (x.errorRate || 0))[0];
+  const best = attemptedQs.slice().sort((x, y) => (y.accuracyRate || 0) - (x.accuracyRate || 0))[0];
+  const plan = (dash && dash.pedagogicalActionPlan) || {};
+  const recos = [].concat(plan.teachOnceAgainNeeded || [], plan.quickRecapNeeded || []);
+  const recoFor = q => { const r = q && recos.find(x => x.questionIndex === q.questionIndex); return r ? (r.recommendation || '') : ''; };
+  const avgScore = attempted ? results.reduce((sum, r) => sum + r.score, 0) / attempted : 0;
+  const lowest = results[results.length - 1];
+  return {
+    id: a.id,
+    code,
+    title: a.title,
+    chapter: a.chapter || (qa[0] && qa[0].topic) || '',
+    topic: a.topic || (qa[0] && qa[0].subtopic) || '',
+    subject: a.subject,
+    subjectKey: String(a.subjectKey || teacherSubjectKeyUpper()).toUpperCase(),
+    targetClass: a.section || a.targetClass || '',
+    date: liveFmtDate(a.createdAt),
+    duration: a.duration || `${a.durationMinutes || 45} Mins`,
+    totalMarks: tMarks,
+    totalQuestions: a.questionCount || qa.length,
+    attemptedCount: attempted,
+    enrolledCount: enrolled,
+    attemptedRate: enrolled ? `${((attempted / enrolled) * 100).toFixed(1)}%` : '0.0%',
+    averageScore: Number(avgScore.toFixed(1)),
+    averagePercentage: attempted && tMarks ? `${((avgScore / tMarks) * 100).toFixed(1)}%` : '--',
+    status: a.status || 'PUBLISHED',
+    source: 'backend',
+    highestScore: attempted ? { score: results[0].score, percentage: results[0].percentage, studentName: results[0].name } : { score: 0, percentage: '0%', studentName: 'No submissions yet' },
+    lowestScore: attempted ? { score: lowest.score, percentage: lowest.percentage, studentName: lowest.name } : { score: 0, percentage: '0%', studentName: 'No submissions yet' },
+    mostWrongQuestion: worst ? {
+      questionIndex: worst.questionIndex,
+      statement: worst.questionLatex || '',
+      topic: worst.subtopic || worst.topic || '',
+      errorRate: `${worst.errorRate || 0}%`,
+      wrongCount: worst.wrongCount || 0,
+      totalAttempted: worst.attemptCount || 0,
+      dominantMistake: worst.dominantMistake || (worst.needsMoreTime ? 'Time pressure on this question.' : 'Conceptual error on this question.'),
+      actionRecommendation: recoFor(worst) || 'Revisit this concept with the class before the next test.'
+    } : { questionIndex: 1, statement: 'No submissions yet.', topic: '', errorRate: '0%', wrongCount: 0, totalAttempted: 0, dominantMistake: 'Awaiting student submissions.', actionRecommendation: 'Results appear here as students submit.' },
+    mostCorrectQuestion: best ? {
+      questionIndex: best.questionIndex,
+      statement: best.questionLatex || '',
+      topic: best.subtopic || best.topic || '',
+      successRate: `${best.accuracyRate || 0}%`,
+      correctCount: best.correctCount || 0,
+      totalAttempted: best.attemptCount || 0,
+      masteryNotes: 'Highest class accuracy in this test.'
+    } : { questionIndex: 1, statement: 'No submissions yet.', topic: '', successRate: '0%', correctCount: 0, totalAttempted: 0, masteryNotes: 'Awaiting student submissions.' },
+    tiers: {
+      excellent: { count: tier('Excellent'), percentage: share(tier('Excellent')), range: `${Math.round(tMarks * 0.8)} - ${tMarks} Marks`, label: 'Advanced Mastery' },
+      average: { count: tier('Average'), percentage: share(tier('Average')), range: `${Math.round(tMarks * 0.5)} - ${Math.max(0, Math.round(tMarks * 0.8) - 1)} Marks`, label: 'Passing' },
+      belowAverage: { count: tier('Below Average'), percentage: share(tier('Below Average')), range: `< ${Math.round(tMarks * 0.5)} Marks`, label: 'Remedial' }
+    },
+    questionAnalytics: qa.map(q => ({
+      questionIndex: q.questionIndex,
+      subtopic: q.subtopic || q.topic || `Q${q.questionIndex}`,
+      accuracyRate: q.accuracyRate || 0,
+      errorRate: q.errorRate || 0,
+      avgSeconds: q.avgTimeSpentSeconds || 0,
+      benchmarkSeconds: q.benchmarkSeconds || 90
+    })),
+    studentResults: results
+  };
+}
+
+async function syncTeacherClassDataFromBackend() {
+  const key = teacherSubjectKeyUpper();
+  if (!key) return false;
+  if (liveClassSync.inFlight) return liveClassSync.inFlight;
+  const reqId = ++liveClassSync.requestId;
+  const run = (async () => {
+    const base = getApiBaseUrl();
+    const [aRes, sRes] = await Promise.all([
+      fetch(`${base}/api/assessments?teacherSubjectKey=${encodeURIComponent(key)}`),
+      fetch(`${base}/api/curriculum/students?subjectKey=${encodeURIComponent(key)}`)
+    ]);
+    if (!aRes.ok || !sRes.ok) throw new Error(`Backend returned ${aRes.status}/${sRes.status}`);
+    const aData = await aRes.json();
+    const sData = await sRes.json();
+    const tests = (aData.assessments || [])
+      .filter(a => a.status !== 'DRAFT' && !String(a.id).startsWith('paper_'))
+      .sort((x, y) => String(x.createdAt || '').localeCompare(String(y.createdAt || '')));
+    const dashes = await Promise.all(tests.map(a =>
+      fetch(`${base}/api/analytics/class-dashboard?assessmentId=${encodeURIComponent(a.id)}&subjectKey=${encodeURIComponent(key)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null)
+    ));
+    if (reqId !== liveClassSync.requestId || key !== teacherSubjectKeyUpper()) return false;
+
+    const students = sData.students || [];
+    const studentsBySection = {};
+    students.forEach(st => { (studentsBySection[st.section] = studentsBySection[st.section] || []).push(st); });
+
+    // Recorded tests (Class Progress)
+    Object.keys(RECORDED_CLASS_TESTS).forEach(k => { delete RECORDED_CLASS_TESTS[k]; });
+    const codeCounter = {};
+    const built = tests.map((a, i) => {
+      const sec = a.section || a.targetClass || '';
+      codeCounter[sec] = (codeCounter[sec] || 0) + 1;
+      return buildRecordedTestFromBackend(a, dashes[i], `Test ${String(codeCounter[sec]).padStart(2, '0')}`, (studentsBySection[sec] || []).length);
+    });
+    built.slice().reverse().forEach(t => {
+      (RECORDED_CLASS_TESTS[t.targetClass] = RECORDED_CLASS_TESTS[t.targetClass] || []).push(t);
+    });
+
+    // Assigned tests (Take / Conduct Test)
+    assignedTestsState.length = 0;
+    built.slice().reverse().forEach(t => {
+      assignedTestsState.push({
+        id: t.id,
+        title: t.title,
+        targetClass: t.targetClass,
+        subject: t.subject,
+        topic: t.topic || t.chapter || '',
+        duration: t.duration,
+        submitted: `${t.attemptedCount} / ${t.enrolledCount}`,
+        submittedCount: t.attemptedCount,
+        totalCount: t.enrolledCount,
+        avg: t.attemptedCount ? t.averagePercentage : '—',
+        status: t.status === 'COMPLETED' || (t.enrolledCount > 0 && t.attemptedCount >= t.enrolledCount) ? 'COMPLETED' : 'LIVE',
+        statusBadge: ''
+      });
+    });
+
+    // Enrolled rosters (only this teacher's classes)
+    const scopedClasses = (teacherBuilderState.classes || []).map(c => c.id || c.key).filter(Boolean);
+    Object.keys(CLASS_ROSTERS).forEach(k => { delete CLASS_ROSTERS[k]; });
+    const classIds = Array.from(new Set(scopedClasses.concat(Object.keys(studentsBySection))));
+    classIds.forEach(cid => {
+      const clsMeta = (teacherBuilderState.classes || []).find(c => (c.id || c.key) === cid) || {};
+      const classTests = built.filter(t => t.targetClass === cid);
+      const list = (studentsBySection[cid] || []).map(st => {
+        const mine = classTests.map(t => t.studentResults.find(r => r.studentId === st.id)).filter(Boolean);
+        const avgPct = mine.length ? Math.round(mine.reduce((sum, r) => sum + parseFloat(r.percentage), 0) / mine.length) : null;
+        return {
+          studentId: st.id,
+          roll: st.roll_number || st.rollNumber || st.id,
+          name: st.full_name || st.name || 'Student',
+          phone: st.phone || st.contact_phone || '',
+          parent: st.parent_phone || st.parentPhone || '',
+          turnIn: mine.length ? `Submitted (${mine.length} of ${classTests.length} tests)` : (classTests.length ? 'Pending Turn-in' : 'No tests yet'),
+          score: avgPct === null ? '--' : `${avgPct}%`,
+          status: avgPct === null ? 'Pending' : (avgPct < 50 ? 'Remedial' : (avgPct < 65 ? 'Focus Needed' : 'Active'))
+        };
+      });
+      const scored = list.filter(s => s.score !== '--');
+      CLASS_ROSTERS[cid] = {
+        name: clsMeta.name || cid,
+        stream: clsMeta.stream ? String(clsMeta.stream).replace(/_/g, ' ') : '',
+        subject: (teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || key,
+        enrolled: list.length,
+        attendance: '--',
+        average: scored.length ? `${Math.round(scored.reduce((sum, s) => sum + parseFloat(s.score), 0) / scored.length)}%` : '--',
+        students: list
+      };
+    });
+
+    liveClassSync.backendOk = true;
+    liveClassSync.lastSyncAt = Date.now();
+    return true;
+  })();
+  liveClassSync.inFlight = run;
+  try {
+    return await run;
+  } catch (err) {
+    console.warn('[CLASS SYNC] Using offline demo data (subject-filtered):', err.message);
+    liveClassSync.backendOk = false;
+    return false;
+  } finally {
+    if (liveClassSync.inFlight === run) liveClassSync.inFlight = null;
+  }
+}
+
+// Syncs from the backend, then re-renders whichever teacher views are on screen.
+async function refreshTeacherLiveViews() {
+  const ok = await syncTeacherClassDataFromBackend();
+  if (!ok) return false;
+  refreshPaperClassOptions();
+  const classId = teacherBuilderState.selectedClassId;
+  if (typeof window.renderClassProgressDashboard === 'function' && document.getElementById('tabTeacherClasses')) {
+    try { window.renderClassProgressDashboard(classId); } catch (e) { console.warn(e); }
+  }
+  if (typeof window.renderAssignedTestsTable === 'function') {
+    try { window.renderAssignedTestsTable(); } catch (e) { console.warn(e); }
+  }
+  return true;
+}
+window.syncTeacherClassDataFromBackend = syncTeacherClassDataFromBackend;
+window.refreshTeacherLiveViews = refreshTeacherLiveViews;
+
 window.renderClassProgressDashboard = function(classId = '12-NonMed') {
   teacherBuilderState.selectedClassId = classId;
 
@@ -7678,19 +7994,9 @@ window.renderClassProgressDashboard = function(classId = '12-NonMed') {
   if (sel && sel.value !== classId) sel.value = classId;
 
   const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
-  const allClassTests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
-  let tests = allClassTests.filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
-  if (tests.length === 0) {
-    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
-      const match = (RECORDED_CLASS_TESTS[cid] || []).filter(t => t.subjectKey === currentTeacherSubject);
-      if (match.length > 0) {
-        tests = match;
-        break;
-      }
-    }
-    if (tests.length === 0) tests = allClassTests;
-  }
-  const rosterData = CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed'];
+  // Subject + class isolation: only this teacher's subject in this class, never a fallback to others.
+  let tests = getScopedRecordedTests(classId);
+  const rosterData = getScopedRoster(classId);
 
   // Update Top KPI Cards
   const statTests = document.getElementById('statClassTestsRecorded');
@@ -7724,18 +8030,8 @@ window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = 
   if (!tbody) return;
 
   const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
-  const allClassTests = RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || [];
-  let tests = allClassTests.filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
-  if (tests.length === 0) {
-    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
-      const match = (RECORDED_CLASS_TESTS[cid] || []).filter(t => t.subjectKey === currentTeacherSubject);
-      if (match.length > 0) {
-        tests = match;
-        break;
-      }
-    }
-    if (tests.length === 0) tests = allClassTests;
-  }
+  // Subject + class isolation: only this teacher's subject in this class, never a fallback to others.
+  let tests = getScopedRecordedTests(classId);
 
   let filtered = tests;
   if (filterQuery) {
@@ -7749,7 +8045,9 @@ window.renderRecordedTestsTable = function(classId = '12-NonMed', filterQuery = 
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No assessments found matching "${escapeHtml(filterQuery)}".</td></tr>`;
+    tbody.innerHTML = filterQuery
+      ? `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No assessments found matching "${escapeHtml(filterQuery)}".</td></tr>`
+      : `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No tests have been published for this class in your subject yet. Create one in Create Test &amp; Paper; results appear here as students submit.</td></tr>`;
     return;
   }
 
@@ -7829,18 +8127,12 @@ window.viewTestReportDetail = function(testId) {
   const currentTeacherSubject = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
 
   // Find test across active class or any class
-  let test = (RECORDED_CLASS_TESTS[classId] || []).find(t => t.id === testId);
+  // Subject isolation: only open tests that belong to this teacher's subject.
+  const test = findScopedRecordedTest(testId);
   if (!test) {
-    for (const cid of Object.keys(RECORDED_CLASS_TESTS)) {
-      test = (RECORDED_CLASS_TESTS[cid] || []).find(t => t.id === testId);
-      if (test) break;
-    }
+    if (typeof showToast === 'function') showToast('This test report is not available for your subject.', 'error');
+    return;
   }
-  if (!test) {
-    const list = (RECORDED_CLASS_TESTS[classId] || RECORDED_CLASS_TESTS['12-NonMed'] || []).filter(t => !t.subjectKey || t.subjectKey === currentTeacherSubject);
-    test = list[0] || (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
-  }
-  if (!test) return;
 
   const reportContainer = document.getElementById('viewTestReportDetail');
   if (!reportContainer) return;
@@ -7868,13 +8160,13 @@ window.viewTestReportDetail = function(testId) {
 
   reportContainer.innerHTML = `
     <!-- Top Action & Navigation Banner -->
-    <div style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:var(--shadow-card);">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <button type="button" class="btn-secondary" onclick="window.switchClassProgressSubView('tests')" style="font-size:0.8rem; padding:7px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+    <div style="background:#ffffff; border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:var(--shadow-card); max-width:100%;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-width:0; max-width:100%;">
+        <button type="button" class="btn-secondary" onclick="window.switchClassProgressSubView('tests')" style="font-size:0.8rem; padding:7px 14px; font-weight:700; display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
           <i data-lucide="arrow-left" style="width:14px; height:14px;"></i> Back to All Tests
         </button>
-        <div>
-          <div style="display:flex; align-items:center; gap:8px;">
+        <div style="min-width:0; max-width:100%;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-weight:800; padding:2px 8px; border-radius:5px; font-size:0.75rem;">
               ${escapeHtml(test.code)}
             </span>
@@ -7922,7 +8214,7 @@ window.viewTestReportDetail = function(testId) {
     </div>
 
     <!-- 2. HIGH-IMPACT QUESTION DIAGNOSTIC CARDS (MOST WRONG vs MOST SOLVED) -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.5rem;">
+    <div class="report-two-col-grid" style="margin-bottom:1.5rem;">
       <!-- CARD A: Most Wrong Question (Clean, Prominent Question Number) -->
       <div class="diagnostic-highlight-card diagnostic-failed-card" style="padding:16px 20px; border-radius:12px; background:linear-gradient(145deg, #fff5f5, #ffffff); border:1.5px solid #fecdd3; box-shadow:0 2px 6px rgba(225,29,72,0.06);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -8063,7 +8355,7 @@ window.viewTestReportDetail = function(testId) {
     </div>
 
     <!-- 4. VISUAL PROGRESS CHARTS -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:1.5rem;">
+    <div class="report-two-col-grid" style="margin-bottom:1.5rem;">
       <!-- Chart 1: Performance Tier Distribution -->
       <div class="report-chart-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -8118,9 +8410,9 @@ window.viewTestReportDetail = function(testId) {
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <div style="display:inline-flex; gap:4px;">
             <button type="button" class="tier-filter-pill active" onclick="window.filterReportStudentTier('ALL', this)">All (${test.studentResults.length})</button>
-            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Excellent', this)">Excellent (${test.tiers.excellent.count})</button>
-            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Average', this)">Average (${test.tiers.average.count})</button>
-            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Below Average', this)">Below Avg (${test.tiers.belowAverage.count})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Excellent', this)">Excellent (${test.studentResults.filter(s => s.tier === 'Excellent').length})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Average', this)">Average (${test.studentResults.filter(s => s.tier === 'Average').length})</button>
+            <button type="button" class="tier-filter-pill" onclick="window.filterReportStudentTier('Below Average', this)">Below Avg (${test.studentResults.filter(s => s.tier !== 'Excellent' && s.tier !== 'Average').length})</button>
           </div>
         </div>
       </div>
@@ -8344,7 +8636,7 @@ window.printTestReport = function(testId) {
 };
 
 window.renderClassRoster = function(classId = '12-NonMed') {
-  const data = CLASS_ROSTERS[classId] || CLASS_ROSTERS['12-NonMed'];
+  const data = getScopedRoster(classId);
   teacherBuilderState.selectedClassId = classId;
 
   const sel = document.getElementById('selectTeacherActiveRosterClass');
@@ -8422,9 +8714,28 @@ window.notifyStudentParent = function(studentName, parentPhone) {
   window.sendRosterStudentWhatsApp(studentName, parentPhone, 'Good', 'Active');
 };
 
+// Subject isolation for class creation: a teacher can only create classes in grades/streams they teach.
+function getTeacherClassCreationScope() {
+  const key = String(teacherBuilderState.teacherSubjectKey || '').toUpperCase();
+  const grades = key.startsWith('CLASS10_') ? ['10'] : ['11', '12'];
+  const streams = key === 'BIOLOGY' ? ['MEDICAL'] : (key === 'MATHEMATICS' ? ['NON_MEDICAL'] : (key.startsWith('CLASS10_') ? ['FOUNDATION'] : ['MEDICAL', 'NON_MEDICAL']));
+  return { key, grades, streams };
+}
+
 window.openCreateClassModal = function() {
   const modal = document.getElementById('modalCreateClass');
   if (modal) {
+    const scope = getTeacherClassCreationScope();
+    const gradeSel = document.getElementById('selectNewClassGrade');
+    if (gradeSel) {
+      Array.from(gradeSel.options).forEach(o => { const ok = scope.grades.includes(String(o.value)); o.hidden = !ok; o.disabled = !ok; });
+      if (!scope.grades.includes(String(gradeSel.value))) gradeSel.value = scope.grades[0];
+    }
+    const streamSel = document.getElementById('selectNewClassStream');
+    if (streamSel && scope.streams) {
+      Array.from(streamSel.options).forEach(o => { const ok = scope.streams.includes(String(o.value)); o.hidden = !ok; o.disabled = !ok; });
+      if (!scope.streams.includes(String(streamSel.value))) streamSel.value = scope.streams[0];
+    }
     modal.style.display = 'flex';
     initLucideIcons();
   }
@@ -8502,6 +8813,7 @@ function setupAiGenerator() {
 
   // Dynamic NCERT topic updating on grade/subject change
   const updateTopicsForGrade = () => {
+    if (!selectTopic) return;
     const grade = selectGrade ? selectGrade.value : '10';
     const subj = selectSubject ? selectSubject.value : 'Science';
 
@@ -8677,6 +8989,10 @@ function renderCurrentQuestionInPreview() {
   const solTextEl = document.getElementById('renderSolutionText');
   const badgeEl = document.getElementById('previewBadge');
   const subtitleEl = document.getElementById('previewMetaSubtitle');
+
+  if (!qTextEl || !optListEl || !solTextEl) {
+    return;
+  }
 
   if (badgeEl) {
     badgeEl.innerText = `${q.curriculum_board || 'CBSE'} • Class ${q.grade || '10'}`;
@@ -9750,7 +10066,7 @@ function setupTelemetryControls() {
   const btnEveningDrill = document.getElementById('btnTriggerEveningDrill');
   if (btnEveningDrill) {
     btnEveningDrill.addEventListener('click', () => {
-      alert('Evening Prep Remedial Drill #SHM-04 dispatched to Aryan Sharma for 7:30 PM hostel self-study.');
+      showToast(`Evening prep remedial drill dispatched to ${handwrittenState.studentName || 'the selected student'} for 7:30 PM hostel self-study.`, 'success');
     });
   }
 }
@@ -9758,24 +10074,55 @@ function setupTelemetryControls() {
 // -----------------------------------------------------------------------------
 // 4. HANDWRITTEN ANSWER SHEET EVALUATOR
 // -----------------------------------------------------------------------------
+// Scan Paper Sheets: the graded student is chosen from the teacher's own (subject-scoped) class roster.
+const handwrittenState = { studentId: null, studentName: '' };
+
+function populateHandwrittenStudentSelect() {
+  const sel = document.getElementById('selectHandwrittenStudent');
+  if (!sel) return;
+  const classId = teacherBuilderState.selectedClassId;
+  const roster = (typeof getScopedRoster === 'function' ? getScopedRoster(classId) : { students: [] }).students || [];
+  if (roster.length === 0) {
+    sel.innerHTML = '<option value="">No students enrolled in this class</option>';
+    handwrittenState.studentId = null;
+    handwrittenState.studentName = '';
+    return;
+  }
+  const keep = roster.some(st => st.studentId === handwrittenState.studentId) ? handwrittenState.studentId : roster[0].studentId;
+  sel.innerHTML = roster.map(st => `<option value="${escapeHtml(st.studentId || '')}"${st.studentId === keep ? ' selected' : ''}>${escapeHtml(st.name)} (${escapeHtml(String(st.roll))})</option>`).join('');
+  const chosen = roster.find(st => st.studentId === keep) || roster[0];
+  handwrittenState.studentId = chosen.studentId;
+  handwrittenState.studentName = chosen.name;
+  if (!sel.dataset.bound) {
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', () => {
+      const st = (getScopedRoster(teacherBuilderState.selectedClassId).students || []).find(x => x.studentId === sel.value);
+      handwrittenState.studentId = st ? st.studentId : null;
+      handwrittenState.studentName = st ? st.name : '';
+    });
+  }
+}
+window.populateHandwrittenStudentSelect = populateHandwrittenStudentSelect;
+
 function setupHandwrittenStation() {
   const btnApprove = document.getElementById('btnApproveHandwritten');
   const btnOverride = document.getElementById('btnOverrideMarks');
 
   if (btnApprove) {
-    btnApprove.addEventListener('click', () => {
-      alert('Verified by Teacher: 4.0 / 4.0 marks officially recorded in HAPS Class XI Gradebook.');
-    });
+    btnApprove.onclick = () => {
+      showToast('Verified by Teacher: 4.0 / 4.0 marks officially recorded in HAPS Class XI Gradebook.', 'success');
+    };
   }
 
   if (btnOverride) {
-    btnOverride.addEventListener('click', () => {
-      const newMarks = prompt('Enter revised marks for Aryan Sharma (out of 4.0):', '4.0');
+    btnOverride.onclick = () => {
+      const newMarks = prompt(`Enter revised marks for ${handwrittenState.studentName || 'this student'} (out of 4.0):`, '4.0');
       if (newMarks !== null) {
-        document.getElementById('displayTotalMarks').innerText = `${newMarks} / 4.0`;
-        alert(`Marks successfully adjusted to ${newMarks}/4.0.`);
+        const disp = document.getElementById('displayTotalMarks');
+        if (disp) disp.innerText = `${newMarks} / 4.0`;
+        showToast(`Marks successfully adjusted to ${newMarks}/4.0.`, 'success');
       }
-    });
+    };
   }
 }
 
@@ -9789,7 +10136,7 @@ function setupStudentMode() {
       modeCards.forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       state.activeStudentMode = card.getAttribute('data-mode');
-      alert(`Switched to Learning Mode: ${state.activeStudentMode}`);
+      showToast(`Switched to Learning Mode: ${state.activeStudentMode}`, 'info');
     });
   });
 
@@ -9800,16 +10147,21 @@ function setupStudentMode() {
 
   if (btnHint && hintNumEl && hintTextEl && hintBox) {
     btnHint.addEventListener('click', () => {
-      const activeQ = (examState.questions && examState.questions.length > 0)
+      const hasExamQuestions = Boolean(examState.questions && examState.questions.length > 0);
+      const activeQ = hasExamQuestions
         ? examState.questions[examState.currentQuestionIndex]
         : state.currentQuestion;
-      const hints = (activeQ && activeQ.socratic_hints && activeQ.socratic_hints.length > 0)
+      const activeTopicLabel = activeQ?.subtopic || activeQ?.topic || activeQ?.chapter_name || 'this concept';
+      const defaultContextualHints = [
+        `Identify the key governing equation or physical relationship in ${activeTopicLabel}.`,
+        `List all given magnitudes with proper SI units and sign conventions for ${activeTopicLabel}.`,
+        `Substitute the known boundary conditions carefully and verify units of the final answer.`
+      ];
+      const hints = (activeQ && Array.isArray(activeQ.socratic_hints) && activeQ.socratic_hints.length > 0)
         ? activeQ.socratic_hints
-        : (state.currentQuestion?.socratic_hints || [
-            "What fundamental formula governs this physical or mathematical system?",
-            "Check what values or quantities are conserved in this interaction.",
-            "Substitute given numerical values carefully to solve for the target variable."
-          ]);
+        : (!hasExamQuestions && state.currentQuestion?.socratic_hints?.length > 0
+            ? state.currentQuestion.socratic_hints
+            : defaultContextualHints);
 
       state.studentTimer.hintsRevealed = (state.studentTimer.hintsRevealed % hints.length) + 1;
       const hintIdx = state.studentTimer.hintsRevealed - 1;
@@ -9828,7 +10180,7 @@ function setupStudentMode() {
   if (btnSubmit) {
     btnSubmit.addEventListener('click', async () => {
       if (!state.studentTimer.selectedOption) {
-        alert('Please select an option before submitting.');
+        showToast('Please select an option before submitting.', 'warning');
         return;
       }
 
@@ -10019,9 +10371,10 @@ function setupHandwrittenUploadAndVisionAi() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageData,
-          studentId: 'b0000000-0000-0000-0000-000000000001',
+          studentId: handwrittenState.studentId,
           questionId: 'c0000000-0000-0000-0000-000000000002',
-          subject: 'Physics'
+          subject: (teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || 'Physics',
+          teacherSubjectKey: teacherBuilderState.teacherSubjectKey
         })
       });
 
@@ -10071,7 +10424,7 @@ function setupHandwrittenUploadAndVisionAi() {
       });
     }
 
-    alert('Vision AI Evaluation Complete.\nScored 4.0/4.0 against official CBSE/HPBOSE marking rubric.');
+    showToast('Vision AI Evaluation Complete. Scored 4.0/4.0 against official CBSE/HPBOSE marking rubric.', 'success');
   }
 }
 
@@ -10163,7 +10516,7 @@ function initClassroomSeatmap() {
     `;
 
     pod.addEventListener('click', () => {
-      alert(`Desk ${i + 1}: ${s.name}\nActive Status: ${s.status === 'green' ? 'Solving accurately within benchmark' : s.status === 'amber' ? 'Hesitating (>60s)' : 'Misconception / Hints requested'}`);
+      showToast(`Desk ${i + 1}: ${s.name} — ${s.status === 'green' ? 'Solving accurately within benchmark' : s.status === 'amber' ? 'Hesitating (>60s)' : 'Misconception / Hints requested'}`, s.status === 'green' ? 'success' : (s.status === 'amber' ? 'warning' : 'error'));
     });
 
     seatmapGrid.appendChild(pod);
@@ -10186,15 +10539,23 @@ let activeWhatsAppContext = {
   portalUrl: 'https://scholar.unisole.ai/report/b0000000-0000-0000-0000-000000000001'
 };
 
+function sanitizeWhatsAppPayload(rawText) {
+  return String(rawText || '')
+    .replace(/\uFFFD/g, '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
 function formatWhatsAppDossierText(ctx) {
-  return (
+  return sanitizeWhatsAppPayload(
     `*Unisole AI School - Official Academic Update*\n` +
     `*Weekly Academic Dossier for ${ctx.studentName} (Roll: ${ctx.rollNumber})*\n\n` +
     `*Performance Summary:*\n` +
-    `• Weekly Accuracy: ${ctx.accuracy}%\n` +
-    `• Study Time: ${ctx.studyHours || '15.2'} hrs\n` +
-    `• Mastered: ${ctx.mastered}\n` +
-    `• Focus Need: ${ctx.weakness}\n\n` +
+    `- Weekly Accuracy: ${ctx.accuracy}%\n` +
+    `- Study Time: ${ctx.studyHours || '15.2'} hrs\n` +
+    `- Mastered: ${ctx.mastered}\n` +
+    `- Focus Need: ${ctx.weakness}\n\n` +
     `*Recommended Parent Action for this Weekend:*\n` +
     `1. ${ctx.actionItem}\n` +
     `2. Ensure 45 mins quiet time Sunday morning for speed recap drill.\n\n` +
@@ -10247,12 +10608,18 @@ function setupWhatsAppNotificationModal() {
 
   if (btnDrilldown) {
     btnDrilldown.addEventListener('click', () => {
-      const studentName = document.getElementById('drilldownStudentName')?.innerText || 'Aryan Sharma';
-      const studentRoll = document.getElementById('drilldownStudentRoll')?.innerText?.replace('Roll: ', '') || '12-NM-01';
-      const snippet = document.getElementById('drilldownParentSnippet')?.innerText || '';
+      const planCtx = window._currentStudentRemedialPlan;
+      const modalName = document.getElementById('modalStudentName')?.textContent?.trim();
+      const modalRoll = document.getElementById('modalStudentRollBadge')?.textContent?.replace(/Roll\s*#?/i, '').trim();
+      const modalPhone = document.getElementById('modalStudentPhone')?.textContent?.trim();
+      const studentName = planCtx?.student?.name || modalName || document.getElementById('drilldownStudentName')?.innerText || 'Aryan Sharma';
+      const studentRoll = planCtx?.student?.roll || modalRoll || document.getElementById('drilldownStudentRoll')?.innerText?.replace('Roll: ', '') || '12-NM-01';
+      const parentPhone = planCtx?.student?.phone || modalPhone || '';
+      const snippet = planCtx?.plan?.whatsAppText || document.getElementById('drilldownParentSnippet')?.innerText || '';
       openWhatsAppModalWithContext({
         studentName,
         rollNumber: studentRoll,
+        parentPhone,
         actionItem: snippet || 'Ask student to explain their primary test question mistake.'
       });
     });
@@ -10288,10 +10655,10 @@ function setupWhatsAppNotificationModal() {
       let phone = (phoneInput?.value || '').replace(/[^0-9]/g, '');
       if (phone.length === 10) phone = `91${phone}`;
       if (!phone || phone.length < 8) {
-        alert('Please enter a valid mobile number with country code (e.g. +91 98160 12345).');
+        showToast('Please enter a valid mobile number with country code (e.g. +91 98160 12345).', 'warning');
         return;
       }
-      const message = document.getElementById('waBubbleContent')?.innerText || formatWhatsAppDossierText(activeWhatsAppContext);
+      const message = sanitizeWhatsAppPayload(document.getElementById('waBubbleContent')?.innerText || formatWhatsAppDossierText(activeWhatsAppContext));
       const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       window.open(waUrl, '_blank');
 
@@ -10326,7 +10693,7 @@ function setupWhatsAppNotificationModal() {
         const data = await res.json();
         if (data.success) {
           if (data.dispatchMode === 'META_CLOUD_API' || data.dispatchMode === 'TWILIO_API') {
-            alert(`WhatsApp notification successfully delivered to ${data.recipient} via ${data.dispatchMode}!`);
+            showToast(`WhatsApp notification delivered to ${data.recipient} via ${data.dispatchMode}!`, 'success');
             modal.classList.remove('active');
           } else {
             // Direct link mode: server confirmed ready, launch wa.me
@@ -10340,7 +10707,7 @@ function setupWhatsAppNotificationModal() {
             }
           }
         } else {
-          alert('Server dispatch returned: ' + (data.error || 'Failed to dispatch'));
+          showToast('Server dispatch returned: ' + (data.error || 'Failed to dispatch'), 'error');
         }
       } catch (err) {
         console.warn('[WHATSAPP DISPATCH ERROR]', err);
@@ -10486,7 +10853,7 @@ function setupNtaExamPaletteEngine() {
     if (examState.currentQuestionIndex < totalQ - 1) {
       jumpToQuestion(examState.currentQuestionIndex + 1);
     } else {
-      alert(`You are on the final question (Q${totalQ}). You can review your answers on the palette or click 'Submit Full Assessment'.`);
+      showToast(`You are on the final question (Q${totalQ}). Review your answers or click Submit Full Assessment.`, 'info');
     }
   };
 
@@ -10617,13 +10984,82 @@ function setupNtaExamPaletteEngine() {
             console.warn('Telemetry update error:', syncErr);
           }
 
+          try {
+            const rData = data.results || {};
+            const totalMarks = rData.totalMarks || (examState.questions?.length ? examState.questions.length * 4 : 40);
+            const gotScore = rData.totalScore !== undefined ? rData.totalScore : (rData.score !== undefined ? rData.score : 0);
+            const pctVal = rData.percentage !== undefined ? Number(rData.percentage).toFixed(1) : '0.0';
+            const bandLabel = Number(pctVal) >= 80 ? 'Distinction' : (Number(pctVal) >= 60 ? 'Merit Band' : 'Needs Review');
+            const bandColor = Number(pctVal) >= 80 ? '#34d399' : (Number(pctVal) >= 60 ? '#38bdf8' : '#fbbf24');
+            const elapsedMins = Math.max(1, Math.round((state.studentTimer?.secondsElapsed || 600) / 60));
+            const titleText = state.activeAssessment?.title || 'Assigned Assessment';
+            const topicText = `${examState.questions?.length || 0} Questions • ${state.activeAssessment?.subject || 'Mixed Concept'} Review`;
+            const rowId = `prev_row_${state.lastSubmittedAssessmentId}`;
+            const prevTbody = document.getElementById('studentPrevTestsTableBody');
+            if (prevTbody && !document.getElementById(rowId)) {
+              const firstBreakdownSol = (rData.questionBreakdown || [])
+                .slice(0, 3)
+                .map((b, i) => `Q${i + 1} (${b.subtopic || b.topic || 'Concept'}): ${b.isCorrect ? 'Correct' : 'Expected ' + (b.correctAnswer || 'A')}`)
+                .join(' | ');
+              const tr = document.createElement('tr');
+              tr.id = rowId;
+              tr.innerHTML = `
+                <td>
+                  <div style="font-weight:700; color:#f8fafc;">${escapeHtml(titleText)}</div>
+                  <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(topicText)}</div>
+                </td>
+                <td>Just Now</td>
+                <td>${elapsedMins} mins</td>
+                <td><strong style="color:${bandColor};">${gotScore} / ${totalMarks}</strong></td>
+                <td><span class="status-badge" style="background:rgba(56,189,248,0.18); color:${bandColor};">${pctVal}%</span></td>
+                <td><span style="color:${bandColor}; font-weight:700;">${bandLabel}</span></td>
+                <td style="text-align:right;">
+                  <button type="button" class="btn-secondary" style="padding:6px 12px; font-size:0.75rem;">
+                    Review Solutions
+                  </button>
+                </td>
+              `;
+              const revBtn = tr.querySelector('button');
+              if (revBtn) {
+                revBtn.onclick = () => window.openPreviousTestReview(
+                  titleText,
+                  topicText,
+                  `${gotScore} / ${totalMarks} (${pctVal}%)`,
+                  firstBreakdownSol || 'Full diagnostic step review recorded.'
+                );
+              }
+              prevTbody.insertBefore(tr, prevTbody.firstChild);
+              const completedCount = prevTbody.querySelectorAll('tr').length;
+              const navBadge = document.getElementById('studentCompletedBadgeNav');
+              const drawerBadge = document.getElementById('drawerStudentCompletedBadge');
+              const drawerSub = document.getElementById('drawerStudentCompletedSub');
+              const reportCountLbl = document.getElementById('studentSmartReportTestsCountLabel');
+              const reportAttemptedSub = document.getElementById('studentSmartReportAttemptedSub');
+              const reportBtnLbl = document.getElementById('studentSmartReportAttemptedBtnLabel');
+              if (navBadge) navBadge.textContent = `${completedCount} Completed`;
+              if (drawerBadge) drawerBadge.textContent = `${completedCount} Completed`;
+              if (drawerSub) drawerSub.textContent = `${completedCount} Completed Tests & Step Solutions`;
+              if (reportCountLbl) reportCountLbl.textContent = `Showing ${completedCount} of ${completedCount} Completed Tests`;
+              if (reportAttemptedSub) reportAttemptedSub.textContent = `All ${completedCount} recorded unit tests completed`;
+              if (reportBtnLbl) reportBtnLbl.textContent = `Attempted Tests & Reports (${completedCount})`;
+            }
+            loadStudentPreviousTests();
+            if (typeof STUDENT_REPORT_DATA !== 'undefined' && STUDENT_REPORT_DATA?.student) {
+              const totalCount = prevTbody ? prevTbody.querySelectorAll('tr').length : (STUDENT_REPORT_DATA.student.testsAttempted + 1);
+              STUDENT_REPORT_DATA.student.testsAttempted = totalCount;
+              STUDENT_REPORT_DATA.student.totalTestsScheduled = Math.max(STUDENT_REPORT_DATA.student.totalTestsScheduled || 4, totalCount);
+            }
+          } catch (historyErr) {
+            console.warn('Previous tests record update notice:', historyErr);
+          }
+
           displayDiagnosticResults(data.results);
         } else {
           throw new Error('Fallback to local calculation');
         }
       } catch (e) {
         console.warn('Backend submit error, calculating locally:', e);
-        alert(`Assessment Submitted!\nScore recorded and streamed to Teacher Live Telemetry Monitor.`);
+        showToast('Assessment submitted locally and synced to telemetry monitor.', 'success');
       } finally {
         btnSubmitExam.disabled = false;
         btnSubmitExam.innerHTML = `<i data-lucide="send" style="width:14px;height:14px;"></i> Submit Full Assessment`;
@@ -10650,7 +11086,7 @@ function advanceQuestion() {
   } else {
     renderPaletteButtons();
     updatePaletteCounts();
-    alert(`You have reached the final question (Q${totalQ}). You can review responses on the palette or click 'Submit Full Assessment'.`);
+    showToast(`Reached the final question (Q${totalQ}). Review responses or click Submit Full Assessment.`, 'info');
   }
 }
 
@@ -10685,6 +11121,33 @@ function renderActiveNtaQuestion() {
   const titleEl = document.getElementById('ntaQuestionTitle');
   if (titleEl) {
     titleEl.innerHTML = `Question ${q.num} of ${totalQ} &bull; ${q.subject} (${q.topic})`;
+  }
+
+  // Dynamically sync exam marking scheme badge & palette subtitle to current assessment board
+  const activeBoardStr = String(
+    state.activeAssessment?.board ||
+    state.activeAssessment?.curriculum_board ||
+    q.curriculum_board ||
+    examState.board ||
+    ''
+  ).toUpperCase();
+  const isNoNegativeBoard = !!(
+    (state.activeAssessment?.negativeMarks !== undefined && Number(state.activeAssessment.negativeMarks) === 0) ||
+    activeBoardStr.includes('CBSE') ||
+    activeBoardStr.includes('HP')
+  );
+  const posMarkLabel = Number(q.marks || state.activeAssessment?.positiveMarks || 4);
+  const negMarkLabel = isNoNegativeBoard ? '0' : `-${Math.abs(Number(state.activeAssessment?.negativeMarks ?? 1))}`;
+  const markBadgeEl = document.getElementById('examMarkingSchemeBadge');
+  if (markBadgeEl) {
+    markBadgeEl.innerText = isNoNegativeBoard ? `+${posMarkLabel} / 0 (No Neg)` : `+${posMarkLabel}.0 / -1.0`;
+  }
+  const paletteSubEl = document.getElementById('examPaletteStandardSubtitle');
+  if (paletteSubEl) {
+    if (activeBoardStr.includes('HP')) paletteSubEl.innerText = 'HPBOSE / HP Board Standard';
+    else if (activeBoardStr.includes('CBSE')) paletteSubEl.innerText = 'CBSE Board Standard (No Negative)';
+    else if (activeBoardStr.includes('NEET')) paletteSubEl.innerText = 'NTA NEET UG Standard';
+    else paletteSubEl.innerText = 'NTA JEE Main / NEET Standard';
   }
 
   const qText = document.getElementById('studentRenderQuestion');
@@ -10743,6 +11206,9 @@ function renderPaletteButtons() {
     for (let i = 0; i < totalCount; i++) {
       const btn = document.createElement('div');
       btn.className = 'palette-btn';
+      btn.setAttribute('role', 'button');
+      btn.setAttribute('tabindex', '0');
+      btn.setAttribute('aria-label', `Jump to Question ${i + 1}`);
       btn.innerText = i + 1;
 
       const isCurrent = i === examState.currentQuestionIndex;
@@ -10763,8 +11229,17 @@ function renderPaletteButtons() {
       }
 
       btn.addEventListener('click', () => jumpToQuestion(i));
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          jumpToQuestion(i);
+        }
+      });
       container.appendChild(btn);
     }
+    container.querySelectorAll('.palette-btn').forEach(el => {
+      el.dataset.bound = 'true';
+    });
   }
 
   // 2. Render top inline question strip [ 1 ] [ 2 ] [ 3 ] [ 4 ] ...
@@ -10865,7 +11340,7 @@ function setupTestAssignmentBuilder() {
   if (btnPublish) {
     btnPublish.addEventListener('click', async () => {
       if (!state.testDraft || state.testDraft.length === 0) {
-        alert('Please add at least one question to the draft before publishing.');
+        showToast('Please add at least one question to the draft before publishing.', 'warning');
         return;
       }
 
@@ -10895,7 +11370,7 @@ function setupTestAssignmentBuilder() {
 
         if (res.ok) {
           const data = await res.json();
-          alert(`Test "${title}" successfully published and assigned to ${classSec}.\n\n• Questions: ${state.testDraft.length}\n• Total Marks: ${state.testDraft.length * 4}\n• Target: ${classSec}\n\nStudents can now take this assessment immediately in the Student Portal.`);
+          showToast(`Test "${title}" published to ${classSec} (${state.testDraft.length} Qs, ${state.testDraft.length * 4} Marks).`, 'success');
           state.testDraft = [];
           updateTestDraftBadges();
           if (modal) modal.classList.remove('active');
@@ -10904,7 +11379,7 @@ function setupTestAssignmentBuilder() {
           throw new Error('Failed to publish');
         }
       } catch (err) {
-        alert('Error publishing assessment. Running in resilient local mode.');
+        showToast('Error publishing assessment. Running in resilient local mode.', 'warning');
         if (modal) modal.classList.remove('active');
       } finally {
         btnPublish.disabled = false;
@@ -10922,7 +11397,7 @@ function addQuestionToTestDraft(q) {
     state.testDraft.push(q);
   }
   updateTestDraftBadges();
-  alert(`Question added to Test Assignment Draft.\nTotal: ${state.testDraft.length} Questions drafted.\n\nClick "Test Builder" in the navigation bar to review and assign to your class roster.`);
+  showToast(`Question added to Test Draft (${state.testDraft.length} total). Click "Test Builder" to review and assign.`, 'success');
 }
 
 function updateTestDraftBadges() {
@@ -11031,12 +11506,99 @@ async function setupStudentAssignedTests() {
   }
 }
 
+// Active student portal identity (the demo portal signs in as Aryan Sharma, Class 12 Non-Medical).
+// Every student-facing list is scoped to this class so students never see other classes' tests.
+const ACTIVE_STUDENT_PROFILE = {
+  id: 'b0000000-0000-0000-0000-000000000001',
+  name: 'Aryan Sharma',
+  section: '12-NonMed',
+  grade: '12'
+};
+window.ACTIVE_STUDENT_PROFILE = ACTIVE_STUDENT_PROFILE;
+
+function isAssessmentForActiveStudent(a) {
+  const sec = String((a && (a.section || a.targetClass)) || '').trim().toLowerCase();
+  return sec === ACTIVE_STUDENT_PROFILE.section.toLowerCase();
+}
+
+function updateStudentCompletedCounters(completedCount) {
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('studentCompletedBadgeNav', `${completedCount} Completed`);
+  set('drawerStudentCompletedBadge', `${completedCount} Completed`);
+  set('drawerStudentCompletedSub', `${completedCount} Completed Tests & Step Solutions`);
+  set('studentSmartReportTestsCountLabel', `Showing ${completedCount} of ${completedCount} Completed Tests`);
+  set('studentSmartReportAttemptedSub', `All ${completedCount} recorded unit tests completed`);
+  set('studentSmartReportAttemptedBtnLabel', `Attempted Tests & Reports (${completedCount})`);
+  if (typeof STUDENT_REPORT_DATA !== 'undefined' && STUDENT_REPORT_DATA && STUDENT_REPORT_DATA.student) {
+    STUDENT_REPORT_DATA.student.testsAttempted = completedCount;
+    STUDENT_REPORT_DATA.student.totalTestsScheduled = Math.max(STUDENT_REPORT_DATA.student.totalTestsScheduled || 0, completedCount);
+  }
+}
+
+// Record of Previous Tests: built from the student's real submissions (own class only).
+// The static rows in index.html remain only as an offline fallback.
+async function loadStudentPreviousTests() {
+  const tbody = document.getElementById('studentPrevTestsTableBody');
+  if (!tbody) return;
+  let data;
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/analytics/student/${encodeURIComponent(ACTIVE_STUDENT_PROFILE.id)}/submissions`);
+    if (!res.ok) return;
+    data = await res.json();
+  } catch (e) {
+    return;
+  }
+  const subs = data.submissions || [];
+  if (subs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:1.5rem; color:#94a3b8;">No completed tests yet. Your submitted tests will appear here.</td></tr>`;
+    updateStudentCompletedCounters(0);
+    return;
+  }
+  tbody.innerHTML = '';
+  subs.forEach(sub => {
+    const total = Number(sub.totalMarks) || 0;
+    const pct = Number(sub.percentage || (total ? (sub.totalScore / total) * 100 : 0));
+    const pctText = pct.toFixed(1);
+    const bandLabel = pct >= 80 ? 'Distinction' : (pct >= 60 ? 'Merit Band' : 'Needs Review');
+    const bandColor = pct >= 80 ? '#34d399' : (pct >= 60 ? '#38bdf8' : '#fbbf24');
+    const mins = Math.max(1, Math.round((Number(sub.totalTimeSpentSeconds) || 0) / 60));
+    let when = 'Recently';
+    if (sub.submittedAt) {
+      try { when = new Date(sub.submittedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { /* keep default */ }
+    }
+    const topicText = `${sub.questionCount || sub.questionBreakdown.length} Questions • ${sub.subject || ''}${sub.chapter ? ' • ' + sub.chapter : ''}`;
+    const solution = (sub.questionBreakdown || []).slice(0, 4)
+      .map(b => `Q${b.questionIndex} (${b.subtopic || b.topic || 'Concept'}): ${b.isCorrect ? 'Correct' : 'Expected ' + (b.correctAnswer || '-')}`)
+      .join(' | ') || 'Full diagnostic step review recorded.';
+    const tr = document.createElement('tr');
+    tr.id = `prev_row_${sub.assessmentId}`;
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:700; color:#f8fafc;">${escapeHtml(sub.title)}</div>
+        <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(topicText)}</div>
+      </td>
+      <td>${escapeHtml(when)}</td>
+      <td>${mins} mins</td>
+      <td><strong style="color:${bandColor};">${escapeHtml(String(sub.totalScore))} / ${total}</strong></td>
+      <td><span class="status-badge" style="background:rgba(56,189,248,0.18); color:${bandColor};">${pctText}%</span></td>
+      <td><span style="color:${bandColor}; font-weight:700;">${bandLabel}</span></td>
+      <td style="text-align:right;">
+        <button type="button" class="btn-secondary" style="padding:6px 12px; font-size:0.75rem;">Review Solutions</button>
+      </td>`;
+    const btn = tr.querySelector('button');
+    if (btn) btn.onclick = () => window.openPreviousTestReview(sub.title, topicText, `${sub.totalScore} / ${total} (${pctText}%)`, solution);
+    tbody.appendChild(tr);
+  });
+  updateStudentCompletedCounters(subs.length);
+}
+window.loadStudentPreviousTests = loadStudentPreviousTests;
+
 async function loadStudentAssignedTests() {
   const selectEl = document.getElementById('selectStudentAssignedTest');
   if (!selectEl) return;
 
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/assessments?status=PUBLISHED`);
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments?status=PUBLISHED&classId=${encodeURIComponent(ACTIVE_STUDENT_PROFILE.section)}`);
     if (res.ok) {
       const data = await res.json();
       state.publishedAssessments = (data.assessments || []).filter(a => a.status !== 'DRAFT');
@@ -11057,7 +11619,7 @@ async function loadStudentAssignedTests() {
               state.publishedAssessments.push({
                 id: t.id,
                 title: t.title,
-                section: t.targetClass || t.section || '12-NonMed',
+                section: t.targetClass || t.section || '',
                 durationMinutes: parseInt(t.duration, 10) || 45,
                 questionCount: t.totalQuestions || 10,
                 status: 'PUBLISHED'
@@ -11069,8 +11631,11 @@ async function loadStudentAssignedTests() {
     });
   } catch (e) {}
 
-  // Filter out any draft tests
-  state.publishedAssessments = (state.publishedAssessments || []).filter(a => a.status !== 'DRAFT');
+  // Filter out any draft tests and anything not assigned to this student's class (subject/class isolation)
+  state.publishedAssessments = (state.publishedAssessments || []).filter(a => a.status !== 'DRAFT' && isAssessmentForActiveStudent(a));
+  if (state.activeAssessment && !isAssessmentForActiveStudent(state.activeAssessment)) {
+    state.activeAssessment = null;
+  }
 
   selectEl.innerHTML = '';
   if (state.publishedAssessments.length === 0) {
@@ -11085,15 +11650,19 @@ async function loadStudentAssignedTests() {
     selectEl.appendChild(opt);
   });
 
-  // Select first assessment by default
+  // Select first assessment by default and hydrate into exam simulator silently
   if (!state.activeAssessment && state.publishedAssessments.length > 0) {
     state.activeAssessment = state.publishedAssessments[0];
     const bannerTitle = document.getElementById('assignedTestBannerTitle');
     if (bannerTitle) bannerTitle.innerText = state.activeAssessment.title;
   }
+  if (!examState._assignedTestLoaded && state.activeAssessment) {
+    // Background preload: no "Test Started" toast (it used to pop up on the sign-in screen).
+    await startAssignedTest(state.activeAssessment, { silent: true });
+  }
 }
 
-async function startAssignedTest(assessmentSummary) {
+async function startAssignedTest(assessmentSummary, opts) {
   let fullAssessment = assessmentSummary;
   // If questions are not in summary, fetch full assessment details
   if (!fullAssessment.questions || fullAssessment.questions.length === 0) {
@@ -11112,13 +11681,19 @@ async function startAssignedTest(assessmentSummary) {
   if (bannerTitle) bannerTitle.innerText = fullAssessment.title;
 
   // Map questions into examState
+  examState._assignedTestLoaded = true;
   examState.questions = (fullAssessment.questions || []).map((q, idx) => ({
     id: q.id,
     num: idx + 1,
-    subject: fullAssessment.subject || 'Biology',
+    subject: fullAssessment.subject || 'Science',
+    chapter_name: q.chapter_name || q.chapter || q.topic || '',
     topic: q.topic || q.chapter || 'Topic',
     subtopic: q.subtopic || 'General',
+    difficulty: q.difficulty || 'MEDIUM',
+    marks: q.marks || 4,
     question_latex: q.question_latex,
+    solution_latex: q.solution_latex || '',
+    correct_answer_latex: q.correct_answer_latex || '',
     options: (() => {
       const existingOpts = (q.options_latex && q.options_latex.length >= 2) ? q.options_latex : (q.options || []);
       const isGeneric = existingOpts.length > 0 && existingOpts.every(o => /^Option\s+[A-D]$/i.test((o.latex || o.text || '').trim()));
@@ -11170,7 +11745,9 @@ async function startAssignedTest(assessmentSummary) {
     examSwitcher.innerHTML = `<button class="section-tab-btn active" data-subject="${escapeHtml(testSubj)}">${escapeHtml(testSubj)} (${escapeHtml(fullAssessment.title || 'Assigned Test')})</button>`;
   }
 
-  alert(`Test Started: "${fullAssessment.title}"\n\n• Questions: ${examState.questions.length}\n• Duration: ${fullAssessment.durationMinutes} Minutes\n• Live Telemetry: Sub-second timer streaming to Teacher Seatmap.\n\nGood luck!`);
+  if (!(opts && opts.silent)) {
+    showToast(`Test Started: "${fullAssessment.title}" (${examState.questions.length} Qs, ${fullAssessment.durationMinutes}m). Live telemetry active.`, 'success');
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -11273,6 +11850,15 @@ function displayDiagnosticResults(results) {
   results = results || {};
   const container = document.getElementById('diagReportScrollContainer');
 
+  const examBoardStr = String(results.board || state.activeAssessment?.board || state.activeAssessment?.curriculum_board || '').toUpperCase();
+  const isBoardExamNoNeg = !!(
+    (results.negativePenalty !== undefined && Number(results.negativePenalty) === 0) ||
+    examBoardStr.includes('CBSE') ||
+    examBoardStr.includes('HP')
+  );
+  const posMarkFallback = Number(state.activeAssessment?.positiveMarks || (isBoardExamNoNeg ? 4 : 4));
+  const negMarkFallback = isBoardExamNoNeg ? 0 : 1;
+
   // 1. Resolve and compute telemetry metrics
   let breakdown = results.questionBreakdown || [];
   if (breakdown.length === 0 && Array.isArray(examState.questions) && examState.questions.length > 0) {
@@ -11282,6 +11868,7 @@ function displayDiagnosticResults(results) {
       const isCorr = sel && sel.trim().toUpperCase() === exp.toUpperCase();
       const timeSpent = (examState.timeSpentPerQuestion && examState.timeSpentPerQuestion[idx]) || 45;
       const benchmark = q.benchmark_time_seconds || 90;
+      const qMarks = Number(q.marks !== undefined ? q.marks : posMarkFallback);
       let category = 'FAST_ACCURATE';
       if (isCorr) {
         category = timeSpent > benchmark * 1.3 ? 'SLOW_ACCURATE' : 'FAST_ACCURATE';
@@ -11300,7 +11887,7 @@ function displayDiagnosticResults(results) {
         timeSpentSeconds: timeSpent,
         benchmarkSeconds: benchmark,
         category,
-        marksAwarded: isCorr ? 4 : (sel ? -1 : 0)
+        marksAwarded: isCorr ? qMarks : (sel ? -negMarkFallback : 0)
       };
     });
   }
@@ -11367,6 +11954,12 @@ function displayDiagnosticResults(results) {
     studentRoadmapCardsHtml = missedQuestions.map((q, idx) => {
       const prof = getConceptPedagogicalProfile(q.subtopic, q.category, q.timeSpentSeconds, q.benchmarkSeconds);
       const isCareless = q.category === 'FAST_CARELESS_SLIP' || q.timeSpentSeconds <= (q.benchmarkSeconds || 90);
+      const qCtxArg = JSON.stringify({
+        questionIndex: q.questionIndex || (idx + 1),
+        topic: q.topic || q.subtopic || '',
+        subtopic: q.subtopic || q.topic || '',
+        subject: q.subject || results.subject || state.activeAssessment?.subject || ''
+      }).replace(/"/g, '&quot;');
       return `
         <div class="diag-concept-item-card" style="border-left:4px solid ${isCareless ? '#f59e0b' : '#ef4444'};">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
@@ -11383,7 +11976,7 @@ function displayDiagnosticResults(results) {
                 ${renderLatexString(prof.cleanTitle)}
               </strong>
             </div>
-            <button type="button" class="btn-secondary" onclick="openPersonalizedRemedialModal()" style="font-size:0.74rem; padding:4px 10px; background:rgba(6,182,212,0.12); border:1px solid #06b6d4; color:#22d3ee; display:inline-flex; align-items:center; gap:5px; border-radius:6px;" title="Practice formula drill">
+            <button type="button" class="btn-secondary" onclick="openPersonalizedRemedialModal(${qCtxArg})" style="font-size:0.74rem; padding:4px 10px; background:rgba(6,182,212,0.12); border:1px solid #06b6d4; color:#22d3ee; display:inline-flex; align-items:center; gap:5px; border-radius:6px;" title="Practice formula drill">
               <i data-lucide="play" style="width:12px; height:12px;"></i> Practice Formula
             </button>
           </div>
@@ -11392,11 +11985,11 @@ function displayDiagnosticResults(results) {
             <strong style="color:#e2e8f0;">Why You Slipped:</strong> ${renderLatexString(prof.studentGuidance)}
           </div>
 
-          <div style="background:rgba(0,0,0,0.3); border:1px dashed rgba(6,182,212,0.35); border-radius:6px; padding:10px 14px; font-size:0.92rem; color:#38bdf8; display:flex; flex-direction:column; gap:4px;">
+          <div style="background:rgba(0,0,0,0.3); border:1px dashed rgba(6,182,212,0.35); border-radius:6px; padding:10px 14px; font-size:0.92rem; color:#38bdf8; display:flex; flex-direction:column; gap:4px; min-width:0; max-width:100%;">
             <span style="font-size:0.7rem; font-weight:800; color:#22d3ee; text-transform:uppercase; letter-spacing:0.5px;">
               Core Theorem &amp; Formula to Memorize:
             </span>
-            <div>${renderLatexString(prof.formula)}</div>
+            <div class="diag-formula-scroll" style="max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;">${renderLatexString(prof.formula)}</div>
           </div>
         </div>
       `;
@@ -11429,7 +12022,7 @@ function displayDiagnosticResults(results) {
         <span style="font-size:0.75rem; color:var(--text-muted);">${missedQuestions.length} Mistakes Analyzed</span>
       </div>
       
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap:10px;">
         <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:10px 12px;">
           <div style="font-size:0.72rem; color:#f59e0b; font-weight:700; text-transform:uppercase;">Careless Slips</div>
           <div style="font-size:1.4rem; font-weight:800; color:#fbbf24; margin:2px 0;">${carelessSlips.length} <span style="font-size:0.8rem; font-weight:600;">(${carelessPct}%)</span></div>
@@ -11472,7 +12065,7 @@ function displayDiagnosticResults(results) {
     return arr.map(rawTopic => {
       const cleaned = cleanDiagnosticSubtopic(rawTopic);
       return `
-        <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; font-size:0.76rem; font-weight:700; border-radius:6px; background:${bgRgba}; color:${colorHex}; border:1px solid ${colorHex}40; margin:3px;">
+        <span style="display:inline-flex; flex-wrap:wrap; align-items:center; gap:5px; padding:4px 10px; font-size:0.76rem; font-weight:700; border-radius:6px; background:${bgRgba}; color:${colorHex}; border:1px solid ${colorHex}40; margin:3px; max-width:100%; overflow-wrap:anywhere;">
           ${renderLatexString(cleaned)}
         </span>
       `;
@@ -11494,13 +12087,18 @@ function displayDiagnosticResults(results) {
     const prof = getConceptPedagogicalProfile(q.subtopic, q.category, timeSpent, benchmark);
 
     // Prepare Intuitive Solution Steps
-    const stepsData = formatIntuitiveSteps(matchingExamQ || {
-      subject: q.subject,
-      topic: q.topic,
-      subtopic: q.subtopic,
-      difficulty: 'MEDIUM',
-      solution_latex: matchingExamQ?.solution_latex || `Given the fundamental governing equation ${prof.formula}, we apply standard boundary conditions to establish the result.`,
-      correct_answer: q.correctAnswer || 'A'
+    const stepsData = formatIntuitiveSteps({
+      ...(matchingExamQ || {}),
+      subject: matchingExamQ?.subject || q.subject,
+      chapter_name: matchingExamQ?.chapter_name || matchingExamQ?.chapter || q.topic,
+      topic: matchingExamQ?.topic || q.topic,
+      subtopic: matchingExamQ?.subtopic || q.subtopic,
+      question_latex: qText,
+      difficulty: matchingExamQ?.difficulty || 'MEDIUM',
+      solution_latex: (matchingExamQ?.solution_latex && matchingExamQ.solution_latex.trim())
+        ? matchingExamQ.solution_latex
+        : `Given the fundamental governing equation ${prof.formula}, we apply standard boundary conditions to establish the result.`,
+      correct_answer: matchingExamQ?.correctKey || matchingExamQ?.correct_answer || q.correctAnswer || 'A'
     });
 
     const studentOpt = q.selectedOption || 'Unanswered';
@@ -11516,10 +12114,10 @@ function displayDiagnosticResults(results) {
                 Question ${q.questionIndex}
               </span>
               <span style="font-size:0.75rem; font-weight:700; color:${isCorrect ? '#34d399' : '#f87171'}; background:${isCorrect ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; padding:2px 8px; border-radius:4px;">
-                ${isCorrect ? '+4 Marks (Correct)' : (studentOpt === 'Unanswered' ? '0 Marks (Skipped)' : '-1 Mark (Incorrect)')}
+                ${isCorrect ? `+${q.marksAwarded !== undefined ? q.marksAwarded : posMarkFallback} Marks (Correct)` : (studentOpt === 'Unanswered' ? '0 Marks (Skipped)' : (isBoardExamNoNeg ? '0 Marks (Incorrect)' : `-${negMarkFallback} Mark (Incorrect)`))}
               </span>
               <span style="font-size:0.74rem; font-weight:700; color:${isCorrect ? '#10b981' : (isCareless ? '#fbbf24' : '#ef4444')}; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">
-                ${isCorrect ? 'Fast & Accurate' : (isCareless ? 'Careless Slip (-1M)' : 'Conceptual Misconception (-1M)')}
+                ${isCorrect ? 'Fast & Accurate' : (isCareless ? (isBoardExamNoNeg ? 'Careless Slip (0M)' : `Careless Slip (-${negMarkFallback}M)`) : (isBoardExamNoNeg ? 'Conceptual Misconception (0M)' : `Conceptual Misconception (-${negMarkFallback}M)`))}
               </span>
             </div>
             <div style="font-size:0.96rem; font-weight:700; color:var(--text-primary); margin-top:6px;">
@@ -11538,12 +12136,12 @@ function displayDiagnosticResults(results) {
         </div>
 
         <!-- Question Statement -->
-        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:14px 16px; font-size:0.92rem; color:var(--text-primary); line-height:1.65;">
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:14px 16px; font-size:0.92rem; color:var(--text-primary); line-height:1.65; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; overflow-wrap:anywhere;">
           ${renderLatexString(qText)}
         </div>
 
         <!-- Options / Responses Row -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap:12px;">
           <div style="background:${isCorrect ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border:1px solid ${isCorrect ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}; border-radius:8px; padding:10px 14px; display:flex; align-items:center; gap:10px;">
             <span style="width:24px; height:24px; border-radius:50%; background:${isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isCorrect ? '#34d399' : '#f87171'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
               <i data-lucide="${isCorrect ? 'check' : 'x'}" style="width:14px; height:14px;"></i>
@@ -11609,7 +12207,7 @@ function displayDiagnosticResults(results) {
             <div class="qb-solution-steps-flow">
               ${(stepsData.parsedSteps || []).map((s, sIdx) => `
                 <div class="qb-solution-step-item">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
                     <span class="qb-solution-step-badge">
                       Step 2.${sIdx + 1}: ${escapeHtml(s.title)}
                     </span>
@@ -11734,7 +12332,7 @@ function displayDiagnosticResults(results) {
       <div class="diag-dual-directive-grid">
         <!-- Left Pillar: What You Need to Learn & Master (Student) -->
         <div class="diag-directive-box diag-directive-student">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(6,182,212,0.2); padding-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; border-bottom:1px solid rgba(6,182,212,0.2); padding-bottom:12px;">
             <div style="display:flex; align-items:center; gap:10px;">
               <span style="width:34px; height:34px; border-radius:8px; background:rgba(6,182,212,0.18); color:#22d3ee; display:flex; align-items:center; justify-content:center;">
                 <i data-lucide="graduation-cap" style="width:20px; height:20px;"></i>
@@ -11756,7 +12354,7 @@ function displayDiagnosticResults(results) {
 
         <!-- Right Pillar: Where Teacher Needs to Focus (Teacher) -->
         <div class="diag-directive-box diag-directive-teacher">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid rgba(245,158,11,0.2); padding-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; border-bottom:1px solid rgba(245,158,11,0.2); padding-bottom:12px;">
             <div style="display:flex; align-items:center; gap:10px;">
               <span style="width:34px; height:34px; border-radius:8px; background:rgba(245,158,11,0.18); color:#fbbf24; display:flex; align-items:center; justify-content:center;">
                 <i data-lucide="users" style="width:20px; height:20px;"></i>
@@ -11778,8 +12376,8 @@ function displayDiagnosticResults(results) {
       </div>
 
       <!-- 3. Concept Mastery Breakdown Matrix -->
-      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:14px; padding:20px 24px; display:flex; flex-direction:column; gap:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:14px; min-width:0; max-width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <i data-lucide="layers" style="width:18px; height:18px; color:#60a5fa;"></i>
             <strong style="font-size:0.98rem; color:var(--text-primary); font-family:'Outfit', sans-serif;">
@@ -11789,9 +12387,9 @@ function displayDiagnosticResults(results) {
           <span style="font-size:0.75rem; color:var(--text-muted);">Institutional Syllabus Alignment</span>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap:16px; min-width:0;">
           <!-- Mastered Concepts -->
-          <div style="background:rgba(16,185,129,0.04); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:14px 16px;">
+          <div style="background:rgba(16,185,129,0.04); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:14px 16px; min-width:0;">
             <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
               <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
               <strong style="font-size:0.82rem; color:#34d399; text-transform:uppercase; letter-spacing:0.5px;">Mastered Concepts (High Accuracy &amp; Speed)</strong>
@@ -11802,23 +12400,23 @@ function displayDiagnosticResults(results) {
           </div>
 
           <!-- Recap Concepts -->
-          <div style="background:rgba(245,158,11,0.04); border:1px solid rgba(245,158,11,0.2); border-radius:10px; padding:14px 16px;">
+          <div style="background:rgba(245,158,11,0.04); border:1px solid rgba(245,158,11,0.2); border-radius:10px; padding:14px 16px; min-width:0;">
             <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-              <span style="width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>
+              <span style="width:8px; height:8px; border-radius:50%; background:#f59e0b; flex-shrink:0;"></span>
               <strong style="font-size:0.82rem; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px;">Concepts Needing Recap (Speed Lag or Minor Slip)</strong>
             </div>
-            <div id="diagRecapList" style="display:flex; flex-wrap:wrap;">
+            <div id="diagRecapList" style="display:flex; flex-wrap:wrap; min-width:0;">
               ${renderMasteryPills(recapList, '#fbbf24', 'rgba(245,158,11,0.12)')}
             </div>
           </div>
 
           <!-- Critical Weaknesses -->
-          <div style="background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:14px 16px;">
+          <div style="background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:14px 16px; min-width:0;">
             <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-              <span style="width:8px; height:8px; border-radius:50%; background:#ef4444;"></span>
+              <span style="width:8px; height:8px; border-radius:50%; background:#ef4444; flex-shrink:0;"></span>
               <strong style="font-size:0.82rem; color:#f87171; text-transform:uppercase; letter-spacing:0.5px;">Critical Weaknesses (Conceptual Trap or Hesitation)</strong>
             </div>
-            <div id="diagWeakList" style="display:flex; flex-wrap:wrap;">
+            <div id="diagWeakList" style="display:flex; flex-wrap:wrap; min-width:0;">
               ${renderMasteryPills(weakList, '#f87171', 'rgba(239,68,68,0.12)')}
             </div>
           </div>
@@ -11826,8 +12424,8 @@ function displayDiagnosticResults(results) {
       </div>
 
       <!-- 4. Question-by-Question Detailed Review with Interactive Solutions -->
-      <div style="display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+      <div style="display:flex; flex-direction:column; gap:16px; min-width:0; max-width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
           <div>
             <strong style="font-size:1.02rem; color:var(--text-primary); font-family:'Outfit', sans-serif;">
               Question-by-Question Diagnostic Review &amp; Step Walkthroughs
@@ -11885,16 +12483,39 @@ function closeDiagnosticResultsModal() {
 // PERSONALIZED REMEDIAL ASSIGNMENT ENGINE: FORMULA RECALL & TARGETED REMEDIATION
 // =============================================================================
 
-async function openPersonalizedRemedialModal() {
+async function openPersonalizedRemedialModal(questionCtx = null) {
   const modal = document.getElementById('modalPersonalizedRemedial');
   if (!modal) return;
 
-  const curSubj = state.activeAssessment?.subject || (teacherBuilderState?.selectedSubjectKey === 'BIOLOGY' ? 'Biology' : (teacherBuilderState?.selectedSubjectKey === 'CHEMISTRY' ? 'Chemistry' : 'Biology'));
-  const curSubjKey = state.activeAssessment?.subjectKey || (curSubj === 'Biology' ? 'BIOLOGY' : (curSubj === 'Chemistry' ? 'CHEMISTRY' : 'PHYSICS'));
+  const fallbackSubj = teacherBuilderState?.activeTeacher?.subjectName || (
+    teacherBuilderState?.teacherSubjectKey === 'BIOLOGY' ? 'Biology' :
+    teacherBuilderState?.teacherSubjectKey === 'CHEMISTRY' ? 'Chemistry' :
+    teacherBuilderState?.teacherSubjectKey === 'MATHEMATICS' ? 'Mathematics' :
+    teacherBuilderState?.teacherSubjectKey === 'CLASS10_SCIENCE' ? 'Science' : 'Physics'
+  );
+  const rawSubj = questionCtx?.subject || state.activeAssessment?.subject || fallbackSubj;
+  const sLower = String(rawSubj || 'Physics').toLowerCase();
+  const curSubj = sLower.includes('bio') ? 'Biology' : (sLower.includes('chem') ? 'Chemistry' : (sLower.includes('math') ? 'Mathematics' : (sLower.includes('sci') ? 'Science' : 'Physics')));
+  const curSubjKey = questionCtx?.subjectKey || state.activeAssessment?.subjectKey || (
+    curSubj === 'Biology' ? 'BIOLOGY' : (curSubj === 'Chemistry' ? 'CHEMISTRY' : (curSubj === 'Mathematics' ? 'MATHEMATICS' : (curSubj === 'Science' ? 'CLASS10_SCIENCE' : 'PHYSICS')))
+  );
   const curTitle = state.activeAssessment?.title || `${curSubj} Diagnostic Assessment`;
 
-  // If no active assignment exists yet, fetch or generate one from the backend preserving current subject
-  if (!state.activeRemedialAssignment) {
+  const defaultTopic = curSubj === 'Biology' ? 'Organisms and Populations' : (curSubj === 'Chemistry' ? 'Electrochemistry' : (curSubj === 'Mathematics' ? 'Calculus & Derivatives' : (curSubj === 'Science' ? 'Light - Reflection & Refraction' : 'Optics')));
+  const defaultSubtopic = curSubj === 'Biology' ? 'Verhulst-Pearl Logistic Growth Equation' : (curSubj === 'Chemistry' ? 'Standard Gibbs Free Energy & Cell Potential' : (curSubj === 'Mathematics' ? 'Maxima & Minima Applications' : (curSubj === 'Science' ? 'Mirror Formula & Cartesian Sign Convention' : 'Spherical Mirrors')));
+  const targetTopic = (questionCtx?.topic || '').trim() || defaultTopic;
+  const targetSubtopic = (questionCtx?.subtopic || '').trim() || (questionCtx?.topic ? questionCtx.topic : defaultSubtopic);
+  const targetIdx = questionCtx?.questionIndex || 1;
+  const contextKey = `${curSubjKey}::${state.lastSubmittedAssessmentId || state.activeAssessment?.id || 'cur'}::${targetTopic}::${targetSubtopic}`;
+
+  // Regenerate when explicitly invoked for a specific missed question, or when cached drill belongs to a different subject/context
+  const shouldRegenerate = Boolean(
+    !state.activeRemedialAssignment ||
+    questionCtx ||
+    state.activeRemedialAssignment._contextKey !== contextKey
+  );
+
+  if (shouldRegenerate) {
     try {
       const res = await fetch(`${getApiBaseUrl()}/api/assessments/remedial/generate`, {
         method: 'POST',
@@ -11903,23 +12524,24 @@ async function openPersonalizedRemedialModal() {
           studentId: 'b0000000-0000-0000-0000-000000000001',
           studentName: 'Aryan Sharma',
           rollNumber: '11-S-24',
-          assessmentId: state.lastSubmittedAssessmentId || 'asgn_cur_01',
+          assessmentId: state.lastSubmittedAssessmentId || state.activeAssessment?.id || 'asgn_cur_01',
           assessmentTitle: curTitle,
           subject: curSubj,
           subjectKey: curSubjKey,
-          grade: state.activeAssessment?.grade || '12',
-          chapterName: state.activeAssessment?.chapterName || '',
+          grade: state.activeAssessment?.grade || (curSubj === 'Science' ? '10' : '12'),
+          chapterName: state.activeAssessment?.chapterName || targetTopic,
           questionBreakdown: [
             {
-              questionIndex: 1,
-              topic: curSubj === 'Biology' ? 'Organisms and Populations' : (curSubj === 'Chemistry' ? 'Electrochemistry' : 'Optics'),
-              subtopic: curSubj === 'Biology' ? 'Verhulst-Pearl Logistic Growth Equation' : (curSubj === 'Chemistry' ? 'Standard Gibbs Free Energy & Cell Potential' : 'Spherical Mirrors'),
+              questionIndex: targetIdx,
+              topic: targetTopic,
+              subtopic: targetSubtopic,
+              subject: curSubj,
               selectedOption: 'B',
               correctAnswer: 'A',
               isCorrect: false,
               timeSpentSeconds: 110,
               benchmarkSeconds: 90,
-              mistakeClassification: { explanation: curSubj === 'Biology' ? 'Omitted environmental carrying capacity resistance factor (K-N)/K' : 'Formula error' }
+              mistakeClassification: { explanation: curSubj === 'Biology' ? 'Omitted environmental carrying capacity resistance factor (K-N)/K' : `Formula & sign convention reinforcement for ${targetSubtopic}` }
             }
           ]
         })
@@ -11927,7 +12549,10 @@ async function openPersonalizedRemedialModal() {
 
       if (res.ok) {
         const data = await res.json();
-        state.activeRemedialAssignment = data.assignment;
+        if (data.assignment) {
+          data.assignment._contextKey = contextKey;
+          state.activeRemedialAssignment = data.assignment;
+        }
       }
     } catch (err) {
       console.warn('Failed to generate remedial assignment from server:', err);
@@ -12012,9 +12637,9 @@ function renderPersonalizedRemedialAssignment(assignment) {
         </div>
 
         <!-- Formula Text Input & Check Button -->
-        <div style="display: flex; gap: 8px; align-items: stretch;">
-          <input type="text" id="formulaInput_${idx}" class="form-input" style="flex: 1; font-family: monospace; font-size: 0.88rem; padding: 8px 12px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(168, 85, 247, 0.4);" placeholder="${placeholderText}">
-          <button type="button" class="btn-primary" onclick="handleVerifyFormula(${idx}, '${drill.subtopic}', '${assignment.subject || 'Biology'}')" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.82rem; padding: 8px 16px; white-space: nowrap; cursor: pointer;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;">
+          <input type="text" id="formulaInput_${idx}" class="form-input" style="flex: 1 1 180px; min-width: 0; width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.88rem; padding: 8px 12px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(168, 85, 247, 0.4);" placeholder="${placeholderText}">
+          <button type="button" class="btn-primary" onclick="handleVerifyFormula(${idx}, '${drill.subtopic}', '${assignment.subject || 'Biology'}')" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.82rem; padding: 8px 16px; white-space: nowrap; cursor: pointer; min-height: 40px;">
             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> Verify Equation
           </button>
         </div>
@@ -12214,7 +12839,7 @@ async function triggerDocxBlobDownload(endpoint, payload, fallbackFilename) {
     }, 100);
   } catch (err) {
     console.error('Failed to download DOCX:', err);
-    alert(`Failed to download DOCX assignment: ${err.message}`);
+    showToast(`Failed to download DOCX assignment: ${err.message}`, 'error');
   }
 }
 
@@ -12378,36 +13003,19 @@ async function loadAndRenderSmartReport(studentId = 'b0000000-0000-0000-0000-000
 async function handleGoToSmartReport() {
   closeDiagnosticResultsModal();
 
-  // 1. Switch to Teacher role
-  const btnRoleTeacher = document.getElementById('btnRoleTeacher');
-  if (btnRoleTeacher) {
-    btnRoleTeacher.click();
-  } else {
-    state.activeRole = 'teacher';
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('teacherView')?.classList.add('active');
+  // 1. Students only: open their own Report Card
+  if (state.sessionRole && state.sessionRole !== 'student') return;
+  if (typeof switchPortalRole === 'function') {
+    switchPortalRole('student');
+  }
+  if (typeof window.switchStudentTab === 'function') {
+    window.switchStudentTab('tabStudentSmartReport');
   }
 
-  // 2. Switch to Weekly Smart Report sub-tab
-  const tabSmartReportsBtn = document.getElementById('tabBtnSmartReports');
-  if (tabSmartReportsBtn) {
-    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-    tabSmartReportsBtn.classList.add('active');
-
-    document.querySelectorAll('.teacher-tab-content').forEach(tab => {
-      const isTarget = tab.id === 'tabSmartReports';
-      tab.style.display = isTarget ? 'block' : 'none';
-      tab.classList.toggle('active', isTarget);
-    });
-  } else {
-    const tabStudentsBtn = document.getElementById('tabBtnStudents');
-    if (tabStudentsBtn) tabStudentsBtn.click();
-  }
-
-  // 3. Load & render latest dynamic smart report
+  // 2. Load & render latest dynamic smart report
   await loadAndRenderSmartReport('b0000000-0000-0000-0000-000000000001');
 
-  // 4. Scroll smoothly to top
+  // 3. Scroll smoothly to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
   initLucideIcons();
 }
@@ -13092,17 +13700,10 @@ function renderClassAnalytics(data) {
               ${asgn.title || 'Curriculum Diagnostic Assessment'}
             </h3>
             <p style="font-size:0.82rem; color:var(--text-secondary); margin:0;">
-              Questions are prepared in clean LaTeX formatting. Progress analytics and question accuracy charts will be generated after attempting.
+              Assigned to the class. Analytics and question accuracy charts appear after students submit.
             </p>
           </div>
-          <div class="pending-attempt-actions">
-            <button type="button" class="btn-attempt-live" onclick="attemptActiveTestInStudentPortal('${asgn.id || ''}')">
-              <i data-lucide="play" style="width:15px;height:15px;"></i> Attempt Test as Student
-            </button>
-            <button type="button" class="btn-simulate-eval" onclick="simulateClassAttemptsAndGenerateDashboard('${asgn.id || ''}')">
-              <i data-lucide="zap" style="width:15px;height:15px;"></i> Submit Class Attempts & Generate Dashboard
-            </button>
-          </div>
+          <p style="font-size:0.84rem; color:var(--text-muted); margin:0;">Waiting for students to submit. Results appear here as soon as they do.</p>
         </div>
       `;
       initLucideIcons();
@@ -13221,9 +13822,7 @@ function renderClassAnalytics(data) {
           <td style="padding: 10px 8px; font-size:0.8rem; font-weight:600; color:var(--text-muted);">--</td>
           <td style="padding: 10px 8px;"><span class="badge-mistake badge-mistake-none">None</span></td>
           <td style="padding: 10px 8px; text-align: right;">
-            <button class="btn-secondary" onclick="attemptActiveTestInStudentPortal('${asgn.id || ''}')" style="font-size:0.75rem; padding:5px 10px; border-radius:6px; cursor:pointer;">
-              <i data-lucide="play" style="width:13px; height:13px;"></i> Start Attempt
-            </button>
+            <span style="font-size:0.78rem; color:var(--text-muted);">Not submitted yet</span>
           </td>
         </tr>
       `).join('');
@@ -13257,9 +13856,6 @@ function renderClassAnalytics(data) {
           <i data-lucide="check-circle" style="width:14px; height:14px; vertical-align:middle; display:inline-block;"></i>
           Test Attempted &bull; Live Progress Dashboard Generated for <strong>${data.assessment?.title || 'Active Assessment'}</strong>
         </span>
-        <button type="button" class="btn-micro-quiz" onclick="attemptActiveTestInStudentPortal('${data.assessment?.id || asgn?.id || ''}')" style="background:rgba(255,255,255,0.06); color:var(--text-primary); border-color:var(--border-subtle);">
-          <i data-lucide="rotate-ccw" style="width:11px;height:11px;"></i> Re-take in Student Portal
-        </button>
       </div>
     `;
     initLucideIcons();
@@ -13885,7 +14481,98 @@ async function openStudentDrilldown(studentId, assessmentId) {
     }
 
     const modal = document.getElementById('modalStudentDrilldown');
-    if (modal) modal.classList.add('active');
+    if (modal) {
+      modal.classList.add('active');
+    } else {
+      const reportModal = document.getElementById('modalStudentIndividualReport');
+      if (reportModal) {
+        const pct = Number(submission.percentage || 0);
+        const tier = pct >= 80 ? 'Excellent' : (pct >= 55 ? 'Average' : 'Needs Support');
+        const stuName = student.fullName || student.name || 'Student';
+        const stuRoll = student.rollNumber || student.roll || '12-NM-01';
+        const stuPhone = student.parentPhone || student.phone || '9816055011';
+
+        const nameNode = document.getElementById('modalStudentName');
+        const rollNode = document.getElementById('modalStudentRollBadge');
+        const tierNode = document.getElementById('modalStudentTierBadge');
+        const ctxNode = document.getElementById('modalStudentTestContext');
+        const scoreNode = document.getElementById('modalStudentScore');
+        const pctNode = document.getElementById('modalStudentScorePct');
+        const paceNode = document.getElementById('modalStudentPacing');
+        const phoneNode = document.getElementById('modalStudentPhone');
+        const focusBadge = document.getElementById('modalStudentFocusBadge');
+        const focusSub = document.getElementById('modalStudentFocusSub');
+        const focusContent = document.getElementById('modalStudentFocusContent');
+        const qContainer = document.getElementById('modalStudentRemedialQuestions');
+
+        if (nameNode) nameNode.textContent = stuName;
+        if (rollNode) rollNode.textContent = `Roll #${stuRoll}`;
+        if (tierNode) {
+          tierNode.textContent = tier;
+          tierNode.style.background = tier === 'Excellent' ? '#10b981' : (tier === 'Average' ? '#2563eb' : '#f43f5e');
+          tierNode.style.color = '#fff';
+        }
+        if (ctxNode) ctxNode.textContent = `${submission.assessmentTitle || 'Diagnostic Test'} • ${student.targetExam || 'Board / Competitive'}`;
+        if (scoreNode) scoreNode.textContent = `${submission.totalScore || 0} / ${submission.totalMarks || 12}`;
+        if (pctNode) pctNode.textContent = `${pct}% Accuracy`;
+        if (paceNode) paceNode.textContent = smartCard.totalTimeFormatted || '2m 30s';
+        if (phoneNode) phoneNode.textContent = stuPhone.startsWith('+') ? stuPhone : `+91 ${stuPhone}`;
+
+        if (focusBadge) {
+          focusBadge.textContent = tier === 'Excellent' ? 'Advanced Mastery' : (tier === 'Average' ? 'Concept Gaps Identified' : 'Remedial Priority');
+          focusBadge.style.background = tier === 'Excellent' ? '#ecfdf5' : (tier === 'Average' ? '#eff6ff' : '#fff1f2');
+          focusBadge.style.color = tier === 'Excellent' ? '#059669' : (tier === 'Average' ? '#2563eb' : '#e11d48');
+        }
+        if (focusSub) focusSub.textContent = smartCard.teacherActionDirective || 'Personalized teacher analysis';
+        if (focusContent) {
+          focusContent.innerHTML = `<p style="margin:0 0 8px 0;">${renderLatexString(smartCard.shortSummary || '')}</p>` +
+            `<p style="margin:0;"><strong>Recommended Teacher Directive:</strong> ${renderLatexString(smartCard.teacherActionDirective || '')}</p>`;
+        }
+
+        if (qContainer && Array.isArray(questionBreakdown)) {
+          qContainer.innerHTML = questionBreakdown.map(q => {
+            const m = q.mistakeClassification || {};
+            const borderCol = q.isCorrect ? '#10b981' : '#f43f5e';
+            return `
+              <div style="border:1px solid ${borderCol}; border-radius:8px; padding:10px 12px; background:#f8fafc;">
+                <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                  <strong>Q${q.questionIndex}: ${renderLatexString(q.subtopic || q.topic || '')}</strong>
+                  <span style="font-size:0.74rem; font-weight:700; color:${borderCol};">${q.isCorrect ? 'Correct' : (m.label || 'Needs Review')}</span>
+                </div>
+                <div style="font-size:0.8rem; color:#334155;">${renderLatexString(m.explanation || '')}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const subtopics = (questionBreakdown || []).map(q => ({
+          name: q.subtopic || q.topic || `Q${q.questionIndex}`,
+          studentPct: q.isCorrect ? 92 : 35,
+          classPct: 72
+        }));
+        const radarData = {
+          labels: ['Conceptual', 'Formula', 'Speed', 'Accuracy', 'Application'],
+          studentData: [pct, Math.max(30, pct - 5), 78, pct, Math.max(35, pct - 8)],
+          classBenchmark: [72, 70, 74, 72, 68]
+        };
+        window._currentStudentRemedialPlan = {
+          student: { name: stuName, roll: stuRoll, phone: stuPhone },
+          plan: { whatsAppText: smartCard.parentWhatsAppSnippet || `${stuName} scored ${pct}%` }
+        };
+
+        reportModal.style.display = 'flex';
+        if (typeof renderStudentMasteryChart === 'function' && subtopics.length) {
+          renderStudentMasteryChart(subtopics);
+        }
+        if (typeof renderStudentRadarChart === 'function') {
+          renderStudentRadarChart(radarData);
+        }
+        if (typeof renderMathInElement === 'function') {
+          if (focusContent) renderMathInElement(focusContent);
+          if (qContainer) renderMathInElement(qContainer);
+        }
+      }
+    }
     initLucideIcons();
   } catch (err) {
     console.error('[STUDENT DRILLDOWN] Error:', err.message);
@@ -14710,6 +15397,7 @@ function openGenTestForTopic(chNum, chTitle, topicTitle, subtopics, event) {
     teacherBuilderState.activeModalScope = {
       classId: teacherBuilderState.selectedClassId,
       subjectKey: teacherBuilderState.selectedSubjectKey,
+      teacherSubjectKey: teacherBuilderState.teacherSubjectKey,
       chapterNumber: chNum,
       chapterTitle: chTitle,
       subtopics: subtopics || [topicTitle],
@@ -14888,6 +15576,7 @@ async function submitGenerateCurriculumTest() {
       grade: currentClass.grade || '12',
       section: currentClass.section || currentClass.key || teacherBuilderState.selectedClassId,
       subjectKey: teacherBuilderState.selectedSubjectKey,
+      teacherSubjectKey: teacherBuilderState.teacherSubjectKey,
       subjectName: subjName,
       chapterNumber: scope.chapterNumber,
       chapterName: scope.chapterTitle,
@@ -14912,14 +15601,14 @@ async function submitGenerateCurriculumTest() {
       if (data.assessment) {
         openQuizCreatedSuccessModal(data.assessment);
       } else {
-        alert('Quiz generated and assigned to class successfully.');
+        showToast('Quiz generated and assigned to class successfully.', 'success');
       }
     } else {
       throw new Error(`Server returned ${res.status}`);
     }
   } catch (err) {
     console.error('Error generating curriculum test:', err);
-    alert('There was an error generating the test. Please check backend connection.');
+    showToast('There was an error generating the test. Please check backend connection.', 'error');
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
@@ -14930,6 +15619,11 @@ async function submitGenerateCurriculumTest() {
 }
 
 async function attemptActiveTestInStudentPortal(assessmentId) {
+  // Teachers do not sit tests as a student; students attempt from their own portal.
+  if (state.sessionRole && state.sessionRole !== 'student') {
+    showToast('Students attempt this test from their own login. Their results appear here in Class Progress.', 'info');
+    return;
+  }
   await loadStudentAssignedTests();
 
   let targetTest = state.publishedAssessments.find(a => a.id === assessmentId);
@@ -14994,7 +15688,7 @@ async function simulateClassAttemptsAndGenerateDashboard(assessmentId) {
     }
   } catch (err) {
     console.error('Error simulating attempts:', err);
-    alert('Could not simulate student attempts. Please check backend connection.');
+    showToast('Could not simulate student attempts. Please check backend connection.', 'warning');
     await loadClassAnalytics(assessmentId);
   }
 }
@@ -15098,11 +15792,11 @@ async function submitTeacherLoginForm(event) {
 
   const cleanPhone = phone.replace(/\D/g, '');
   if (!cleanPhone || cleanPhone.length < 10) {
-    alert('Please enter a valid 10-digit mobile number.');
+    showToast('Please enter a valid 10-digit mobile number.', 'warning');
     return;
   }
   if (!name || name.length < 2) {
-    alert('Please enter the faculty member\'s full name.');
+    showToast('Please enter the faculty member\'s full name.', 'warning');
     return;
   }
 
@@ -15198,9 +15892,7 @@ function applyTeacherProfile(prof, notify = false) {
   teacherBuilderState.teacherSubjectKey = prof.subjectKey;
   teacherBuilderState.selectedSubjectKey = prof.subjectKey;
   teacherBuilderState.activeGrade = defaultGrade;
-  const defaultClassForSubj = (prof.subjectKey === 'CLASS10_MATHEMATICS')
-    ? '10-Maths-A'
-    : (isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed'));
+  const defaultClassForSubj = isClass10 ? '10-Science-A' : (prof.subjectKey === 'BIOLOGY' ? '12-Med' : '12-NonMed');
   teacherBuilderState.selectedClassId = prof.defaultClass || defaultClassForSubj;
   teacherBuilderState.targetStream = prof.targetStream || (isClass10 ? 'CBSE_CLASS_10' : (prof.subjectKey === 'BIOLOGY' ? 'NEET' : 'JEE'));
   teacherBuilderState.activeTeacher = prof;
@@ -15208,7 +15900,12 @@ function applyTeacherProfile(prof, notify = false) {
   try {
     localStorage.setItem('haps_active_teacher', JSON.stringify(prof));
     localStorage.setItem('haps_teacher_profile', JSON.stringify(prof));
-    localStorage.setItem('haps_active_role', 'teacher');
+    // Only an explicit sign-in (notify = true) makes this browser a teacher session.
+    // Restoring a saved profile on page load must never change the signed-in role.
+    if (notify) {
+      localStorage.setItem('haps_active_role', 'teacher');
+      setSessionRole('teacher');
+    }
   } catch (e) {}
 
   const nameEl = document.getElementById('teacherFacultyName');
@@ -15243,13 +15940,15 @@ function applyTeacherProfile(prof, notify = false) {
     }
   }
 
-  // Header chip & title update
+  const isDirectorActive = state.activeRole === 'director';
+
+  // Header chip & title update (preserve Principal/Director identity when Director is active)
   const headerFacultyName = document.getElementById('headerFacultyName');
-  if (headerFacultyName) headerFacultyName.innerText = prof.name || prof.full_name;
+  if (headerFacultyName && !isDirectorActive) headerFacultyName.innerText = prof.name || prof.full_name;
   const headerFacultyTag = document.getElementById('headerFacultyTag');
-  if (headerFacultyTag) headerFacultyTag.innerText = `FACULTY • ${prof.subjectKey}`;
+  if (headerFacultyTag && !isDirectorActive) headerFacultyTag.innerText = `FACULTY • ${prof.subjectKey}`;
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
-  if (headerClassBadge) headerClassBadge.innerText = `Class ${defaultGrade}th ▼`;
+  if (headerClassBadge && !isDirectorActive) headerClassBadge.innerText = `Class ${defaultGrade}th ▼`;
 
   const headerTitle = document.getElementById('headerNavTitle');
   if (headerTitle && (!state.activeRole || state.activeRole === 'teacher')) {
@@ -15263,7 +15962,7 @@ function applyTeacherProfile(prof, notify = false) {
 
   // Student Smartboard header sync
   const sbHeader = document.getElementById('smartboardFacultyHeader');
-  if (sbHeader) sbHeader.innerText = `${prof.name || 'Faculty'} Live AI Smartboard Session`;
+  if (sbHeader) sbHeader.innerText = 'Live AI Smartboard Session';
 
   // Drawer faculty info update
   const drawerName = document.getElementById('drawerFacultyName');
@@ -15294,11 +15993,7 @@ function applyTeacherProfile(prof, notify = false) {
     selectPaperSubject.disabled = true;
   }
 
-  const selectPaperClass = document.getElementById('selectPaperClass');
-  if (selectPaperClass) {
-    selectPaperClass.innerHTML = allowedClasses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-    selectPaperClass.value = teacherBuilderState.selectedClassId;
-  }
+  refreshPaperClassOptions();
 
   const drawerSelectClass = document.getElementById('drawerSelectClassScope');
   if (drawerSelectClass) drawerSelectClass.value = teacherBuilderState.selectedClassId;
@@ -15309,7 +16004,7 @@ function applyTeacherProfile(prof, notify = false) {
   const inputInjectSubj = document.getElementById('inputInjectSubject');
   if (inputInjectSubj) inputInjectSubj.value = prof.subjectName;
   const injectSubjBadge = document.getElementById('injectFacultySubjectBadge');
-  if (injectSubjBadge) injectSubjBadge.innerText = `🔒 Locked: ${prof.subjectKey} (Class ${defaultGrade}th Scope)`;
+  if (injectSubjBadge) injectSubjBadge.innerText = `${prof.subjectName || prof.subjectKey} only • Class ${defaultGrade}`;
   const injectBName = document.getElementById('injectFacultyBannerName');
   if (injectBName) injectBName.innerText = `${prof.name || 'Faculty'} • ${prof.designation || prof.subjectName + ' Faculty'}`;
 
@@ -15339,7 +16034,32 @@ function applyTeacherProfile(prof, notify = false) {
     window.renderRecordedTestsTable(teacherBuilderState.selectedClassId);
   }
 
-  // 6. Reset question bank cache and reload if active
+  // 6. Sync Board Paper Studio to active teacher scope & invalidate stale paper cache
+  if (typeof syncBoardPaperStudioWithTeacher === 'function') {
+    syncBoardPaperStudioWithTeacher();
+  }
+  if (typeof boardPaperStudioState !== 'undefined' && boardPaperStudioState.currentPaper) {
+    const curPaper = boardPaperStudioState.currentPaper;
+    if (
+      String(curPaper.subject || '').toLowerCase() !== String(boardPaperStudioState.subject || '').toLowerCase() ||
+      String(curPaper.grade || '') !== String(boardPaperStudioState.grade || '')
+    ) {
+      boardPaperStudioState.currentPaper = null;
+      if (
+        state.activePaperCreationMode === 'board_paper' ||
+        document.getElementById('subModeBoardPaper')?.style.display === 'block' ||
+        state.activeTeacherTab === 'tabTeacherBoardPaper'
+      ) {
+        const label = document.getElementById('paperModeActiveLabel');
+        if (label) {
+          label.innerText = `Mode 2 of 3: Full Board Paper Studio (${boardPaperStudioState.board || 'CBSE'} ${boardPaperStudioState.subject || ''} Class ${boardPaperStudioState.grade || '12'})`;
+        }
+        generateOrLoadBoardPaper();
+      }
+    }
+  }
+
+  // 7. Reset question bank cache and reload if active
   state.questionBankData = [];
   state.currentQbSubjectKey = null;
   state.currentQbGrade = null;
@@ -15350,6 +16070,10 @@ function applyTeacherProfile(prof, notify = false) {
   if (notify) {
     showScopeSwitchToast(defaultGrade, prof.subjectKey);
   }
+  // Replace any demo class data with this teacher's real, subject-scoped tests and rosters.
+  setTimeout(() => { refreshTeacherLiveViews(); }, 0);
+  restrictStudioSubjectOptions();
+  restrictDrawerClassScope();
 }
 
 function setTeacherSubjectFaculty(subjectFaculty) {
@@ -15379,7 +16103,25 @@ async function submitCreateClass(event) {
   const stream = document.getElementById('selectNewClassStream')?.value || 'NON_MEDICAL';
 
   if (!name || !section) {
-    alert('Please enter both class name and section code.');
+    showToast('Please enter both class name and section code.', 'warning');
+    return;
+  }
+
+  const createScope = getTeacherClassCreationScope();
+  if (!createScope.grades.includes(String(grade))) {
+    showToast(`You can only create classes in Class ${createScope.grades.join(' / ')} for your subject.`, 'warning');
+    return;
+  }
+  if (createScope.streams && !createScope.streams.includes(String(stream))) {
+    showToast('That stream does not study your subject. Choose a matching stream.', 'warning');
+    return;
+  }
+  const allKnownClassIds = new Set([].concat(
+    ...Object.values(FACULTY_SUBJECT_CLASSES).map(list => (list || []).map(c => String(c.id).toLowerCase())),
+    (teacherBuilderState.classes || []).map(c => String(c.id || c.key).toLowerCase())
+  ));
+  if (allKnownClassIds.has(String(section).toLowerCase())) {
+    showToast(`Section "${section}" already exists. Use a new section code.`, 'warning');
     return;
   }
 
@@ -15522,7 +16264,7 @@ async function submitCreateClass(event) {
 
   } catch (err) {
     console.error('Error creating class:', err);
-    alert('Could not complete class creation. Please check console for details.');
+    showToast('Could not complete class creation. Please check console for details.', 'error');
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
@@ -15540,7 +16282,8 @@ function openAddStudentModal() {
       const subjKey = teacherBuilderState.teacherSubjectKey || 'PHYSICS';
       const allowedClasses = [...(FACULTY_SUBJECT_CLASSES[subjKey] || FACULTY_SUBJECT_CLASSES.PHYSICS)];
       try {
-        const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]');
+        const customClasses = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]')
+          .filter(c => String(c.subjectKey || '').toUpperCase() === String(subjKey).toUpperCase());
         customClasses.forEach(c => {
           const cid = c.id || c.section;
           if (!allowedClasses.some(x => x.id === cid)) {
@@ -15578,7 +16321,7 @@ async function submitAddStudentToClass(event) {
   const hostelResident = document.getElementById('selectNewStudentCategory')?.value === 'true';
 
   if (!name || !rollNumber) {
-    alert('Please enter student full name and roll number.');
+    showToast('Please enter student full name and roll number.', 'warning');
     return;
   }
 
@@ -15674,7 +16417,7 @@ async function submitAddStudentToClass(event) {
 
   } catch (err) {
     console.error('Error adding student:', err);
-    alert('Error enrolling student: ' + err.message);
+    showToast('Error enrolling student: ' + err.message, 'error');
   } finally {
     if (btnSubmit) {
       btnSubmit.disabled = false;
@@ -15757,9 +16500,12 @@ function updateStreamSelectionUI(stream = 'JEE') {
 
   // Normalize stream if in Class 10
   if (isClass10) {
-    if (stream === 'JEE' || stream === 'NEET' || stream === 'CBSE_CLASS_10' || stream === 'FOUNDATION') {
+    if (stream === 'JEE' || stream === 'NEET' || stream === 'CBSE_CLASS_10' || stream === 'FOUNDATION' || stream === 'OLYMPIAD') {
       stream = 'BOARD';
     }
+  } else if (stream === 'OLYMPIAD') {
+    const isMedical = curClassId.includes('Med') && !curClassId.includes('NonMed');
+    stream = isMedical ? 'NEET' : 'JEE';
   }
 
   teacherBuilderState.targetStream = stream;
@@ -15777,11 +16523,6 @@ function updateStreamSelectionUI(stream = 'JEE') {
       badgeStream.style.borderColor = 'rgba(16, 185, 129, 0.4)';
       badgeStream.style.color = '#34d399';
       badgeStream.style.background = 'rgba(16, 185, 129, 0.12)';
-    } else if (stream === 'OLYMPIAD') {
-      badgeStream.innerText = isClass10 ? 'Olympiad & Foundation' : 'Olympiad & Advanced';
-      badgeStream.style.borderColor = 'rgba(168, 85, 247, 0.4)';
-      badgeStream.style.color = '#c084fc';
-      badgeStream.style.background = 'rgba(168, 85, 247, 0.12)';
     } else {
       badgeStream.innerText = 'JEE (Main & Advanced)';
       badgeStream.style.borderColor = 'rgba(56, 189, 248, 0.4)';
@@ -15794,14 +16535,10 @@ function updateStreamSelectionUI(stream = 'JEE') {
   const btnBoard = document.getElementById('drawerStreamBoard');
   const btnJee = document.getElementById('drawerStreamJee');
   const btnNeet = document.getElementById('drawerStreamNeet');
-  const btnOlympiad = document.getElementById('drawerStreamOlympiad');
   const checkBoard = document.getElementById('checkStreamBoard');
   const checkJee = document.getElementById('checkStreamJee');
   const checkNeet = document.getElementById('checkStreamNeet');
-  const checkOlympiad = document.getElementById('checkStreamOlympiad');
   const boardSubtext = document.getElementById('drawerStreamBoardSubtext');
-  const olympiadTitle = document.getElementById('drawerStreamOlympiadTitle');
-  const olympiadSubtext = document.getElementById('drawerStreamOlympiadSubtext');
 
   if (isClass10) {
     // STRICT ISOLATION FOR CLASS 10: HIDE JEE & NEET COMPLETELY!
@@ -15811,13 +16548,7 @@ function updateStreamSelectionUI(stream = 'JEE') {
       btnBoard.style.display = 'flex';
       btnBoard.classList.toggle('active', stream === 'BOARD');
     }
-    if (btnOlympiad) {
-      btnOlympiad.style.display = 'flex';
-      btnOlympiad.classList.toggle('active', stream === 'OLYMPIAD');
-    }
     if (boardSubtext) boardSubtext.innerText = 'Class 10th Foundation & Boards • Step Rubrics';
-    if (olympiadTitle) olympiadTitle.innerText = 'Olympiad & Foundation';
-    if (olympiadSubtext) olympiadSubtext.innerText = 'NTSE, Olympiads & Deep Reasoning';
   } else {
     // Senior secondary: Classes 11 & 12
     if (btnBoard) {
@@ -15825,8 +16556,6 @@ function updateStreamSelectionUI(stream = 'JEE') {
       btnBoard.classList.toggle('active', stream === 'BOARD');
     }
     if (boardSubtext) boardSubtext.innerText = 'Classes 10, 11 & 12 • Step Rubrics';
-    if (olympiadTitle) olympiadTitle.innerText = 'Olympiad & Advanced';
-    if (olympiadSubtext) olympiadSubtext.innerText = 'Deep Reasoning • Multi-Step Problems';
 
     const isMedical = curClassId.includes('Med') && !curClassId.includes('NonMed');
     const isNonMed = curClassId.includes('NonMed');
@@ -15839,16 +16568,11 @@ function updateStreamSelectionUI(stream = 'JEE') {
       btnNeet.style.display = isNonMed ? 'none' : 'flex';
       btnNeet.classList.toggle('active', stream === 'NEET');
     }
-    if (btnOlympiad) {
-      btnOlympiad.style.display = 'flex';
-      btnOlympiad.classList.toggle('active', stream === 'OLYMPIAD');
-    }
   }
 
   if (checkBoard) checkBoard.style.display = stream === 'BOARD' ? 'inline-flex' : 'none';
   if (checkJee) checkJee.style.display = stream === 'JEE' ? 'inline-flex' : 'none';
   if (checkNeet) checkNeet.style.display = stream === 'NEET' ? 'inline-flex' : 'none';
-  if (checkOlympiad) checkOlympiad.style.display = stream === 'OLYMPIAD' ? 'inline-flex' : 'none';
 
   // Sync drawer class scope selector if present
   const drawerClassSelect = document.getElementById('drawerSelectClassScope');
@@ -15866,6 +16590,13 @@ function updateStreamSelectionUI(stream = 'JEE') {
 }
 
 function selectDrawerStream(stream) {
+  if (state.activeRole !== 'teacher') {
+    state.activeTargetStream = stream;
+    updateStreamSelectionUI(stream);
+    closeSidebarDrawer();
+    return;
+  }
+
   const isClass10 = teacherBuilderState.selectedClassId === '10-Science-A' 
     || String(teacherBuilderState.selectedClassId || '').startsWith('10')
     || (teacherBuilderState.teacherSubjectKey || '').startsWith('CLASS10_');
@@ -15927,6 +16658,7 @@ function selectDrawerStream(stream) {
 }
 
 function openFacultyClassSwitcherModal() {
+  if (state.sessionRole && state.sessionRole !== 'teacher') return;
   if (typeof closeSidebarDrawer === 'function') {
     closeSidebarDrawer();
   }
@@ -15970,155 +16702,29 @@ function renderFacultyClassSwitcherCards() {
   let currentClassId = teacherBuilderState.selectedClassId || '12-NonMed';
   const currentGrade = String(teacherBuilderState.activeGrade || (currentClassId.startsWith('11') ? '11' : (currentClassId.startsWith('10') ? '10' : '12')));
 
-  let classCards = [];
-
-  if (subjKey === 'PHYSICS') {
-    classCards = [
-      {
-        id: '12-NonMed',
-        grade: '12',
-        title: 'Class 12th Physics (Non-Medical & Medical)',
-        stream: 'Senior Secondary • CBSE & HP Board / JEE Main',
-        stats: '14 NCERT Chapters • 48 Students Enrolled',
-        badge: 'CBSE & HP Board + JEE'
-      },
-      {
-        id: '11-NonMed',
-        grade: '11',
-        title: 'Class 11th Physics (Non-Medical & Medical)',
-        stream: 'Class 11th Senior Secondary • CBSE & HP Foundation',
-        stats: '14 NCERT Chapters • 42 Students Enrolled',
-        badge: 'Class 11 + Foundation'
-      },
-      {
-        id: '10-Science-A',
-        grade: '10',
-        title: 'Class 10th Science & Physics Foundation',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '13 NCERT Chapters • 45 Students Enrolled',
-        badge: 'Class 10 Foundation'
-      }
-    ];
-  } else if (subjKey === 'CHEMISTRY') {
-    classCards = [
-      {
-        id: '12-NonMed',
-        grade: '12',
-        title: 'Class 12th Chemistry (Senior Batch)',
-        stream: 'Senior Secondary • CBSE & HP Board / NEET & JEE',
-        stats: '10 NCERT Chapters • 48 Students Enrolled',
-        badge: 'CBSE & HP Board'
-      },
-      {
-        id: '11-NonMed',
-        grade: '11',
-        title: 'Class 11th Chemistry (Junior Batch)',
-        stream: 'Class 11th Senior Secondary • Foundation',
-        stats: '10 NCERT Chapters • 42 Students Enrolled',
-        badge: 'Class 11 Foundation'
-      },
-      {
-        id: '10-Science-A',
-        grade: '10',
-        title: 'Class 10th Science & Chemistry Foundation',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '13 NCERT Chapters • 45 Students Enrolled',
-        badge: 'Class 10 Foundation'
-      }
-    ];
-  } else if (subjKey === 'BIOLOGY') {
-    classCards = [
-      {
-        id: '12-Med',
-        grade: '12',
-        title: 'Class 12th Biology (Senior Medical)',
-        stream: 'Senior Secondary • CBSE & HP Board / NEET UG',
-        stats: '13 NCERT Chapters • 38 Students Enrolled',
-        badge: 'NEET UG + Boards'
-      },
-      {
-        id: '11-Med',
-        grade: '11',
-        title: 'Class 11th Biology (Junior Medical)',
-        stream: 'Class 11th Senior Secondary • NEET Foundation',
-        stats: '13 NCERT Chapters • 40 Students Enrolled',
-        badge: 'Class 11 Medical'
-      },
-      {
-        id: '10-Science-A',
-        grade: '10',
-        title: 'Class 10th Science & Biology Foundation',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '13 NCERT Chapters • 45 Students Enrolled',
-        badge: 'Class 10 Foundation'
-      }
-    ];
-  } else if (subjKey === 'MATHEMATICS') {
-    classCards = [
-      {
-        id: '12-NonMed',
-        grade: '12',
-        title: 'Class 12th Mathematics (Senior Secondary)',
-        stream: 'Senior Secondary • CBSE & HP Board / JEE Main',
-        stats: '13 NCERT Chapters • 48 Students Enrolled',
-        badge: 'CBSE & HP Board + JEE'
-      },
-      {
-        id: '11-NonMed',
-        grade: '11',
-        title: 'Class 11th Mathematics (Junior Secondary)',
-        stream: 'Class 11th Senior Secondary • JEE Foundation',
-        stats: '13 NCERT Chapters • 42 Students Enrolled',
-        badge: 'Class 11 Foundation'
-      },
-      {
-        id: '10-Maths-A',
-        grade: '10',
-        title: 'Class 10th Mathematics Foundation (Section A)',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '14 NCERT Chapters • 44 Students Enrolled',
-        badge: 'Class 10 Foundation'
-      }
-    ];
-  } else if (subjKey === 'CLASS10_SCIENCE' || subjKey === 'SCIENCE') {
-    classCards = [
-      {
-        id: '10-Science-A',
-        grade: '10',
-        title: 'Class 10th Science — Section A',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '13 NCERT Chapters • 45 Students Enrolled',
-        badge: 'Section A • Board Track'
-      },
-      {
-        id: '10-Science-B',
-        grade: '10',
-        title: 'Class 10th Science — Section B',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '13 NCERT Chapters • 43 Students Enrolled',
-        badge: 'Section B • Board Track'
-      }
-    ];
-  } else {
-    classCards = [
-      {
-        id: '10-Maths-A',
-        grade: '10',
-        title: 'Class 10th Mathematics — Section A',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '14 NCERT Chapters • 44 Students Enrolled',
-        badge: 'Section A • Board Track'
-      },
-      {
-        id: '10-Maths-B',
-        grade: '10',
-        title: 'Class 10th Mathematics — Section B',
-        stream: 'Secondary Board Track • CBSE & HPBOSE',
-        stats: '14 NCERT Chapters • 42 Students Enrolled',
-        badge: 'Section B • Board Track'
-      }
-    ];
-  }
+  // Class cards come from the faculty class map (same scope as the backend) with real enrolment counts
+  // from the live roster sync; no hardcoded sections or student counts.
+  const CLASS_CARD_META = {
+    '12-NonMed': { grade: '12', title: 'Class 12th Non-Medical', stream: 'JEE Main & Advanced • CBSE / HP Board', badge: 'Senior Secondary' },
+    '11-NonMed': { grade: '11', title: 'Class 11th Non-Medical', stream: 'JEE Foundation • CBSE / HP Board', badge: 'Senior Secondary' },
+    '12-Med': { grade: '12', title: 'Class 12th Medical', stream: 'NEET UG • CBSE / HP Board', badge: 'Senior Secondary' },
+    '11-Med': { grade: '11', title: 'Class 11th Medical', stream: 'NEET Foundation • CBSE / HP Board', badge: 'Senior Secondary' },
+    '10-Science-A': { grade: '10', title: 'Class 10th Section A', stream: 'Secondary Board Track • CBSE & HPBOSE', badge: 'Class 10 Foundation' },
+    '10-Maths-A': { grade: '10', title: 'Class 10th Maths-A', stream: 'Secondary Board Track • CBSE & HPBOSE', badge: 'Class 10 Foundation' }
+  };
+  const classCards = (FACULTY_SUBJECT_CLASSES[subjKey] || []).map(c => {
+    const meta = CLASS_CARD_META[c.id] || { grade: String(c.id).split('-')[0], title: c.name, stream: '', badge: '' };
+    const roster = CLASS_ROSTERS[c.id];
+    const count = roster && Array.isArray(roster.students) ? roster.students.length : null;
+    return {
+      id: c.id,
+      grade: meta.grade,
+      title: `${meta.title} • ${(teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || ''}`.replace(/ • $/, ''),
+      stream: meta.stream,
+      stats: count === null ? 'Roster loading...' : `${count} Student${count === 1 ? '' : 's'} Enrolled`,
+      badge: meta.badge
+    };
+  });
 
   // Set of default class IDs to prevent any duplicate or incorrect custom labeling
   const defaultClassIds = new Set(classCards.map(c => c.id));
@@ -16230,7 +16836,7 @@ function renderFacultyClassSwitcherCards() {
             <button type="button" class="btn-secondary" 
                     onclick="event.stopPropagation(); switchFacultyClassScope('${c.id}')"
                     style="padding: 6px 12px; font-size: 0.78rem; font-weight: 700;">
-              Switch Scope ⇄
+              Switch
             </button>
           `}
 
@@ -16333,6 +16939,13 @@ function deleteCustomFacultyClass(classId, className) {
 window.deleteCustomFacultyClass = deleteCustomFacultyClass;
 
 async function switchFacultyClassScope(classId) {
+  // Subject isolation: ignore requests for classes outside this teacher's scope.
+  const allowedForTeacher = FACULTY_SUBJECT_CLASSES[String(teacherBuilderState.teacherSubjectKey || '').toUpperCase()];
+  const customForTeacher = (() => { try { return JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]').filter(c => String(c.subjectKey || '').toUpperCase() === String(teacherBuilderState.teacherSubjectKey || '').toUpperCase()); } catch (e) { return []; } })();
+  if (allowedForTeacher && !allowedForTeacher.some(c => c.id === classId) && !customForTeacher.some(c => (c.id || c.section) === classId)) {
+    if (typeof showToast === 'function') showToast('That class is outside your subject scope.', 'warning');
+    return;
+  }
   if (!classId) return;
   closeFacultyClassSwitcherModal();
 
@@ -16375,29 +16988,31 @@ async function switchFacultyClassScope(classId) {
     name: classObj.name ? `${classObj.name} (${classObj.section || classId})` : `Class ${activeGrade}th Section ${classId}`
   } : (allowedClasses.find(c => c.id === classId) || {
     id: classId,
-    name: activeGrade === '11' ? 'Class 11-NonMed • Physics (42 Students)' : (isClass10 ? 'Class 10-A • Foundation (45 Students)' : 'Class 12-A • Senior Physics (48 Students)')
+    name: activeGrade === '11' ? `Class 11 Non-Medical • ${(teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || 'Physics'}` : (isClass10 ? 'Class 10 Section A' : `Class 12 Non-Medical • ${(teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || 'Physics'}`)
   });
+
+  const isDirectorActive = state.activeRole === 'director';
 
   // 1. Update Header class badge, faculty name, faculty tag and title
   const headerClassBadge = document.getElementById('headerFacultyClassBadge');
-  if (headerClassBadge) {
+  if (headerClassBadge && !isDirectorActive) {
     headerClassBadge.innerText = `Class ${activeGrade}th ▼`;
   }
   const headerFacultyName = document.getElementById('headerFacultyName');
-  if (headerFacultyName) {
+  if (headerFacultyName && !isDirectorActive) {
     headerFacultyName.innerText = teacherBuilderState.activeTeacher?.name || 'Dr. Vikram Sharma';
   }
   const headerFacultyTag = document.getElementById('headerFacultyTag');
-  if (headerFacultyTag) {
+  if (headerFacultyTag && !isDirectorActive) {
     const sName = isClass10 
-      ? (profSubj === 'MATHEMATICS' ? 'Class 10th Math' : 'Class 10th Science')
+      ? (profSubj.includes('MATH') ? 'Class 10th Math' : 'Class 10th Science')
       : (teacherBuilderState.activeTeacher?.subjectName || 'Physics');
     headerFacultyTag.innerText = `Faculty • ${sName}`;
   }
   const headerNavTitle = document.getElementById('headerNavTitle');
   if (headerNavTitle && state.activeTeacherTab) {
     const curSubjName = isClass10
-      ? (profSubj === 'MATHEMATICS' ? 'Class 10th Mathematics' : 'Class 10th Science')
+      ? (profSubj.includes('MATH') ? 'Class 10th Mathematics' : 'Class 10th Science')
       : `Class ${activeGrade}th ${teacherBuilderState.activeTeacher?.subjectName || 'Physics'}`;
     const tabTitles = {
       'tabTeacherCreateTestAndPaper': `Create Test & Paper Studio • ${curSubjName}`,
@@ -16831,9 +17446,10 @@ function formatIntuitiveSteps(q) {
 
   if (isScience) {
     const chLower = (q.chapter_name || q.chapter || '').toLowerCase();
+    const topicLower = `${q.topic || ''} ${q.subtopic || ''}`.toLowerCase();
     const qTextLower = (q.question_latex || q.question_text || '').toLowerCase();
     const solLower = solutionText.toLowerCase();
-    const combined = `${chLower} ${qTextLower} ${solLower}`;
+    const combined = `${chLower} ${topicLower} ${qTextLower} ${solLower}`;
 
     // Senior Physics & Specific Physics derivation rules
     if (combined.includes('drift') || combined.includes('resistivity') || combined.includes('relaxation time') || combined.includes('ne^2') || combined.includes('rho =')) {
@@ -16861,26 +17477,31 @@ function formatIntuitiveSteps(q) {
       principleIntuition = "Apply refraction at two successive curved spherical boundaries of a thin lens to relate focal length directly to radii of curvature and refractive index.";
       formulaLatex = "\\frac{1}{f} = (\\mu - 1)\\left(\\frac{1}{R_1} - \\frac{1}{R_2}\\right)";
       examTip = "Examiner Warning: Apply the Cartesian sign convention strictly to radii R1 and R2.";
-    } else if (chLower.includes('light') || chLower.includes('mirror') || chLower.includes('lens')) {
+    } else if (combined.includes('light') || combined.includes('mirror') || combined.includes('lens') || combined.includes('concave') || combined.includes('convex') || combined.includes('focal') || combined.includes('refraction')) {
       principle = 'Ray Optics: Spherical Mirrors & Lens Formula with Sign Convention';
       principleIntuition = 'In spherical mirrors and lenses, apply the Cartesian sign convention strictly. Distances measured against the incident light are negative (object distance u is always negative). Focal length of a concave mirror is negative.';
       formulaLatex = '\\frac{1}{v} + \\frac{1}{u} = \\frac{1}{f}, \\quad m = -\\frac{v}{u} = \\frac{h\'}{h} \\quad (\\text{Mirror})';
       examTip = 'Examiner Warning: A negative magnification (m < 0) denotes a Real & Inverted image; positive magnification (m > 0) denotes a Virtual & Erect image.';
-    } else if (chLower.includes('elect') || chLower.includes('current')) {
+    } else if (combined.includes('elect') || combined.includes('current') || combined.includes('heater') || combined.includes('joule') || combined.includes('ohm') || combined.includes('resistan')) {
       principle = 'Ohm\'s Law, Circuit Resistance & Joule\'s Law of Heating';
       principleIntuition = 'Electric current is directly proportional to potential difference (V = IR). When current flows through a resistance for time t, electrical energy is converted into heat energy.';
       formulaLatex = 'V = IR, \\quad P = VI = I^2R = \\frac{V^2}{R}, \\quad H = P \\cdot t = I^2Rt';
       examTip = 'Crucial Step: Always convert time from hours or minutes into seconds before calculating heat energy H in Joules (1 hr = 3600 s).';
-    } else if (chLower.includes('chem') || chLower.includes('reaction') || chLower.includes('metal')) {
+    } else if (combined.includes('chem') || combined.includes('reaction') || combined.includes('metal') || combined.includes('acid') || combined.includes('base') || combined.includes('salt') || combined.includes('carbon')) {
       principle = 'Law of Conservation of Mass & Stoichiometric Chemical Balancing';
       principleIntuition = 'In a balanced chemical reaction, the number of atoms of each element on the reactant side must equal the number of atoms on the product side. Physical state symbols (s, l, g, aq) must be indicated.';
       formulaLatex = '\\sum \\text{Atoms (Reactants)} = \\sum \\text{Atoms (Products)}';
       examTip = 'Always write physical states (s, l, g, aq) and mention reaction conditions (heat, catalyst) above the reaction arrow to earn the full marking score.';
-    } else {
+    } else if (subjectLower.includes('bio') || combined.includes('enzyme') || combined.includes('hormone') || combined.includes('cell') || combined.includes('photosynth') || combined.includes('respirat')) {
       principle = 'Core Science & Biological Principles';
-      principleIntuition = 'Analyze the biological/chemical process sequentially, highlighting key anatomical structures, hormonal regulation, or molecular interactions.';
+      principleIntuition = 'Analyze the biological process sequentially, highlighting key anatomical structures, enzymatic pathways, or physiological regulation.';
       formulaLatex = '\\text{Observe balanced physiological \\& biochemical mechanisms}';
       examTip = 'Use precise biological terminology and reference organ/cellular locations explicitly.';
+    } else {
+      principle = 'Core Scientific Principle & Quantitative Conservation';
+      principleIntuition = 'Identify the governing physical law, convert all given values into consistent SI units, and apply boundary conditions systematically.';
+      formulaLatex = '\\text{Governing Law} \\implies \\text{SI Unit Substitution} \\implies \\text{Verified Magnitude}';
+      examTip = 'Always state the formula before substituting numerical values and verify dimensional consistency.';
     }
   } else {
     // Mathematics 14-Chapter Detailed Pedagogical Taxonomy
@@ -17207,7 +17828,8 @@ async function loadQuestionBankView(forceReload = false) {
 
   populateQbChapterPills(chapterSelect?.value || 'ALL');
 
-  if (state.questionBankData.length > 0 && state.currentQbSubjectKey === activeSubj && state.currentQbGrade === curGrade && !forceReload) {
+  const qbModeKey = qbModeQueryString();
+  if (state.questionBankData.length > 0 && state.currentQbSubjectKey === activeSubj && state.currentQbGrade === curGrade && state.currentQbModeKey === qbModeKey && !forceReload) {
     filterQuestionBankCards();
     return;
   }
@@ -17233,7 +17855,7 @@ async function loadQuestionBankView(forceReload = false) {
         : activeSubj === 'CHEMISTRY' ? 'senior_chemistry' 
         : activeSubj === 'BIOLOGY' ? 'senior_biology' 
         : 'senior_mathematics';
-      url = `${getApiBaseUrl()}/api/questions/subject-banks/${bankKey}?grade=${curGrade}`;
+      url = `${getApiBaseUrl()}/api/questions/subject-banks/${bankKey}?grade=${curGrade}${qbModeKey}`;
     }
 
     let res = null;
@@ -17251,6 +17873,7 @@ async function loadQuestionBankView(forceReload = false) {
       state.questionBankData = data.questions || [];
       state.currentQbSubjectKey = activeSubj;
       state.currentQbGrade = curGrade;
+      state.currentQbModeKey = qbModeKey;
     } else if (isClass10 && activeSubj === 'CLASS10_MATHEMATICS') {
       const fallbackRes = await fetch('https://haps-ai-scholar-assistant.vercel.app/api/questions/class10-math-bank?limit=450');
       if (fallbackRes.ok) {
@@ -17279,6 +17902,14 @@ async function loadQuestionBankView(forceReload = false) {
         if (!q || !q.id || existingIds.has(q.id)) return false;
         const qGrade = String(q.grade || '12');
         if (qGrade !== curGrade && curGrade !== 'ALL') return false;
+
+        // Respect the active Board / Competitive mode, like the backend bank filter does.
+        const modeCtx = (window.HapsDualMode && window.HapsDualMode.getContext) ? window.HapsDualMode.getContext() : null;
+        const tagText = `${q.target_exam || ''} ${q.pyq_appearance || ''}`.toUpperCase();
+        const isCompTagged = /JEE|NEET/.test(tagText);
+        const isBoardTagged = /CBSE|BOARD|NCERT/.test(tagText) || !isCompTagged;
+        if (modeCtx && modeCtx.mode === 'COMPETITIVE' && !isCompTagged && !(Array.isArray(q.options_latex) && q.options_latex.length === 4 && q.correct_answer)) return false;
+        if (modeCtx && modeCtx.mode === 'BOARD' && !isBoardTagged) return false;
 
         const qSubj = (q.subjectKey || q.subject || '').toUpperCase();
         if (isClass10) {
@@ -17323,6 +17954,7 @@ async function loadQuestionBankView(forceReload = false) {
     console.warn('[LOCAL STORAGE QB MERGE ERROR]', err);
   }
 
+  populateQbFilterOptions();
   filterQuestionBankCards();
 }
 
@@ -17395,10 +18027,138 @@ window.handleQbChapterChange = function(chapterVal) {
   filterQuestionBankCards();
 };
 
+// =============================================================================
+// QUESTION BANK FILTERS (aligned with the backend canonical content model)
+// Options are built from the questions actually loaded, with counts, so every
+// option matches real data. Classification mirrors canonicalContentService.js.
+// =============================================================================
+const QB_CATEGORY_LABELS = {
+  PYQ: 'Previous Year Questions (PYQ)',
+  NCERT_EXERCISE: 'NCERT Exercise',
+  NCERT_EXAMPLE: 'NCERT Solved Example',
+  EXEMPLAR: 'NCERT Exemplar',
+  SAMPLE_PATTERN: 'CBSE Sample / Board Pattern',
+  COMPETITIVE: 'JEE / NEET / Competitive',
+  PRACTICE: 'Practice / Teacher Added'
+};
+const QB_FORMAT_LABELS = {
+  MCQ: 'MCQ (Single Correct)',
+  ASSERTION_REASON: 'Assertion & Reason',
+  NUMERICAL: 'Numerical',
+  VERY_SHORT: 'Very Short Answer',
+  SHORT: 'Short Answer',
+  LONG: 'Long Answer / Derivation',
+  CASE: 'Case / Source Based',
+  OTHER: 'Other'
+};
+const QB_DIFFICULTY_LABELS = { EASY: 'Easy', MEDIUM: 'Medium', HARD: 'Hard' };
+
+// The active Board/Competitive mode decides which questions the bank loads.
+function qbModeQueryString() {
+  try {
+    const ctx = window.HapsDualMode && window.HapsDualMode.getContext ? window.HapsDualMode.getContext() : null;
+    if (!ctx || !ctx.mode) return '';
+    if (ctx.mode === 'COMPETITIVE' && ctx.stream) return `&mode=COMPETITIVE&stream=${encodeURIComponent(ctx.stream)}`;
+    if (ctx.mode === 'BOARD' && ctx.board) return `&mode=BOARD&board=${encodeURIComponent(ctx.board)}`;
+  } catch (e) { /* mode engine not ready */ }
+  return '';
+}
+
+function qbCategoryOf(q) {
+  const src = String(q.question_source || q.source_category || '').toUpperCase();
+  const app = String(q.pyq_appearance || '').toUpperCase();
+  if (src === 'CBSE_PYQ') return 'PYQ';
+  if (src === 'NCERT_EXERCISE' || src === 'NCERT_TEXTBOOK') return 'NCERT_EXERCISE';
+  if (src === 'NCERT_EXAMPLE') return 'NCERT_EXAMPLE';
+  if (src.includes('EXEMPLAR')) return 'EXEMPLAR';
+  if (src === 'CBSE_SAMPLE_PATTERN') return 'SAMPLE_PATTERN';
+  if (src === 'COMPETITIVE_OTHER') return 'COMPETITIVE';
+  if (!src) {
+    if (/JEE|NEET/.test(app) && !/CBSE|BOARD/.test(app)) return 'COMPETITIVE';
+    if (/PYQ|BOARD|20\d\d/.test(app)) return 'PYQ';
+    if (/EXEMPLAR/.test(app)) return 'EXEMPLAR';
+    if (/PATTERN|SAMPLE/.test(app)) return 'SAMPLE_PATTERN';
+    if (/NCERT/.test(app)) return 'NCERT_EXERCISE';
+  }
+  return 'PRACTICE';
+}
+
+function qbExamYearTags(q) {
+  const text = String(q.pyq_appearance || '').toUpperCase();
+  const tags = [];
+  const re = /(CBSE|HPBOSE|HP BOARD|NEET|JEE[\s_-]*MAIN|JEE[\s_-]*ADVANCED|JEE)[^0-9&]{0,40}(20\d\d)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const exam = m[1].replace(/[\s_-]+/g, ' ').replace('HPBOSE', 'HP BOARD');
+    tags.push(`${exam} ${m[2]}`);
+  }
+  return Array.from(new Set(tags));
+}
+
+function qbFormatGroupOf(q) {
+  const f = String(q.question_format || q.question_type || q.format || '').toUpperCase();
+  if (f.includes('ASSERTION')) return 'ASSERTION_REASON';
+  if (f.includes('MCQ') || f.includes('CHOICE')) return 'MCQ';
+  if (f.includes('NUMERICAL')) return 'NUMERICAL';
+  if (f.includes('VERY_SHORT') || f.includes('VSA')) return 'VERY_SHORT';
+  if (f.includes('CASE')) return 'CASE';
+  if (f.includes('LONG') || f.includes('DERIVATION')) return 'LONG';
+  if (f.includes('SHORT')) return 'SHORT';
+  return 'OTHER';
+}
+
+function qbGradeScoped(list) {
+  const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId || '').startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId || '').startsWith('10') ? '10' : '12')));
+  return list.filter(q => !q.grade || String(q.grade) === curGrade);
+}
+
+function populateQbFilterOptions() {
+  const data = qbGradeScoped(state.questionBankData || []);
+  const fill = (id, allLabel, entries) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = `<option value="ALL">${allLabel} (${data.length})</option>` +
+      entries.map(([val, label, n]) => `<option value="${escapeHtml(val)}">${escapeHtml(label)} (${n})</option>`).join('');
+    sel.value = entries.some(e => e[0] === prev) ? prev : 'ALL';
+  };
+  const count = (fn) => {
+    const m = new Map();
+    data.forEach(q => [].concat(fn(q)).forEach(k => m.set(k, (m.get(k) || 0) + 1)));
+    return m;
+  };
+  const cats = count(qbCategoryOf);
+  fill('selectQbQuestionType', 'All Question Categories', Object.keys(QB_CATEGORY_LABELS).filter(k => cats.has(k)).map(k => [k, QB_CATEGORY_LABELS[k], cats.get(k)]));
+  const years = count(q => { const t = qbExamYearTags(q); return t.length ? t : ['UNTAGGED']; });
+  const yearKeys = Array.from(years.keys()).filter(k => k !== 'UNTAGGED').sort((a, b) => b.slice(-4).localeCompare(a.slice(-4)) || a.localeCompare(b));
+  fill('selectQbSource', 'All Exams & Years', yearKeys.map(k => [k, k.replace(/\b(\w)(\w*)/g, (x, a, b) => a + b.toLowerCase()).replace('Cbse', 'CBSE').replace('Neet', 'NEET').replace('Jee', 'JEE').replace('Hp Board', 'HP Board'), years.get(k)])
+    .concat(years.has('UNTAGGED') ? [['UNTAGGED', 'No exam year tag', years.get('UNTAGGED')]] : []));
+  const diffs = count(q => String(q.difficulty || 'MEDIUM').toUpperCase());
+  fill('selectQbDifficulty', 'All Difficulties', ['EASY', 'MEDIUM', 'HARD'].filter(k => diffs.has(k)).map(k => [k, QB_DIFFICULTY_LABELS[k], diffs.get(k)]));
+  const fmts = count(qbFormatGroupOf);
+  fill('selectQbFormat', 'All Formats', Object.keys(QB_FORMAT_LABELS).filter(k => fmts.has(k)).map(k => [k, QB_FORMAT_LABELS[k], fmts.get(k)]));
+}
+window.populateQbFilterOptions = populateQbFilterOptions;
+if (typeof window.addEventListener === 'function') {
+  window.addEventListener('haps:modechange', () => {
+    if (state.activeTeacherTab === 'tabQuestionBank' && typeof loadQuestionBankView === 'function') loadQuestionBankView(true);
+  });
+}
+
 function filterQuestionBankCards() {
   const container = document.getElementById('containerQbQuestions');
   const statsLabel = document.getElementById('qbCountLabel');
   if (!container) return;
+
+  const qbTotalCount = Array.isArray(state.questionBankData) ? state.questionBankData.length : 0;
+  const drawerQbSub = document.getElementById('drawerQbSubtitle');
+  const drawerQbBadge = document.getElementById('drawerQbCountBadge');
+  if (drawerQbSub && qbTotalCount > 0) {
+    drawerQbSub.textContent = `${qbTotalCount}+ Curated Questions & PYQs`;
+  }
+  if (drawerQbBadge && qbTotalCount > 0) {
+    drawerQbBadge.textContent = `${qbTotalCount} Qs`;
+  }
 
   const typeVal = document.getElementById('selectQbQuestionType')?.value || 'ALL';
   const chVal = document.getElementById('selectQbChapter')?.value || 'ALL';
@@ -17452,40 +18212,14 @@ function filterQuestionBankCards() {
     });
   }
 
+  // Category, exam-year and format filters use the same classification that builds the dropdowns.
   if (typeVal !== 'ALL') {
+    filtered = filtered.filter(q => qbCategoryOf(q) === typeVal);
+  }
+  if (srcVal !== 'ALL') {
     filtered = filtered.filter(q => {
-      const qCat = (q.source_category || q.question_source || '').toUpperCase();
-      const qSrc = (q.question_source || q.pyq_appearance || q.ncert_mapping?.pyq_tag || '').toUpperCase();
-      if (typeVal === 'CBSE_PYQ' || typeVal === 'PYQ') {
-        return qCat === 'CBSE_PYQ' || q.question_source === 'CBSE_PYQ' || qSrc.includes('PYQ') || qSrc.includes('BOARD') || qSrc.includes('CBSE') || qSrc.includes('HPBOSE');
-      }
-      if (typeVal === 'NCERT_EXAMPLE') {
-        return qCat === 'NCERT_EXAMPLE' || qSrc.includes('EXAMPLE') || qSrc.includes('IN-TEXT');
-      }
-      if (typeVal === 'NCERT_EXERCISE') {
-        return qCat === 'NCERT_EXERCISE' || qSrc.includes('EXERCISE') || qSrc.includes('TEXTBOOK');
-      }
-      if (typeVal === 'COMPETITIVE_OTHER' || typeVal === 'OTHER') {
-        return qCat === 'COMPETITIVE_OTHER' || qCat === 'OTHER' || qSrc.includes('EXEMPLAR') || qSrc.includes('JEE') || qSrc.includes('NEET') || qSrc.includes('COMPETITIVE');
-      }
-      if (typeVal === 'BOARD_PATTERN') {
-        return q.question_source === 'CBSE_SAMPLE_PATTERN' || qSrc.includes('PATTERN') || qSrc.includes('SAMPLE') || qSrc.includes('STANDARD') || qSrc.includes('BASIC') || qSrc.includes('NCERT');
-      }
-      return true;
-    });
-  } else if (srcVal !== 'ALL') {
-    filtered = filtered.filter(q => {
-      const qSrc = (q.question_source || q.pyq_appearance || q.ncert_mapping?.pyq_tag || '').toUpperCase();
-      if (srcVal === 'PYQ') {
-        return q.question_source === 'CBSE_PYQ' || qSrc.includes('PYQ') || qSrc.includes('BOARD') || qSrc.includes('CBSE') || qSrc.includes('HPBOSE') || qSrc.includes('COMMON');
-      }
-      if (srcVal === 'NCERT_EXERCISE' || srcVal === 'NCERT_TEXTBOOK' || srcVal === 'NCERT_EXAMPLE') {
-        return q.question_source === 'NCERT_TEXTBOOK' || qSrc.includes('NCERT') || qSrc.includes('EXAMPLE') || qSrc.includes('EXERCISE') || qSrc.includes('TEXTBOOK');
-      }
-      if (srcVal === 'CBSE_PATTERN') {
-        return q.question_source === 'CBSE_SAMPLE_PATTERN' || qSrc.includes('PATTERN') || qSrc.includes('SAMPLE') || qSrc.includes('STANDARD') || qSrc.includes('BASIC');
-      }
-      return true;
+      const tags = qbExamYearTags(q);
+      return srcVal === 'UNTAGGED' ? tags.length === 0 : tags.includes(srcVal);
     });
   }
 
@@ -17498,20 +18232,11 @@ function filterQuestionBankCards() {
   }
 
   if (diffVal !== 'ALL') {
-    filtered = filtered.filter(q => (q.difficulty || '').toUpperCase() === diffVal);
+    filtered = filtered.filter(q => String(q.difficulty || 'MEDIUM').toUpperCase() === diffVal);
   }
 
   if (fmtVal !== 'ALL') {
-    filtered = filtered.filter(q => {
-      const qFmt = (q.question_format || q.question_type || q.format || '').toUpperCase();
-      if (fmtVal === 'MCQ_SINGLE') return qFmt.includes('MCQ') || qFmt.includes('CHOICE');
-      if (fmtVal === 'ASSERTION_REASON') return qFmt.includes('ASSERTION');
-      if (fmtVal === 'SHORT_ANSWER') return qFmt.includes('SHORT') && !qFmt.includes('VERY');
-      if (fmtVal === 'VERY_SHORT_ANSWER') return qFmt.includes('VERY_SHORT') || qFmt.includes('VSA');
-      if (fmtVal === 'LONG_ANSWER') return qFmt.includes('LONG') || qFmt.includes('DERIVATION');
-      if (fmtVal === 'CASE_STUDY') return qFmt.includes('CASE');
-      return qFmt === fmtVal;
-    });
+    filtered = filtered.filter(q => qbFormatGroupOf(q) === fmtVal);
   }
 
   if (query) {
@@ -17761,7 +18486,7 @@ function interruptVoiceTutor(qId) {
 function toggleVoiceMicInput(qId) {
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRec) {
-    alert('Speech recognition is not supported in this browser. You can type your doubt in the box directly!');
+    showToast('Speech recognition is not supported in this browser. Type your doubt in the box directly.', 'info');
     document.getElementById(`inputVoiceDoubt_${qId}`)?.focus();
     return;
   }
@@ -18034,8 +18759,30 @@ function attachLiveVoiceCallbacks(qId) {
         if (curBanner) curBanner.classList.add('speaking');
         if (curWave) curWave.classList.add('active');
         initLucideIcons();
+
+        // Microphone permission granted and voice stream connected!
+        // Start concept pacing timer now that voice is live and speaking
+        syncQuestionToWhiteboard(qId);
+        sendWhiteboardMessage(qId, { type: 'RESUME_PACING' });
       } else if (status === 'DISCONNECTED') {
         stopRealtimeVoiceAssistant(qId, false);
+      }
+    },
+    onPhaseChange: (phaseIndex, phaseName) => {
+      // 1. Synchronize smartboard spotlight with active spoken concept
+      sendWhiteboardMessage(qId, {
+        type: 'SPOTLIGHT_CONCEPT',
+        payload: { conceptIndex: phaseIndex }
+      });
+      if (typeof postToStudentSmartboard === 'function') {
+        postToStudentSmartboard({
+          type: 'SPOTLIGHT_CONCEPT',
+          payload: { conceptIndex: phaseIndex }
+        });
+      }
+      const badge = document.getElementById(`wbPacingBadge_${qId}`);
+      if (badge) {
+        badge.textContent = phaseName || `Concept ${phaseIndex + 1}`;
       }
     },
     onTranscript: ({ role, text, isInterim }) => {
@@ -18063,6 +18810,26 @@ function attachLiveVoiceCallbacks(qId) {
       if (!voiceTutorState.liveTranscriptHistory) voiceTutorState.liveTranscriptHistory = [];
       if (turn.studentText) voiceTutorState.liveTranscriptHistory.push({ role: 'student', text: turn.studentText });
       if (turn.tutorText) voiceTutorState.liveTranscriptHistory.push({ role: 'tutor', text: turn.tutorText });
+
+      // If student asked a doubt and tutor answered, project doubt note directly to smartboard!
+      if (turn.studentText && turn.tutorText) {
+        sendWhiteboardMessage(qId, {
+          type: 'HIGHLIGHT_DOUBT',
+          payload: {
+            doubtText: turn.studentText,
+            answerText: turn.tutorText
+          }
+        });
+        if (typeof postToStudentSmartboard === 'function') {
+          postToStudentSmartboard({
+            type: 'HIGHLIGHT_DOUBT',
+            payload: {
+              doubtText: turn.studentText,
+              answerText: turn.tutorText
+            }
+          });
+        }
+      }
     },
     onInterrupted: () => {
       const curBanner = document.getElementById(`voiceBanner_${qId}`);
@@ -18073,6 +18840,10 @@ function attachLiveVoiceCallbacks(qId) {
       }
       if (curBadge) {
         curBadge.innerHTML = `<span class="qb-live-pulsing-dot" style="background:#f43f5e; box-shadow:0 0 8px #f43f5e;"></span> <span style="color:#fb7185; font-weight:800;">Auto-Interrupted! Listening to your voice...</span>`;
+      }
+      sendWhiteboardMessage(qId, { type: 'PAUSE_PACING' });
+      if (typeof postToStudentSmartboard === 'function') {
+        postToStudentSmartboard({ type: 'PAUSE_PACING' });
       }
       initLucideIcons();
     },
@@ -18092,10 +18863,10 @@ function attachLiveVoiceCallbacks(qId) {
       }
     },
     onError: (err) => {
-      console.error('[GEMINI LIVE ERROR]', err);
+      console.warn('[GEMINI LIVE WARN]', err);
       const curBadge = document.getElementById(`voiceStatusBadge_${qId}`);
       if (curBadge) {
-        curBadge.innerHTML = `<i data-lucide="alert-circle" style="width:13px;height:13px;color:#f43f5e;"></i> Live Session Error: ${escapeHtml(err.message || 'Connection lost')}`;
+        curBadge.innerHTML = `<i data-lucide="radio" style="width:13px;height:13px;color:#38bdf8;"></i> Switching to Neural Studio Voice Mode...`;
       }
       initLucideIcons();
     }
@@ -18206,15 +18977,29 @@ async function startRealtimeVoiceAssistant(qId) {
       apiBaseUrl: getApiBaseUrl()
     });
   } catch (err) {
-    console.error('Failed to start Gemini Live voice assistant:', err);
-    if (badge) {
-      badge.innerHTML = `<i data-lucide="alert-triangle" style="width:13px;height:13px;color:#f43f5e;"></i> Live session setup failed: ${escapeHtml(err.message || 'Microphone or network error')}`;
-    }
+    console.warn('Gemini Live fallback to Studio Neural Voice Tutor:', err?.message || err);
     if (btnLive) {
       btnLive.classList.remove('live-active');
       btnLive.innerHTML = `<span class="qb-live-pulsing-dot"></span> <i data-lucide="presentation" style="width:13px; height:13px;"></i> AI Teacher & Smartboard <span class="qb-live-tag">LIVE CLASS</span>`;
     }
+    if (badge) {
+      badge.innerHTML = `<i data-lucide="headphones" style="width:13px;height:13px;color:#34d399;"></i> Studio Neural Tutor Active (Hinglish & Smartboard Ready)`;
+    }
+    const fallbackBrief = `Aaiye is question ko samajhte hain: ${cleanLatexForClientVoice(rawQ)}. ${teachingPlan?.steps?.[0]?.spokenHinglish || teachingPlan?.hinglishIntro || 'Pehle given quantities aur formula note karein, phir step-by-step solve karein.'}`;
+    if (transcript) {
+      transcript.innerHTML = `
+        <div style="background:rgba(16,185,129,0.12); border-left:3px solid #34d399; padding:10px 14px; border-radius:6px;">
+          <strong style="color:#34d399; font-size:0.84rem;"><i data-lucide="headphones" style="width:13px;height:13px;vertical-align:middle;"></i> Teacher's Hinglish Brief:</strong>
+          <p style="margin:6px 0 0 0; color:#ecfdf5; font-size:0.94rem; line-height:1.7;">${escapeHtml(fallbackBrief)}</p>
+        </div>
+        <div id="liveChatStream_${qId}" class="qb-live-chat-stream"></div>
+      `;
+    }
     initLucideIcons();
+    try {
+      sendWhiteboardMessage(qId, { type: 'START_PACING', plan: teachingPlan });
+    } catch (wbErr) {}
+    speakWithVoiceEngine(fallbackBrief, voiceTutorState.selectedVoice || 'swara');
   }
 }
 
@@ -18270,6 +19055,10 @@ function toggleLiveWhiteboard(qId, forceOpen = null) {
       btn.style.borderColor = '#c084fc';
     }
     syncQuestionToWhiteboard(qId);
+    setTimeout(() => {
+      syncQuestionToWhiteboard(qId);
+      fitLiveWhiteboard(qId);
+    }, 180);
   } else {
     container.style.display = 'none';
     if (btn) {
@@ -18371,6 +19160,8 @@ function buildLocalSmartboardPlan(qId) {
   let ch = qObj.chapter_name || qObj.chapter || (discipline === 'CHEMISTRY' ? 'Electrochemistry' : (discipline === 'BIOLOGY' ? 'Principles of Inheritance' : (discipline === 'MATHEMATICS' ? 'Integrals' : 'Electric Charges and Fields')));
   let marks = qObj.marks_weightage || qObj.marks || 3;
   let ans = qObj.correct_answer_latex || qObj.correct_answer || '';
+  const ansKey = String(qObj.correct_answer || '').trim();
+  const ansTag = /^[A-Da-d]$/.test(ansKey) ? `[Option ${ansKey.toUpperCase()}]` : (ans ? `[Ans: ${cleanLatexForClientVoice(ans).slice(0, 32)}]` : '');
 
   if (!rawQ) {
     if (discipline === 'CHEMISTRY') {
@@ -18630,8 +19421,116 @@ function buildLocalSmartboardPlan(qId) {
   // DISCIPLINE 4: SENIOR SECONDARY PHYSICS & FOUNDATION SCIENCE
   // ==========================================================================
   } else {
-    // PHYSICS ONLY: Strict discipline isolation ensures rolling / circuit never triggers for chemistry
-    if (textForDetection.match(/roll|sphere|incline|rotat|torque|angular|slip|moment of inertia|friction/)) {
+    // 1. Gauss's Law & Electric Fields (e.g. Infinitely long wire, cylindrical Gaussian surface, flux)
+    if (textForDetection.match(/gauss|cylindrical.*surface|infinitely long|wire.*density|linear charge|flux.*wire|electric field.*wire/)) {
+      diagramType = 'gauss';
+      diagTitle = "Gauss's Law • Cylindrical Gaussian Surface & Wire (λ)";
+      step1Title = "Gauss's Law & Gaussian Surface Selection";
+      step1Formula = '• Gauss\'s Law: ∮ E⃗ · dA⃗ = q_enclosed / ε₀\n• Gaussian Surface: Coaxial cylinder of radius r, length L\n• Charge Enclosed: q_enclosed = λ · L';
+      step1Exp = 'Cylindrical symmetry dictates that E⃗ is everywhere radial and normal to the wire.';
+
+      step2Title = "Flux Integration Across Gaussian Cylinder";
+      step2Working = '1) Flux across 2 circular end caps: Φ_ends = ∮ E · dA · cos(90°) = 0\n2) Flux across curved surface: Φ_curved = ∮ E · dA · cos(0°) = E · (2π · r · L)\n3) Apply Gauss\'s Law: E · (2π · r · L) = (λ · L) / ε₀';
+      step2Exp = 'Flux passes only through the curved cylinder surface since E⃗ is perpendicular to flat end caps.';
+
+      step3Title = "Final Electric Field Derivation & Sanity Check";
+      step3Working = '• Electric Field: E = λ / (2π · ε₀ · r) = (2 · k · λ) / r\n• Direction: Radially outward for λ > 0, inward for λ < 0\n• Radial Dependence: E ∝ 1/r (vs 1/r² for a point charge)';
+      step3Exp = 'Length L cancels out cleanly, showing field strength depends only on linear charge density and distance r.';
+      tipText = 'Electric flux through flat circular end caps is strictly ZERO because E⃗ is parallel to the surface (cos 90° = 0)!';
+      diagSpoken = 'Pehle left side board par charged straight wire aur coaxial cylindrical Gaussian surface ko dhyan se observe karo.';
+      s1Spoken = 'Dekho beta, pehle Gauss law formula aur cylindrical surface ke andar enclosed charge q = lambda into L note karte hain.';
+      s2Spoken = 'Ab circular flat ends par flux zero hoga kyunki field perpendicular hai, aur curved surface se total flux E into 2 pi r L banta hai.';
+      s3Spoken = 'Dono sides equate karne par cylinder ki length L cancel ho jati hai aur final electric field E = lambda upon 2 pi epsilon naught r mil jata hai!';
+
+    // 2. Electric Dipole in Uniform Field (Torque & Potential Energy)
+    } else if (textForDetection.match(/dipole|dipole moment|torque.*dipole|potential energy.*dipole/)) {
+      diagramType = 'dipole';
+      diagTitle = "Electric Dipole • Charge Geometry & Field Alignment (θ)";
+      step1Title = "Dipole Moment & External Field Configuration";
+      step1Formula = '• Dipole Moment Vector: p⃗ = q · (2a⃗), directed from -q to +q\n• Uniform Field: E⃗ at angle θ to dipole axis\n• Net Translatory Force: F_net = (+q·E⃗) + (-q·E⃗) = 0';
+      step1Exp = 'In a uniform electric field, net force is zero; only a net restoring torque acts.';
+
+      step2Title = "Torque (Couple) & Work Derivation";
+      step2Working = '1) Force Couple Arm: d = 2a · sin θ\n2) Torque: τ = Force × arm = (q·E) · (2a · sin θ) = (q · 2a) · E · sin θ\n3) Vector Form: τ⃗ = p⃗ × E⃗\n4) Work Done: W = ∫ τ dθ = -p · E · [cos θ₂ - cos θ₁]';
+      step2Exp = 'Torque tends to align the dipole moment p⃗ along the electric field lines E⃗.';
+
+      step3Title = "Potential Energy & Equilibrium States";
+      step3Working = '• Potential Energy: U = -p⃗ · E⃗ = -p · E · cos θ\n• Stable Equilibrium (θ = 0°):   τ = 0,  U_min = -p · E\n• Unstable Equilibrium (θ = 180°): τ = 0,  U_max = +p · E\n• Maximum Torque (θ = 90°):      τ_max = p · E';
+      step3Exp = 'Zero net force means no linear acceleration; the dipole undergoes rotational oscillation if displaced.';
+      tipText = 'Stable equilibrium occurs at θ = 0° (minimum energy -pE); unstable equilibrium occurs at θ = 180° (+pE)!';
+      diagSpoken = 'Pehle left side board par minus q aur plus q charges, separation 2a aur electric field E⃗ ko note karo.';
+      s1Spoken = 'Dekho beta, dipole moment vector p = q into 2a minus charge se plus charge ki taraf point karta hai.';
+      s2Spoken = 'Uniform field mein net force zero hai lekin opposite forces torque produce karte hain: tau = p E sin theta.';
+      s3Spoken = 'Aur potential energy U = -p dot E banti hai, jisme theta = 0 degree par dipole perfectly stable hota hai!';
+
+    // 3. Alternating Current & Reactive Circuits (Pure C, LCR, AC Voltage)
+    } else if (textForDetection.match(/alternat|ac voltage|capacitive reactance|inductive reactance|peak current|ac circuit|phasor/)) {
+      diagramType = 'ac_circuit';
+      diagTitle = "AC Circuit & Phasor Diagram • Pure Capacitive Load";
+      step1Title = "AC Voltage & Capacitive Reactance Definition";
+      step1Formula = '• Applied Voltage: V(t) = V₀ · sin(ωt) = 220√2 · sin(100π t)\n• Angular Frequency: ω = 100π rad/s,  V₀ = 220√2 V ≈ 311.1 V\n• Capacitive Reactance: X_C = 1 / (ω · C)';
+      step1Exp = 'A pure capacitor opposes alternating current through frequency-dependent capacitive reactance.';
+
+      step2Title = "Reactance & Peak Current Derivation";
+      step2Working = '1) Calculate Reactance: X_C = 1 / [100π × (10 × 10⁻⁶)] = 1000 / π ≈ 318.3 Ω\n2) Peak Current: I₀ = V₀ / X_C = (220√2) / (1000 / π) = 0.22√2 · π ≈ 0.978 A\n3) Phase Relation: Current leads voltage by π/2 (90°)';
+      step2Exp = 'Ohm\'s Law analog in AC circuits yields peak current amplitude from peak voltage and capacitive reactance.';
+
+      step3Title = "Final Evaluated AC Parameters & Takeaway";
+      step3Working = '• Capacitive Reactance: X_C = 1000/π Ω ≈ 318.3 Ω\n• Peak Current: I₀ ≈ 0.98 A (RMS Current I_rms = 0.69 A)\n• Phase Lead: Current leads voltage by 90° (φ = +π/2)\n• Average Power: P_avg = V_rms · I_rms · cos(90°) = 0 W';
+      step3Exp = 'Pure reactive circuit elements consume ZERO net active power over a full cycle (cos 90° = 0).';
+      tipText = 'In a pure capacitor, current LEADS voltage by 90°! Average power consumed over a full cycle is strictly ZERO!';
+      diagSpoken = 'Pehle left side board par AC capacitor circuit aur phasor diagram ko dhyan se observe karo.';
+      s1Spoken = 'Dekho beta, pehle AC voltage formula aur capacitive reactance X_C = 1 / (omega C) note karte hain.';
+      s2Spoken = 'Ab angular frequency omega = 100 pi substitute karke reactance 318.3 ohm aur peak current I0 = 0.98 ampere evaluate karte hain.';
+      s3Spoken = 'Aur pure capacitor mein current voltage se 90 degree aage lead karta hai!';
+
+    // 4. Capacitors & Dielectrics
+    } else if (textForDetection.match(/capacit|dielectric|parallel plate/)) {
+      diagramType = 'capacitor';
+      diagTitle = "Parallel Plate Capacitor • Electric Field & Dielectric (K)";
+      step1Title = "Capacitance Principles & Gauss Field";
+      step1Formula = '• Electric Field between plates: E₀ = σ / ε₀ = Q / (A · ε₀)\n• Potential Difference: V₀ = E₀ · d = (Q · d) / (A · ε₀)\n• Capacitance in Vacuum: C₀ = Q / V₀ = (ε₀ · A) / d';
+      step1Exp = 'Capacitance is purely geometric, depending directly on plate area A and inversely on separation d.';
+
+      step2Title = "Dielectric Insertion & Polarized Bound Charge";
+      step2Working = '1) Reduced Field in Dielectric: E = E₀ / K\n2) Potential Difference: V = E · d = V₀ / K\n3) New Capacitance: C = Q / V = K · C₀ = K · (ε₀ · A / d)\n4) Stored Energy: U = ½ · C · V² = Q² / (2 · C)';
+      step2Exp = 'Induced polarization charges on dielectric surfaces oppose applied field, increasing capacitance by factor K.';
+
+      step3Title = "Final Evaluated Capacitance & Energy";
+      step3Working = `• Capacitance: C = K · (ε₀ · A / d)\n• Energy Stored: U = ½ C V² = Q² / (2C)\n• Final Verified Result: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-60).trim()})` : ''} ${ansTag}`.trim();
+      step3Exp = 'Inserting a dielectric always increases capacitance by K and lowers potential if charge is isolated.';
+      tipText = 'If battery remains connected: V is constant, Q increases by K. If battery is disconnected: Q is constant, V drops by K!';
+      diagSpoken = 'Pehle left board par capacitor plates aur dielectric slab ko observe karo.';
+      s1Spoken = 'Dekho beta, pehle parallel plate capacitor ka basic formula C0 = epsilon naught A upon d note karte hain.';
+      s2Spoken = 'Ab dielectric constant K insert karne par capacitance K times multiply ho jata hai.';
+      s3Spoken = 'Aur energy stored U = half C V square se numerical answer verify ho jata hai!';
+
+    // 4. Magnetism, Solenoids & Biot-Savart
+    } else if (textForDetection.match(/magnet|solenoid|biot-savart|lorentz|ampere.*circuital|magnetic field/)) {
+      diagramType = 'magnetism';
+      diagTitle = "Electromagnetism • Magnetic Field & Solenoid / Wire (B)";
+      step1Title = "Ampere's Circuital Law & Symmetry";
+      step1Formula = '• Ampere\'s Law: ∮ B⃗ · dℓ⃗ = μ₀ · I_enclosed\n• Straight Wire: B = (μ₀ · I) / (2π · r)\n• Long Solenoid: B = μ₀ · n · I,  where n = N / L';
+      step1Exp = 'Right-hand thumb rule determines magnetic field line orientation around current path.';
+
+      step2Title = "Amperian Loop Line Integral";
+      step2Working = '1) Inside Solenoid: Field B is uniform and axial\n2) Outside Solenoid: B ≈ 0 for ideal long solenoid\n3) Along rectangular Amperian loop: ∮ B · dℓ = B · L = μ₀ · (N · I)\n4) Solving for B: B = μ₀ · (N / L) · I = μ₀ · n · I';
+      step2Exp = 'The external field cancels due to opposing winding geometry, confining magnetic flux inside.';
+
+      step3Title = "Final Field Evaluation & Takeaway";
+      step3Working = `• Magnetic Field: B = μ₀ · n · I  (Tesla)\n• Direction: Along solenoid axis (Right-hand grip rule)\n• Final Verified Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-60).trim()})` : ''} ${ansTag}`.trim();
+      step3Exp = 'Core magnetic field strength depends strictly on turns per unit length n and current I.';
+      tipText = 'Notice n is TURNS PER UNIT LENGTH (n = N / L), not total turns N!';
+      diagSpoken = 'Pehle left side board par solenoid windings aur magnetic field vectors ko note karo.';
+      s1Spoken = 'Dekho beta, Ampere circuital law formula aur Amperian loop setup note karte hain.';
+      s2Spoken = 'Ab line integral calculate karke solenoid ka uniform axial magnetic field derive karte hain.';
+      s3Spoken = 'Aur final field B = mu naught n I verify ho jata hai!';
+
+    // 5. Rotational Dynamics & Rolling Motion on Incline
+    } else if (
+      !/dipole|electric|charge|gauss|flux|magnetic|capacit|lens|mirror|circuit/.test(textForDetection) &&
+      textForDetection.match(/\b(roll|sphere|cylinder|incline|ramp|moment of inertia|angular momentum|rotational dynamics)\b/)
+    ) {
       diagramType = 'rolling_incline';
       diagTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
       step1Title = 'Free-Body Force & Torque Equations';
@@ -18715,11 +19614,11 @@ function buildLocalSmartboardPlan(qId) {
       diagramType = 'concept';
       diagTitle = `${ch} • Physical Framework`;
       step1Title = 'Governing Physical Law & Given Setup';
-      step1Formula = cleanSol.slice(0, 160) || '• Identify given physical quantities and boundary conditions\n• State primary governing physical law';
+      step1Formula = '• Identify given physical quantities and boundary conditions\n• State primary governing physical law';
       step2Title = 'Step-by-Step Derivation & Working';
       step2Working = cleanSol.slice(0, 220) || '• Substitute numerical values into governing equation\n• Solve algebraically preserving SI units';
       step3Title = 'Final Evaluated Answer & Verification';
-      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ans ? `[Option ${ans}]` : ''}`.trim();
+      step3Working = `Final Answer: ${cleanAns ? `${cleanAns} ` : ''}${cleanSol ? `(${cleanSol.slice(-80).trim()})` : ''} ${ansTag}`.trim();
       diagSpoken = 'Pehle left board par physical system schematic aur coordinates observe karo.';
       s1Spoken = 'Dekho beta, pehle physical setup aur governing equations note karte hain.';
       s2Spoken = 'Ab step-by-step substitution karke derivation solve karte hain.';
@@ -18766,10 +19665,20 @@ function syncQuestionToWhiteboard(qId) {
     payload: planToRender
   });
 
-  // 2. Fetch synchronized LLM teaching plan from server if not yet fetched
-  if (!existingPlan) {
+  const iframe = document.getElementById(`wbIframe_${qId}`);
+  if (iframe && iframe.contentWindow && iframe.contentWindow.whiteboardController?.renderSmartboardSolution) {
+    try {
+      iframe.contentWindow.whiteboardController.renderSmartboardSolution(planToRender);
+    } catch (e) {}
+  }
+
+  // 2. Fetch synchronized LLM teaching plan from server if not yet fetched or in-flight
+  if (!voiceTutorState.inFlightSync) voiceTutorState.inFlightSync = {};
+  if (!existingPlan && !voiceTutorState.inFlightSync[qId]) {
+    voiceTutorState.inFlightSync[qId] = true;
+    setTimeout(() => { if (voiceTutorState.inFlightSync) delete voiceTutorState.inFlightSync[qId]; }, 8000);
     const qObj = (state.qbFilteredQuestions || []).find(item => item.id === qId) || {};
-    fetch('/api/voice-tutor/solve-and-sync', {
+    fetch(`${getApiBaseUrl()}/api/voice-tutor/solve-and-sync`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -18779,26 +19688,45 @@ function syncQuestionToWhiteboard(qId) {
         chapterName: qObj.chapter_name || qObj.chapter || '',
         topic: qObj.topic || qObj.subtopic || '',
         options: qObj.options_latex || qObj.options || [],
-        correctAnswer: qObj.correct_answer_latex || qObj.correct_answer || '',
+        correctAnswer: qObj.correct_answer || qObj.correct_answer_latex || '',
         marks: qObj.marks_weightage || qObj.marks || 3,
-        subject: localPlan.subjectDiscipline || 'CHEMISTRY',
-        subjectKey: localPlan.subjectKey || 'CHEMISTRY',
+        subject: localPlan.subjectDiscipline || 'PHYSICS',
+        subjectKey: localPlan.subjectKey || 'PHYSICS',
         facultyName: localPlan.teacherName || 'Faculty Mentor',
         voice: voiceTutorState.selectedVoice || 'swara'
       })
     })
-    .then(r => r.json())
+    .then(r => {
+      if (voiceTutorState.inFlightSync) delete voiceTutorState.inFlightSync[qId];
+      return r.json();
+    })
     .then(data => {
       if (data && data.success && data.smartboardPlan) {
-        voiceTutorState.teachingPlans[qId] = data;
+        // Guard against server returning generic fallback diagram when local plan has a domain-specific diagram
+        const isServerConcept = !data.smartboardPlan.diagram || data.smartboardPlan.diagram.type === 'concept';
+        const hasSpecificLocalDiagram = localPlan.diagram && localPlan.diagram.type !== 'concept';
+        const isAcMismatched = (data.smartboardPlan.solution?.step1?.title?.toLowerCase().includes('electrostatic') &&
+                                (localPlan.diagram?.type === 'ac_circuit' || (qObj.chapter_name || qObj.chapter || '').toLowerCase().includes('alternating')));
+
+        const safeDiagram = (isServerConcept && hasSpecificLocalDiagram) ? localPlan.diagram : (data.smartboardPlan.diagram || localPlan.diagram);
+        const safeSolution = isAcMismatched ? localPlan.solution : (data.smartboardPlan.solution || localPlan.solution);
+
+        const mergedSmartboardPlan = {
+          ...data.smartboardPlan,
+          teacherName: localPlan.teacherName,
+          diagram: safeDiagram,
+          solution: safeSolution
+        };
+
+        voiceTutorState.teachingPlans[qId] = { ...data, smartboardPlan: mergedSmartboardPlan };
         sendWhiteboardMessage(qId, {
           type: 'RENDER_SMARTBOARD_SOLUTION',
-          payload: { ...data.smartboardPlan, teacherName: localPlan.teacherName }
+          payload: mergedSmartboardPlan
         });
 
         // If Gemini Live is active on this question, notify it of the updated plan
         if (window.geminiLiveVoiceTutor && window.geminiLiveVoiceTutor.isSessionActive() && window.geminiLiveVoiceTutor.getActiveQuestionId() === qId) {
-          window.geminiLiveVoiceTutor.updateTeachingPlan(data.smartboardPlan);
+          window.geminiLiveVoiceTutor.updateTeachingPlan(mergedSmartboardPlan);
         }
 
         // If transcript drawer is shown, display Faculty's Hinglish brief
@@ -18826,6 +19754,7 @@ function syncDoubtToWhiteboard(qId, doubtText, answerText) {
 }
 
 // Window listener for iframe readiness & concept pacing sync
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
 window.addEventListener('message', (event) => {
   if (!event.data) return;
   if (event.data.type === 'WHITEBOARD_READY') {
@@ -18869,6 +19798,7 @@ window.addEventListener('message', (event) => {
     }
   }
 });
+}
 
 // Global exports for inline HTML onclick handlers
 window.readQuestionAloud = readQuestionAloud;
@@ -18924,11 +19854,12 @@ function renderQbCurrentPage() {
   const currentIdx = state.qbCurrentPage;
 
   if (statsLabel) {
-    statsLabel.innerHTML = `Showing Question <strong>${currentIdx + 1}</strong> of <strong>${total}</strong> in selected scope &bull; 1 Question Per Page Mode`;
+    statsLabel.innerHTML = `Showing Question <strong>${currentIdx + 1}</strong> of <strong>${total}</strong> `;
   }
 
   const q = sanitizeAcademicQuestionObject(filtered[currentIdx]);
   const qId = q.id || `q_${currentIdx}`;
+
   const chNum = q.chapter_number || '';
   const chName = q.chapter_name || q.chapter || 'Chapter';
   const source = q.question_source || q.pyq_appearance || (q.ncert_mapping ? q.ncert_mapping.pyq_tag : 'CBSE Board Question');
@@ -19094,7 +20025,7 @@ function renderQbCurrentPage() {
             <div class="qb-solution-steps-flow">
               ${steps.parsedSteps.map((s, sIdx) => `
                 <div class="qb-solution-step-item">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
                     <span class="qb-solution-step-badge">
                       Step 2.${sIdx + 1}: ${escapeHtml(s.title)}
                     </span>
@@ -19163,7 +20094,7 @@ function renderQbCurrentPage() {
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.08);">
           <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
             <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); background:var(--bg-secondary); padding:3px 9px; border-radius:6px; border:1px solid var(--border-subtle);">
-              #Q${currentIdx + 1} of ${total} &bull; ${qId}
+              Q${currentIdx + 1} of ${total}
             </span>
             <span style="font-size:0.76rem; font-weight:700; color:var(--accent-blue); background:rgba(37,99,235,0.12); padding:3px 10px; border-radius:6px; border:1px solid rgba(37,99,235,0.25);">
               Ch ${chNum}: ${escapeHtml(chName)}
@@ -19210,70 +20141,6 @@ function renderQbCurrentPage() {
               </button>
             </div>
           </div>
-
-          <!-- Live Spoken Transcript & Interruption Drawer (collapsible) -->
-          <div id="voiceDrawer_${qId}" class="qb-voice-transcript-drawer" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span id="voiceStatusBadge_${qId}" style="font-size:0.75rem; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="mic" style="width:13px; height:13px;"></i> Audio Tutor Live
-              </span>
-              <button type="button" onclick="closeVoiceDrawer('${qId}')" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:0.72rem;">Close</button>
-            </div>
-
-            <!-- Live Dual Audio Level Meters -->
-            <div id="voiceLiveVisualizer_${qId}" class="qb-live-visualizer-panel" style="display:none;">
-              <div class="qb-live-meter-group">
-                <span class="qb-live-meter-label"><i data-lucide="mic" style="width:11px; height:11px;"></i> You (Mic):</span>
-                <div class="qb-live-meter-track"><div id="micMeter_${qId}" class="qb-live-meter-fill-mic"></div></div>
-              </div>
-              <div class="qb-live-meter-group">
-                <span class="qb-live-meter-label"><i data-lucide="volume-2" style="width:11px; height:11px;"></i> Teacher:</span>
-                <div class="qb-live-meter-track"><div id="tutorMeter_${qId}" class="qb-live-meter-fill-tutor"></div></div>
-              </div>
-            </div>
-
-            <!-- Auto-Interruption Notification Hint -->
-            <div id="voiceLiveHint_${qId}" class="qb-live-interruption-notice" style="display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <div style="display:inline-flex; align-items:center; gap:8px;">
-                <i data-lucide="sparkles" style="width:13px; height:13px;"></i>
-                <span>Hands-Free Auto-Interruption Active: <strong>Speak anytime</strong> to ask doubts live!</span>
-              </div>
-              <button type="button" class="btn-secondary" onclick="commitLiveVoiceTurn('${qId}')" style="font-size:0.75rem; padding:4px 10px; border-radius:6px; background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.45); color:#38bdf8; cursor:pointer;" title="Trigger response immediately without waiting for pause">
-                <i data-lucide="zap" style="width:12px; height:12px; vertical-align:middle;"></i> Done Speaking (Instant)
-              </button>
-            </div>
-
-            <!-- Spoken Content Transcript Box -->
-            <div id="voiceTranscript_${qId}" style="font-size:0.95rem; color:#f1f5f9; line-height:1.7; background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:6px; border-left:3px solid #38bdf8;">
-              Listening for voice instructions...
-            </div>
-
-            <!-- Interruption & Doubt Interaction Area -->
-            <div id="voiceInterruptionArea_${qId}" class="qb-voice-interruption-box">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                <span style="font-size:0.78rem; font-weight:700; color:#fb7185; display:inline-flex; align-items:center; gap:6px;">
-                  <i data-lucide="message-square-plus" style="width:13px; height:13px;"></i> Have a doubt? Speak or type in Hinglish:
-                </span>
-                <span style="font-size:0.7rem; color:var(--text-muted);">Audio pauses automatically when you interrupt</span>
-              </div>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="text" id="inputVoiceDoubt_${qId}" class="form-input" placeholder="e.g. Sir, yahan minus sign kyu lagaya? ya kaunsa formula lagana hai?" style="flex:1; font-size:0.86rem; padding:8px 12px; border-radius:6px;" onkeydown="if(event.key==='Enter') submitVoiceDoubt('${qId}')">
-                <button type="button" class="btn-secondary" id="btnMic_${qId}" onclick="toggleVoiceMicInput('${qId}')" style="font-size:0.8rem; padding:8px 12px; display:inline-flex; align-items:center; gap:6px;" title="Speak doubt into microphone">
-                  <i data-lucide="mic" style="width:14px; height:14px; color:#fb7185;"></i> Speak
-                </button>
-                <button type="button" class="btn-primary" onclick="submitVoiceDoubt('${qId}')" style="font-size:0.8rem; padding:8px 14px; background:#2563eb;">
-                  Ask Doubt
-                </button>
-              </div>
-              <!-- Quick Question Chips -->
-              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
-                <span class="qb-doubt-chip" onclick="quickAskDoubt('${qId}', 'Kaunsa formula lagana hai?')">Kaunsa formula lagana hai?</span>
-                <span class="qb-doubt-chip" onclick="quickAskDoubt('${qId}', 'Pehla step kya hoga?')">Pehla step kya hoga?</span>
-                <span class="qb-doubt-chip" onclick="quickAskDoubt('${qId}', 'Minus sign kyu aaya?')">Minus sign kyu aaya?</span>
-                <span class="qb-doubt-chip" onclick="quickAskDoubt('${qId}', 'Koi shortcut trick hai kya?')">Koi shortcut trick hai?</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- AI LIVE WHITEBOARD (TLDRAW) -->
@@ -19296,7 +20163,7 @@ function renderQbCurrentPage() {
               </button>
             </div>
           </div>
-          <iframe id="wbIframe_${qId}" class="qb-whiteboard-iframe" src="/whiteboard?v=${Date.now()}" allow="clipboard-read; clipboard-write"></iframe>
+          <iframe id="wbIframe_${qId}" class="qb-whiteboard-iframe" src="/whiteboard?v=${Date.now()}" allow="clipboard-read; clipboard-write" onload="syncQuestionToWhiteboard('${qId}')"></iframe>
         </div>
 
         <!-- QUESTION STATEMENT -->
@@ -19410,7 +20277,7 @@ if (!window._qbKeyNavInitialized && typeof document !== 'undefined') {
 function openStepSolutionStudio(qId) {
   const q = state.questionBankData?.find(item => item.id === qId);
   if (!q) {
-    alert('Question not found in repository.');
+    showToast('Question not found in repository.', 'warning');
     return;
   }
 
@@ -19419,6 +20286,13 @@ function openStepSolutionStudio(qId) {
   const title = document.getElementById('studioModalTitle');
   const subtitle = document.getElementById('studioModalSubtitle');
   if (!modal || !body) return;
+
+  const btnBack = document.getElementById('btnStudioBackBtn');
+  const btnAssignFooter = document.getElementById('btnStudioAssignQuiz');
+  if (btnBack) btnBack.textContent = 'Back to Question Bank';
+  if (btnAssignFooter) {
+    btnAssignFooter.style.display = state.activeRole === 'student' ? 'none' : 'inline-flex';
+  }
 
   const chNum = q.chapter_number || '';
   const chName = q.chapter_name || q.chapter || 'Chapter';
@@ -19595,10 +20469,12 @@ ${steps.rawSteps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 `;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(fullLatex).then(() => {
-          alert(`Complete step-by-step LaTeX solution for #${qId} copied to clipboard.`);
+          showToast(`Complete step-by-step LaTeX solution for #${qId} copied to clipboard.`, 'success');
+        }).catch(() => {
+          showToast('Clipboard copy blocked — please copy manually from the Solution Studio.', 'warning');
         });
       } else {
-        alert(fullLatex);
+        showToast('Clipboard API unavailable — please copy manually from the Solution Studio.', 'info');
       }
     };
   }
@@ -19786,7 +20662,9 @@ function openChapterSolutionSheetModal() {
         doc += `% Question ${i + 1} (${q.id})\n\\textbf{Q${i + 1}:} ${q.question_latex || q.questionText || ''}\n\\textbf{Solution:}\n${steps.rawSteps.join('\n')}\n\\textbf{Answer:} ${steps.correctAnswer}\n\n`;
       });
       navigator.clipboard.writeText(doc).then(() => {
-        alert(`Master Solution Sheet for Ch ${chNum} copied to clipboard.`);
+        showToast(`Master Solution Sheet for Ch ${chNum} copied to clipboard.`, 'success');
+      }).catch(() => {
+        showToast('Clipboard copy blocked — please copy manually.', 'warning');
       });
     };
   }
@@ -19819,12 +20697,12 @@ function copyQbLatexToClipboard(qId) {
   const text = q.question_latex || q.questionText || '';
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => {
-      alert(`Question LaTeX for ${qId} copied to clipboard.`);
+      showToast(`Question LaTeX for ${qId} copied to clipboard.`, 'success');
     }).catch(() => {
-      alert(`LaTeX: ${text}`);
+      showToast('Clipboard copy blocked — open Solution Studio to copy manually.', 'warning');
     });
   } else {
-    alert(`LaTeX: ${text}`);
+    showToast('Clipboard API unavailable — open Solution Studio to copy manually.', 'info');
   }
 }
 
@@ -19844,6 +20722,7 @@ async function assignQbQuestionToClass(qId) {
       grade: currentClass.grade || '10',
       section: currentClass.section || currentClass.key || teacherBuilderState.selectedClassId,
       subjectKey: teacherBuilderState.selectedSubjectKey,
+      teacherSubjectKey: teacherBuilderState.teacherSubjectKey,
       subjectName: subjName,
       chapterNumber: q.chapter_number || 1,
       chapterName: q.chapter_name || q.chapter || 'Chapter',
@@ -19866,19 +20745,26 @@ async function assignQbQuestionToClass(qId) {
       if (data.assessment) {
         openQuizCreatedSuccessModal(data.assessment);
       } else {
-        alert(`Flash Quiz for question ${qId} assigned to class successfully.`);
+        showToast(`Flash Quiz for question ${qId} assigned to class successfully.`, 'success');
       }
     } else {
       throw new Error(`Server returned ${res.status}`);
     }
   } catch (err) {
     console.error('Error assigning question:', err);
-    alert('Notice: Could not assign question. Please check backend connection.');
+    showToast('Could not assign question. Please check backend connection.', 'warning');
   }
 }
 
 window.handleTabActivated = function(tabId) {
   state.activeTeacherTab = tabId;
+  if (tabId === 'tabTeacherClasses' || tabId === 'tabTeacherCreateTestAndPaper') {
+    // Pull the latest submissions / published tests every time these views open.
+    refreshTeacherLiveViews();
+  } else if (tabId === 'tabHandwritten') {
+    populateHandwrittenStudentSelect();
+    syncTeacherClassDataFromBackend().then(() => populateHandwrittenStudentSelect());
+  }
   if (tabId === 'tabQuestionBank') {
     loadQuestionBankView();
   } else if (tabId === 'tabClassAnalytics') {
@@ -19927,6 +20813,7 @@ const injectQuestionStudioState = {
   imageFile: null,
   imageBase64: null,
   imageMime: 'image/jpeg',
+  images: [], // [{ dataUrl, name, width, height }] prepared photos (max 6), read together
   pdfFile: null,
   pdfBase64: null,
   currentExtracted: null,
@@ -19935,7 +20822,7 @@ const injectQuestionStudioState = {
 
 function openInjectQuestionModal() {
   if (state.activeRole !== 'teacher') {
-    alert('Access Restricted: Only authenticated Faculty members can inject questions into the repository.');
+    showToast('Access Restricted: Only authenticated Faculty members can inject questions into the repository.', 'warning');
     return;
   }
 
@@ -19961,9 +20848,18 @@ function openInjectQuestionModal() {
 
   const curGrade = String(teacherBuilderState.activeGrade || (String(teacherBuilderState.selectedClassId || '').startsWith('11') ? '11' : (String(teacherBuilderState.selectedClassId || '').startsWith('10') ? '10' : '12')));
 
+  // Target Bank Mode & Track chip sync
+  const dualContext = window.HapsDualMode ? window.HapsDualMode.getContext() : { mode: 'BOARD', board: 'CBSE', stream: 'JEE' };
+  const activeMode = (dualContext.mode || 'BOARD').toUpperCase();
+  const activeTrack = activeMode === 'BOARD' ? (dualContext.board || 'CBSE') : (dualContext.stream || 'JEE');
+  const targetBadge = document.getElementById('injectTargetBankBadge');
+  if (targetBadge) {
+    targetBadge.innerText = `Adding to: ${activeMode} › ${activeTrack}`;
+  }
+
   const badge = document.getElementById('injectFacultySubjectBadge');
   if (badge) {
-    badge.innerText = `🔒 Locked: ${curSubjKey} (Class ${curGrade}th Scope)`;
+    badge.innerText = `${curSubjKey.replace('CLASS10_', '').replace(/_/g, ' ')} only • Class ${curGrade}`;
   }
 
   const inputSubj = document.getElementById('inputInjectSubject');
@@ -19971,9 +20867,15 @@ function openInjectQuestionModal() {
     inputSubj.value = curSubj;
   }
 
-  // Set default grade matching teacher's active grade
+  // Set default grade matching teacher's active grade; only grades this teacher teaches are offered.
   const gradeSel = document.getElementById('selectInjectGrade');
   if (gradeSel) {
+    const teacherGrades = Array.from(new Set((FACULTY_SUBJECT_CLASSES[curSubjKey] || [])
+      .map(c => (String(c.id).match(/^(\d+)/) || [])[1]).filter(Boolean)));
+    if (!teacherGrades.includes(curGrade)) teacherGrades.unshift(curGrade);
+    const gradeLabel = { '12': 'Class 12th', '11': 'Class 11th', '10': 'Class 10th (Foundation)' };
+    gradeSel.innerHTML = teacherGrades.sort((a, b) => Number(b) - Number(a))
+      .map(g => `<option value="${g}">${gradeLabel[g] || 'Class ' + g}</option>`).join('');
     gradeSel.value = curGrade;
     handleInjectGradeChange(curGrade);
     if (!gradeSel._boundScopeSync) {
@@ -19981,7 +20883,7 @@ function openInjectQuestionModal() {
       gradeSel.addEventListener('change', (e) => {
         const g = e.target.value;
         const b = document.getElementById('injectFacultySubjectBadge');
-        if (b) b.innerText = `🔒 Locked: ${curSubjKey} (Class ${g}th Scope)`;
+        if (b) b.innerText = `${curSubjKey.replace('CLASS10_', '').replace(/_/g, ' ')} only • Class ${g}`;
       });
     }
   }
@@ -20007,11 +20909,13 @@ function openInjectQuestionModal() {
     btnPush.disabled = true;
     btnPush.style.opacity = '0.5';
     btnPush.style.cursor = 'not-allowed';
-    btnPush.innerHTML = `<i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> 🚀 Push All Questions to Bank`;
+    btnPush.innerHTML = `<i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> Save to Question Bank`;
   }
 
   const modal = document.getElementById('modalInjectQuestion');
   if (modal) modal.style.display = 'flex';
+
+  setupInjectDropzones();
 
   if (typeof initLucideIcons === 'function') initLucideIcons();
 }
@@ -20168,43 +21072,150 @@ Step 5: Applying Gauss's law: $E(2\\pi r L) = \\frac{\\lambda L}{\\varepsilon_0}
   }
 }
 
+// Photos are prepared in the browser before upload: turned upright (phone EXIF rotation),
+// scaled to at most 2000 px on the long side and saved as JPEG. Smaller uploads are faster
+// and the AI reads straight, evenly sized pages better.
+const INJECT_MAX_PHOTOS = 6;
+
+function prepareInjectPhoto(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !/^image\//.test(file.type || 'image/')) { reject(new Error('Please choose a photo (JPG, PNG or WEBP).')); return; }
+    const done = (source, w, h) => {
+      const scale = Math.min(1, 2000 / Math.max(w, h));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+      resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.9), width: canvas.width, height: canvas.height, name: file.name || 'Pasted image' });
+    };
+    const viaImage = () => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); done(img, img.naturalWidth, img.naturalHeight); };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error(/hei[cf]/i.test(file.type || file.name || '') ? 'This photo is in HEIC format, which this browser cannot open. On iPhone set Camera > Formats > Most Compatible, or share the photo as JPG.' : 'This photo could not be opened. Please use a JPG or PNG image.'));
+      };
+      img.src = url;
+    };
+    if (typeof createImageBitmap === 'function') {
+      createImageBitmap(file, { imageOrientation: 'from-image' })
+        .then(bmp => done(bmp, bmp.width, bmp.height))
+        .catch(viaImage);
+    } else {
+      viaImage();
+    }
+  });
+}
+
+function renderInjectPhotoList() {
+  const st = injectQuestionStudioState;
+  const wrap = document.getElementById('previewInjectImageWrap');
+  if (!wrap) return;
+  if (!st.images.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = 'block';
+  wrap.innerHTML = `
+    <div class="inject-photo-head">
+      <strong>${st.images.length} photo${st.images.length > 1 ? 's' : ''} ready</strong>
+      <span>${st.images.length > 1 ? 'Pages are read together, in this order.' : 'Add more photos if the paper has more pages.'}</span>
+    </div>
+    <div class="inject-photo-list">
+      ${st.images.map((im, i) => `
+        <figure class="inject-photo">
+          <img src="${im.dataUrl}" alt="Photo ${i + 1}">
+          <figcaption>${i + 1}. ${escapeHtml(im.name)}<br><small>${im.width} x ${im.height} px</small></figcaption>
+          <button type="button" class="inject-photo-remove" onclick="removeInjectPhoto(${i})" aria-label="Remove photo ${i + 1}">Remove</button>
+        </figure>`).join('')}
+    </div>`;
+}
+
+async function loadInjectImageFile(file) {
+  const files = Array.isArray(file) ? file : [file];
+  const st = injectQuestionStudioState;
+  for (const f of files.filter(Boolean)) {
+    if (st.images.length >= INJECT_MAX_PHOTOS) { showToast(`You can add up to ${INJECT_MAX_PHOTOS} photos at a time.`, 'warning'); break; }
+    try {
+      const prepared = await prepareInjectPhoto(f);
+      st.images.push(prepared);
+    } catch (err) {
+      showToast(err.message, 'warning');
+    }
+  }
+  st.imageFile = files[0] || null;
+  st.imageBase64 = st.images.length ? st.images[0].dataUrl : null;
+  st.imageMime = 'image/jpeg';
+  renderInjectPhotoList();
+}
+
+function removeInjectPhoto(index) {
+  const st = injectQuestionStudioState;
+  st.images.splice(index, 1);
+  st.imageBase64 = st.images.length ? st.images[0].dataUrl : null;
+  renderInjectPhotoList();
+}
+
 function handleInjectImageFileSelect(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-
-  injectQuestionStudioState.imageFile = file;
-  injectQuestionStudioState.imageMime = file.type || 'image/jpeg';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    injectQuestionStudioState.imageBase64 = e.target.result;
-    const thumb = document.getElementById('thumbInjectImage');
-    const nameLbl = document.getElementById('labelInjectImageName');
-    const sizeLbl = document.getElementById('labelInjectImageSize');
-    const wrap = document.getElementById('previewInjectImageWrap');
-
-    if (thumb) thumb.src = e.target.result;
-    if (nameLbl) nameLbl.innerText = file.name;
-    if (sizeLbl) sizeLbl.innerText = `${(file.size / 1024).toFixed(1)} KB • Ready for AI extraction`;
-    if (wrap) wrap.style.display = 'flex';
-    if (typeof initLucideIcons === 'function') initLucideIcons();
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from((event.target && event.target.files) || []);
+  if (files.length) loadInjectImageFile(files);
+  if (event.target) event.target.value = '';
 }
 
 function clearInjectImageFile() {
   injectQuestionStudioState.imageFile = null;
   injectQuestionStudioState.imageBase64 = null;
+  injectQuestionStudioState.images = [];
   const input = document.getElementById('inputInjectImageFile');
   if (input) input.value = '';
-  const wrap = document.getElementById('previewInjectImageWrap');
-  if (wrap) wrap.style.display = 'none';
+  renderInjectPhotoList();
 }
 
-function handleInjectPdfFileSelect(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+// Crops each figure the AI located (figure_box_2d, 0-1000 scale) out of its photo, stores it on the
+// server and adds [[figure:<id>]] to the question text, so the diagram stays with the question.
+async function attachInjectFigures(questions) {
+  const photos = injectQuestionStudioState.images || [];
+  if (!photos.length) return;
+  const loadImg = src => new Promise((ok, bad) => { const im = new Image(); im.onload = () => ok(im); im.onerror = bad; im.src = src; });
+  for (const q of questions) {
+    const box = Array.isArray(q.figure_box_2d) ? q.figure_box_2d.map(Number) : null;
+    if (!q.has_figure || !box || box.length !== 4 || box.some(n => !isFinite(n))) continue;
+    if (/\[\[figure:fig_/.test(q.question_latex || '')) continue;
+    const photo = photos[Math.max(0, Math.min(photos.length - 1, (Number(q.figure_image_index) || 1) - 1))];
+    try {
+      const img = await loadImg(photo.dataUrl);
+      let [y0, x0, y1, x1] = box.map(v => Math.max(0, Math.min(1000, v)) / 1000);
+      if (y1 < y0) [y0, y1] = [y1, y0];
+      if (x1 < x0) [x0, x1] = [x1, x0];
+      const pad = 0.015;
+      y0 = Math.max(0, y0 - pad); x0 = Math.max(0, x0 - pad); y1 = Math.min(1, y1 + pad); x1 = Math.min(1, x1 + pad);
+      const sw = Math.round((x1 - x0) * img.naturalWidth);
+      const sh = Math.round((y1 - y0) * img.naturalHeight);
+      if (sw < 24 || sh < 24) continue;
+      const scale = Math.min(1, 1200 / Math.max(sw, sh));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(sw * scale);
+      canvas.height = Math.round(sh * scale);
+      canvas.getContext('2d').drawImage(img, Math.round(x0 * img.naturalWidth), Math.round(y0 * img.naturalHeight), sw, sh, 0, 0, canvas.width, canvas.height);
+      const res = await fetch(`${getApiBaseUrl()}/api/questions/figures`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl: canvas.toDataURL('image/jpeg', 0.9), description: q.figure_description || '', teacherSubjectKey: (teacherBuilderState.activeTeacher || {}).subjectKey || '' })
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.token) {
+        q.question_latex = `${q.question_latex || ''}\n\n${body.token}`;
+        q.figure_id = body.id;
+      }
+    } catch (err) {
+      console.warn('[INJECT] Could not attach figure:', err && err.message);
+    }
+  }
+}
 
+function loadInjectPdfFile(file) {
+  if (!file) return;
   injectQuestionStudioState.pdfFile = file;
 
   const reader = new FileReader();
@@ -20215,11 +21226,16 @@ function handleInjectPdfFileSelect(event) {
     const wrap = document.getElementById('previewInjectPdfWrap');
 
     if (nameLbl) nameLbl.innerText = file.name;
-    if (sizeLbl) sizeLbl.innerText = `${(file.size / 1024).toFixed(1)} KB • PDF Document loaded`;
+    if (sizeLbl) sizeLbl.innerText = `${(file.size / 1024).toFixed(1)} KB • PDF ready to read`;
     if (wrap) wrap.style.display = 'flex';
     if (typeof initLucideIcons === 'function') initLucideIcons();
   };
   reader.readAsDataURL(file);
+}
+
+function handleInjectPdfFileSelect(event) {
+  const file = event.target.files && event.target.files[0];
+  if (file) loadInjectPdfFile(file);
 }
 
 function clearInjectPdfFile() {
@@ -20231,20 +21247,107 @@ function clearInjectPdfFile() {
   if (wrap) wrap.style.display = 'none';
 }
 
+function setupInjectDropzones() {
+  const dropzoneImg = document.getElementById('dropzoneInjectImage');
+  if (dropzoneImg && !dropzoneImg.dataset.bound) {
+    dropzoneImg.dataset.bound = 'true';
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzoneImg.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneImg.style.background = 'rgba(37,99,235,0.12)';
+        dropzoneImg.style.borderColor = 'var(--accent-blue)';
+      });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropzoneImg.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneImg.style.background = 'rgba(37,99,235,0.03)';
+      });
+    });
+    dropzoneImg.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        const images = Array.from(dt.files).filter(f => (f.type || '').startsWith('image/') || /\.(hei[cf]|jpe?g|png|webp)$/i.test(f.name || ''));
+        if (images.length) {
+          loadInjectImageFile(images);
+        } else {
+          showToast('Please drop photos (JPG, PNG or WEBP).', 'warning');
+        }
+      }
+    });
+  }
+
+  const dropzonePdf = document.getElementById('dropzoneInjectPdf');
+  if (dropzonePdf && !dropzonePdf.dataset.bound) {
+    dropzonePdf.dataset.bound = 'true';
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzonePdf.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzonePdf.style.background = 'rgba(6,182,212,0.12)';
+      });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropzonePdf.addEventListener(name, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzonePdf.style.background = 'rgba(6,182,212,0.03)';
+      });
+    });
+    dropzonePdf.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        const file = dt.files[0];
+        if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+          loadInjectPdfFile(file);
+        } else {
+          showToast('Please drop a valid PDF document.', 'warning');
+        }
+      }
+    });
+  }
+}
+
+if (typeof window !== 'undefined' && !window.__injectPasteHandlerBound) {
+  window.__injectPasteHandlerBound = true;
+  window.addEventListener('paste', (e) => {
+    const modal = document.getElementById('modalInjectQuestion');
+    if (!modal || modal.style.display === 'none') return;
+
+    const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const blob = item.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          switchInjectMode('image');
+          loadInjectImageFile(blob);
+          showToast('Screenshot pasted from clipboard. Ready to read.', 'info');
+          return;
+        }
+      }
+    }
+  });
+}
+
 async function triggerAiQuestionExtraction() {
   const mode = injectQuestionStudioState.mode;
   const rawText = document.getElementById('textareaInjectRaw')?.value || '';
 
   if (mode === 'text' && !rawText.trim()) {
-    alert('Please paste question text or click "Load Sample Questions".');
+    showToast('Please paste question text or click "Load Sample Questions".', 'warning');
     return;
   }
-  if (mode === 'image' && !injectQuestionStudioState.imageBase64) {
-    alert('Please select or drop an image file first.');
+  if (mode === 'image' && !injectQuestionStudioState.images.length) {
+    showToast('Please select or drop an image file first.', 'warning');
     return;
   }
   if (mode === 'pdf' && !injectQuestionStudioState.pdfBase64) {
-    alert('Please select or drop a PDF document first.');
+    showToast('Please select or drop a PDF document first.', 'warning');
     return;
   }
 
@@ -20267,16 +21370,24 @@ async function triggerAiQuestionExtraction() {
     role: 'TEACHER'
   };
 
+  const dualContext = window.HapsDualMode ? window.HapsDualMode.getContext() : { mode: 'BOARD', board: 'CBSE', stream: 'JEE' };
+  const activeMode = (dualContext.mode || 'BOARD').toUpperCase();
+  const activeTrack = activeMode === 'BOARD' ? (dualContext.board || 'CBSE') : (dualContext.stream || 'JEE');
+
   const payload = {
     teacher: activeTeacher,
     targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
     targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
-    mode: mode,
+    mode: activeMode,
+    track: activeTrack,
+    sourceType: mode,
     rawText: rawText,
-    mediaData: mode === 'image' ? injectQuestionStudioState.imageBase64 : injectQuestionStudioState.pdfBase64,
-    mimeType: mode === 'image' ? injectQuestionStudioState.imageMime : 'application/pdf',
+    // Only send a file for image / PDF imports (text imports have none). Photos go as a list.
+    mediaData: mode === 'text' ? undefined : (mode === 'image' ? injectQuestionStudioState.imageBase64 : injectQuestionStudioState.pdfBase64),
+    mediaList: mode === 'image' ? injectQuestionStudioState.images.map(im => im.dataUrl) : undefined,
+    mimeType: mode === 'text' ? undefined : (mode === 'image' ? injectQuestionStudioState.imageMime : 'application/pdf'),
     grade: document.getElementById('selectInjectGrade')?.value || '12',
-    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ'
+    category: document.getElementById('selectInjectCategory')?.value || (activeMode === 'BOARD' ? `${activeTrack}_PYQ` : 'COMPETITIVE_OTHER')
   };
 
   try {
@@ -20296,6 +21407,7 @@ async function triggerAiQuestionExtraction() {
       ? data.questions
       : (data.previewQuestion ? [data.previewQuestion] : []);
     const questions = rawList.map(q => sanitizeAcademicQuestionObject(q));
+    if (mode === 'image') await attachInjectFigures(questions);
 
     injectQuestionStudioState.extractedQuestions = questions;
     injectQuestionStudioState.currentExtracted = questions[0] || null;
@@ -20364,18 +21476,30 @@ async function triggerAiQuestionExtraction() {
             <div class="katex-render-target" style="font-size:0.92rem; line-height:1.6; color:var(--text-primary); margin-bottom:8px;">
               ${renderLatexString(q.question_latex || '')}
             </div>
+            ${q.has_figure && !q.figure_id ? `<div class="inject-figure-note">This question has a figure${q.figure_description ? ': ' + escapeHtml(q.figure_description) : ''}. It could not be cut out of the photo automatically, so check the text before saving.</div>` : ''}
+            ${/\[unclear\]/i.test(q.question_latex || '') ? '<div class="inject-figure-note">Some words could not be read from the photo and are marked [unclear]. Please correct them before saving.</div>' : ''}
 
             <!-- Options if MCQ -->
             ${optionsHtml}
+            ${hasOptions ? `
+            <div class="inject-answer-key" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 2px;">
+              <label for="injectAnswerKey_${idx}" style="font-size:0.78rem; font-weight:700; color:${q.correct_answer ? 'var(--text-primary)' : '#ef4444'};">
+                ${q.correct_answer ? 'Correct option' : 'Answer key not found in the text. Choose the correct option'}
+              </label>
+              <select id="injectAnswerKey_${idx}" class="form-select" data-inject-idx="${idx}" onchange="setInjectAnswerKey(${idx}, this.value)" style="width:auto; font-size:0.82rem; padding:4px 8px;${q.correct_answer ? '' : ' border:1.5px solid #ef4444;'}">
+                <option value=""${q.correct_answer ? '' : ' selected'}>Select</option>
+                ${q.options_latex.map(o => `<option value="${escapeHtml(o.key)}"${o.key === q.correct_answer ? ' selected' : ''}>Option ${escapeHtml(o.key)}</option>`).join('')}
+              </select>
+            </div>` : ''}
 
             <!-- Step-by-Step Solution & Rubric -->
             <div style="margin-top:10px; background:var(--bg-secondary); border-radius:8px; padding:10px 12px; border-left:3px solid #10b981;">
               <div style="font-size:0.75rem; font-weight:800; color:#10b981; text-transform:uppercase; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
-                <span>✓ Verified Solution &amp; Step Rubric</span>
-                <span style="color:var(--text-muted); font-size:0.7rem; font-weight:600;">Ans: ${renderLatexString(q.correct_answer_latex || 'Verified')}</span>
+                <span>Solution &amp; Format</span>
+                <span style="color:var(--text-muted); font-size:0.7rem; font-weight:600;">${escapeHtml(String(q.question_format || '').replace(/_/g, ' '))}${q.pyq_year ? ' • ' + escapeHtml((q.exam_tag || '') + ' ' + q.pyq_year) : ''}${q.correct_answer_latex ? ' • Ans: ' + renderLatexString(q.correct_answer_latex) : ''}</span>
               </div>
               <div class="katex-render-target" style="font-size:0.86rem; line-height:1.55; color:var(--text-primary);">
-                ${renderLatexString(q.solution_latex || '')}
+                ${q.solution_latex ? renderLatexString(q.solution_latex) : '<span style="color:var(--text-muted);">No worked solution was found in the source. The question is saved without one.</span>'}
               </div>
             </div>
           </div>
@@ -20385,9 +21509,44 @@ async function triggerAiQuestionExtraction() {
       renderMathInElement(container);
     }
 
+    // Render Reconciliation & Count Audit Banner
+    const rec = data.reconciliation || {};
+    const bannerRec = document.getElementById('bannerInjectReconciliation');
+    if (bannerRec) {
+      bannerRec.style.display = 'block';
+      const passed = Boolean(rec.passed);
+      const isBoard = (data.mode || activeMode) === 'BOARD';
+      const bg = passed ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+      const border = passed ? '1px solid #10b981' : '1px solid #ef4444';
+      const color = passed ? '#10b981' : '#ef4444';
+      const title = passed
+        ? `[Reconciliation Verified] Extracted ${rec.actualTotalQuestions} of ${rec.expectedTotalQuestions} expected questions`
+        : `[Reconciliation Mismatch] Extracted ${rec.actualTotalQuestions} of ${rec.expectedTotalQuestions} expected questions`;
+
+      const secPills = (rec.sectionBreakdown || []).map(s => {
+        const pColor = s.passed ? '#10b981' : '#ef4444';
+        return `<span style="display:inline-block; margin-right:6px; margin-top:4px; padding:2px 8px; border-radius:4px; background:${pColor}20; color:${pColor}; font-weight:700; font-size:0.75rem;">Sec ${escapeHtml(s.label)}: ${s.actualCount}/${s.expectedCount} (${s.marksPerQ}M)</span>`;
+      }).join('');
+
+      const issuesList = (rec.issues || []).map(iss => `<div style="color:#ef4444; font-size:0.78rem; margin-top:3px;">&bull; ${escapeHtml(iss)}</div>`).join('');
+      const warningsList = (rec.warnings || []).map(w => `<div style="color:#f59e0b; font-size:0.78rem; margin-top:3px;">&bull; ${escapeHtml(w)}</div>`).join('');
+
+      bannerRec.style.background = bg;
+      bannerRec.style.border = border;
+      bannerRec.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <strong style="color:${color}; font-size:0.9rem;">${title}</strong>
+          <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${isBoard ? 'Marks Sum: ' + (rec.calculatedMarksSum || 0) + '/' + (rec.expectedTotalMarks || 0) : 'Mode: ' + escapeHtml(data.mode || activeMode)}</span>
+        </div>
+        ${secPills ? `<div style="margin-top:6px;">${secPills}</div>` : ''}
+        ${issuesList ? `<div style="margin-top:6px;">${issuesList}</div>` : ''}
+        ${warningsList ? `<div style="margin-top:4px;">${warningsList}</div>` : ''}
+      `;
+    }
+
     // Update auto counts
     const badgeAuto = document.getElementById('badgeInjectAutoCount');
-    if (badgeAuto) badgeAuto.innerText = `✓ ${questions.length} Auto-Categorized Question${questions.length > 1 ? 's' : ''}`;
+    if (badgeAuto) badgeAuto.innerText = `[Verified] ${questions.length} Auto-Categorized Question${questions.length > 1 ? 's' : ''}`;
 
     const titleAuto = document.getElementById('titleInjectAutoCount');
     if (titleAuto) titleAuto.innerText = `${questions.length} Question${questions.length > 1 ? 's' : ''} Extracted & Auto-Categorized`;
@@ -20399,6 +21558,7 @@ async function triggerAiQuestionExtraction() {
         <i data-lucide="shield-check" style="width:13px; height:13px; vertical-align:middle; color:#10b981;"></i>
         Discipline Lock Verified: <strong>${escapeHtml(payload.targetSubject)}</strong> &bull;
         Injected By: <strong>${escapeHtml(activeTeacher.name || 'Faculty')}</strong> &bull;
+        Target: <strong>${escapeHtml(data.mode || activeMode)} &rsaquo; ${escapeHtml(data.track || activeTrack)}</strong> &bull;
         Category: <strong>${escapeHtml(catLabel)}</strong> &bull;
         ${questions.length} Auto-Categorized Questions Ready for Repository Sync
       `;
@@ -20407,18 +21567,27 @@ async function triggerAiQuestionExtraction() {
     const sectionPrev = document.getElementById('sectionInjectPreview');
     if (sectionPrev) sectionPrev.style.display = 'block';
 
+    const btnDraft = document.getElementById('btnSaveDraft');
+    if (btnDraft) btnDraft.style.display = 'inline-block';
+
     const btnPush = document.getElementById('btnPushToBank');
     if (btnPush) {
       btnPush.disabled = false;
       btnPush.style.opacity = '1';
       btnPush.style.cursor = 'pointer';
-      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push All ${questions.length} Question${questions.length > 1 ? 's' : ''} to Bank`;
+      if (rec.passed === false) {
+        btnPush.innerHTML = `<i data-lucide="alert-triangle" style="width:15px; height:15px;"></i> Override &amp; Approve to Bank`;
+        btnPush.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+      } else {
+        btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> Approve &amp; Save ${questions.length} Question${questions.length > 1 ? 's' : ''} to Bank`;
+        btnPush.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      }
     }
 
     if (typeof initLucideIcons === 'function') initLucideIcons();
   } catch (err) {
     console.error('[triggerAiQuestionExtraction error]', err);
-    alert(`Extraction failed: ${err.message}`);
+    showToast(`Extraction failed: ${err.message}`, 'error');
   } finally {
     if (spinner) spinner.style.display = 'none';
     if (btnExtract) {
@@ -20428,18 +21597,43 @@ async function triggerAiQuestionExtraction() {
   }
 }
 
-async function commitInjectedQuestionToBank() {
+function setInjectAnswerKey(idx, key) {
+  const q = (injectQuestionStudioState.extractedQuestions || [])[idx];
+  if (!q || !Array.isArray(q.options_latex)) return;
+  q.options_latex.forEach(o => { o.is_correct = Boolean(key) && o.key === key; });
+  const chosen = q.options_latex.find(o => o.is_correct);
+  q.correct_answer = chosen ? chosen.key : null;
+  q.correct_answer_latex = chosen ? chosen.latex : '';
+  q.answer_key_missing = !chosen;
+  const sel = document.getElementById(`injectAnswerKey_${idx}`);
+  if (sel) sel.style.border = chosen ? '' : '1.5px solid #ef4444';
+}
+window.setInjectAnswerKey = setInjectAnswerKey;
+
+async function commitInjectedQuestionToBank(saveAsDraft = false) {
   const questions = injectQuestionStudioState.extractedQuestions || [];
   if (questions.length === 0 && !injectQuestionStudioState.currentExtracted) {
-    alert('Please run AI Extract first to preview and verify questions.');
+    showToast('Click "Read Questions" first to preview them.', 'warning');
     return;
+  }
+  // MCQs need an answer key before they can be approved into live test banks.
+  if (!saveAsDraft) {
+    const missingKey = questions.findIndex(q => Array.isArray(q.options_latex) && q.options_latex.length >= 2 && !q.correct_answer);
+    if (missingKey !== -1) {
+      showToast(`Question ${questions[missingKey].question_number || missingKey + 1}: choose the correct option before approving to the bank (or click "Save as Draft").`, 'warning');
+      const sel = document.getElementById(`injectAnswerKey_${missingKey}`);
+      if (sel) { sel.scrollIntoView({ block: 'center', behavior: 'smooth' }); sel.focus(); }
+      return;
+    }
   }
 
   const btnPush = document.getElementById('btnPushToBank');
+  const btnDraft = document.getElementById('btnSaveDraft');
   if (btnPush) {
     btnPush.disabled = true;
-    btnPush.innerText = 'Pushing to Repository...';
+    btnPush.innerText = saveAsDraft ? 'Saving Draft...' : 'Approving to Repository...';
   }
+  if (btnDraft) btnDraft.disabled = true;
 
   const baseTeacher = teacherBuilderState.activeTeacher || {};
   const activeTeacher = {
@@ -20452,13 +21646,21 @@ async function commitInjectedQuestionToBank() {
     role: 'TEACHER'
   };
 
+  const dualContext = window.HapsDualMode ? window.HapsDualMode.getContext() : { mode: 'BOARD', board: 'CBSE', stream: 'JEE' };
+  const activeMode = (dualContext.mode || 'BOARD').toUpperCase();
+  const activeTrack = activeMode === 'BOARD' ? (dualContext.board || 'CBSE') : (dualContext.stream || 'JEE');
+
   const payload = {
     teacher: activeTeacher,
     targetSubject: activeTeacher.subjectName || activeTeacher.subject || 'Physics',
     targetSubjectKey: (activeTeacher.subjectKey || 'PHYSICS').toUpperCase(),
-    mode: injectQuestionStudioState.mode,
+    mode: activeMode,
+    track: activeTrack,
+    action: saveAsDraft ? 'DRAFT' : 'APPROVE',
+    saveAsDraft: Boolean(saveAsDraft),
+    sourceType: injectQuestionStudioState.mode,
     grade: document.getElementById('selectInjectGrade')?.value || '12',
-    category: document.getElementById('selectInjectCategory')?.value || 'CBSE_PYQ',
+    category: document.getElementById('selectInjectCategory')?.value || (activeMode === 'BOARD' ? `${activeTrack}_PYQ` : 'COMPETITIVE_OTHER'),
     questions: questions.length > 0 ? questions : [injectQuestionStudioState.currentExtracted]
   };
 
@@ -20511,29 +21713,30 @@ async function commitInjectedQuestionToBank() {
     // Close modal
     closeInjectQuestionModal();
 
-    // Trigger filter and view reload
+    // Rebuild the filter options (counts include the new questions) and re-render the bank
+    if (typeof populateQbFilterOptions === 'function') populateQbFilterOptions();
     if (typeof filterQuestionBankCards === 'function') {
       filterQuestionBankCards();
     }
 
     // Show toast
-    const msg = `✅ Successfully pushed ${newQuestions.length} auto-categorized question(s) into ${data.targetBank}!`;
-    if (typeof showToast === 'function') {
-      showToast(msg, 'success');
-    } else {
-      alert(msg);
-    }
+    const msg = saveAsDraft
+      ? `Saved ${newQuestions.length} question(s) as Draft in repository.`
+      : `Successfully approved and pushed ${newQuestions.length} auto-categorized question(s) into ${data.targetBank}!`;
+    showToast(msg, 'success');
   } catch (err) {
     console.error('[commitInjectedQuestionToBank error]', err);
-    alert(`Failed to commit question: ${err.message}`);
+    showToast(`Failed to commit question: ${err.message}`, 'error');
   } finally {
     if (btnPush) {
       btnPush.disabled = false;
-      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> 🚀 Push All Questions to Bank`;
-      if (typeof initLucideIcons === 'function') initLucideIcons();
+      btnPush.innerHTML = `<i data-lucide="check-circle" style="width:15px; height:15px;"></i> Approve &amp; Save to Bank`;
     }
+    if (btnDraft) btnDraft.disabled = false;
+    if (typeof initLucideIcons === 'function') initLucideIcons();
   }
 }
+window.commitInjectedQuestionToBank = commitInjectedQuestionToBank;
 
 window.openInjectQuestionModal = openInjectQuestionModal;
 window.closeInjectQuestionModal = closeInjectQuestionModal;
@@ -20541,6 +21744,7 @@ window.switchInjectMode = switchInjectMode;
 window.handleInjectGradeChange = handleInjectGradeChange;
 window.insertInjectSampleQuestion = insertInjectSampleQuestion;
 window.handleInjectImageFileSelect = handleInjectImageFileSelect;
+window.removeInjectPhoto = removeInjectPhoto;
 window.clearInjectImageFile = clearInjectImageFile;
 window.handleInjectPdfFileSelect = handleInjectPdfFileSelect;
 window.clearInjectPdfFile = clearInjectPdfFile;
@@ -20563,7 +21767,94 @@ const boardPaperStudioState = {
   alternativesList: []
 };
 
+// Subject isolation for the Full Board Paper studio: only the teacher's own subject is offered.
+const STUDIO_SUBJECT_OPTIONS_BY_TEACHER = {
+  PHYSICS: ['Physics'],
+  CHEMISTRY: ['Chemistry'],
+  MATHEMATICS: ['Mathematics'],
+  BIOLOGY: [],
+  CLASS10_SCIENCE: ['Science'],
+  CLASS10_MATHEMATICS: ['Mathematics10']
+};
+function restrictStudioSubjectOptions() {
+  const sel = document.getElementById('selectStudioSubject');
+  const key = String(teacherBuilderState.teacherSubjectKey || '').toUpperCase();
+  if (!sel || !STUDIO_SUBJECT_OPTIONS_BY_TEACHER[key]) return;
+  const allowed = STUDIO_SUBJECT_OPTIONS_BY_TEACHER[key];
+  Array.from(sel.options).forEach(o => {
+    const ok = allowed.includes(o.value);
+    o.hidden = !ok;
+    o.disabled = !ok;
+  });
+  if (!allowed.includes(sel.value) && allowed.length) sel.value = allowed[0];
+  // No board-paper blueprint for this subject (e.g. Biology): disable the Full Board Paper mode.
+  const modeOpt = document.querySelector('#selectPaperModeDropdown option[value="board_paper"]');
+  if (modeOpt && allowed.length === 0) {
+    modeOpt.disabled = true;
+    if (state.activePaperCreationMode === 'board_paper' && typeof switchPaperCreationMode === 'function') switchPaperCreationMode('unit_test');
+  }
+}
+window.restrictStudioSubjectOptions = restrictStudioSubjectOptions;
+// Drawer "Active Class & Grade Scope": only the classes this teacher's subject is taught in.
+function restrictDrawerClassScope() {
+  const sel = document.getElementById('drawerSelectClassScope');
+  const key = String(teacherBuilderState.teacherSubjectKey || '').toUpperCase();
+  const allowed = FACULTY_SUBJECT_CLASSES[key];
+  if (!sel || !allowed) return;
+  sel.innerHTML = allowed.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if (allowed.some(c => c.id === teacherBuilderState.selectedClassId)) sel.value = teacherBuilderState.selectedClassId;
+}
+window.restrictDrawerClassScope = restrictDrawerClassScope;
+
+// Create Test "Select Class for Test": only sections of the ACTIVE grade (the class shown in the header).
+// Example: a Physics teacher in Class 12 sees "Class 12 Non-Medical" and "Class 12 Medical"; switching the
+// header class to Class 11 switches this list to Class 11 sections. Counts are real enrolment.
+function scopedPaperClassList() {
+  const key = String(teacherBuilderState.teacherSubjectKey || '').toUpperCase();
+  const activeId = String(teacherBuilderState.selectedClassId || '');
+  const activeGrade = (activeId.match(/^(\d+)/) || [])[1] || String(teacherBuilderState.activeGrade || '');
+  let custom = [];
+  try {
+    custom = JSON.parse(localStorage.getItem('haps_teacher_custom_classes') || '[]')
+      .filter(c => String(c.subjectKey || '').toUpperCase() === key)
+      .map(c => ({ id: c.id || c.section, name: c.name || c.id || c.section, grade: String(c.grade || '') }));
+  } catch (e) { /* ignore */ }
+  const base = (FACULTY_SUBJECT_CLASSES[key] || []).map(c => ({ id: c.id, name: c.name, grade: (String(c.id).match(/^(\d+)/) || [])[1] || '' }));
+  const all = base.concat(custom.filter(c => !base.some(b => b.id === c.id)));
+  const sameGrade = all.filter(c => !activeGrade || c.grade === activeGrade);
+  return sameGrade.length ? sameGrade : all;
+}
+
+function paperClassLabel(c) {
+  const roster = CLASS_ROSTERS[c.id];
+  const n = roster && Array.isArray(roster.students) ? roster.students.length : null;
+  const nice = /^(\d+)-NonMed$/.test(c.id) ? `Class ${c.id.split('-')[0]} Non-Medical`
+    : /^(\d+)-Med$/.test(c.id) ? `Class ${c.id.split('-')[0]} Medical`
+    : c.id === '10-Science-A' ? 'Class 10 Section A'
+    : c.id === '10-Maths-A' ? 'Class 10 Maths-A'
+    : c.name;
+  const subj = (teacherBuilderState.activeTeacher && teacherBuilderState.activeTeacher.subjectName) || '';
+  return `${nice}${subj ? ' • ' + subj : ''}${n === null ? '' : ` (${n} student${n === 1 ? '' : 's'})`}`;
+}
+
+function refreshPaperClassOptions() {
+  const sel = document.getElementById('selectPaperClass');
+  if (!sel) return;
+  const list = scopedPaperClassList();
+  if (!list.length) return;
+  const keep = list.some(c => c.id === teacherBuilderState.selectedClassId) ? teacherBuilderState.selectedClassId : list[0].id;
+  sel.innerHTML = list.map(c => `<option value="${escapeHtml(c.id)}"${c.id === keep ? ' selected' : ''}>${escapeHtml(paperClassLabel(c))}</option>`).join('');
+  sel.value = keep;
+}
+window.refreshPaperClassOptions = refreshPaperClassOptions;
+
+window.teacherHasBoardPaper = function() {
+  const allowed = STUDIO_SUBJECT_OPTIONS_BY_TEACHER[String(teacherBuilderState.teacherSubjectKey || '').toUpperCase()];
+  return !allowed || allowed.length > 0;
+};
+
 function syncBoardPaperStudioWithTeacher() {
+  restrictStudioSubjectOptions();
   const activeTeacher = teacherBuilderState.activeTeacher;
   const subSelect = document.getElementById('selectStudioSubject');
   if (!activeTeacher) return;
@@ -20675,7 +21966,8 @@ async function generateOrLoadBoardPaper() {
         grade: boardPaperStudioState.grade,
         subject: boardPaperStudioState.subject,
         schoolName: 'HIM ACADEMY PUBLIC SCHOOL (HAPS)',
-        academicYear: '2025–26'
+        academicYear: '2025–26',
+        teacherSubjectKey: teacherBuilderState.teacherSubjectKey
       })
     });
 
@@ -20732,7 +22024,7 @@ function renderBoardPaperStudio(paper) {
         ANNUAL BOARD MODEL EXAMINATION • SESSION ${paper.academicYear || '2025–26'}
       </div>
       <div style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin-top: 4px;">
-        CLASS: ${paper.grade}th &bull; SUBJECT: ${paper.subject.toUpperCase()} ${isHp ? (paper.subject === 'Science' ? '(विज्ञान)' : '(भौतिक विज्ञान - सैद्धांतिक)') : '(THEORY)'}
+        CLASS: ${paper.grade}th &bull; SUBJECT: ${paper.subject.toUpperCase()} ${isHp ? ({ Science: '(विज्ञान)', Chemistry: '(रसायन विज्ञान - सैद्धांतिक)', Mathematics: '(गणित - सैद्धांतिक)', Biology: '(जीव विज्ञान - सैद्धांतिक)' }[paper.subject] || '(भौतिक विज्ञान - सैद्धांतिक)') : '(THEORY)'}
       </div>
 
       <!-- ROLL NUMBER & TIME/MARKS BAR -->
@@ -20832,7 +22124,7 @@ function renderBoardPaperStudio(paper) {
           <!-- TEACHER CUSTOMIZATION TOOLBAR -->
           <div class="paper-q-teacher-tools">
             <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Teacher Controls:</span>
-            <button type="button" class="btn-paper-tool swap" onclick="openSwapQuestionModal('${q.id}')" title="Swap this question with another authentic PYQ from the question bank">
+            <button type="button" class="btn-paper-tool swap" onclick="openBoardSwapQuestionModal('${q.id}')" title="Swap this question with another authentic PYQ from the question bank">
               <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Swap / Change Question
             </button>
             <button type="button" class="btn-paper-tool" onclick="openEditQuestionModal('${q.id}')" title="Edit question text, options, marks or solution in place">
@@ -20918,7 +22210,7 @@ function clientResequenceAndRecalculate(paper) {
 // QUESTION SWAPPING WITH BANK ALTERNATIVES
 // ----------------------------------------------------------------------------
 
-async function openSwapQuestionModal(questionId) {
+async function openBoardSwapQuestionModal(questionId) {
   boardPaperStudioState.swapTargetQuestionId = questionId;
   const paper = boardPaperStudioState.currentPaper;
   if (!paper) return;
@@ -20965,8 +22257,8 @@ async function openSwapQuestionModal(questionId) {
     if (data.success && data.alternatives && data.alternatives.length > 0) {
       boardPaperStudioState.alternativesList = data.alternatives;
       container.innerHTML = data.alternatives.map((alt) => `
-        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
-          <div style="flex:1;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; padding:12px 14px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div style="flex:1 1 180px; min-width:0; overflow-wrap:anywhere;">
             <div style="font-size:0.75rem; color:#2563eb; font-weight:700; margin-bottom:4px;">
               [${alt.topic || 'Syllabus Topic'}] &bull; ${alt.marks} Mark${alt.marks > 1 ? 's' : ''} &bull; ${alt.pyq_appearance || 'Board PYQ'}
             </div>
@@ -21109,19 +22401,34 @@ function openAddCustomQuestionModal(preselectedSectionId = null) {
     `).join('');
   }
 
-  // Toggle options group based on marks
+  // Reset form values first, then re-apply preselected section & sync marks/options visibility
+  const form = document.getElementById('formAddCustomQuestion');
+  if (form) form.reset();
+  if (selectSec && preselectedSectionId) {
+    selectSec.value = preselectedSectionId;
+  }
+
   const selectMarks = document.getElementById('selectCustomQMarks');
   const groupOptions = document.getElementById('groupCustomQOptions');
+  const syncSectionMarksAndOptions = () => {
+    const activeSecId = selectSec?.value || preselectedSectionId || paper.sections[0]?.id;
+    const activeSec = paper.sections.find(s => s.id === activeSecId) || paper.sections[0];
+    if (selectMarks && activeSec && activeSec.marksPerQuestion) {
+      selectMarks.value = String(activeSec.marksPerQuestion);
+    }
+    if (selectMarks && groupOptions) {
+      groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
+    }
+  };
+  syncSectionMarksAndOptions();
+  if (selectSec) {
+    selectSec.onchange = syncSectionMarksAndOptions;
+  }
   if (selectMarks && groupOptions) {
-    groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
     selectMarks.onchange = () => {
       groupOptions.style.display = selectMarks.value === '1' ? 'block' : 'none';
     };
   }
-
-  // Reset form values
-  const form = document.getElementById('formAddCustomQuestion');
-  if (form) form.reset();
 
   modal.style.display = 'flex';
   modal.classList.add('active');
@@ -21147,25 +22454,27 @@ async function submitAddCustomQuestion() {
   const solution = document.getElementById('inputCustomQSolution')?.value || '';
 
   if (!text || !text.trim()) {
-    alert('Please enter a question statement.');
+    showToast('Please enter a question statement.', 'warning');
     return;
   }
 
   let options = [];
-  let answer = 'A';
-  if (marks === 1) {
-    const optA = document.getElementById('inputCustomOptA')?.value || 'Option A';
-    const optB = document.getElementById('inputCustomOptB')?.value || 'Option B';
-    const optC = document.getElementById('inputCustomOptC')?.value || 'Option C';
-    const optD = document.getElementById('inputCustomOptD')?.value || 'Option D';
-    answer = document.getElementById('selectCustomCorrectOpt')?.value || 'A';
-
-    options = [
-      { key: 'A', latex: optA, is_correct: answer === 'A' },
-      { key: 'B', latex: optB, is_correct: answer === 'B' },
-      { key: 'C', latex: optC, is_correct: answer === 'C' },
-      { key: 'D', latex: optD, is_correct: answer === 'D' }
-    ];
+  let answer = null;
+  const rawOpts = [
+    document.getElementById('inputCustomOptA')?.value?.trim() || '',
+    document.getElementById('inputCustomOptB')?.value?.trim() || '',
+    document.getElementById('inputCustomOptC')?.value?.trim() || '',
+    document.getElementById('inputCustomOptD')?.value?.trim() || ''
+  ];
+  if (marks === 1 || rawOpts.some(Boolean)) {
+    if (rawOpts.some(Boolean)) {
+      answer = document.getElementById('selectCustomCorrectOpt')?.value || 'A';
+      options = ['A', 'B', 'C', 'D'].map((k, idx) => ({
+        key: k,
+        latex: rawOpts[idx] || `Option ${k}`,
+        is_correct: answer === k
+      }));
+    }
   }
 
   // 1. Instantly perform the addition on client-side state
@@ -21194,15 +22503,16 @@ async function submitAddCustomQuestion() {
   closeAddCustomQuestionModal();
   renderBoardPaperStudio(paper);
 
-  // 2. Sync to backend
+  // 2. Sync to backend (preserve customQ.id so subsequent PUT/DELETE match cleanly)
   try {
-    fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/add-custom-question`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/assessments/board-paper/${paper.id}/add-custom-question`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         paper,
         sectionId,
         questionData: {
+          id: customQ.id,
           question_latex: text,
           marks,
           topic,
@@ -21211,7 +22521,14 @@ async function submitAddCustomQuestion() {
           solution_latex: solution
         }
       })
-    }).catch(e => console.warn('[SYNC ADD Q NOTICE]', e));
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data && data.paper) {
+        boardPaperStudioState.currentPaper = data.paper;
+        renderBoardPaperStudio(data.paper);
+      }
+    }
   } catch (err) {
     console.warn('[SYNC ADD Q NOTICE]', err);
   }
@@ -21243,14 +22560,16 @@ function openEditQuestionModal(questionId) {
   document.getElementById('inputEditQSolution').value = targetQ.solution_latex || '';
 
   const groupOptions = document.getElementById('groupEditQOptions');
+  const hasMcqOptions = Boolean(targetQ.options_latex && targetQ.options_latex.length > 0);
   const marksInput = document.getElementById('inputEditQMarks');
   if (marksInput && groupOptions) {
     marksInput.oninput = () => {
-      groupOptions.style.display = Number(marksInput.value) === 1 ? 'block' : 'none';
+      const stillMcq = hasMcqOptions || String(targetQ.question_format || '').toUpperCase().includes('MCQ');
+      groupOptions.style.display = (stillMcq && Number(marksInput.value) === 1) ? 'block' : 'none';
     };
   }
 
-  if (targetQ.options_latex && targetQ.options_latex.length > 0) {
+  if (hasMcqOptions) {
     if (groupOptions) groupOptions.style.display = 'block';
     const opts = targetQ.options_latex;
     document.getElementById('inputEditOptA').value = opts[0]?.latex || '';
@@ -21259,7 +22578,11 @@ function openEditQuestionModal(questionId) {
     document.getElementById('inputEditOptD').value = opts[3]?.latex || '';
     document.getElementById('selectEditCorrectOpt').value = targetQ.correct_answer || 'A';
   } else {
-    if (groupOptions) groupOptions.style.display = Number(targetQ.marks) === 1 ? 'block' : 'none';
+    if (groupOptions) groupOptions.style.display = 'none';
+    ['inputEditOptA', 'inputEditOptB', 'inputEditOptC', 'inputEditOptD'].forEach(elId => {
+      const el = document.getElementById(elId);
+      if (el) el.value = '';
+    });
   }
 
   modal.style.display = 'flex';
@@ -21289,18 +22612,19 @@ async function submitEditPaperQuestion() {
   let answer = undefined;
   const groupOptions = document.getElementById('groupEditQOptions');
   if (groupOptions && groupOptions.style.display !== 'none') {
-    const optA = document.getElementById('inputEditOptA')?.value || '';
-    const optB = document.getElementById('inputEditOptB')?.value || '';
-    const optC = document.getElementById('inputEditOptC')?.value || '';
-    const optD = document.getElementById('inputEditOptD')?.value || '';
-    answer = document.getElementById('selectEditCorrectOpt')?.value || 'A';
-
-    options = [
-      { key: 'A', latex: optA, is_correct: answer === 'A' },
-      { key: 'B', latex: optB, is_correct: answer === 'B' },
-      { key: 'C', latex: optC, is_correct: answer === 'C' },
-      { key: 'D', latex: optD, is_correct: answer === 'D' }
-    ];
+    const optA = (document.getElementById('inputEditOptA')?.value || '').trim();
+    const optB = (document.getElementById('inputEditOptB')?.value || '').trim();
+    const optC = (document.getElementById('inputEditOptC')?.value || '').trim();
+    const optD = (document.getElementById('inputEditOptD')?.value || '').trim();
+    if (optA || optB || optC || optD) {
+      answer = document.getElementById('selectEditCorrectOpt')?.value || 'A';
+      options = [
+        { key: 'A', latex: optA, is_correct: answer === 'A' },
+        { key: 'B', latex: optB, is_correct: answer === 'B' },
+        { key: 'C', latex: optC, is_correct: answer === 'C' },
+        { key: 'D', latex: optD, is_correct: answer === 'D' }
+      ];
+    }
   }
 
   // 1. Instantly perform the edit on client-side state
@@ -21403,7 +22727,7 @@ window.closeBoardPaperStudio = closeBoardPaperStudio;
 window.changeStudioBoard = changeStudioBoard;
 window.regenerateStudioPaper = regenerateStudioPaper;
 window.togglePaperMarkingScheme = togglePaperMarkingScheme;
-window.openSwapQuestionModal = openSwapQuestionModal;
+window.openBoardSwapQuestionModal = openBoardSwapQuestionModal;
 window.closeSelectAlternativeModal = closeSelectAlternativeModal;
 window.selectAlternativeQuestion = selectAlternativeQuestion;
 window.autoGenerateFreshAlternative = autoGenerateFreshAlternative;
@@ -21615,6 +22939,7 @@ window.launchTeacherSmartboardForTopic = function(topicKey) {
   }
 
   if (iframe) {
+    if (!iframe.getAttribute('src') && iframe.dataset.src) iframe.setAttribute('src', iframe.dataset.src);
     const deliverPlan = () => {
       if (iframe.contentWindow) {
         iframe.contentWindow.postMessage({
@@ -22248,7 +23573,7 @@ function renderStudentFocusTopics() {
             1. Ampere's Circuital Law &amp; Finite Solenoid End Effects
           </h4>
           <p style="font-size:0.82rem; color:#7f1d1d; margin:0 0 10px 0; line-height:1.5;">
-            Misconception: Applying <code>B = &mu;₀nI</code> at the edges of a solenoid. Boundary integration proves field at the ends is halved: <code>B_{end} = &frac12; &mu;₀nI</code>.
+            Misconception: Applying ${renderLatexString('$B = \\mu_0 n I$')} at the edges of a solenoid. Boundary integration proves field at the ends is halved: ${renderLatexString('$B_{\\text{end}} = \\frac{1}{2}\\mu_0 n I$')}.
           </p>
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <span style="font-size:0.75rem; color:#991b1b; font-weight:600;">Action: Practice Solenoid Axis Integration &amp; Boundary Conditions</span>
@@ -22340,15 +23665,35 @@ function renderStudentFocusTopics() {
 }
 
 function launchRemedialPracticeDrill(drillId) {
-  alert(`⚡ Launching targeted remedial practice drill for: ${drillId}.\nLoading adaptive questions to reinforce weak concepts.`);
-  if (typeof switchStudentTab === 'function') {
+  const drillMap = {
+    drill_12_04_solenoid: { subject: 'Physics', topic: 'Moving Charges and Magnetism', subtopic: 'Ampere Circuital Law & Solenoid Field' },
+    drill_12_03_kirchhoff: { subject: 'Physics', topic: 'Current Electricity', subtopic: 'Kirchhoff Loop Rule & Internal Resistance' },
+    drill_12_02_capacitors: { subject: 'Physics', topic: 'Electrostatic Potential and Capacitance', subtopic: 'Dielectric Slab & Energy Stored' }
+  };
+  const ctx = drillMap[drillId] || { subject: 'Physics', topic: String(drillId || 'Core Physics'), subtopic: String(drillId || 'Adaptive Remedial Drill') };
+  showToast(`Opening adaptive remedial practice drill: ${ctx.subtopic}`, 'info');
+  if (typeof window.openPersonalizedRemedialModal === 'function') {
+    window.openPersonalizedRemedialModal(ctx);
+  } else if (typeof switchStudentTab === 'function') {
     switchStudentTab('tabStudentActiveTest');
   }
 }
 
 function shareStudentReportWhatsApp() {
   const s = STUDENT_REPORT_DATA.student;
-  const msg = `*Unisole AI School - Weekly Diagnostic Report Card*\n\nScholar: ${s.name} (${s.roll})\nGrade: ${s.section}\n\n📊 Performance Summary:\n• Assignments: ${s.assignmentsSubmitted}/${s.assignmentsAssigned} Submitted (${s.assignmentCompletionRate})\n• Tests Attempted: ${s.testsAttempted}/${s.totalTestsScheduled} (100%)\n• Overall Average: ${s.averagePercentage} (${s.overallGrade})\n• Class Standing: ${s.standing} (${s.percentile})\n\n🎯 Priority Remedial Focus:\n1. Ampere's Circuital Law & Solenoid Ends\n2. Kirchhoff's Loop Rules\n\nView complete interactive telemetry & charts at:\nhttps://scholar.unisole.ai/report/${s.id}`;
+  const msg = sanitizeWhatsAppPayload(
+    `*Unisole AI School - Weekly Diagnostic Report Card*\n\n` +
+    `Scholar: ${s.name} (${s.roll})\nGrade: ${s.section}\n\n` +
+    `Performance Summary:\n` +
+    `- Assignments: ${s.assignmentsSubmitted}/${s.assignmentsAssigned} Submitted (${s.assignmentCompletionRate})\n` +
+    `- Tests Attempted: ${s.testsAttempted}/${s.totalTestsScheduled} (100%)\n` +
+    `- Overall Average: ${s.averagePercentage} (${s.overallGrade})\n` +
+    `- Class Standing: ${s.standing} (${s.percentile})\n\n` +
+    `Priority Remedial Focus:\n` +
+    `1. Ampere's Circuital Law & Solenoid Ends\n` +
+    `2. Kirchhoff's Loop Rules\n\n` +
+    `View complete interactive telemetry & charts at:\nhttps://scholar.unisole.ai/report/${s.id}`
+  );
   
   const encoded = encodeURIComponent(msg);
   const url = `https://api.whatsapp.com/send?text=${encoded}`;
@@ -22389,7 +23734,7 @@ function renderRemedialQuestionsCard(questions) {
         ${q.statement}
       </div>
       <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:7px 10px; border-radius:4px; font-size:0.78rem; color:#92400e;">
-        <strong>💡 Pedagogical Hint &amp; Trap Warning:</strong> ${q.hint}
+        <strong>Pedagogical Hint &amp; Trap Warning:</strong> ${q.hint}
       </div>
       <details style="font-size:0.78rem; color:#334155; margin-top:2px;">
         <summary style="font-weight:700; color:var(--accent-blue); cursor:pointer; user-select:none;">
@@ -22404,27 +23749,29 @@ function renderRemedialQuestionsCard(questions) {
 }
 
 function formatWhatsAppText(test, student, focusPoints, questions) {
-  const line = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+  const line = '--------------------------------';
   let qText = '';
   questions.forEach((q, idx) => {
-    qText += `${idx + 1}️⃣ *${q.title} (${q.marks})*\n${q.plainStatement || q.statement}\n💡 *Hint:* ${q.plainHint || q.hint}\n\n`;
+    qText += `${idx + 1}. *${q.title} (${q.marks})*\n${q.plainStatement || q.statement}\n*Hint:* ${q.plainHint || q.hint}\n\n`;
   });
 
-  return `🎓 *UNISOLE AI SCHOLAR ASSISTANT • DIAGNOSTIC REPORT & REMEDIAL PLAN*\n` +
+  return sanitizeWhatsAppPayload(
+    `*UNISOLE AI SCHOLAR ASSISTANT - DIAGNOSTIC REPORT & REMEDIAL PLAN*\n` +
     `${line}\n` +
-    `👤 *Scholar:* ${student.name} (Roll #${student.roll})\n` +
-    `📋 *Assessment:* ${test.code} - ${test.title}\n` +
-    `📊 *Score Obtained:* ${student.score} / ${test.totalMarks} (${student.percentage})\n` +
-    `⏱️ *Pacing & Speed:* ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})\n` +
-    `🎯 *Performance Tier:* ${student.tier}\n` +
+    `*Scholar:* ${student.name} (Roll #${student.roll})\n` +
+    `*Assessment:* ${test.code} - ${test.title}\n` +
+    `*Score Obtained:* ${student.score} / ${test.totalMarks} (${student.percentage})\n` +
+    `*Pacing & Speed:* ${student.time || '40m'} (Benchmark: ${test.duration || '45m'})\n` +
+    `*Performance Tier:* ${student.tier}\n` +
     `${line}\n\n` +
-    `🎯 *WHAT TO FOCUS ON TO IMPROVE:*\n` +
-    focusPoints.map(p => `• ${p}`).join('\n') +
+    `*WHAT TO FOCUS ON TO IMPROVE:*\n` +
+    focusPoints.map(p => `- ${p}`).join('\n') +
     `\n\n${line}\n\n` +
-    `📝 *PERSONALIZED PRACTICE ASSIGNMENT (3 TARGETED PROBLEMS):*\n\n` +
+    `*PERSONALIZED PRACTICE ASSIGNMENT (3 TARGETED PROBLEMS):*\n\n` +
     qText +
-    `💡 *Instructions for ${student.name}:* Please solve these 3 practice problems in your physics homework notebook and submit your step-by-step working in class tomorrow for teacher verification.\n\n` +
-    `— Dr. Vikram Sharma, Senior Physics Faculty\nHAPS Senior Secondary School`;
+    `*Instructions for ${student.name}:* Please solve these 3 practice problems in your homework notebook and submit your step-by-step working in class tomorrow for teacher verification.\n\n` +
+    `-- ${teacherBuilderState?.activeTeacher?.name || 'Academic Faculty'}\nHAPS Senior Secondary School`
+  );
 }
 
 function generateStudentDiagnosticPlan(test, student) {
@@ -22470,7 +23817,7 @@ function generateStudentDiagnosticPlan(test, student) {
               🟢 Advanced Distinction Standing (Top 2% Class Mastery)
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              ${student.name} demonstrates exceptional conceptual precision across inverse square laws, permittivity dimensional formulas ($[\text{M}^{-1}\text{L}^{-3}\text{T}^4\text{A}^2]$), and vector superposition. Correctly navigated the dielectric screening reduction factor ($E = E_0/\kappa$) where 77% of the batch faltered.
+              ${student.name} demonstrates exceptional conceptual precision across inverse square laws, permittivity dimensional formulas ($[\\text{M}^{-1}\\text{L}^{-3}\\text{T}^4\\text{A}^2]$), and vector superposition. Correctly navigated the dielectric screening reduction factor ($E = E_0/\\kappa$) where 77% of the batch faltered.
             </p>
           </div>
           <div>
@@ -22502,27 +23849,27 @@ function generateStudentDiagnosticPlan(test, student) {
           marks: "3 Marks",
           statement: "Two equal positive charges $+q$ are fixed at separation $2a$. A third charge $Q$ is placed at the midpoint. (a) Determine the sign and magnitude of $Q$ such that the entire three-charge system is in electrostatic equilibrium. (b) Is this equilibrium stable or unstable for small longitudinal displacements?",
           plainStatement: "Two equal positive charges +q are fixed at separation 2a. A third charge Q is placed at midpoint. (a) Determine the sign and magnitude of Q for full system equilibrium. (b) Is this equilibrium stable or unstable?",
-          hint: "For the entire system to be in equilibrium, net electrostatic force on each $+q$ must vanish: $\frac{q^2}{4\pi\varepsilon_0(2a)^2} + \frac{q Q}{4\pi\varepsilon_0 a^2} = 0$.",
+          hint: "For the entire system to be in equilibrium, net electrostatic force on each $+q$ must vanish: $\\frac{q^2}{4\\pi\\varepsilon_0(2a)^2} + \\frac{q Q}{4\\pi\\varepsilon_0 a^2} = 0$.",
           plainHint: "Equate net force on outer charge to 0: q²/(4a²) + qQ/a² = 0 ==> Q = -q/4.",
-          solution: "(a) Force on outer charge $+q$: $F_{\text{net}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{q^2}{4a^2} + \frac{q Q}{a^2}\right) = 0 \implies Q = -\frac{q}{4}$.<br>(b) For small displacement $x$ along line: $F_{\text{restoring}} \approx -\frac{q^2}{\pi\varepsilon_0 a^3}x$ (stable along line), but displacement perpendicular to line is unstable (Earnshaw's Theorem)."
+          solution: "(a) Force on outer charge $+q$: $F_{\\text{net}} = \\frac{1}{4\\pi\\varepsilon_0}\\left(\\frac{q^2}{4a^2} + \\frac{q Q}{a^2}\\right) = 0 \\implies Q = -\\frac{q}{4}$.<br>(b) For small displacement $x$ along line: $F_{\\text{restoring}} \\approx -\\frac{q^2}{\\pi\\varepsilon_0 a^3}x$ (stable along line), but displacement perpendicular to line is unstable (Earnshaw's Theorem)."
         },
         {
           title: "Work Done Rotating Electric Dipole by 180°",
           marks: "3 Marks",
-          statement: "An electric dipole of dipole moment $\vec{p} = 4\times 10^{-9}\text{ C}\cdot\text{m}$ is initially aligned parallel to a uniform electric field $\vec{E} = 5\times 10^4\text{ N/C}$. (a) Calculate the work done by external torque to rotate the dipole by $180^\circ$ into antiparallel alignment. (b) What is its potential energy in this unstable state?",
+          statement: "An electric dipole of dipole moment $\\vec{p} = 4\\times 10^{-9}\\text{ C}\\cdot\\text{m}$ is initially aligned parallel to a uniform electric field $\\vec{E} = 5\\times 10^4\\text{ N/C}$. (a) Calculate the work done by external torque to rotate the dipole by $180^\\circ$ into antiparallel alignment. (b) What is its potential energy in this unstable state?",
           plainStatement: "An electric dipole of moment p = 4x10^-9 C*m is aligned parallel to field E = 5x10^4 N/C. (a) Find work done to rotate it by 180°. (b) What is its potential energy in this antiparallel state?",
-          hint: "Work done $W = pE(\cos\theta_1 - \cos\theta_2) = pE(1 - (-1)) = 2pE$. Potential energy $U = -\vec{p}\cdot\vec{E} = +pE$.",
+          hint: "Work done $W = pE(\\cos\\theta_1 - \\cos\\theta_2) = pE(1 - (-1)) = 2pE$. Potential energy $U = -\\vec{p}\\cdot\\vec{E} = +pE$.",
           plainHint: "W = 2pE = 2 * (4x10^-9) * (5x10^4) = 4x10^-4 J. U = +pE = +2x10^-4 J.",
-          solution: "(a) $W = \int_0^\pi \tau_{\text{ext}} d\theta = pE[-\cos\theta]_0^\pi = pE(1 - (-1)) = 2pE = 2\times (4\times 10^{-9})\times (5\times 10^4) = 4\times 10^{-4}\text{ J}$.<br>(b) Potential Energy: $U = -pE\cos(180^\circ) = +pE = +2\times 10^{-4}\text{ J}$ (Maximum potential energy, unstable equilibrium)."
+          solution: "(a) $W = \\int_0^\\pi \\tau_{\\text{ext}} d\\theta = pE[-\\cos\\theta]_0^\\pi = pE(1 - (-1)) = 2pE = 2\\times (4\\times 10^{-9})\\times (5\\times 10^4) = 4\\times 10^{-4}\\text{ J}$.<br>(b) Potential Energy: $U = -pE\\cos(180^\\circ) = +pE = +2\\times 10^{-4}\\text{ J}$ (Maximum potential energy, unstable equilibrium)."
         },
         {
           title: "Centroid Field Superposition for Equilateral Triangle",
           marks: "3 Marks",
           statement: "Three point charges $+2q$, $-q$, and $-q$ are situated at vertices $A$, $B$, and $C$ of an equilateral triangle of side $L$. Find the magnitude and direction of the net electric field at the centroid $O$ of the triangle.",
           plainStatement: "Three point charges +2q, -q, and -q are at vertices A, B, and C of an equilateral triangle of side L. Find the magnitude and direction of net electric field at centroid O.",
-          hint: "Distance of centroid from each vertex is $r = \frac{L}{\sqrt{3}}$. Decompose $+2q$ into $+q$ and $+q$. Notice the symmetrical trio $(+q, -q, -q)$ cancels with dipole resolution along the altitude through $A$.",
+          hint: "Distance of centroid from each vertex is $r = \\frac{L}{\\sqrt{3}}$. Decompose $+2q$ into $+q$ and $+q$. Notice the symmetrical trio $(+q, -q, -q)$ cancels with dipole resolution along the altitude through $A$.",
           plainHint: "Distance r = L/√3. Field due to +2q points away from A; fields due to -q point towards B and C. Vector sum adds along AO direction: E_net = 3q / (πε₀ L²).",
-          solution: "Distance from vertex to centroid: $r = \frac{L}{\sqrt{3}}$.<br>Field from $A$ ($+2q$): $E_A = \frac{2q}{4\pi\varepsilon_0 r^2}$ away from $A$ along altitude.<br>Fields from $B$ and $C$ ($-q$ each): $E_B = E_C = \frac{q}{4\pi\varepsilon_0 r^2}$ directed towards $B$ and $C$ (angle between them is $60^\circ$).<br>Their resultant along altitude is $2 E_B \cos(30^\circ) = \sqrt{3} E_B = \frac{\sqrt{3} q}{4\pi\varepsilon_0 r^2}$ pointing away from $A$.<br>Net Field: $E_{\text{net}} = E_A + \text{Resultant}_{BC} = \frac{3q}{\pi\varepsilon_0 L^2}$ directed along $AO$ produced."
+          solution: "Distance from vertex to centroid: $r = \\frac{L}{\\sqrt{3}}$.<br>Field from $A$ ($+2q$): $E_A = \\frac{2q}{4\\pi\\varepsilon_0 r^2}$ away from $A$ along altitude.<br>Fields from $B$ and $C$ ($-q$ each): $E_B = E_C = \\frac{q}{4\\pi\\varepsilon_0 r^2}$ directed towards $B$ and $C$ (angle between them is $60^\\circ$).<br>Their resultant along altitude is $2 E_B \\cos(30^\\circ) = \\sqrt{3} E_B = \\frac{\\sqrt{3} q}{4\\pi\\varepsilon_0 r^2}$ pointing away from $A$.<br>Net Field: $E_{\\text{net}} = E_A + \\text{Resultant}_{BC} = \\frac{3q}{\\pi\\varepsilon_0 L^2}$ directed along $AO$ produced."
         }
       ];
     } else if (roll === '103' || roll === '105' || isBelow) {
@@ -22548,7 +23895,7 @@ function generateStudentDiagnosticPlan(test, student) {
               🔴 Critical Conceptual Blunder: Dielectric Multiplication Trap
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              Failed on Question 4. ${student.name} computed $E = E_0 \times \kappa = 800 \times 4 = 3200\text{ N/C}$ instead of recognizing that dielectric polarization creates internal opposing bound charges that screen and reduce the field to $E = \frac{E_0}{\kappa} = \frac{800}{4} = 200\text{ N/C}$.
+              Failed on Question 4. ${student.name} computed $E = E_0 \\times \\kappa = 800 \\times 4 = 3200\\text{ N/C}$ instead of recognizing that dielectric polarization creates internal opposing bound charges that screen and reduce the field to $E = \\frac{E_0}{\\kappa} = \\frac{800}{4} = 200\\text{ N/C}$.
             </p>
           </div>
           <div>
@@ -22556,14 +23903,14 @@ function generateStudentDiagnosticPlan(test, student) {
               🔴 Vector Decomposition Deficit on 2D Superposition:
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              Lost marks on Question 2 & Question 10. Added scalar magnitudes of forces ($F_1 + F_2$) instead of resolving vectors into rectangular Cartesian components $\sum F_x = F_1 \cos\theta_1 + F_2 \cos\theta_2$.
+              Lost marks on Question 2 & Question 10. Added scalar magnitudes of forces ($F_1 + F_2$) instead of resolving vectors into rectangular Cartesian components $\\sum F_x = F_1 \\cos\\theta_1 + F_2 \\cos\\theta_2$.
             </p>
           </div>
           <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:7px 12px; border-radius:4px;">
             <strong style="color:#9f1239; font-size:0.78rem; display:block; margin-bottom:2px;">
               🎯 Immediate Remedial Action for ${student.name}:
             </strong>
-            <span style="font-size:0.77rem; color:#334155;">Memorize dielectric screening rule ($E = E_0/\kappa$), redraw free-body vector diagrams, and complete the 3 remedial drills below.</span>
+            <span style="font-size:0.77rem; color:#334155;">Memorize dielectric screening rule ($E = E_0/\\kappa$), redraw free-body vector diagrams, and complete the 3 remedial drills below.</span>
           </div>
         </div>
       `;
@@ -22578,29 +23925,29 @@ function generateStudentDiagnosticPlan(test, student) {
         {
           title: "Electric Field inside Dielectric Medium (Slab)",
           marks: "2 Marks",
-          statement: "A parallel plate arrangement has an initial uniform electric field $E_0 = 1200\text{ N/C}$ in vacuum. A dielectric slab of dielectric constant $\kappa = 5$ is inserted to completely fill the space. (a) Calculate the reduced electric field $E$ inside the slab. (b) Find the magnitude of the induced polarization field $E_p$.",
+          statement: "A parallel plate arrangement has an initial uniform electric field $E_0 = 1200\\text{ N/C}$ in vacuum. A dielectric slab of dielectric constant $\\kappa = 5$ is inserted to completely fill the space. (a) Calculate the reduced electric field $E$ inside the slab. (b) Find the magnitude of the induced polarization field $E_p$.",
           plainStatement: "Initial electric field E₀ = 1200 N/C in vacuum. A dielectric slab with dielectric constant κ = 5 is inserted. (a) Calculate reduced electric field E. (b) Find induced polarization field Ep.",
-          hint: "The net field is reduced by factor $\kappa$: $E = \frac{E_0}{\kappa}$. The polarization bound field opposes $E_0$: $E_p = E_0 - E$.",
+          hint: "The net field is reduced by factor $\\kappa$: $E = \\frac{E_0}{\\kappa}$. The polarization bound field opposes $E_0$: $E_p = E_0 - E$.",
           plainHint: "E = E₀ / κ = 1200 / 5 = 240 N/C. Ep = E₀ - E = 1200 - 240 = 960 N/C.",
-          solution: "(a) Reduced field: $E = \frac{E_0}{\kappa} = \frac{1200}{5} = 240\text{ N/C}$.<br>(b) Polarization field: $E = E_0 - E_p \implies E_p = E_0 - E = 1200 - 240 = 960\text{ N/C}$ directed opposite to external field."
+          solution: "(a) Reduced field: $E = \\frac{E_0}{\\kappa} = \\frac{1200}{5} = 240\\text{ N/C}$.<br>(b) Polarization field: $E = E_0 - E_p \\implies E_p = E_0 - E = 1200 - 240 = 960\\text{ N/C}$ directed opposite to external field."
         },
         {
           title: "Superposition on Two Identical Charges",
           marks: "3 Marks",
-          statement: "Two point charges $q_1 = +4\ \mu\text{C}$ and $q_2 = -4\ \mu\text{C}$ are placed at points $(0, 3\text{ cm})$ and $(0, -3\text{ cm})$. Find the magnitude and direction of the net electric field at $(4\text{ cm}, 0)$ on the x-axis.",
+          statement: "Two point charges $q_1 = +4\\ \\mu\\text{C}$ and $q_2 = -4\\ \\mu\\text{C}$ are placed at points $(0, 3\\text{ cm})$ and $(0, -3\\text{ cm})$. Find the magnitude and direction of the net electric field at $(4\\text{ cm}, 0)$ on the x-axis.",
           plainStatement: "Two charges +4 μC and -4 μC are at (0, 3cm) and (0, -3cm). Find net electric field at (4cm, 0) on x-axis.",
-          hint: "Distance to test point is $r = \sqrt{4^2 + 3^2} = 5\text{ cm} = 0.05\text{ m}$. Notice that horizontal x-components cancel out, while vertical y-components add downwards!",
+          hint: "Distance to test point is $r = \\sqrt{4^2 + 3^2} = 5\\text{ cm} = 0.05\\text{ m}$. Notice that horizontal x-components cancel out, while vertical y-components add downwards!",
           plainHint: "Distance r = 0.05m. E_single = kq/r² = 1.44x10^7 N/C. Net Ey = 2 * E * sinθ = 2 * (1.44x10^7) * (3/5) = 1.73x10^7 N/C downwards.",
-          solution: "Distance $r = \sqrt{0.04^2 + 0.03^2} = 0.05\text{ m}$.<br>$E_1 = E_2 = \frac{(9\times 10^9)(4\times 10^{-6})}{(0.05)^2} = 1.44\times 10^7\text{ N/C}$.<br>Horizontal components: $E_{1x} - E_{2x} = 0$.<br>Vertical components add in $-\hat{j}$ direction: $E_{\text{net}} = 2 E_1 \sin\theta = 2(1.44\times 10^7)\left(\frac{3}{5}\right) = 1.73\times 10^7\text{ N/C}$ along $-\hat{j}$."
+          solution: "Distance $r = \\sqrt{0.04^2 + 0.03^2} = 0.05\\text{ m}$.<br>$E_1 = E_2 = \\frac{(9\\times 10^9)(4\\times 10^{-6})}{(0.05)^2} = 1.44\\times 10^7\\text{ N/C}$.<br>Horizontal components: $E_{1x} - E_{2x} = 0$.<br>Vertical components add in $-\\hat{j}$ direction: $E_{\\text{net}} = 2 E_1 \\sin\\theta = 2(1.44\\times 10^7)\\left(\\frac{3}{5}\\right) = 1.73\\times 10^7\\text{ N/C}$ along $-\\hat{j}$."
         },
         {
           title: "Electric Dipole Torque and Stable Orientation",
           marks: "3 Marks",
-          statement: "An electric dipole consists of charges $\pm 2\times 10^{-6}\text{ C}$ separated by $2\text{ cm}$. It is placed in an external field $E = 10^5\text{ N/C}$ at angle $30^\circ$ to the field lines. (a) Calculate the torque experienced by the dipole. (b) What torque acts when the dipole is aligned parallel to $\vec{E}$?",
+          statement: "An electric dipole consists of charges $\\pm 2\\times 10^{-6}\\text{ C}$ separated by $2\\text{ cm}$. It is placed in an external field $E = 10^5\\text{ N/C}$ at angle $30^\\circ$ to the field lines. (a) Calculate the torque experienced by the dipole. (b) What torque acts when the dipole is aligned parallel to $\\vec{E}$?",
           plainStatement: "An electric dipole consists of charges ±2 μC separated by 2cm in field E = 10^5 N/C at 30°. (a) Calculate torque. (b) What is the torque when aligned parallel to field?",
-          hint: "Dipole moment $p = q(2a)$. Torque $\tau = p E \sin\theta$. When parallel, $\theta = 0^\circ \implies \tau = 0$.",
+          hint: "Dipole moment $p = q(2a)$. Torque $\\tau = p E \\sin\\theta$. When parallel, $\\theta = 0^\\circ \\implies \\tau = 0$.",
           plainHint: "p = 2x10^-6 * 0.02 = 4x10^-8 C*m. Torque = pE sin(30°) = (4x10^-8)(10^5)(0.5) = 2x10^-3 N*m.",
-          solution: "(a) Dipole moment: $p = q(2a) = (2\times 10^{-6}\text{ C})(0.02\text{ m}) = 4\times 10^{-8}\text{ C}\cdot\text{m}$.<br>Torque: $\tau = pE\sin(30^\circ) = (4\times 10^{-8})(10^5)(0.5) = 2\times 10^{-3}\text{ N}\cdot\text{m}$.<br>(b) When parallel ($\theta = 0^\circ$): $\tau = pE\sin(0^\circ) = 0\text{ N}\cdot\text{m}$ (Stable equilibrium orientation)."
+          solution: "(a) Dipole moment: $p = q(2a) = (2\\times 10^{-6}\\text{ C})(0.02\\text{ m}) = 4\\times 10^{-8}\\text{ C}\\cdot\\text{m}$.<br>Torque: $\\tau = pE\\sin(30^\\circ) = (4\\times 10^{-8})(10^5)(0.5) = 2\\times 10^{-3}\\text{ N}\\cdot\\text{m}$.<br>(b) When parallel ($\\theta = 0^\\circ$): $\\tau = pE\\sin(0^\\circ) = 0\\text{ N}\\cdot\\text{m}$ (Stable equilibrium orientation)."
         }
       ];
     } else {
@@ -22626,14 +23973,14 @@ function generateStudentDiagnosticPlan(test, student) {
               🟡 Board Presentation &amp; Vector Calculation Precision
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              ${student.name} demonstrates solid foundational knowledge (77.8% score) but dropped step marks on Question 7 (dipole rotation work done) by omitting the negative sign in $U = -\vec{p}\cdot\vec{E}$, and lost derivation marks on the axial electric field ratio.
+              ${student.name} demonstrates solid foundational knowledge (77.8% score) but dropped step marks on Question 7 (dipole rotation work done) by omitting the negative sign in $U = -\\vec{p}\\cdot\\vec{E}$, and lost derivation marks on the axial electric field ratio.
             </p>
           </div>
           <div style="background:#eff6ff; border-left:3px solid #2563eb; padding:7px 12px; border-radius:4px;">
             <strong style="color:#1e40af; font-size:0.78rem; display:block; margin-bottom:2px;">
               🎯 Action Plan to Cross 90% (Distinction):
             </strong>
-            <span style="font-size:0.77rem; color:#334155;">Practice explicit step-by-step derivations for axial vs equatorial field ratio ($E_{\text{axial}} = 2 E_{\text{equatorial}}$) and solve the 3 practice problems below.</span>
+            <span style="font-size:0.77rem; color:#334155;">Practice explicit step-by-step derivations for axial vs equatorial field ratio ($E_{\\text{axial}} = 2 E_{\\text{equatorial}}$) and solve the 3 practice problems below.</span>
           </div>
         </div>
       `;
@@ -22648,29 +23995,29 @@ function generateStudentDiagnosticPlan(test, student) {
         {
           title: "Axial vs Equatorial Dipole Electric Field Ratio",
           marks: "3 Marks",
-          statement: "Deduce the expression for electric field intensity due to a short electric dipole of dipole moment $p$ at: (a) An axial point at distance $r$, and (b) An equatorial point at distance $r$. Hence prove that $E_{\text{axial}} = 2 E_{\text{equatorial}}$ for $r \gg 2a$.",
+          statement: "Deduce the expression for electric field intensity due to a short electric dipole of dipole moment $p$ at: (a) An axial point at distance $r$, and (b) An equatorial point at distance $r$. Hence prove that $E_{\\text{axial}} = 2 E_{\\text{equatorial}}$ for $r \\gg 2a$.",
           plainStatement: "Deduce expressions for electric field of short dipole at axial point and equatorial point at distance r. Prove E_axial = 2 * E_equatorial.",
-          hint: "Axial: $E_{\text{axial}} = \frac{1}{4\pi\varepsilon_0}\frac{2pr}{(r^2 - a^2)^2} \approx \frac{2p}{4\pi\varepsilon_0 r^3}$. Equatorial: $E_{\text{equatorial}} \approx \frac{p}{4\pi\varepsilon_0 r^3}$.",
+          hint: "Axial: $E_{\\text{axial}} = \\frac{1}{4\\pi\\varepsilon_0}\\frac{2pr}{(r^2 - a^2)^2} \\approx \\frac{2p}{4\\pi\\varepsilon_0 r^3}$. Equatorial: $E_{\\text{equatorial}} \\approx \\frac{p}{4\\pi\\varepsilon_0 r^3}$.",
           plainHint: "E_axial = 2p/(4πε₀r³), E_equatorial = p/(4πε₀r³). Ratio = 2:1.",
-          solution: "(a) Axial field: $E_{\text{axial}} = \frac{1}{4\pi\varepsilon_0}\frac{2p r}{(r^2 - a^2)^2} \\xrightarrow{r \gg a} \frac{2p}{4\pi\varepsilon_0 r^3}$.<br>(b) Equatorial field: $E_{\text{equatorial}} = \frac{1}{4\pi\varepsilon_0}\frac{p}{(r^2 + a^2)^{3/2}} \\xrightarrow{r \gg a} \frac{p}{4\pi\varepsilon_0 r^3}$.<br>Hence $\frac{E_{\text{axial}}}{E_{\text{equatorial}}} = 2$."
+          solution: "(a) Axial field: $E_{\\text{axial}} = \\frac{1}{4\\pi\\varepsilon_0}\\frac{2p r}{(r^2 - a^2)^2} \\xrightarrow{r \\gg a} \\frac{2p}{4\\pi\\varepsilon_0 r^3}$.<br>(b) Equatorial field: $E_{\\text{equatorial}} = \\frac{1}{4\\pi\\varepsilon_0}\\frac{p}{(r^2 + a^2)^{3/2}} \\xrightarrow{r \\gg a} \\frac{p}{4\\pi\\varepsilon_0 r^3}$.<br>Hence $\\frac{E_{\\text{axial}}}{E_{\\text{equatorial}}} = 2$."
         },
         {
           title: "Dielectric Constant from Force Reduction",
           marks: "2 Marks",
-          statement: "The electrostatic force between two small charges placed $0.1\text{ m}$ apart in air is $0.18\text{ N}$. When immersed in an unknown oil at the same separation, the force drops to $0.03\text{ N}$. Find the dielectric constant $\kappa$ of the oil.",
+          statement: "The electrostatic force between two small charges placed $0.1\\text{ m}$ apart in air is $0.18\\text{ N}$. When immersed in an unknown oil at the same separation, the force drops to $0.03\\text{ N}$. Find the dielectric constant $\\kappa$ of the oil.",
           plainStatement: "Force between two charges in air is 0.18 N. In oil at same separation, force drops to 0.03 N. Find dielectric constant κ.",
-          hint: "Recall Coulomb's Law in medium: $F_{\text{medium}} = \frac{F_{\text{air}}}{\kappa} \implies \kappa = \frac{F_{\text{air}}}{F_{\text{medium}}}$.",
+          hint: "Recall Coulomb's Law in medium: $F_{\\text{medium}} = \\frac{F_{\\text{air}}}{\\kappa} \\implies \\kappa = \\frac{F_{\\text{air}}}{F_{\\text{medium}}}$.",
           plainHint: "κ = F_air / F_oil = 0.18 / 0.03 = 6.",
-          solution: "$\kappa = \frac{F_{\text{air}}}{F_{\text{oil}}} = \frac{0.18}{0.03} = 6$. The dielectric constant is $6$ (dimensionless)."
+          solution: "$\\kappa = \\frac{F_{\\text{air}}}{F_{\\text{oil}}} = \\frac{0.18}{0.03} = 6$. The dielectric constant is $6$ (dimensionless)."
         },
         {
           title: "Work Done Rotating Dipole by 90°",
           marks: "3 Marks",
-          statement: "A dipole of moment $p = 5\times 10^{-8}\text{ C}\cdot\text{m}$ is initially in stable equilibrium in a uniform field $E = 2\times 10^4\text{ N/C}$. How much work must be done to rotate it to the position of zero potential energy?",
+          statement: "A dipole of moment $p = 5\\times 10^{-8}\\text{ C}\\cdot\\text{m}$ is initially in stable equilibrium in a uniform field $E = 2\\times 10^4\\text{ N/C}$. How much work must be done to rotate it to the position of zero potential energy?",
           plainStatement: "A dipole p = 5x10^-8 C*m is in stable equilibrium in field E = 2x10^4 N/C. How much work is needed to rotate it to zero potential energy?",
-          hint: "Zero potential energy occurs at $\theta = 90^\circ$ where $U = -pE\cos(90^\circ) = 0$. $W = pE(\cos 0^\circ - \cos 90^\circ) = pE(1 - 0) = pE$.",
+          hint: "Zero potential energy occurs at $\\theta = 90^\\circ$ where $U = -pE\\cos(90^\\circ) = 0$. $W = pE(\\cos 0^\\circ - \\cos 90^\\circ) = pE(1 - 0) = pE$.",
           plainHint: "W = pE(1 - 0) = (5x10^-8)(2x10^4) = 1.0x10^-3 J.",
-          solution: "Initial position: $\theta_1 = 0^\circ$. Final position: $\theta_2 = 90^\circ$.<br>$W = pE(\cos\theta_1 - \cos\theta_2) = pE(1 - 0) = pE = (5\times 10^{-8})(2\times 10^4) = 1.0\times 10^{-3}\text{ J}$."
+          solution: "Initial position: $\\theta_1 = 0^\\circ$. Final position: $\\theta_2 = 90^\\circ$.<br>$W = pE(\\cos\\theta_1 - \\cos\\theta_2) = pE(1 - 0) = pE = (5\\times 10^{-8})(2\\times 10^4) = 1.0\\times 10^{-3}\\text{ J}$."
         }
       ];
     }
@@ -22702,7 +24049,7 @@ function generateStudentDiagnosticPlan(test, student) {
               🔴 Critical Concept Gap: Electric Field Inside Conducting Shells (E = 0)
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              Failed on Question 8. Rohit mistakenly applied dielectric volume charge formulas ($E \propto r$) to a hollow conducting shell. In electrostatic equilibrium, all mobile electrons redistribute such that interior net charge is zero, establishing $\vec{E}_{\text{inside}} = 0$ everywhere inside the conductor.
+              Failed on Question 8. Rohit mistakenly applied dielectric volume charge formulas ($E \\propto r$) to a hollow conducting shell. In electrostatic equilibrium, all mobile electrons redistribute such that interior net charge is zero, establishing $\\vec{E}_{\\text{inside}} = 0$ everywhere inside the conductor.
             </p>
           </div>
           <div>
@@ -22710,14 +24057,14 @@ function generateStudentDiagnosticPlan(test, student) {
               🔴 Geometric Trap: Corner Flux Partitioning &amp; Solid Angle Symmetries
             </strong>
             <p style="margin:0; font-size:0.81rem; color:#475569;">
-              Failed on Question 14. When evaluating flux from a charge placed at a cube corner, Rohit omitted the 8-cube symmetry model and missed that the 3 adjacent faces have field lines parallel to their surfaces ($\vec{E} \perp \hat{n} \implies \Phi = 0$).
+              Failed on Question 14. When evaluating flux from a charge placed at a cube corner, Rohit omitted the 8-cube symmetry model and missed that the 3 adjacent faces have field lines parallel to their surfaces ($\\vec{E} \\perp \\hat{n} \\implies \\Phi = 0$).
             </p>
           </div>
           <div style="background:#fff1f2; border-left:3px solid #e11d48; padding:7px 12px; border-radius:4px;">
             <strong style="color:#9f1239; font-size:0.78rem; display:block; margin-bottom:2px;">
               🎯 Actionable Pedagogical Roadmap for Rohit:
             </strong>
-            <span style="font-size:0.77rem; color:#334155;">Always check conductor vs dielectric. Inside metal cavity, $\oint \vec{E}\cdot d\vec{A} = 0 \implies E = 0$. Complete the 3 targeted problems below.</span>
+            <span style="font-size:0.77rem; color:#334155;">Always check conductor vs dielectric. Inside metal cavity, $\\oint \\vec{E}\\cdot d\\vec{A} = 0 \\implies E = 0$. Complete the 3 targeted problems below.</span>
           </div>
         </div>
       `;
@@ -22732,29 +24079,29 @@ function generateStudentDiagnosticPlan(test, student) {
         {
           title: "Electrostatic Shielding & Conductor Cavity",
           marks: "2 Marks",
-          statement: "A thin hollow spherical metallic shell of radius $R = 12\text{ cm}$ carries a net charge of $Q = +6\ \mu\text{C}$. Calculate the electric field intensity at: (i) radial distance $r = 4\text{ cm}$ (inside cavity), and (ii) $r = 24\text{ cm}$ (in exterior space). State the physical law justifying part (i).",
+          statement: "A thin hollow spherical metallic shell of radius $R = 12\\text{ cm}$ carries a net charge of $Q = +6\\ \\mu\\text{C}$. Calculate the electric field intensity at: (i) radial distance $r = 4\\text{ cm}$ (inside cavity), and (ii) $r = 24\\text{ cm}$ (in exterior space). State the physical law justifying part (i).",
           plainStatement: "A thin hollow spherical metallic shell of radius R = 12cm carries net charge Q = +6 μC. Calculate electric field at: (i) r = 4cm (inside cavity), and (ii) r = 24cm (outside). State the justifying law.",
-          hint: "Construct a concentric spherical Gaussian surface of radius $r < R$. How much net charge is enclosed? Recall $\oint \vec{E}\cdot d\vec{A} = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
+          hint: "Construct a concentric spherical Gaussian surface of radius $r < R$. How much net charge is enclosed? Recall $\\oint \\vec{E}\\cdot d\\vec{A} = \\frac{q_{\\text{enc}}}{\\varepsilon_0}$.",
           plainHint: "q_enc = 0 inside cavity ==> E = 0 N/C (shielding). Outside: E = kq/r².",
-          solution: "(i) Inside cavity ($r = 4\text{ cm} < R$): $q_{\text{enc}} = 0 \implies E = 0\text{ N/C}$ (Electrostatic Shielding).<br>(ii) Outside shell ($r = 0.24\text{ m}$): $E = \frac{1}{4\pi\varepsilon_0}\frac{Q}{r^2} = (9\times 10^9)\times\frac{6\times 10^{-6}}{(0.24)^2} = 9.38\times 10^5\text{ N/C}$ radially outwards."
+          solution: "(i) Inside cavity ($r = 4\\text{ cm} < R$): $q_{\\text{enc}} = 0 \\implies E = 0\\text{ N/C}$ (Electrostatic Shielding).<br>(ii) Outside shell ($r = 0.24\\text{ m}$): $E = \\frac{1}{4\\pi\\varepsilon_0}\\frac{Q}{r^2} = (9\\times 10^9)\\times\\frac{6\\times 10^{-6}}{(0.24)^2} = 9.38\\times 10^5\\text{ N/C}$ radially outwards."
         },
         {
           title: "Point Charge at Corner of a Cube",
           marks: "3 Marks",
-          statement: "A point charge $q = 8.85\ \mu\text{C}$ is placed at one corner of an imaginary cube of side $a = 10\text{ cm}$. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces not touching the corner charge.",
+          statement: "A point charge $q = 8.85\\ \\mu\\text{C}$ is placed at one corner of an imaginary cube of side $a = 10\\text{ cm}$. Find: (a) The total electric flux emerging through all 6 faces of this cube, and (b) The flux through each of the 3 faces not touching the corner charge.",
           plainStatement: "A charge q = 8.85 μC is at the corner of a cube of side 10cm. Find (a) total flux through cube, and (b) flux through each of the 3 faces not touching the charge.",
-          hint: "By 3D symmetry, assemble 8 identical cubes around the corner to fully enclose $q$. Total flux through all 8 cubes is $\frac{q}{\varepsilon_0}$. For the 3 touching faces, $\vec{E}$ is parallel to the surface, so their flux is zero!",
+          hint: "By 3D symmetry, assemble 8 identical cubes around the corner to fully enclose $q$. Total flux through all 8 cubes is $\\frac{q}{\\varepsilon_0}$. For the 3 touching faces, $\\vec{E}$ is parallel to the surface, so their flux is zero!",
           plainHint: "Total flux = q / 8ε₀ = 1.25x10^5 N*m²/C. Each opposite face receives (1/3)(q/8ε₀) = q/24ε₀ = 4.17x10^4 N*m²/C.",
-          solution: "(a) Total flux through 1 cube = $\frac{1}{8}\frac{q}{\varepsilon_0} = \frac{8.85\times 10^{-6}}{8\times 8.85\times 10^{-12}} = 1.25\times 10^5\text{ N}\cdot\text{m}^2/\text{C}$.<br>(b) The 3 adjacent faces have $\Phi = 0$. Hence the 3 opposite faces share flux equally: $\Phi_{\text{each}} = \frac{q}{24\varepsilon_0} = 4.17\times 10^4\text{ N}\cdot\text{m}^2/\text{C}$."
+          solution: "(a) Total flux through 1 cube = $\\frac{1}{8}\\frac{q}{\\varepsilon_0} = \\frac{8.85\\times 10^{-6}}{8\\times 8.85\\times 10^{-12}} = 1.25\\times 10^5\\text{ N}\\cdot\\text{m}^2/\\text{C}$.<br>(b) The 3 adjacent faces have $\\Phi = 0$. Hence the 3 opposite faces share flux equally: $\\Phi_{\\text{each}} = \\frac{q}{24\\varepsilon_0} = 4.17\\times 10^4\\text{ N}\\cdot\\text{m}^2/\\text{C}$."
         },
         {
           title: "Line Charge Cylindrical Gauss Derivation",
           marks: "3 Marks",
-          statement: "An infinitely long straight wire has uniform linear charge density $\lambda = 2.4\times 10^{-7}\text{ C/m}$. (a) Using Gauss's theorem with a coaxial cylinder of radius $r$ and length $L$, derive the formula $E = \frac{\lambda}{2\pi \varepsilon_0 r}$. (b) Calculate the electric field magnitude at perpendicular distance $r = 15\text{ cm}$.",
+          statement: "An infinitely long straight wire has uniform linear charge density $\\lambda = 2.4\\times 10^{-7}\\text{ C/m}$. (a) Using Gauss's theorem with a coaxial cylinder of radius $r$ and length $L$, derive the formula $E = \\frac{\\lambda}{2\\pi \\varepsilon_0 r}$. (b) Calculate the electric field magnitude at perpendicular distance $r = 15\\text{ cm}$.",
           plainStatement: "An infinite straight wire has linear density λ = 2.4x10^-7 C/m. (a) Derive E = λ/(2πε₀r). (b) Calculate E at r = 15cm.",
-          hint: "Total flux $\oint \vec{E}\cdot d\vec{A} = \Phi_{\text{ends}} + \Phi_{\text{curved}}$. End faces have $\vec{E} \perp \hat{n} \implies \Phi_{\text{ends}} = 0$. Curved area is $2\pi r L$.",
+          hint: "Total flux $\\oint \\vec{E}\\cdot d\\vec{A} = \\Phi_{\\text{ends}} + \\Phi_{\\text{curved}}$. End faces have $\\vec{E} \\perp \\hat{n} \\implies \\Phi_{\\text{ends}} = 0$. Curved area is $2\\pi r L$.",
           plainHint: "E(2πrL) = λL / ε₀ ==> E = λ / (2πε₀r) = 2.88x10^4 N/C.",
-          solution: "(a) Derivation: $E(2\pi r L) = \frac{\lambda L}{\varepsilon_0} \implies E = \frac{\lambda}{2\pi \varepsilon_0 r}$.<br>(b) At $r = 0.15\text{ m}$: $E = \frac{2\times (9\times 10^9)\times (2.4\times 10^{-7})}{0.15} = 2.88\times 10^4\text{ N/C}$."
+          solution: "(a) Derivation: $E(2\\pi r L) = \\frac{\\lambda L}{\\varepsilon_0} \\implies E = \\frac{\\lambda}{2\\pi \\varepsilon_0 r}$.<br>(b) At $r = 0.15\\text{ m}$: $E = \\frac{2\\times (9\\times 10^9)\\times (2.4\\times 10^{-7})}{0.15} = 2.88\\times 10^4\\text{ N/C}$."
         }
       ];
     } else {
@@ -22787,7 +24134,7 @@ function generateStudentDiagnosticPlan(test, student) {
             <strong style="color:#065f46; font-size:0.78rem; display:block; margin-bottom:2px;">
               🎯 Enrichment Challenge:
             </strong>
-            <span style="font-size:0.77rem; color:#334155;">Master non-uniform volume charge distributions $\rho(r) = \rho_0(1 - r/R)$ and earthed concentric spherical conductors.</span>
+            <span style="font-size:0.77rem; color:#334155;">Master non-uniform volume charge distributions $\\rho(r) = \\rho_0(1 - r/R)$ and earthed concentric spherical conductors.</span>
           </div>
         </div>
       `;
@@ -22802,29 +24149,29 @@ function generateStudentDiagnosticPlan(test, student) {
         {
           title: "Non-Uniform Volume Charge Distribution",
           marks: "3 Marks",
-          statement: "A solid insulating sphere of radius $R$ has a non-uniform volume charge density $\rho(r) = \rho_0\left(1 - \frac{r}{R}\right)$ for $r \le R$. Find the electric field $E$ at distance $r < R$ inside the sphere.",
+          statement: "A solid insulating sphere of radius $R$ has a non-uniform volume charge density $\\rho(r) = \\rho_0\\left(1 - \\frac{r}{R}\\right)$ for $r \\le R$. Find the electric field $E$ at distance $r < R$ inside the sphere.",
           plainStatement: "A solid insulating sphere of radius R has non-uniform density ρ(r) = ρ₀(1 - r/R). Find E at distance r < R.",
-          hint: "Enclosed charge $q_{\text{enc}} = \int_0^r \rho(r) 4\pi r'^2 dr' = 4\pi \rho_0 \left[\frac{r^3}{3} - \frac{r^4}{4R}\right]$. Then apply $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0}$.",
+          hint: "Enclosed charge $q_{\\text{enc}} = \\int_0^r \\rho(r) 4\\pi r'^2 dr' = 4\\pi \\rho_0 \\left[\\frac{r^3}{3} - \\frac{r^4}{4R}\\right]$. Then apply $E(4\\pi r^2) = \\frac{q_{\\text{enc}}}{\\varepsilon_0}$.",
           plainHint: "Integrate spherical shells dq = ρ(r) 4πr² dr. E = (ρ₀ r / ε₀) [ 1/3 - r / (4R) ].",
-          solution: "$q_{\text{enc}} = 4\pi \rho_0 \int_0^r \left(r'^2 - \frac{r'^3}{R}\right)dr' = 4\pi\rho_0\left(\frac{r^3}{3} - \frac{r^4}{4R}\right)$.<br>Gauss Law: $E(4\pi r^2) = \frac{q_{\text{enc}}}{\varepsilon_0} \implies E = \frac{\rho_0 r}{\varepsilon_0}\left(\frac{1}{3} - \frac{r}{4R}\right)$."
+          solution: "$q_{\\text{enc}} = 4\\pi \\rho_0 \\int_0^r \\left(r'^2 - \\frac{r'^3}{R}\\right)dr' = 4\\pi\\rho_0\\left(\\frac{r^3}{3} - \\frac{r^4}{4R}\\right)$.<br>Gauss Law: $E(4\\pi r^2) = \\frac{q_{\\text{enc}}}{\\varepsilon_0} \\implies E = \\frac{\\rho_0 r}{\\varepsilon_0}\\left(\\frac{1}{3} - \\frac{r}{4R}\\right)$."
         },
         {
           title: "Concentric Shells with Earthing Boundary Condition",
           marks: "3 Marks",
           statement: "Two concentric conducting shells have radii $a$ and $b$ ($a < b$). The inner shell has charge $Q$, while the outer shell is connected to ground (earthed). Find: (a) The charge induced on the outer shell, and (b) The potential of the inner shell.",
           plainStatement: "Concentric shells radii a and b (a < b). Inner has charge Q, outer is earthed. Find: (a) Induced charge on outer, (b) Potential of inner shell.",
-          hint: "Earthing outer shell means its net potential is zero: $V_b = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q + Q'}{b}\right) = 0 \implies Q' = -Q$.",
+          hint: "Earthing outer shell means its net potential is zero: $V_b = \\frac{1}{4\\pi\\varepsilon_0}\\left(\\frac{Q + Q'}{b}\\right) = 0 \\implies Q' = -Q$.",
           plainHint: "V_outer = 0 ==> Q' = -Q. V_inner = (Q/4πε₀)(1/a - 1/b).",
-          solution: "(a) Outer earthed $\implies V_{\text{outer}} = 0 \implies Q' = -Q$.<br>(b) $V_{\text{inner}} = \frac{1}{4\pi\varepsilon_0}\left(\frac{Q}{a} + \frac{Q'}{b}\right) = \frac{Q}{4\pi\varepsilon_0}\left(\frac{1}{a} - \frac{1}{b}\right)$."
+          solution: "(a) Outer earthed $\\implies V_{\\text{outer}} = 0 \\implies Q' = -Q$.<br>(b) $V_{\\text{inner}} = \\frac{1}{4\\pi\\varepsilon_0}\\left(\\frac{Q}{a} + \\frac{Q'}{b}\\right) = \\frac{Q}{4\\pi\\varepsilon_0}\\left(\\frac{1}{a} - \\frac{1}{b}\\right)$."
         },
         {
           title: "Electrostatic Pressure on Charged Conductor",
           marks: "3 Marks",
-          statement: "Prove that the outward electrostatic pressure acting on the surface of a charged conductor with surface charge density $\sigma$ is given by $P = \frac{\sigma^2}{2\varepsilon_0}$.",
+          statement: "Prove that the outward electrostatic pressure acting on the surface of a charged conductor with surface charge density $\\sigma$ is given by $P = \\frac{\\sigma^2}{2\\varepsilon_0}$.",
           plainStatement: "Prove outward electrostatic pressure on surface of charged conductor of density σ is P = σ² / (2ε₀).",
-          hint: "The field due to neighboring patch is $E_1 = \frac{\sigma}{2\varepsilon_0}$. Force on element $dF = dq \cdot E_1 = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right)$.",
+          hint: "The field due to neighboring patch is $E_1 = \\frac{\\sigma}{2\\varepsilon_0}$. Force on element $dF = dq \\cdot E_1 = (\\sigma dA)\\left(\\frac{\\sigma}{2\\varepsilon_0}\\right)$.",
           plainHint: "Pressure = dF / dA = (σ dA)(σ / 2ε₀) / dA = σ² / (2ε₀).",
-          solution: "Force on surface element: $dF = dq \times E_{\text{other}} = (\sigma dA)\left(\frac{\sigma}{2\varepsilon_0}\right)$.<br>Pressure $P = \frac{dF}{dA} = \frac{\sigma^2}{2\varepsilon_0}$."
+          solution: "Force on surface element: $dF = dq \\times E_{\\text{other}} = (\\sigma dA)\\left(\\frac{\\sigma}{2\\varepsilon_0}\\right)$.<br>Pressure $P = \\frac{dF}{dA} = \\frac{\\sigma^2}{2\\varepsilon_0}$."
         }
       ];
     }
@@ -22931,7 +24278,7 @@ window.openStudentPerformanceModal = function(testId, studentRoll) {
       if (test) break;
     }
   }
-  if (!test) test = (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
+  if (test && String(test.subjectKey || '').toUpperCase() !== teacherSubjectKeyUpper()) test = null;
   if (!test) return;
 
   const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
@@ -23212,14 +24559,13 @@ function renderStudentRadarChart(radarData) {
 function dispatchWhatsAppMessage(phone, text, studentName) {
   const digits = String(phone || '').replace(/\D/g, '');
   const cleanPhone = digits.length === 10 ? `91${digits}` : digits;
-  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+  const cleanText = sanitizeWhatsAppPayload(text);
+  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(cleanText)}`;
   
   window.open(url, '_blank');
   
   if (typeof showToast === 'function') {
-    showToast(`📲 Opening WhatsApp with ${studentName}'s personalized diagnostic & remedial plan!`, 'success');
-  } else {
-    alert(`Opening WhatsApp with ${studentName}'s personalized diagnostic & remedial plan!`);
+    showToast(`Opening WhatsApp with ${studentName}'s personalized diagnostic & remedial plan.`, 'success');
   }
 }
 
@@ -23232,7 +24578,7 @@ window.sendStudentWhatsAppPlan = function(testId, studentRoll) {
       if (test) break;
     }
   }
-  if (!test) test = (RECORDED_CLASS_TESTS['12-NonMed'] || [])[0];
+  if (test && String(test.subjectKey || '').toUpperCase() !== teacherSubjectKeyUpper()) test = null;
   if (!test) return;
 
   const student = (test.studentResults || []).find(s => String(s.roll) === String(studentRoll)) || test.studentResults[0];
@@ -23256,9 +24602,7 @@ window.copyStudentPlanToClipboard = function() {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(plan.whatsAppText).then(() => {
       if (typeof showToast === 'function') {
-        showToast(`📋 Copied remedial plan for ${student.name} to clipboard!`, 'success');
-      } else {
-        alert(`Copied remedial plan for ${student.name} to clipboard!`);
+        showToast(`Copied remedial plan for ${student.name} to clipboard.`, 'success');
       }
     }).catch(() => {
       prompt('Copy the remedial plan text below:', plan.whatsAppText);
@@ -23272,17 +24616,1130 @@ window.sendRosterStudentWhatsApp = function(name, parentPhone, score, status) {
   const digits = String(parentPhone || '').replace(/\D/g, '');
   const cleanPhone = digits.length === 10 ? `91${digits}` : digits;
   const senderName = teacherBuilderState.activeTeacher?.name || 'Department Faculty';
-  const msg = `📚 *UNISOLE AI SCHOLAR ASSISTANT • PARENT UPDATE*\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+  const msg = sanitizeWhatsAppPayload(
+    `*UNISOLE AI SCHOLAR ASSISTANT - PARENT UPDATE*\n` +
+    `----------------------------\n` +
     `Dear Parent, regarding scholar *${name}*:\n` +
-    `• *Attendance & Status:* ${status}\n` +
-    `• *Current Subject Standing:* ${score}\n\n` +
+    `- *Attendance & Status:* ${status}\n` +
+    `- *Current Subject Standing:* ${score}\n\n` +
     `Please review the diagnostic test report and complete the remedial assignments shared on the scholar portal.\n\n` +
-    `— ${senderName}, HAPS Senior Secondary School`;
+    `-- ${senderName}, HAPS Senior Secondary School`
+  );
 
   const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
   if (typeof showToast === 'function') {
-    showToast(`📲 Opening WhatsApp notification for parent of ${name}...`, 'success');
+    showToast(`Opening WhatsApp notification for parent of ${name}...`, 'success');
   }
 };
+
+window.openPreviousTestReview = function(testTitle, summaryTopic, scoreText, solutionDetail) {
+  const modal = document.getElementById('modalStepSolutionStudio');
+  const titleEl = document.getElementById('studioModalTitle');
+  const subEl = document.getElementById('studioModalSubtitle');
+  const bodyEl = document.getElementById('studioModalBody');
+  if (!modal || !bodyEl) return;
+
+  if (titleEl) titleEl.textContent = testTitle || 'Previous Assessment Solution Review';
+  if (subEl) subEl.textContent = `${summaryTopic || 'Recorded Diagnostic'} • Score: ${scoreText || 'Reviewed'}`;
+
+  const btnBack = document.getElementById('btnStudioBackBtn');
+  const btnAssignFooter = document.getElementById('btnStudioAssignQuiz');
+  const btnCopyFooter = document.getElementById('btnStudioCopyLatex');
+  const btnPrintFooter = document.getElementById('btnStudioPrintHandout');
+  if (btnBack) btnBack.textContent = 'Close Review';
+  if (btnAssignFooter) btnAssignFooter.style.display = 'none';
+  if (btnCopyFooter) {
+    btnCopyFooter.onclick = () => {
+      const copyPayload = `${testTitle || 'Assessment'}\n${summaryTopic || ''}\nScore: ${scoreText || ''}\n${solutionDetail || ''}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(copyPayload).then(() => {
+          showToast('Solution summary copied to clipboard.', 'success');
+        }).catch(() => {});
+      }
+    };
+  }
+  if (btnPrintFooter) {
+    btnPrintFooter.onclick = () => window.print();
+  }
+
+  bodyEl.innerHTML = `
+    <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:10px; padding:16px 18px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <strong style="color:var(--accent-cyan); font-size:0.95rem;">Key Concept &amp; Stepwise Walkthrough</strong>
+        <span style="background:rgba(16,185,129,0.15); color:var(--accent-emerald); padding:3px 10px; border-radius:12px; font-size:0.76rem; font-weight:700;">Score: ${escapeHtml(scoreText || 'Evaluated')}</span>
+      </div>
+      <div class="latex-content" style="font-size:0.92rem; line-height:1.6; color:var(--text-primary);">
+        ${renderLatexString(solutionDetail || 'Detailed derivation and Cartesian sign rules loaded.')}
+      </div>
+    </div>
+    <div style="background:rgba(37,99,235,0.08); border-left:3px solid var(--accent-blue); padding:12px 14px; border-radius:6px; font-size:0.84rem; color:var(--text-secondary);">
+      <strong>Next Recommended Step:</strong> Review your formula sign convention checklist and attempt the matching remedial drill sheet in Personalized Assignments.
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(bodyEl);
+  }
+  initLucideIcons();
+};
+
+window.launchRemedialDrillSheet = function(drillTitle, focusFormula, questionCount) {
+  const modal = document.getElementById('modalPersonalizedRemedial');
+  const titleEl = document.getElementById('remStudentTitle');
+  const badgeEl = document.getElementById('remBadgeStudent');
+  const summaryEl = document.getElementById('remSummaryText');
+  const formulaBox = document.getElementById('remFormulaDrillsContainer');
+  const qBox = document.getElementById('remTargetQuestionsContainer');
+  const hostelEl = document.getElementById('remHostelDirective');
+  const parentEl = document.getElementById('remParentDirective');
+
+  if (modal && formulaBox && qBox) {
+    if (titleEl) titleEl.textContent = drillTitle || 'Personalized Remedial Drill';
+    if (badgeEl) badgeEl.textContent = `${questionCount || 5} Practice Items • Active Remedial Sheet`;
+    if (summaryEl) {
+      summaryEl.innerHTML = renderLatexString(`Focused remedial mastery session for ${focusFormula || 'core derivations'}.`);
+    }
+    if (hostelEl) {
+      hostelEl.textContent = `Complete the 3-step derivation for ${drillTitle || 'this topic'} on the study hall whiteboard before dinner check-in.`;
+    }
+    if (parentEl) {
+      parentEl.textContent = `Ask Aryan to explain the key boundary conditions of ${drillTitle || 'this concept'} in 3 plain sentences.`;
+    }
+    formulaBox.innerHTML = `
+      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 14px;">
+        <div style="font-weight:700; color:var(--text-primary); margin-bottom:6px;">Key Reference Expression</div>
+        <div class="latex-content" style="font-size:0.92rem; color:var(--accent-cyan);">${renderLatexString(focusFormula || '')}</div>
+      </div>
+    `;
+    qBox.innerHTML = `
+      <div style="background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:8px; padding:12px 14px;">
+        <div style="font-weight:700; color:var(--text-primary); margin-bottom:6px;">Guided Remedial Walkthrough</div>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin:0 0 10px 0;">
+          Work through each step carefully and verify unit consistency and boundary limits before starting a live practice quiz.
+        </p>
+        <button type="button" class="btn-primary" onclick="closePersonalizedRemedialModal(); window.switchStudentTab('tabStudentActiveTest');" style="padding:7px 14px; font-size:0.82rem;">
+          Practice in Live Quiz Simulator
+        </button>
+      </div>
+    `;
+    modal.style.display = 'flex';
+    if (typeof renderMathInElement === 'function') {
+      renderMathInElement(modal);
+    }
+    initLucideIcons();
+  }
+};
+
+function verifyInteractiveControlAccessibility() {
+  const controlSelectors = [
+    '.btn-faculty-card-action',
+    '.btn-role-login',
+    '.btn-close-drawer',
+    '.btn-drawer-switch',
+    '.btn-drawer-signout',
+    '.btn-hamburger',
+    '.btn-side-menu-pill',
+    '.assigned-filter-pill',
+    '.btn-role-switch',
+    '.btn-add-student-pill',
+    '.btn-icon'
+  ];
+  controlSelectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (!el.getAttribute('type') && el.tagName === 'BUTTON') {
+        el.setAttribute('type', 'button');
+      }
+    });
+  });
+
+  const controlIds = [
+    'btnClosePersonalizedRemedial',
+    'btnGatewayStudentQuick',
+    'btnGatewayDirectorQuick',
+    'btnInlineCreateClass',
+    'btnPrintStudentCard',
+    'btnStudentWbRefresh',
+    'btnStudentWbClearSearch',
+    'btnStudentWbTeachTopic',
+    'btnStudentWbPrev',
+    'btnStudentWbPlayPause',
+    'btnStudentWbNext',
+    'btnStudentWbFull',
+    'btnStudentWbFit',
+    'btnStudentWbClear',
+    'btnStudentWbSpeak',
+    'btnStudentWbLiveVoice',
+    'btnStudentWbClearDoubts',
+    'btnStudentWbMic',
+    'btnStudentWbAskDoubt',
+    'btnStudentWbFullscreen',
+    'btnStudentWbBannerFullscreen'
+  ];
+  controlIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.getAttribute('type') && el.tagName === 'BUTTON') {
+      el.setAttribute('type', 'button');
+    }
+  });
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', verifyInteractiveControlAccessibility);
+}
+
+// ============================================================================
+// STUDENT AI SMARTBOARD & DOUBT STUDIO CONTROLLER (#tabStudentSmartboard)
+// ============================================================================
+const studentSmartboardState = {
+  initialized: false,
+  listenersBound: false,
+  iframeReady: false,
+  pendingPlanPayload: null,
+  selectedClass: '12',
+  selectedSubject: 'PHYSICS',
+  searchQuery: '',
+  topicsRequestId: 0,
+  teachRequestId: 0,
+  doubtGenerationId: 0,
+  topicsCache: {},
+  allTopics: [],
+  filteredTopics: [],
+  activeTopic: null,
+  activePlan: null,
+  activeQuestionText: '',
+  activeSolutionText: '',
+  activeHinglishBrief: '',
+  isPaused: false,
+  isSpeaking: false,
+  isListeningDoubt: false,
+  doubtRecognition: null,
+  doubtHistory: [],
+  liveVoiceActive: false
+};
+
+const STUDENT_WB_SUBJECTS_BY_CLASS = {
+  '10': [
+    { key: 'CLASS10_SCIENCE', label: 'Science (Phy, Chem, Bio)' },
+    { key: 'CLASS10_MATHEMATICS', label: 'Mathematics' }
+  ],
+  '11': [
+    { key: 'PHYSICS', label: 'Physics' },
+    { key: 'CHEMISTRY', label: 'Chemistry (Senior Prep)' },
+    { key: 'MATHEMATICS', label: 'Mathematics (Senior Prep)' },
+    { key: 'BIOLOGY', label: 'Biology (Senior Prep)' }
+  ],
+  '12': [
+    { key: 'PHYSICS', label: 'Physics' },
+    { key: 'CHEMISTRY', label: 'Chemistry' },
+    { key: 'MATHEMATICS', label: 'Mathematics' },
+    { key: 'BIOLOGY', label: 'Biology' }
+  ]
+};
+
+function getStudentWbIframeWindow() {
+  const iframe = document.getElementById('studentWbIframe');
+  return iframe && iframe.contentWindow ? iframe.contentWindow : null;
+}
+
+function postToStudentSmartboard(message) {
+  const win = getStudentWbIframeWindow();
+  if (!win || !message || !message.type) return false;
+  try {
+    win.postMessage(message, '*');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getStudentWbSubjectLabel(grade, subjectKey) {
+  const list = STUDENT_WB_SUBJECTS_BY_CLASS[String(grade)] || STUDENT_WB_SUBJECTS_BY_CLASS['12'];
+  const match = list.find(item => item.key === subjectKey);
+  return match ? match.label : subjectKey;
+}
+
+function populateStudentWbSubjectsForClass(grade) {
+  const subjSelect = document.getElementById('selectStudentWbSubject');
+  if (!subjSelect) return;
+  const options = STUDENT_WB_SUBJECTS_BY_CLASS[String(grade)] || STUDENT_WB_SUBJECTS_BY_CLASS['12'];
+  const prevVal = studentSmartboardState.selectedSubject;
+  subjSelect.innerHTML = '';
+  options.forEach(opt => {
+    const o = document.createElement('option');
+    o.value = opt.key;
+    o.textContent = opt.label;
+    subjSelect.appendChild(o);
+  });
+  const keep = options.some(o => o.key === prevVal);
+  studentSmartboardState.selectedSubject = keep ? prevVal : options[0].key;
+  subjSelect.value = studentSmartboardState.selectedSubject;
+}
+
+async function loadStudentWbTopicsForSelection(autoTeachFirst = false) {
+  const reqId = ++studentSmartboardState.topicsRequestId;
+  const grade = String(studentSmartboardState.selectedClass || '12');
+  const subjectKey = String(studentSmartboardState.selectedSubject || 'PHYSICS');
+  const cacheKey = `${grade}::${subjectKey}`;
+  const topicSelect = document.getElementById('selectStudentWbTopic');
+
+  if (topicSelect && !studentSmartboardState.topicsCache[cacheKey]) {
+    topicSelect.innerHTML = '<option value="">Loading syllabus topics...</option>';
+  }
+
+  let topics = studentSmartboardState.topicsCache[cacheKey];
+  if (!topics) {
+    try {
+      const res = await fetch(
+        `${getApiBaseUrl()}/api/curriculum/taxonomy/${encodeURIComponent(subjectKey)}?grade=${encodeURIComponent(grade)}`
+      );
+      if (reqId !== studentSmartboardState.topicsRequestId) return;
+      if (res.ok) {
+        const data = await res.json();
+        const chapters = Array.isArray(data.chapters) ? data.chapters : [];
+        topics = [];
+        chapters.forEach(ch => {
+          const chNum = ch.chapterNumber || '';
+          const chTitle = ch.chapterName || ch.chapterTitle || ch.title || 'Chapter';
+          const chFocus = ch.boardExamFocus || '';
+          const chTopics = Array.isArray(ch.topics) ? ch.topics : [];
+          chTopics.forEach((t, idx) => {
+            topics.push({
+              topicKey: t.id || `${ch.id || chNum}_${idx}`,
+              topicName: t.topicName || t.name || chTitle,
+              chapterId: ch.id || '',
+              chapterNumber: chNum,
+              chapterTitle: chTitle,
+              unit: ch.unit || '',
+              subtopics: Array.isArray(t.subtopics) ? t.subtopics : [],
+              boardFocus: t.boardFocus || t.highYieldNote || chFocus || '',
+              sampleQuestions: Array.isArray(t.sampleQuestions) ? t.sampleQuestions : [],
+              grade,
+              subjectKey
+            });
+          });
+        });
+        studentSmartboardState.topicsCache[cacheKey] = topics;
+      }
+    } catch (err) {
+      console.warn('[STUDENT SMARTBOARD] Failed to fetch curriculum taxonomy:', err.message);
+    }
+  }
+
+  if (reqId !== studentSmartboardState.topicsRequestId) return;
+
+  if (!Array.isArray(topics) || topics.length === 0) {
+    topics = [
+      {
+        topicKey: `${subjectKey}_core_1`,
+        topicName: `${getStudentWbSubjectLabel(grade, subjectKey)} Core Concepts`,
+        chapterNumber: '1',
+        chapterTitle: 'Core Syllabus Foundations',
+        subtopics: ['Governing Principle', 'Formula Derivation', 'Solved Numerical'],
+        boardFocus: 'Fundamental CBSE & Competitive Exam Derivation',
+        sampleQuestions: [],
+        grade,
+        subjectKey
+      }
+    ];
+  }
+
+  studentSmartboardState.allTopics = topics;
+  filterAndRenderStudentWbTopics(autoTeachFirst);
+}
+
+function filterAndRenderStudentWbTopics(autoTeachFirst = false) {
+  const query = (studentSmartboardState.searchQuery || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('btnStudentWbClearSearch');
+  if (clearBtn) {
+    clearBtn.style.display = query ? 'inline-flex' : 'none';
+  }
+
+  const all = studentSmartboardState.allTopics || [];
+  const filtered = !query
+    ? all
+    : all.filter(t => {
+        const hay = [
+          t.topicName,
+          t.chapterTitle,
+          t.unit,
+          t.boardFocus,
+          ...(t.subtopics || [])
+        ].join(' ').toLowerCase();
+        return hay.includes(query);
+      });
+
+  studentSmartboardState.filteredTopics = filtered;
+
+  const countEl = document.getElementById('studentWbTopicMatchCount');
+  if (countEl) {
+    countEl.textContent = `${filtered.length}`;
+  }
+
+  const topicSelect = document.getElementById('selectStudentWbTopic');
+  const chipsContainer = document.getElementById('studentWbTopicChips');
+
+  if (topicSelect) {
+    topicSelect.innerHTML = '';
+    if (filtered.length === 0) {
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = `No topics match "${studentSmartboardState.searchQuery}"`;
+      topicSelect.appendChild(emptyOpt);
+    } else {
+      const grouped = new Map();
+      filtered.forEach(t => {
+        const groupLabel = t.chapterNumber ? `Ch ${t.chapterNumber}: ${t.chapterTitle}` : t.chapterTitle;
+        if (!grouped.has(groupLabel)) grouped.set(groupLabel, []);
+        grouped.get(groupLabel).push(t);
+      });
+
+      grouped.forEach((items, groupLabel) => {
+        const og = document.createElement('optgroup');
+        og.label = groupLabel;
+        items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.topicKey;
+          opt.textContent = item.chapterNumber ? `Ch ${item.chapterNumber} - ${item.topicName}` : item.topicName;
+          og.appendChild(opt);
+        });
+        topicSelect.appendChild(og);
+      });
+
+      const currentStillPresent =
+        studentSmartboardState.activeTopic &&
+        filtered.some(t => t.topicKey === studentSmartboardState.activeTopic.topicKey);
+      const selectedTopic = currentStillPresent ? studentSmartboardState.activeTopic : filtered[0];
+      studentSmartboardState.activeTopic = selectedTopic;
+      topicSelect.value = selectedTopic.topicKey;
+    }
+  }
+
+  if (chipsContainer) {
+    chipsContainer.innerHTML = '';
+    if (filtered.length === 0) {
+      chipsContainer.innerHTML =
+        '<span style="font-size:0.76rem; color:#94a3b8;">No matching topics in this Class/Subject. Try clearing search or switching Class.</span>';
+    } else {
+      const maxChips = 14;
+      filtered.slice(0, maxChips).forEach(t => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        const isActive = studentSmartboardState.activeTopic?.topicKey === t.topicKey;
+        chip.className = `student-wb-topic-chip${isActive ? ' active' : ''}`;
+        chip.setAttribute('data-topic-key', t.topicKey);
+        chip.title = `${t.chapterTitle} - ${t.topicName}`;
+        chip.textContent = t.chapterNumber ? `Ch ${t.chapterNumber}: ${t.topicName}` : t.topicName;
+        chip.addEventListener('click', () => {
+          studentSmartboardState.activeTopic = t;
+          if (topicSelect) topicSelect.value = t.topicKey;
+          filterAndRenderStudentWbTopics(false);
+          teachStudentWbSelectedTopic(false);
+        });
+        chipsContainer.appendChild(chip);
+      });
+    }
+  }
+
+  if (autoTeachFirst && filtered.length > 0) {
+    teachStudentWbSelectedTopic(false);
+  }
+}
+
+function renderStudentWbSyncedCards(smartboardPlan, activeConceptIndex = 0) {
+  const container = document.getElementById('studentWbSyncedCards');
+  if (!container) return;
+  if (!smartboardPlan || !smartboardPlan.solution) {
+    container.innerHTML =
+      '<div class="student-wb-empty-cards">Choose a Class &amp; Topic above and click Teach Topic to display formulas and step-by-step explanations.</div>';
+    return;
+  }
+
+  const sol = smartboardPlan.solution;
+  const steps = [
+    { key: 'step1', idx: 1, fallback: 'Governing Principle & Setup' },
+    { key: 'step2', idx: 2, fallback: 'Derivation & Working' },
+    { key: 'step3', idx: 3, fallback: 'Evaluated Result & Takeaway' }
+  ];
+
+  const cardsHtml = steps
+    .map(s => {
+      const stepData = sol[s.key] || {};
+      const title = escapeHtml(stepData.title || s.fallback);
+      const formulaHtml =
+        typeof renderLatexString === 'function'
+          ? renderLatexString(stepData.formula || '').replace(/\n/g, '<br>')
+          : escapeHtml(stepData.formula || '').replace(/\n/g, '<br>');
+      const expHtml =
+        typeof renderLatexString === 'function'
+          ? renderLatexString(stepData.explanation || '')
+          : escapeHtml(stepData.explanation || '');
+      const activeCls = activeConceptIndex === s.idx ? ' active' : '';
+
+      return `
+        <div class="student-wb-step-card${activeCls}" data-wb-step="${s.idx}">
+          <div class="student-wb-step-title">${title}</div>
+          <div class="student-wb-step-formula">${formulaHtml}</div>
+          <div class="student-wb-step-exp">${expHtml}</div>
+        </div>
+      `;
+    })
+    .join('');
+
+  const tipText = smartboardPlan.examTip
+    ? `<div class="student-wb-tip-bar"><strong>Exam Tip:</strong> ${
+        typeof renderLatexString === 'function'
+          ? renderLatexString(smartboardPlan.examTip)
+          : escapeHtml(smartboardPlan.examTip)
+      }</div>`
+    : '';
+
+  container.innerHTML = cardsHtml + tipText;
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(container);
+  }
+}
+
+function dispatchPlanToStudentWhiteboard(payload) {
+  if (!payload) return;
+  const win = getStudentWbIframeWindow();
+  let alreadyLoaded = false;
+  try {
+    alreadyLoaded = !!(win && win.document && win.document.readyState === 'complete');
+  } catch (e) {}
+
+  if (!studentSmartboardState.iframeReady && !alreadyLoaded) {
+    studentSmartboardState.pendingPlanPayload = payload;
+  } else {
+    studentSmartboardState.iframeReady = true;
+    studentSmartboardState.pendingPlanPayload = null;
+  }
+  postToStudentSmartboard({ type: 'RENDER_SMARTBOARD_SOLUTION', payload });
+  postToStudentSmartboard({ type: 'START_PACING', payload });
+}
+
+async function teachStudentWbSelectedTopic(autoSpeak = false) {
+  const teachId = ++studentSmartboardState.teachRequestId;
+  const topic = studentSmartboardState.activeTopic || studentSmartboardState.filteredTopics[0];
+  const badgeEl = document.getElementById('studentWbPacingBadge');
+  const classTagEl = document.getElementById('studentWbActiveClassTag');
+  const topicLabelEl = document.getElementById('studentWbActiveTopicLabel');
+
+  if (!topic) {
+    if (badgeEl) badgeEl.textContent = 'Select Topic';
+    return;
+  }
+
+  const grade = String(studentSmartboardState.selectedClass || topic.grade || '12');
+  const subjectKey = String(studentSmartboardState.selectedSubject || topic.subjectKey || 'PHYSICS');
+  const voice = document.getElementById('selectStudentWbVoice')?.value || 'swara';
+  const subjectLabel = getStudentWbSubjectLabel(grade, subjectKey);
+
+  if (classTagEl) classTagEl.textContent = `Class ${grade} • ${subjectLabel}`;
+  if (topicLabelEl) topicLabelEl.textContent = `${topic.chapterTitle} — ${topic.topicName}`;
+  if (badgeEl) badgeEl.textContent = 'Generating Lesson...';
+
+  const sampleQ = Array.isArray(topic.sampleQuestions) && topic.sampleQuestions.length > 0 ? topic.sampleQuestions[0] : null;
+  const subtopicsLine = (topic.subtopics || []).slice(0, 4).join(', ');
+  const questionText =
+    (sampleQ && sampleQ.question_latex) ||
+    `Class ${grade} ${subjectLabel}: Explain and derive "${topic.topicName}" (${topic.chapterTitle}). Key concepts: ${subtopicsLine || topic.boardFocus || topic.topicName}.`;
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/voice-tutor/solve-and-sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: (sampleQ && sampleQ.id) || topic.topicKey,
+        questionText,
+        solutionText: '',
+        chapterName: topic.chapterTitle,
+        topic: topic.topicName,
+        subject: subjectLabel,
+        subjectKey,
+        marks: 3,
+        voice
+      })
+    });
+
+    const data = await res.json();
+    if (teachId !== studentSmartboardState.teachRequestId) return;
+    if (!res.ok || !data.success || !data.smartboardPlan) {
+      throw new Error(data.error || 'Could not generate smartboard plan');
+    }
+
+    const plan = data.smartboardPlan;
+    const sol = plan.solution || {};
+    studentSmartboardState.activePlan = plan;
+    studentSmartboardState.activeQuestionText = questionText;
+    studentSmartboardState.activeSolutionText = [
+      sol.step1?.formula,
+      sol.step1?.explanation,
+      sol.step2?.formula,
+      sol.step2?.explanation,
+      sol.step3?.formula
+    ]
+      .filter(Boolean)
+      .join('\n');
+    studentSmartboardState.activeHinglishBrief = data.hinglishBrief || plan.diagram?.spokenScript || '';
+    studentSmartboardState.isPaused = false;
+
+    const payload = {
+      ...plan,
+      questionHeader: plan.questionHeader || {
+        title: topic.topicName,
+        chapter: `${topic.chapterTitle} (Class ${grade})`,
+        marks: 3
+      },
+      subject: subjectLabel,
+      teacherName: plan.teacherName || 'AI Faculty Mentor'
+    };
+
+    renderStudentWbSyncedCards(payload, 1);
+    dispatchPlanToStudentWhiteboard(payload);
+
+    if (badgeEl) badgeEl.textContent = 'Visual Model';
+    updateStudentWbPlayPauseBtn(false);
+
+    if (autoSpeak && studentSmartboardState.activeHinglishBrief) {
+      playStudentWbVoiceBrief();
+    }
+  } catch (err) {
+    console.error('[STUDENT SMARTBOARD] Teach topic error:', err);
+    if (badgeEl) badgeEl.textContent = 'Retry';
+  }
+}
+
+function updateStudentWbPlayPauseBtn(paused) {
+  const btn = document.getElementById('btnStudentWbPlayPause');
+  if (!btn) return;
+  btn.innerHTML = paused
+    ? '<i data-lucide="play" style="width:13px; height:13px;"></i> Resume'
+    : '<i data-lucide="pause" style="width:13px; height:13px;"></i> Pause';
+  initLucideIcons();
+}
+
+function updateStudentWbSpeakBtn(speaking) {
+  studentSmartboardState.isSpeaking = speaking;
+  const btn = document.getElementById('btnStudentWbSpeak');
+  if (!btn) return;
+  btn.innerHTML = speaking
+    ? '<i data-lucide="volume-x" style="width:13px; height:13px;"></i> Stop Audio'
+    : '<i data-lucide="volume-2" style="width:13px; height:13px;"></i> Listen AI';
+  btn.classList.toggle('active', speaking);
+  initLucideIcons();
+}
+
+function playStudentWbVoiceBrief(textOverride = null) {
+  const textToSpeak = textOverride || studentSmartboardState.activeHinglishBrief;
+  if (!textToSpeak) return;
+  const voice = document.getElementById('selectStudentWbVoice')?.value || 'swara';
+  if (typeof speakWithVoiceEngine === 'function') {
+    speakWithVoiceEngine(
+      textToSpeak,
+      voice,
+      () => updateStudentWbSpeakBtn(true),
+      () => updateStudentWbSpeakBtn(false)
+    );
+  }
+}
+
+function controlStudentWbCanvas(action) {
+  const badgeEl = document.getElementById('studentWbPacingBadge');
+  switch (action) {
+    case 'prev':
+      postToStudentSmartboard({ type: 'PREV_CONCEPT' });
+      break;
+    case 'toggle':
+      studentSmartboardState.isPaused = !studentSmartboardState.isPaused;
+      postToStudentSmartboard({ type: studentSmartboardState.isPaused ? 'PAUSE_PACING' : 'RESUME_PACING' });
+      updateStudentWbPlayPauseBtn(studentSmartboardState.isPaused);
+      if (badgeEl) badgeEl.textContent = studentSmartboardState.isPaused ? 'Paused' : 'Playing';
+      break;
+    case 'next':
+      postToStudentSmartboard({ type: 'NEXT_CONCEPT' });
+      break;
+    case 'full':
+      postToStudentSmartboard({ type: 'SHOW_ALL_CONCEPTS' });
+      if (badgeEl) badgeEl.textContent = 'Full Derivation';
+      break;
+    case 'fit':
+      postToStudentSmartboard({ type: 'ZOOM_FIT' });
+      break;
+    case 'fullscreen':
+      toggleStudentWbFullscreen();
+      break;
+    case 'clear':
+      if (typeof stopVoiceAudioPlayback === 'function') stopVoiceAudioPlayback();
+      updateStudentWbSpeakBtn(false);
+      postToStudentSmartboard({ type: 'CLEAR_BOARD' });
+      if (badgeEl) badgeEl.textContent = 'Cleared';
+      break;
+    case 'speak':
+      if (studentSmartboardState.isSpeaking) {
+        if (typeof stopVoiceAudioPlayback === 'function') stopVoiceAudioPlayback();
+        updateStudentWbSpeakBtn(false);
+      } else if (!studentSmartboardState.activeHinglishBrief) {
+        teachStudentWbSelectedTopic(true);
+      } else {
+        playStudentWbVoiceBrief();
+      }
+      break;
+    case 'refresh': {
+      const iframe = document.getElementById('studentWbIframe');
+      if (iframe) {
+        studentSmartboardState.iframeReady = false;
+        if (studentSmartboardState.activePlan) {
+          studentSmartboardState.pendingPlanPayload = studentSmartboardState.activePlan;
+        }
+        iframe.src = `/whiteboard.html?role=student&ts=${Date.now()}`;
+      }
+      break;
+    }
+  }
+}
+
+function toggleStudentWbFullscreen(forceState) {
+  const shell = document.getElementById('tabStudentSmartboard') || document.querySelector('.student-wb-shell');
+  const btn1 = document.getElementById('btnStudentWbFullscreen');
+  const btn2 = document.getElementById('btnStudentWbBannerFullscreen');
+  if (!shell) return;
+  const isCurrentlyFullscreen = shell.classList.contains('student-wb-fullscreen-active');
+  const shouldBeFullscreen = typeof forceState === 'boolean' ? forceState : !isCurrentlyFullscreen;
+
+  if (shouldBeFullscreen === isCurrentlyFullscreen) return;
+
+  shell.classList.toggle('student-wb-fullscreen-active', shouldBeFullscreen);
+  try {
+    if (shouldBeFullscreen) {
+      if (shell.requestFullscreen && !document.fullscreenElement) {
+        shell.requestFullscreen().catch(() => {});
+      }
+    } else if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  } catch (_) {}
+
+  const label = shouldBeFullscreen ? 'Exit Full Screen' : 'Full Screen';
+  const iconName = shouldBeFullscreen ? 'shrink' : 'expand';
+  [btn1, btn2].forEach(b => {
+    if (b) {
+      b.innerHTML = `<i data-lucide="${iconName}" style="width:13px; height:13px;"></i> ${label}`;
+      b.setAttribute('title', shouldBeFullscreen ? 'Exit full screen mode' : 'Expand whiteboard to full screen');
+    }
+  });
+  if (typeof initLucideIcons === 'function') initLucideIcons();
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'));
+    postToStudentSmartboard({ type: 'ZOOM_FIT' });
+  }, 120);
+}
+
+function appendStudentWbDoubtBubble({ role, text, nextStep = '', source = '', speakableText = '' }) {
+  const thread = document.getElementById('studentWbDoubtThread');
+  if (!thread) return null;
+
+  const bubble = document.createElement('div');
+  bubble.className = `student-wb-chat-bubble ${role === 'student' ? 'student' : 'ai'}`;
+
+  const renderedBody =
+    typeof renderLatexString === 'function' ? renderLatexString(text || '') : escapeHtml(text || '');
+  const renderedNext = nextStep
+    ? `<div class="student-wb-chat-next"><strong>Next Step:</strong> ${
+        typeof renderLatexString === 'function' ? renderLatexString(nextStep) : escapeHtml(nextStep)
+      }</div>`
+    : '';
+
+  const replayBtnHtml =
+    role === 'ai' && speakableText
+      ? `<button type="button" class="btn-secondary student-wb-replay-reply" style="font-size:0.68rem; padding:2px 7px;" title="Listen again">Listen</button>`
+      : '';
+
+  bubble.innerHTML = `
+    <div class="student-wb-chat-meta">
+      <span>${role === 'student' ? 'You' : `AI Teacher${source ? ` (${escapeHtml(source)})` : ''}`}</span>
+      ${replayBtnHtml}
+    </div>
+    <div class="student-wb-chat-body">${renderedBody}</div>
+    ${renderedNext}
+  `;
+
+  if (role === 'ai' && speakableText) {
+    const replayBtn = bubble.querySelector('.student-wb-replay-reply');
+    if (replayBtn) {
+      replayBtn.addEventListener('click', () => playStudentWbVoiceBrief(speakableText));
+    }
+  }
+
+  thread.appendChild(bubble);
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(bubble);
+  }
+  thread.scrollTop = thread.scrollHeight;
+  return bubble;
+}
+
+async function submitStudentWbDoubt(doubtOverride = null) {
+  const genId = studentSmartboardState.doubtGenerationId;
+  const inputEl = document.getElementById('inputStudentWbDoubt');
+  const rawDoubt = typeof doubtOverride === 'string' ? doubtOverride : (inputEl?.value || '');
+  const doubtText = rawDoubt.trim();
+  if (!doubtText) return;
+
+  if (inputEl && typeof doubtOverride !== 'string') {
+    inputEl.value = '';
+  }
+
+  appendStudentWbDoubtBubble({ role: 'student', text: doubtText });
+  studentSmartboardState.doubtHistory.push({ role: 'student', text: doubtText });
+
+  const pendingBubble = appendStudentWbDoubtBubble({
+    role: 'ai',
+    text: 'Thinking through your doubt and pinning explanation onto the whiteboard...'
+  });
+
+  const topic = studentSmartboardState.activeTopic || {};
+  const grade = studentSmartboardState.selectedClass || '12';
+  const subjectLabel = getStudentWbSubjectLabel(grade, studentSmartboardState.selectedSubject);
+  const voice = document.getElementById('selectStudentWbVoice')?.value || 'swara';
+
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/voice-tutor/interrupt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionText: studentSmartboardState.activeQuestionText || topic.topicName || subjectLabel,
+        solutionText: studentSmartboardState.activeSolutionText || '',
+        chapterName: topic.chapterTitle || '',
+        topic: topic.topicName || '',
+        grade,
+        subject: subjectLabel,
+        studentDoubt: doubtText,
+        conversationHistory: studentSmartboardState.doubtHistory.slice(-6),
+        voice
+      })
+    });
+
+    const json = await res.json();
+    if (genId !== studentSmartboardState.doubtGenerationId) {
+      if (pendingBubble) pendingBubble.remove();
+      return;
+    }
+    const payload = json.data || json;
+    const answerText = payload.answerHinglish || 'Is concept ka governing formula apply karke quantities check karo.';
+    const nextStep = payload.suggestedNextStep || '';
+
+    if (pendingBubble) pendingBubble.remove();
+
+    appendStudentWbDoubtBubble({
+      role: 'ai',
+      text: answerText,
+      nextStep,
+      source: payload.source || '',
+      speakableText: answerText
+    });
+
+    studentSmartboardState.doubtHistory.push({ role: 'teacher', text: answerText });
+
+    // Pin the student's doubt + AI Teacher's answer right onto the smartboard canvas
+    postToStudentSmartboard({
+      type: 'HIGHLIGHT_DOUBT',
+      payload: {
+        doubtText,
+        answerText: typeof cleanLatexForClientVoice === 'function' ? cleanLatexForClientVoice(answerText) : answerText
+      }
+    });
+
+    playStudentWbVoiceBrief(answerText);
+  } catch (err) {
+    if (pendingBubble) pendingBubble.remove();
+    appendStudentWbDoubtBubble({
+      role: 'ai',
+      text: 'Network interruption while answering doubt. Check your connection and try again.'
+    });
+  }
+}
+
+function toggleStudentWbMic() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById('btnStudentWbMic');
+  if (!SpeechRec) {
+    const inputEl = document.getElementById('inputStudentWbDoubt');
+    if (inputEl) {
+      inputEl.focus();
+      inputEl.placeholder = 'Voice input not supported in this browser; type your doubt here...';
+    }
+    return;
+  }
+
+  if (studentSmartboardState.isListeningDoubt && studentSmartboardState.doubtRecognition) {
+    try { studentSmartboardState.doubtRecognition.stop(); } catch (e) {}
+    studentSmartboardState.isListeningDoubt = false;
+    if (micBtn) micBtn.classList.remove('active');
+    return;
+  }
+
+  const recognition = new SpeechRec();
+  recognition.lang = 'en-IN';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  studentSmartboardState.doubtRecognition = recognition;
+  studentSmartboardState.isListeningDoubt = true;
+  if (micBtn) micBtn.classList.add('active');
+
+  recognition.onresult = event => {
+    const transcript = event.results?.[0]?.[0]?.transcript || '';
+    if (transcript) {
+      submitStudentWbDoubt(transcript);
+    }
+  };
+  recognition.onerror = () => {
+    studentSmartboardState.isListeningDoubt = false;
+    if (micBtn) micBtn.classList.remove('active');
+  };
+  recognition.onend = () => {
+    studentSmartboardState.isListeningDoubt = false;
+    if (micBtn) micBtn.classList.remove('active');
+  };
+  recognition.start();
+}
+
+function toggleStudentWbLiveClass() {
+  const btn = document.getElementById('btnStudentWbLiveVoice');
+  const topic = studentSmartboardState.activeTopic || {};
+  const liveTutor = window.geminiLiveVoiceTutor;
+
+  if (liveTutor && typeof liveTutor.toggleLiveSession === 'function') {
+    const isNowActive = !liveTutor.isSessionActive();
+    studentSmartboardState.liveVoiceActive = isNowActive;
+    if (btn) btn.classList.toggle('active', isNowActive);
+    liveTutor.toggleLiveSession({
+      questionText: studentSmartboardState.activeQuestionText || topic.topicName || '',
+      chapterName: topic.chapterTitle || '',
+      topic: topic.topicName || '',
+      subject: getStudentWbSubjectLabel(studentSmartboardState.selectedClass, studentSmartboardState.selectedSubject),
+      teachingPlan: studentSmartboardState.activePlan,
+      callbacks: {
+        onStatusChange: (status) => {
+          if (btn) btn.classList.toggle('active', status === 'CONNECTED');
+          const badgeEl = document.getElementById('studentWbPacingBadge');
+          if (badgeEl) badgeEl.textContent = status === 'CONNECTED' ? 'Live Gemini Voice Active' : 'Whiteboard Ready';
+        },
+        onPhaseChange: (phaseIndex, phaseName) => {
+          postToStudentSmartboard({ type: 'SPOTLIGHT_CONCEPT', payload: { conceptIndex: phaseIndex } });
+          const stepLabels = ['Visual Model', 'Governing Law', 'Derivation', 'Evaluated Answer'];
+          const badgeEl = document.getElementById('studentWbPacingBadge');
+          if (badgeEl) badgeEl.textContent = stepLabels[phaseIndex] || phaseName || 'Teaching';
+          if (studentSmartboardState.activePlan) {
+            renderStudentWbSyncedCards(studentSmartboardState.activePlan, phaseIndex);
+          }
+        },
+        onInterrupted: () => {
+          const badgeEl = document.getElementById('studentWbPacingBadge');
+          if (badgeEl) badgeEl.textContent = 'Listening to your voice...';
+          postToStudentSmartboard({ type: 'PAUSE_PACING' });
+        }
+      }
+    });
+    return;
+  }
+
+  // Clean fallback: trigger spoken lesson or mic doubt if Gemini Live WebSocket module isn't mounted
+  if (!studentSmartboardState.activeHinglishBrief) {
+    teachStudentWbSelectedTopic(true);
+  } else {
+    playStudentWbVoiceBrief();
+  }
+}
+
+window.initStudentSmartboardWorkspace = function() {
+  const lazyFrame = document.getElementById('studentWbIframe');
+  if (lazyFrame && !lazyFrame.getAttribute('src') && lazyFrame.dataset.src) lazyFrame.setAttribute('src', lazyFrame.dataset.src);
+  const classSelect = document.getElementById('selectStudentWbClass');
+  const subjSelect = document.getElementById('selectStudentWbSubject');
+  const topicSelect = document.getElementById('selectStudentWbTopic');
+  const searchInput = document.getElementById('inputStudentWbTopicSearch');
+  const iframe = document.getElementById('studentWbIframe');
+
+  if (!studentSmartboardState.listenersBound) {
+    studentSmartboardState.listenersBound = true;
+
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      if (!msg) return;
+      if (msg.type === 'WHITEBOARD_READY') {
+        studentSmartboardState.iframeReady = true;
+        if (studentSmartboardState.pendingPlanPayload) {
+          const pending = studentSmartboardState.pendingPlanPayload;
+          studentSmartboardState.pendingPlanPayload = null;
+          dispatchPlanToStudentWhiteboard(pending);
+        }
+      } else if (msg.type === 'WB_CONCEPT_CHANGED') {
+        const badgeEl = document.getElementById('studentWbPacingBadge');
+        const idx = typeof msg.conceptIndex === 'number' ? msg.conceptIndex : 0;
+        const stepLabels = ['Visual Model', 'Governing Law', 'Derivation', 'Evaluated Answer', 'Full Derivation'];
+        if (badgeEl) badgeEl.textContent = stepLabels[idx] || 'Teaching';
+        if (studentSmartboardState.activePlan) {
+          renderStudentWbSyncedCards(studentSmartboardState.activePlan, idx);
+        }
+        if (window.geminiLiveVoiceTutor && window.geminiLiveVoiceTutor.isSessionActive()) {
+          if (typeof idx === 'number' && idx >= 0 && idx < 4 && window.geminiLiveVoiceTutor.currentSpokenPhase !== idx) {
+            window.geminiLiveVoiceTutor.highlightAndExplainStep(idx);
+          }
+        }
+      }
+    });
+
+    if (iframe) {
+      iframe.addEventListener('load', () => {
+        setTimeout(() => {
+          studentSmartboardState.iframeReady = true;
+          if (studentSmartboardState.pendingPlanPayload) {
+            const pending = studentSmartboardState.pendingPlanPayload;
+            studentSmartboardState.pendingPlanPayload = null;
+            dispatchPlanToStudentWhiteboard(pending);
+          }
+        }, 350);
+      });
+    }
+
+    if (classSelect) {
+      classSelect.addEventListener('change', () => {
+        studentSmartboardState.selectedClass = classSelect.value;
+        studentSmartboardState.activeTopic = null;
+        populateStudentWbSubjectsForClass(studentSmartboardState.selectedClass);
+        loadStudentWbTopicsForSelection(true);
+      });
+    }
+
+    if (subjSelect) {
+      subjSelect.addEventListener('change', () => {
+        studentSmartboardState.selectedSubject = subjSelect.value;
+        studentSmartboardState.activeTopic = null;
+        loadStudentWbTopicsForSelection(true);
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        studentSmartboardState.searchQuery = searchInput.value;
+        filterAndRenderStudentWbTopics(false);
+      });
+    }
+
+    if (topicSelect) {
+      topicSelect.addEventListener('change', () => {
+        const key = topicSelect.value;
+        const found = (studentSmartboardState.filteredTopics || []).find(t => t.topicKey === key);
+        if (found) {
+          studentSmartboardState.activeTopic = found;
+          filterAndRenderStudentWbTopics(false);
+          teachStudentWbSelectedTopic(false);
+        }
+      });
+    }
+
+    document.getElementById('btnStudentWbClearSearch')?.addEventListener('click', () => {
+      studentSmartboardState.searchQuery = '';
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      filterAndRenderStudentWbTopics(false);
+    });
+
+    document.getElementById('btnStudentWbTeachTopic')?.addEventListener('click', () => teachStudentWbSelectedTopic(true));
+    document.getElementById('btnStudentWbRefresh')?.addEventListener('click', () => controlStudentWbCanvas('refresh'));
+    document.getElementById('btnStudentWbPrev')?.addEventListener('click', () => controlStudentWbCanvas('prev'));
+    document.getElementById('btnStudentWbPlayPause')?.addEventListener('click', () => controlStudentWbCanvas('toggle'));
+    document.getElementById('btnStudentWbNext')?.addEventListener('click', () => controlStudentWbCanvas('next'));
+    document.getElementById('btnStudentWbFull')?.addEventListener('click', () => controlStudentWbCanvas('full'));
+    document.getElementById('btnStudentWbFullscreen')?.addEventListener('click', () => controlStudentWbCanvas('fullscreen'));
+    document.getElementById('btnStudentWbBannerFullscreen')?.addEventListener('click', () => controlStudentWbCanvas('fullscreen'));
+    document.getElementById('btnStudentWbFit')?.addEventListener('click', () => controlStudentWbCanvas('fit'));
+    document.getElementById('btnStudentWbClear')?.addEventListener('click', () => controlStudentWbCanvas('clear'));
+    document.getElementById('btnStudentWbSpeak')?.addEventListener('click', () => controlStudentWbCanvas('speak'));
+    document.getElementById('btnStudentWbLiveVoice')?.addEventListener('click', toggleStudentWbLiveClass);
+    document.getElementById('btnStudentWbMic')?.addEventListener('click', toggleStudentWbMic);
+    document.getElementById('btnStudentWbAskDoubt')?.addEventListener('click', () => submitStudentWbDoubt());
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        const shell = document.getElementById('tabStudentSmartboard') || document.querySelector('.student-wb-shell');
+        if (shell && shell.classList.contains('student-wb-fullscreen-active')) {
+          toggleStudentWbFullscreen(false);
+        }
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        toggleStudentWbFullscreen(false);
+      }
+    });
+
+    document.getElementById('btnStudentWbClearDoubts')?.addEventListener('click', () => {
+      studentSmartboardState.doubtGenerationId++;
+      studentSmartboardState.doubtHistory = [];
+      const thread = document.getElementById('studentWbDoubtThread');
+      if (thread) {
+        thread.innerHTML = '';
+        appendStudentWbDoubtBubble({
+          role: 'ai',
+          text: 'Chat cleared! Koi bhi naya doubt type karo ya mic se pucho.'
+        });
+      }
+    });
+
+    document.getElementById('inputStudentWbDoubt')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitStudentWbDoubt();
+      }
+    });
+
+    document.querySelectorAll('.student-wb-quick-doubt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.getAttribute('data-doubt') || btn.textContent.trim();
+        submitStudentWbDoubt(prompt);
+      });
+    });
+
+    document.getElementById('selectStudentWbVoice')?.addEventListener('change', e => {
+      if (typeof voiceTutorState !== 'undefined') {
+        voiceTutorState.selectedVoice = e.target.value || 'swara';
+      }
+    });
+  }
+
+  if (!studentSmartboardState.initialized) {
+    studentSmartboardState.initialized = true;
+    const defaultGrade = String(state.studentActiveGrade || '12');
+    studentSmartboardState.selectedClass = STUDENT_WB_SUBJECTS_BY_CLASS[defaultGrade] ? defaultGrade : '12';
+    if (classSelect) classSelect.value = studentSmartboardState.selectedClass;
+    populateStudentWbSubjectsForClass(studentSmartboardState.selectedClass);
+    loadStudentWbTopicsForSelection(true);
+  } else {
+    setTimeout(() => {
+      postToStudentSmartboard({ type: 'ZOOM_FIT' });
+    }, 180);
+  }
+  initLucideIcons();
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('message', event => {
+    const iframe = document.getElementById('studentWbIframe');
+    if (!iframe || event.source !== iframe.contentWindow) return;
+    const msg = event.data;
+    if (!msg) return;
+    if (msg.type === 'WHITEBOARD_READY') {
+      studentSmartboardState.iframeReady = true;
+      if (studentSmartboardState.pendingPlanPayload) {
+        const pending = studentSmartboardState.pendingPlanPayload;
+        studentSmartboardState.pendingPlanPayload = null;
+        dispatchPlanToStudentWhiteboard(pending);
+      }
+    }
+  });
+}

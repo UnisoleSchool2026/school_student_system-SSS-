@@ -51,9 +51,9 @@ router.post(['/whatsapp-dispatch', '/dispatch-whatsapp'], async (req, res) => {
         `*Unisole AI School - Official Academic Update*\n` +
         `*Weekly Academic Dossier for ${student.full_name} (Roll: ${student.roll_number})*\n\n` +
         `*Assessment*: ${testName}\n` +
-        `• *Accuracy*: ${accuracy}%\n` +
-        `• *Mastered Area*: High problem-solving consistency\n` +
-        `• *Focus Area*: ${weakness}\n\n` +
+        `- *Accuracy*: ${accuracy}%\n` +
+        `- *Mastered Area*: High problem-solving consistency\n` +
+        `- *Focus Area*: ${weakness}\n\n` +
         `*Recommended Parent Action for this Weekend:*\n` +
         `1. ${actionItem}\n` +
         `2. Ensure 45 mins quiet time Sunday morning for speed recap drill.\n\n` +
@@ -62,7 +62,8 @@ router.post(['/whatsapp-dispatch', '/dispatch-whatsapp'], async (req, res) => {
     }
 
     // Direct WhatsApp Web/App deep-link (100% free, zero-config, works instantly in browser/mobile)
-    const waDirectLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(formattedMessage)}`;
+    const sanitizedMessage = String(formattedMessage || '').replace(/\uFFFD/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
+    const waDirectLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(sanitizedMessage)}`;
 
     let dispatchMode = 'DIRECT_LINK';
     let apiResponse = null;

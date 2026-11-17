@@ -1,0 +1,18 @@
+# Keep the Docker image to the website files only (nginx serves everything that is copied in).
+.git
+.github
+.agents
+.env
+.env.*
+.gitignore
+.gitleaks.toml
+node_modules
+scripts
+src_whiteboard
+*.md
+*.log
+server.js
+package.json
+package-lock.json
+Dockerfile
+.dockerignore

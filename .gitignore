@@ -24,6 +24,8 @@ Thumbs.db
 build/
 dist/
 .vercel
+_revert_backups/
+*.pdf
 
 # Testing & Coverage
 coverage/

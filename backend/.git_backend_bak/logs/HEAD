@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 77f8c7d194d010eaaf87ce1ad5efb6dda0a1ac47 Nitish-011 <nitishjoshi0554@gmail.com> 1794634938 +0530	commit (initial): feat(backend): initialize standalone backend with production CI/CD workflows
+77f8c7d194d010eaaf87ce1ad5efb6dda0a1ac47 78940d2fbcb4bdfc9a86c80bcad67b8621e2fe1d Nitish-011 <nitishjoshi0554@gmail.com> 1794637352 +0530	commit: fix(ci): resolve background process lifecycle, gitleaks licensing, codeql permissions, and test edge cases
+78940d2fbcb4bdfc9a86c80bcad67b8621e2fe1d a19bac48b91c17515d8c4b519b95050c9757ece2 Nitish-011 <nitishjoshi0554@gmail.com> 1794639980 +0530	commit: fix(ci): make codeql non-blocking on private repositories without GHAS license
+a19bac48b91c17515d8c4b519b95050c9757ece2 a19bac48b91c17515d8c4b519b95050c9757ece2 Nitish-011 <nitishjoshi0554@gmail.com> 1794856560 +0530	checkout: moving from main to feat/role-lock-principal-and-teacher-dpp
+a19bac48b91c17515d8c4b519b95050c9757ece2 5cb1fe8c5f69d1438cd502e3d8c71179eac09368 Nitish-011 <nitishjoshi0554@gmail.com> 1794856576 +0530	commit: feat(backend): implement session role lock, teacher DPP service, principal live telemetry, and balanced keys
+5cb1fe8c5f69d1438cd502e3d8c71179eac09368 efeec075ba32d74cff97cf48f9efe517c76f43af Nitish-011 <nitishjoshi0554@gmail.com> 1794857055 +0530	commit (merge): Merge branch origin/main into feat/role-lock-principal-and-teacher-dpp
+efeec075ba32d74cff97cf48f9efe517c76f43af a19bac48b91c17515d8c4b519b95050c9757ece2 Nitish-011 <nitishjoshi0554@gmail.com> 1794885598 +0530	checkout: moving from feat/role-lock-principal-and-teacher-dpp to main
+a19bac48b91c17515d8c4b519b95050c9757ece2 611156e5def71ce96b069a4768dca2d795077f6a Nitish-011 <nitishjoshi0554@gmail.com> 1794885618 +0530	pull origin main: Fast-forward
+611156e5def71ce96b069a4768dca2d795077f6a df4a5c5eb69eddc25642aec3f8f7d2da3a319c19 rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918292 +0000	reset: moving to origin/main
+df4a5c5eb69eddc25642aec3f8f7d2da3a319c19 df4a5c5eb69eddc25642aec3f8f7d2da3a319c19 rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918383 +0000	reset: moving to HEAD
+df4a5c5eb69eddc25642aec3f8f7d2da3a319c19 df4a5c5eb69eddc25642aec3f8f7d2da3a319c19 rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918511 +0000	reset: moving to HEAD

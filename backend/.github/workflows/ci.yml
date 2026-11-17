@@ -1,0 +1,299 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-integration:
+    name: Unit and Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run evaluator test suite
+        run: npm test
+
+      - name: Run board paper generator test suite
+        run: npm run test:board-paper
+
+      - name: Run class progress analytics test suite
+        run: npm run test:progress
+
+      - name: Run LaTeX rendering and options test suite
+        run: node scripts/test_latex_rendering_and_options.js
+
+      - name: Run multi-tenant dual-mode registry test suite
+        run: npm run test:dual-mode
+
+  live-server:
+    name: Live Server Smoke and Math Bank Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Boot background server, wait for health, and run tests
+        run: |
+          node src/server.js > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Server process initiated with PID: ${SERVER_PID}"
+          echo "Polling http://localhost:5050/api/health until ready..."
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5050/api/health > /dev/null 2>&1; then
+              echo "Backend server is healthy and responding on port 5050."
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Backend server failed to respond within 30 seconds."
+            cat server.log
+            exit 1
+          fi
+          npm run test:math-bank
+          node scripts/verify_staging.js http://localhost:5050
+          kill $SERVER_PID || true
+
+      - name: Upload server logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-live-server-log
+          path: server.log
+          if-no-files-found: ignore
+
+  postgres-integration:
+    name: PostgreSQL Integration and Schema Migration Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: haps_admin
+          POSTGRES_PASSWORD: haps_secure_password_2026
+          POSTGRES_DB: haps_scholar_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PostgreSQL client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Apply schema and seed data migrations
+        env:
+          PGPASSWORD: haps_secure_password_2026
+        run: |
+          echo "Applying database schema..."
+          psql -h localhost -U haps_admin -d haps_scholar_db -f database/schema.sql
+          echo "Applying database seed data..."
+          psql -h localhost -U haps_admin -d haps_scholar_db -f database/seed_data.sql
+
+      - name: Sync tenant profiles and canonical curriculum content
+        env:
+          DATABASE_URL: postgres://haps_admin:haps_secure_password_2026@localhost:5432/haps_scholar_db
+        run: node scripts/sync_curriculum_content.js
+
+      - name: Boot server with PostgreSQL connection and verify health
+        env:
+          DATABASE_URL: postgres://haps_admin:haps_secure_password_2026@localhost:5432/haps_scholar_db
+        run: |
+          node src/server.js > pg_server.log 2>&1 &
+          PG_SERVER_PID=$!
+          echo "Server process initiated with DATABASE_URL (PID: ${PG_SERVER_PID})."
+          echo "Polling http://localhost:5050/api/health until ready..."
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5050/api/health > /dev/null 2>&1; then
+              echo "Backend server with PostgreSQL connectivity is healthy."
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Backend server with PostgreSQL connectivity failed to start."
+            cat pg_server.log
+            exit 1
+          fi
+          kill $PG_SERVER_PID || true
+
+      - name: Upload PostgreSQL server logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-postgres-server-log
+          path: pg_server.log
+          if-no-files-found: ignore
+
+  network-integration:
+    name: Network Dependent Integration (Voice Tutor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run voice tutor synthesis test (non-blocking network check)
+        run: node scripts/test_voice_tutor_hinglish.js
+
+  security-scan:
+    name: Security Vulnerability and Secret Audits
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository (full history for secret detection)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm security audit
+        run: npm audit --audit-level=high
+
+      - name: Install and run Gitleaks secret detection
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz | tar -xz gitleaks
+          chmod +x gitleaks
+          ./gitleaks detect --source=. --no-git --verbose --redact
+
+  codeql-analysis:
+    name: CodeQL Static Application Security Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        continue-on-error: true
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+        with:
+          upload: 'never'
+
+  docker-build-smoke:
+    name: Docker Build, Health Smoke Test, and Trivy Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build local container image with Buildx
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: haps-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start Docker container and verify /api/health
+        run: |
+          docker run -d --name haps-backend-test -p 5050:5050 haps-backend:test
+          echo "Waiting for Docker container on port 5050..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5050/api/health > /dev/null 2>&1; then
+              echo "Docker container is healthy."
+              docker stop haps-backend-test
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Docker container failed health check."
+          docker logs haps-backend-test
+          docker stop haps-backend-test
+          exit 1
+
+      - name: Run Trivy vulnerability scan on container image
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 haps-backend:test
+

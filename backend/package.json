@@ -6,17 +6,36 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node ../scripts/test_evaluator.js"
+    "test": "node scripts/test_evaluator.js",
+    "test:board-paper": "node scripts/test_board_paper_generator.js",
+    "test:progress": "node scripts/test_class_progress_dashboard.js",
+    "test:injection": "node scripts/test_question_injection.js",
+    "test:remedial": "node scripts/test_personalized_remedial_flow.js",
+    "test:math-bank": "node scripts/test_math_question_bank.js",
+    "test:dual-mode": "node scripts/test_dual_mode_registry.js",
+    "test:dpp": "node scripts/test_teacher_dpp_and_principal.js",
+    "test:board": "node scripts/test_study_board_and_class_desk.js",
+    "test:postgres": "node scripts/test_postgres_persistence.js",
+    "db:status": "node scripts/db_status.js",
+    "test:ncert": "node scripts/test_ncert_reading_engine.js",
+    "test:ai-study": "node scripts/test_ncert_ai_study.js",
+    "test:ingestion": "node scripts/test_phase1_ingestion_auth.js && node scripts/test_phase2_canonical_schema.js && node scripts/run_extraction_benchmarks.js",
+    "benchmarks:update-docs": "node scripts/run_extraction_benchmarks.js --update-docs"
   },
   "dependencies": {
+    "@google/genai": "^2.32.0",
     "cors": "^2.8.5",
+    "docx": "^9.14.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "kafkajs": "^2.2.4",
+    "msedge-tts": "^2.1.1",
+    "multer": "^2.5.0",
     "pdf-parse": "^2.4.5",
     "pg": "^8.12.0",
     "uuid": "^9.0.1",
-    "ws": "^8.17.1"
+    "ws": "^8.17.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

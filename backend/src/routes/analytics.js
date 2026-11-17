@@ -14,6 +14,7 @@
 
 const express = require('express');
 const router = express.Router();
+const subjectScope = require('../services/subjectScope');
 const { inMemoryStore } = require('../config/database');
 
 // ============================================================================
@@ -31,17 +32,11 @@ router.get('/class-dashboard', (req, res) => {
 
     // Filter assessments by teacher's subject if provided
     let relevantAssessments = assessmentsList;
-    if (reqSubjKey) {
-      relevantAssessments = assessmentsList.filter(a => {
-        const aKey = (a.subjectKey || '').toUpperCase();
-        const aSub = (a.subject || '').toUpperCase();
-        return aKey === reqSubjKey 
-          || aSub === reqSubjKey 
-          || aSub.includes(reqSubjKey)
-          || (reqSubjKey.includes('MATH') && (aKey.includes('MATH') || aSub.includes('MATH')))
-          || (reqSubjKey.includes('SCIENCE') && (aKey.includes('SCIENCE') || aSub.includes('SCIENCE')));
-      });
-      if (relevantAssessments.length === 0) relevantAssessments = assessmentsList;
+    const scoped = Boolean(reqSubjKey) && subjectScope.isKnownSubject(reqSubjKey);
+    if (scoped) {
+      // Subject isolation: never fall back to other subjects' tests.
+      relevantAssessments = assessmentsList.filter(a => subjectScope.assessmentInScope(reqSubjKey, a));
+      if (section) relevantAssessments = relevantAssessments.filter(a => String(a.section || a.targetClass || '').toLowerCase() === String(section).toLowerCase());
     }
 
     // Filter submissions for this assessment
@@ -51,6 +46,17 @@ router.get('/class-dashboard', (req, res) => {
     let assessment = null;
     if (assessmentId) {
       assessment = assessmentsList.find(a => a.id === assessmentId);
+      if (assessment && scoped && !subjectScope.assessmentInScope(reqSubjKey, assessment)) {
+        return res.status(403).json({ success: false, error: `Subject isolation: this test is outside the ${reqSubjKey} scope.` });
+      }
+    }
+    if (!assessment && scoped) {
+      assessment = relevantAssessments.find(a => !a.id.startsWith('paper_') && allSubmissions.some(s => s.assessmentId === a.id))
+        || relevantAssessments.find(a => !a.id.startsWith('paper_'))
+        || null;
+      if (!assessment) {
+        return res.json({ success: true, hasSubmissions: false, assessment: null, classSummary: null, questionAnalytics: [], studentRoster: [], availableAssessments: [], message: 'No tests have been published for this subject and class yet.' });
+      }
     }
     if (!assessment) {
       assessment = relevantAssessments.find(a => !a.id.startsWith('paper_') && allSubmissions.some(s => s.assessmentId === a.id)) 
@@ -66,10 +72,13 @@ router.get('/class-dashboard', (req, res) => {
     }
 
     const submissions = allSubmissions.filter(s => s.assessmentId === assessment.id);
+    // Real class size: students enrolled in the test's class (never a hardcoded number).
+    const enrolledInSection = (inMemoryStore.users || []).filter(u => u.role === 'STUDENT' && assessment.section && String(u.section || '').toLowerCase() === String(assessment.section).toLowerCase()).length;
+    const enrolledForAssessment = Math.max(enrolledInSection, new Set(submissions.map(s => s.studentId)).size);
 
     // Helper to format available assessments sorted by submission count
     const getAvailableAssessmentsList = () => {
-      const pool = [...relevantAssessments, ...assessmentsList.filter(a => !relevantAssessments.some(r => r.id === a.id))];
+      const pool = scoped ? relevantAssessments : [...relevantAssessments, ...assessmentsList.filter(a => !relevantAssessments.some(r => r.id === a.id))];
       return pool
         .filter(a => !a.id.startsWith('paper_') || (assessment && a.id === assessment.id))
         .sort((a, b) => {
@@ -405,8 +414,8 @@ router.get('/class-dashboard', (req, res) => {
       },
       classSummary: {
         totalSubmissions: submissions.length,
-        classEnrolledCount: 32,
-        participationRate: `${Math.round((submissions.length / 32) * 100)}%`,
+        classEnrolledCount: enrolledForAssessment,
+        participationRate: `${Math.round((submissions.length / Math.max(1, enrolledForAssessment)) * 100)}%`,
         averageScore: avgScore,
         averagePercentage: `${avgPercentage}%`,
         highestScore: {
@@ -571,6 +580,45 @@ router.get('/student-test-drilldown/:studentId/:assessmentId', (req, res) => {
 // ============================================================================
 // 3. GET /api/analytics/student/:id (Overall Concept Mastery)
 // ============================================================================
+// GET /api/analytics/student/:id/submissions - The student's own submitted tests (newest first).
+// Only tests assigned to the student's own class are returned (student content isolation).
+router.get('/student/:id/submissions', (req, res) => {
+  try {
+    const student = (inMemoryStore.users || []).find(u => u.id === req.params.id);
+    if (!student) return res.status(404).json({ success: false, error: 'Student not found' });
+    const assessments = inMemoryStore.assessments || [];
+    const list = (inMemoryStore.submissions || [])
+      .filter(s => s.studentId === student.id)
+      .map(s => ({ s, a: assessments.find(a => a.id === s.assessmentId) }))
+      .filter(({ a }) => a && String(a.section || a.targetClass || '').toLowerCase() === String(student.section || '').toLowerCase())
+      .map(({ s, a }) => ({
+        submissionId: s.submissionId || s.id,
+        assessmentId: a.id,
+        title: a.title,
+        subject: a.subject,
+        chapter: a.chapterName || a.chapter || '',
+        questionCount: (a.questions || []).length,
+        totalScore: s.totalScore,
+        totalMarks: s.totalMarks || a.totalMarks,
+        percentage: s.percentage,
+        totalTimeSpentSeconds: s.totalTimeSpentSeconds || 0,
+        submittedAt: s.submittedAt || null,
+        questionBreakdown: (s.questionBreakdown || []).map(q => ({
+          questionIndex: q.questionIndex,
+          topic: q.topic,
+          subtopic: q.subtopic,
+          isCorrect: q.isCorrect,
+          selectedOption: q.selectedOption,
+          correctAnswer: q.correctAnswer
+        }))
+      }))
+      .sort((x, y) => String(y.submittedAt || '').localeCompare(String(x.submittedAt || '')));
+    res.json({ success: true, student: { id: student.id, name: student.full_name, section: student.section }, count: list.length, submissions: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/student/:id', (req, res) => {
   const studentId = req.params.id || 'b0000000-0000-0000-0000-000000000001';
   const student = inMemoryStore.users.find(u => u.id === studentId) || {
@@ -610,6 +658,169 @@ router.get('/student/:id', (req, res) => {
 // ============================================================================
 // 4. GET /api/analytics/pilot-overview
 // ============================================================================
+// ============================================================================
+// GET /api/analytics/principal-overview - School-wide live telemetry (read-only)
+// Everything is computed from the live store (students, faculty, classes,
+// published tests, submissions, teacher DPPs). Nothing is hardcoded.
+// ============================================================================
+function pct(n, d) { return d ? Math.round((n / d) * 1000) / 10 : 0; }
+function avg(list) { return list.length ? Math.round((list.reduce((s, v) => s + v, 0) / list.length) * 10) / 10 : null; }
+
+function buildPrincipalOverview() {
+  const users = inMemoryStore.users || [];
+  const students = users.filter(u => u.role === 'STUDENT');
+  const teachers = users.filter(u => u.role === 'TEACHER');
+  const classes = inMemoryStore.classes || [];
+  const tests = (inMemoryStore.assessments || []).filter(a => a && a.id && !String(a.id).startsWith('paper_'));
+  const subs = inMemoryStore.submissions || [];
+  const dpps = inMemoryStore.teacherDpps || [];
+  const dppAttempts = inMemoryStore.teacherDppAttempts || [];
+  const sectionOf = v => String(v || '').toLowerCase();
+  const studentsIn = section => students.filter(s => sectionOf(s.section) === sectionOf(section));
+  const teacherFor = test => teachers.find(t => subjectScope.assessmentInScope(t.subjectKey, test)) || null;
+
+  // Per test
+  const testRows = tests.map(t => {
+    const tSubs = subs.filter(s => s.assessmentId === t.id);
+    const enrolled = studentsIn(t.section).length || new Set(tSubs.map(s => s.studentId)).size;
+    const teacher = teacherFor(t);
+    const submittedIds = new Set(tSubs.map(s => s.studentId));
+    return {
+      id: t.id,
+      title: t.title,
+      subject: t.subject || '',
+      section: t.section || '',
+      grade: String(t.grade || ''),
+      teacherName: teacher ? teacher.full_name : (t.teacherName || ''),
+      teacherId: teacher ? teacher.id : null,
+      createdAt: t.createdAt || t.created_at || null,
+      questions: (t.questions || []).length,
+      submitted: submittedIds.size,
+      enrolled,
+      participation: pct(submittedIds.size, enrolled),
+      avgPercent: avg(tSubs.map(s => Number(s.percentage) || 0)),
+      lowestPercent: tSubs.length ? Math.min(...tSubs.map(s => Number(s.percentage) || 0)) : null,
+      highestPercent: tSubs.length ? Math.max(...tSubs.map(s => Number(s.percentage) || 0)) : null
+    };
+  }).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+  // Per class
+  const classRows = classes.map(c => {
+    const section = c.section || c.id;
+    const cStudents = studentsIn(section);
+    const cTests = testRows.filter(t => sectionOf(t.section) === sectionOf(section));
+    const cSubs = subs.filter(s => sectionOf(s.section) === sectionOf(section));
+    const expected = cTests.reduce((s, t) => s + t.enrolled, 0);
+    const submitted = cTests.reduce((s, t) => s + t.submitted, 0);
+    const subjectNames = (c.subjects || []).map(s => (typeof s === 'string' ? s : (s.name || s.key)));
+    return {
+      section,
+      name: c.name || section,
+      grade: String(c.grade || ''),
+      students: cStudents.length,
+      subjects: subjectNames,
+      tests: cTests.length,
+      participation: pct(submitted, expected),
+      avgPercent: avg(cSubs.map(s => Number(s.percentage) || 0)),
+      dpps: dpps.filter(d => sectionOf(d.section) === sectionOf(section)).length
+    };
+  }).sort((a, b) => Number(b.grade) - Number(a.grade) || a.name.localeCompare(b.name));
+
+  // Per teacher
+  const teacherRows = teachers.map(t => {
+    const tTests = testRows.filter(r => r.teacherId === t.id);
+    const tSubs = subs.filter(s => tTests.some(r => r.id === s.assessmentId));
+    const tDpps = dpps.filter(d => d.teacherId === t.id || (!d.teacherId && d.subjectKey === t.subjectKey));
+    const dppSubs = dppAttempts.filter(a => tDpps.some(d => d.id === a.dppId));
+    const lastActivity = [...tTests.map(r => r.createdAt), ...tDpps.map(d => d.createdAt)].filter(Boolean).sort().pop() || null;
+    return {
+      id: t.id,
+      name: t.full_name,
+      subject: t.subject,
+      subjectKey: t.subjectKey,
+      designation: t.designation || '',
+      classes: subjectScope.allowedClasses(t.subjectKey).map(c => c.section || c.id),
+      testsPublished: tTests.length,
+      submissionsReceived: tSubs.length,
+      avgPercent: avg(tSubs.map(s => Number(s.percentage) || 0)),
+      dppsCreated: tDpps.length,
+      dppAttempts: dppSubs.length,
+      lastActivity
+    };
+  }).sort((a, b) => (b.testsPublished + b.dppsCreated) - (a.testsPublished + a.dppsCreated) || a.name.localeCompare(b.name));
+
+  // Topics: accuracy from every answered question across all submissions
+  const topicMap = new Map();
+  subs.forEach(s => (s.questionBreakdown || []).forEach(q => {
+    const topic = q.subtopic || q.topic;
+    if (!topic) return;
+    const test = tests.find(t => t.id === s.assessmentId) || {};
+    const key = `${topic}||${test.subject || ''}`;
+    if (!topicMap.has(key)) topicMap.set(key, { topic, chapter: q.topic || '', subject: test.subject || '', attempts: 0, correct: 0, sections: new Set() });
+    const m = topicMap.get(key);
+    m.attempts += 1;
+    if (q.isCorrect) m.correct += 1;
+    if (s.section) m.sections.add(s.section);
+  }));
+  const topics = Array.from(topicMap.values()).map(m => ({
+    topic: m.topic, chapter: m.chapter, subject: m.subject, attempts: m.attempts,
+    accuracy: pct(m.correct, m.attempts), sections: Array.from(m.sections)
+  }));
+  const weakTopics = topics.filter(t => t.attempts >= 3).sort((a, b) => a.accuracy - b.accuracy || b.attempts - a.attempts).slice(0, 8);
+  const strongTopics = topics.filter(t => t.attempts >= 3).sort((a, b) => b.accuracy - a.accuracy).slice(0, 5);
+
+  // Students needing support: low average, or several published tests not submitted
+  const studentRows = students.map(st => {
+    const sSubs = subs.filter(s => s.studentId === st.id);
+    const expectedTests = testRows.filter(t => sectionOf(t.section) === sectionOf(st.section));
+    const missed = expectedTests.filter(t => !sSubs.some(s => s.assessmentId === t.id)).length;
+    return {
+      id: st.id, name: st.full_name, roll: st.roll_number, section: st.section, grade: String(st.grade || ''),
+      testsTaken: sSubs.length, testsExpected: expectedTests.length, missed,
+      avgPercent: avg(sSubs.map(s => Number(s.percentage) || 0))
+    };
+  });
+  const needsSupport = studentRows
+    .filter(s => (s.avgPercent !== null && s.avgPercent < 50) || (s.testsExpected > 0 && s.missed > 0))
+    .sort((a, b) => (a.avgPercent === null ? 101 : a.avgPercent) - (b.avgPercent === null ? 101 : b.avgPercent) || b.missed - a.missed)
+    .slice(0, 12);
+  const topStudents = studentRows.filter(s => s.avgPercent !== null).sort((a, b) => b.avgPercent - a.avgPercent).slice(0, 5);
+
+  const expectedAll = testRows.reduce((s, t) => s + t.enrolled, 0);
+  const submittedAll = testRows.reduce((s, t) => s + t.submitted, 0);
+  return {
+    generatedAt: new Date().toISOString(),
+    totals: {
+      students: students.length,
+      teachers: teachers.length,
+      classes: classes.length,
+      testsPublished: testRows.length,
+      submissions: subs.length,
+      participation: pct(submittedAll, expectedAll),
+      avgPercent: avg(subs.map(s => Number(s.percentage) || 0)),
+      dppsCreated: dpps.length,
+      dppAttempts: dppAttempts.length,
+      studentsNeedingSupport: needsSupport.length
+    },
+    classes: classRows,
+    teachers: teacherRows,
+    tests: testRows,
+    weakTopics,
+    strongTopics,
+    needsSupport,
+    topStudents
+  };
+}
+
+router.get('/principal-overview', (req, res) => {
+  try {
+    res.json(Object.assign({ success: true }, buildPrincipalOverview()));
+  } catch (err) {
+    console.error('[PRINCIPAL OVERVIEW ERROR]', err);
+    res.status(500).json({ success: false, error: 'Could not build the school overview.' });
+  }
+});
+
 router.get('/pilot-overview', (req, res) => {
   res.json({
     success: true,

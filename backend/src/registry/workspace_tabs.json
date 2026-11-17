@@ -1,0 +1,392 @@
+{
+  "version": "1.2.0",
+  "description": "Workspace Tab Registry. A tab is shown when the active mode is listed in `modes` AND the tenant's feature flag for that mode is true (or `featureFlag` is null). `target.type = core` points at an existing frontend tab container; `target.type = module` opens the Module Workspace and loads GET /api/modules/:moduleId. Order here is the order in the teacher workspace list. Mode design (2026-11-16): BOARD = NCERT (+ exemplar & exercise), chapter-wise PYQ (Question Bank), Scan Paper Sheets; COMPETITIVE = Roadmap, NCERT, chapter-wise PYQ (Question Bank), chapter-wise DPP, Cheat Sheet.",
+  "teacher": [
+    {
+      "id": "createTest",
+      "target": {
+        "type": "core",
+        "tabId": "tabTeacherCreateTestAndPaper"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": null,
+      "icon": "file-plus-2",
+      "tone": "blue",
+      "labels": {
+        "BOARD": {
+          "title": "Create Test & Paper",
+          "subtitle": "Unit Tests & Full Board Papers",
+          "badge": "Paper Studio"
+        },
+        "COMPETITIVE": {
+          "title": "Create Test & Paper",
+          "subtitle": "Timed tests with NTA marking",
+          "badge": "Paper Studio"
+        }
+      }
+    },
+    {
+      "id": "classProgress",
+      "target": {
+        "type": "core",
+        "tabId": "tabTeacherClasses"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": null,
+      "icon": "bar-chart-3",
+      "tone": "purple",
+      "labels": {
+        "BOARD": {
+          "title": "Class Progress & Tests",
+          "subtitle": "Recorded Tests, Diagnostics & Roster",
+          "badge": "Telemetry"
+        },
+        "COMPETITIVE": {
+          "title": "Class Progress & Tests",
+          "subtitle": "Recorded Tests, Diagnostics & Roster",
+          "badge": "Telemetry"
+        }
+      }
+    },
+    {
+      "id": "questionBank",
+      "target": {
+        "type": "core",
+        "tabId": "tabQuestionBank"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "chapterWisePYQ",
+      "icon": "database",
+      "tone": "cyan",
+      "labels": {
+        "BOARD": {
+          "title": "Question Bank & PYQs",
+          "subtitle": "Chapter-wise Board PYQs",
+          "badge": "PYQ Bank"
+        },
+        "COMPETITIVE": {
+          "title": "Question Bank & PYQs",
+          "subtitle": "Chapter-wise JEE / NEET practice",
+          "badge": "PYQ Bank"
+        }
+      }
+    },
+    {
+      "id": "classDesk",
+      "target": {
+        "type": "core",
+        "tabId": "tabTeacherClassDesk"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "classDesk",
+      "icon": "messages-square",
+      "tone": "green",
+      "labels": {
+        "BOARD": {
+          "title": "Class Desk",
+          "subtitle": "Doubts, notices, homework & reports",
+          "badge": "Desk"
+        },
+        "COMPETITIVE": {
+          "title": "Class Desk",
+          "subtitle": "Doubts, notices, homework & reports",
+          "badge": "Desk"
+        }
+      }
+    },
+    {
+      "id": "studyBoard",
+      "target": {
+        "type": "core",
+        "tabId": "tabTeacherStudyBoard"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "studyBoard",
+      "icon": "presentation",
+      "tone": "blue",
+      "labels": {
+        "BOARD": {
+          "title": "Study Board",
+          "subtitle": "Teach a topic on the class board",
+          "badge": "Board"
+        },
+        "COMPETITIVE": {
+          "title": "Study Board",
+          "subtitle": "Teach a topic on the class board",
+          "badge": "Board"
+        }
+      }
+    },
+    {
+      "id": "scanSheets",
+      "target": {
+        "type": "core",
+        "tabId": "tabHandwritten"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "scanPaperSheets",
+      "icon": "scan-line",
+      "tone": "green",
+      "labels": {
+        "BOARD": {
+          "title": "Scan Paper Sheets",
+          "subtitle": "Vision AI Handwritten Grading & Rubric",
+          "badge": "Vision AI"
+        },
+        "COMPETITIVE": {
+          "title": "Scan Paper Sheets",
+          "subtitle": "Vision AI Handwritten Grading & Rubric",
+          "badge": "Vision AI"
+        }
+      }
+    },
+    {
+      "id": "ncertCore",
+      "target": {
+        "type": "module",
+        "moduleId": "ncert_core"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "ncertExemplar",
+      "icon": "book-open",
+      "tone": "cyan",
+      "labels": {
+        "BOARD": {
+          "title": "NCERT",
+          "subtitle": "Reading Engine & Chapters",
+          "badge": "NCERT"
+        },
+        "COMPETITIVE": {
+          "title": "NCERT",
+          "subtitle": "Reading Engine & Chapters",
+          "badge": "NCERT"
+        }
+      }
+    },
+    {
+      "id": "roadmap",
+      "target": {
+        "type": "module",
+        "moduleId": "roadmap"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "topicRoadmap",
+      "icon": "map",
+      "tone": "green",
+      "labels": {
+        "BOARD": {
+          "title": "Roadmap & Milestones",
+          "subtitle": "Term-1, Term-2 & Pre-Board",
+          "badge": "Roadmap"
+        },
+        "COMPETITIVE": {
+          "title": "Roadmap",
+          "subtitle": "Topic weightage & countdown",
+          "badge": "Roadmap"
+        }
+      }
+    },
+    {
+      "id": "practiceDpp",
+      "target": {
+        "type": "module",
+        "moduleId": "dpp"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "dailyPracticeProblems",
+      "icon": "calendar-check",
+      "tone": "blue",
+      "labels": {
+        "BOARD": {
+          "title": "Homework Sets",
+          "subtitle": "Chapter-wise daily practice",
+          "badge": "Homework"
+        },
+        "COMPETITIVE": {
+          "title": "Chapter-wise DPP",
+          "subtitle": "Daily timed problems & streak",
+          "badge": "DPP"
+        }
+      }
+    },
+    {
+      "id": "cheatSheets",
+      "target": {
+        "type": "module",
+        "moduleId": "cheatsheets"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "cheatSheets",
+      "icon": "sticky-note",
+      "tone": "purple",
+      "labels": {
+        "BOARD": {
+          "title": "Definition & Derivation Cards",
+          "subtitle": "Flashcards for board answers",
+          "badge": "Cards"
+        },
+        "COMPETITIVE": {
+          "title": "Cheat Sheet",
+          "subtitle": "Formulas & shortcut tricks",
+          "badge": "Formulas"
+        }
+      }
+    },
+    {
+      "id": "rankAnalytics",
+      "target": {
+        "type": "module",
+        "moduleId": "rank_analytics"
+      },
+      "modes": [
+        "COMPETITIVE"
+      ],
+      "featureFlag": "rankAnalytics",
+      "icon": "trophy",
+      "tone": "amber",
+      "labels": {
+        "COMPETITIVE": {
+          "title": "Predictive Rank Analytics",
+          "subtitle": "Estimated percentile & rank bands",
+          "badge": "Rank"
+        }
+      }
+    }
+  ],
+  "student": [
+    {
+      "id": "ncertCore",
+      "target": {
+        "type": "module",
+        "moduleId": "ncert_core"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "ncertExemplar",
+      "icon": "book-open",
+      "tone": "cyan",
+      "labels": {
+        "BOARD": {
+          "title": "NCERT",
+          "subtitle": "Chapters, Exemplar & Exercise",
+          "badge": "NCERT"
+        },
+        "COMPETITIVE": {
+          "title": "NCERT",
+          "subtitle": "Core concepts & traps",
+          "badge": "NCERT"
+        }
+      }
+    },
+    {
+      "id": "roadmap",
+      "target": {
+        "type": "module",
+        "moduleId": "roadmap"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "topicRoadmap",
+      "icon": "map",
+      "tone": "green",
+      "labels": {
+        "BOARD": {
+          "title": "Roadmap & Milestones",
+          "subtitle": "Term-1, Term-2 & Pre-Board",
+          "badge": "Roadmap"
+        },
+        "COMPETITIVE": {
+          "title": "Roadmap",
+          "subtitle": "High-yield order & countdown",
+          "badge": "Roadmap"
+        }
+      }
+    },
+    {
+      "id": "practiceDpp",
+      "target": {
+        "type": "module",
+        "moduleId": "dpp"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "dailyPracticeProblems",
+      "icon": "calendar-check",
+      "tone": "blue",
+      "labels": {
+        "BOARD": {
+          "title": "Homework Sets",
+          "subtitle": "Chapter-wise daily practice",
+          "badge": "Homework"
+        },
+        "COMPETITIVE": {
+          "title": "Chapter-wise DPP",
+          "subtitle": "Timed set & streak",
+          "badge": "DPP"
+        }
+      }
+    },
+    {
+      "id": "cheatSheets",
+      "target": {
+        "type": "module",
+        "moduleId": "cheatsheets"
+      },
+      "modes": [
+        "BOARD",
+        "COMPETITIVE"
+      ],
+      "featureFlag": "cheatSheets",
+      "icon": "sticky-note",
+      "tone": "purple",
+      "labels": {
+        "BOARD": {
+          "title": "Definition & Derivation Cards",
+          "subtitle": "Revise board answers fast",
+          "badge": "Cards"
+        },
+        "COMPETITIVE": {
+          "title": "Cheat Sheet",
+          "subtitle": "Formulas & shortcut tricks",
+          "badge": "Formulas"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schoolId": "sch_demo_board_only",
+  "name": "Sample Tenant: Board-Only Day School",
+  "shortName": "DEMO",
+  "subdomains": [
+    "demo-board"
+  ],
+  "activeModes": [
+    "BOARD"
+  ],
+  "defaultMode": "BOARD",
+  "boardConfig": {
+    "label": "Board Exam",
+    "eligibleGrades": [
+      "10"
+    ],
+    "enabledBoards": [
+      "CBSE"
+    ],
+    "defaultBoard": "CBSE",
+    "features": {
+      "scanPaperSheets": false,
+      "stepRubricEvaluation": true,
+      "ncertExemplar": true,
+      "chapterWisePYQ": true,
+      "topicRoadmap": true,
+      "cheatSheets": false,
+      "dailyPracticeProblems": true,
+      "rankAnalytics": false,
+      "ntaTimedMockEngine": false,
+      "studyBoard": true,
+      "classDesk": true
+    },
+    "dpp": {
+      "questionsPerDay": 10,
+      "minQuestions": 10,
+      "maxQuestions": 15,
+      "timeLimitMinutes": 25
+    }
+  }
+}

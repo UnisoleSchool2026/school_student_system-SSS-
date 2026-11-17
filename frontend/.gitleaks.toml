@@ -1,0 +1,11 @@
+# Gitleaks Configuration for HAPS Frontend
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore lockfiles and bundled vendor assets"
+paths = [
+  '''package-lock\.json''',
+  '''vendor/''',
+  '''\.env\.example'''
+]

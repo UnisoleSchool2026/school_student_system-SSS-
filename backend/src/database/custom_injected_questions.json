@@ -1,69 +1,3558 @@
 [
   {
-    "id": "snr_c_inj_1793801747344_553",
+    "id": "snr_p_inj_1794470489751_900",
     "grade": "12",
-    "subject": "Chemistry",
-    "subjectKey": "CHEMISTRY",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
     "stream": "COMMON_SENIOR",
     "target_exam": "JEE_MAIN",
-    "chapter_name": "Electrochemistry",
-    "chapter": "Electrochemistry",
-    "topic": "Nernst Equation",
+    "chapter_name": "Electric Fields and Gauss's Law",
+    "chapter": "Electric Fields and Gauss's Law",
+    "topic": "Electric Fields and Gauss's Law",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "EASY",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 30,
+    "marks_weightage": 1,
+    "question_latex": "What is the SI unit of electric flux?",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$N \\cdot m^2 / C$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$N / C$",
+        "is_correct": false,
+        "distractor_trap": "Confuses field unit with flux unit"
+      },
+      {
+        "key": "C",
+        "latex": "$V \\cdot m^2$",
+        "is_correct": false,
+        "distractor_trap": "Mixes potential with flux"
+      },
+      {
+        "key": "D",
+        "latex": "$J / C$",
+        "is_correct": false,
+        "distractor_trap": "Uses energy per charge instead of field per area"
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$N \\cdot m^2 / C$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$N / C$",
+        "is_correct": false,
+        "distractor_trap": "Confuses field unit with flux unit"
+      },
+      {
+        "key": "C",
+        "latex": "$V \\cdot m^2$",
+        "is_correct": false,
+        "distractor_trap": "Mixes potential with flux"
+      },
+      {
+        "key": "D",
+        "latex": "$J / C$",
+        "is_correct": false,
+        "distractor_trap": "Uses energy per charge instead of field per area"
+      }
+    ],
+    "correct_answer_latex": "$N \\cdot m^2 / C$",
+    "correct_answer": "A",
+    "solution_latex": "Electric flux is defined as $\\Phi_E = \\int \\vec{E}\\cdot d\\vec{A}$. The electric field $\\vec{E}$ has SI unit $\\text{N/C}$ and the differential area $d\\vec{A}$ has unit $\\text{m}^2$. Therefore the product gives $\\text{N}\\cdot\\text{m}^2\\cdot\\text{C}^{-1}$, which is equivalent to $\\text{V}\\cdot\\text{m}$.",
+    "socratic_hints": [
+      "Recall the definition of electric flux as the dot product of electric field and area.",
+      "What are the SI units of electric field and area?"
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identify units of $E$ and $A$ and multiply them.",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Fields and Gauss's Law",
+      "ncert_section": "Electric Flux",
+      "pyq_tag": "CBSE / Board PYQ (Previous Year Question)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_physics_9816010001",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-12T08:01:29.751Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-12T08:01:29.751Z",
+    "contentHash": "d27603b2aae3e90ddf3c9a009788a742fdc7518ef66e7a6f34b1782c8852a282",
+    "target_modes": [
+      "BOARD",
+      "COMPETITIVE"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "status": "PENDING_REVIEW"
+  },
+  {
+    "id": "snr_p_inj_1794470489751_830",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Alternating Current",
+    "chapter": "Alternating Current",
+    "topic": "Alternating Current",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
+    "difficulty": "MEDIUM",
+    "question_format": "SUBJECTIVE_LONG",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 3,
+    "question_latex": "An alternating voltage $V = 220\\sqrt{2}\\sin(100\\pi t)$ is applied across a pure capacitor of capacitance $C = 10\\,\\mu\\text{F}$. Find the capacitive reactance $X_C$ and the peak current $I_0$ in the circuit.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "$X_C = \\frac{1}{\\omega C} \\approx 318.3\\,\\Omega,\\quad I_0 \\approx 0.98\\,\\text{A}$",
+    "correct_answer": "A",
+    "solution_latex": "Step 1: Angular frequency $\\omega = 2\\pi f = 100\\pi\\,\\text{rad/s}$.\\nStep 2: Capacitive reactance $X_C = \\frac{1}{\\omega C} = \\frac{1}{100\\pi \\times 10\\times10^{-6}} = \\frac{10^3}{\\pi}\\approx 318.3\\,\\Omega$.\\nStep 3: Peak voltage $V_0 = 220\\sqrt{2}\\,\\text{V}$. Peak current $I_0 = \\frac{V_0}{X_C} = \\frac{220\\sqrt{2}}{318.3}\\approx 0.98\\,\\text{A}$.",
+    "socratic_hints": [
+      "What is the relationship between voltage, current, and reactance in an AC circuit?",
+      "How do you compute angular frequency from the given sinusoidal expression?"
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Compute angular frequency $\\omega$.",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Calculate capacitive reactance $X_C$.",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Determine peak current $I_0$ using $V_0$ and $X_C$.",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Alternating Current",
+      "ncert_section": "Capacitive Reactance",
+      "pyq_tag": "CBSE / Board PYQ (Previous Year Question)",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_physics_9816010001",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-12T08:01:29.751Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-12T08:01:29.751Z",
+    "contentHash": "7636e8c55cb2ffc37b47f8f2cbf4cc007ca50bdcb02eb0fc58909224dae9a275",
+    "target_modes": [
+      "BOARD",
+      "COMPETITIVE"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "status": "PENDING_REVIEW"
+  },
+  {
+    "id": "snr_p_inj_1794470489750_928",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Electric Fields and Gauss's Law",
+    "chapter": "Electric Fields and Gauss's Law",
+    "topic": "Electric Fields and Gauss's Law",
     "subtopic": "Core Derivation",
     "curriculum_board": "CBSE",
     "source_category": "CBSE_PYQ",
     "question_source": "CBSE_PYQ",
     "pyq_appearance": "CBSE Board Exam (2025 PYQ)",
     "difficulty": "HARD",
-    "question_format": "MCQ_SINGLE",
-    "benchmark_time_seconds": 225,
+    "question_format": "CASE_STUDY",
+    "benchmark_time_seconds": 180,
     "marks_weightage": 5,
-    "question_latex": "Calculate the emf of the cell: $\\text{Zn} | \\text{Zn}^{2+}(0.01\\,\\text{M}) || \\text{Cu}^{2+}(0.1\\,\\text{M}) | \\text{Cu}$.",
+    "question_latex": "State Gauss's law in electrostatics. Using this law, derive an expression for the electric field intensity due to an infinitely long straight wire of uniform linear charge density $\\lambda$.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "$E = \\frac{\\lambda}{2\\pi \\varepsilon_0 r}$",
+    "correct_answer": "A",
+    "solution_latex": "Step 1: Gauss's law: $\\oint \\vec{E}\\cdot d\\vec{A} = \\frac{q_{enc}}{\\varepsilon_0}$.\\nStep 2: Choose a cylindrical Gaussian surface of radius $r$ and length $L$ coaxial with the wire.\\nStep 3: By cylindrical symmetry, $\\vec{E}$ is radial and constant over the curved surface; flux through the end caps is zero.\\nStep 4: Flux $\\Phi = E\\,(2\\pi r L)$. Enclosed charge $q_{enc}=\\lambda L$.\\nStep 5: Apply Gauss's law: $E(2\\pi r L)=\\frac{\\lambda L}{\\varepsilon_0}\\Rightarrow E=\\frac{\\lambda}{2\\pi \\varepsilon_0 r}$.",
+    "socratic_hints": [
+      "Which symmetry can you exploit for an infinite line charge?",
+      "How does Gauss's law relate flux to enclosed charge?"
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "State Gauss's law.",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Select appropriate Gaussian surface.",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Use symmetry to simplify flux calculation.",
+        "marks": 1
+      },
+      {
+        "step": 4,
+        "description": "Compute flux and enclosed charge.",
+        "marks": 1
+      },
+      {
+        "step": 5,
+        "description": "Solve for $E$.",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Fields and Gauss's Law",
+      "ncert_section": "Gauss's Law",
+      "pyq_tag": "CBSE / Board PYQ (Previous Year Question)",
+      "marks": 5
+    },
+    "injected_by": {
+      "faculty_id": "fac_physics_9816010001",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-12T08:01:29.750Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-12T08:01:29.750Z",
+    "contentHash": "c32a17c7feb42aeaec90e313db7c5c4606fbb7f85a54fc39c110f2e4bafa3fbc",
+    "target_modes": [
+      "BOARD",
+      "COMPETITIVE"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "status": "PENDING_REVIEW"
+  },
+  {
+    "id": "snr_p_inj_1794899014144_869",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "COMPETITIVE"
+    ],
+    "board_targets": [],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Wave Optics",
+    "chapter": "Wave Optics",
+    "topic": "Wave Optics",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "JEE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 180,
+    "marks_weightage": 4,
+    "question_latex": "Two coherent sources have intensity ratio 100:1. The ratio between maximum and minimum intensities in interference pattern is:",
     "options_latex": [
       {
         "key": "A",
-        "latex": "$1.13\\,\\text{V}$",
+        "latex": "$121:81$",
         "is_correct": true
       },
       {
         "key": "B",
-        "latex": "$1.07\\,\\text{V}$",
+        "latex": "$100:1$",
+        "is_correct": false
+      },
+      {
+        "key": "C",
+        "latex": "$10:1$",
+        "is_correct": false
+      },
+      {
+        "key": "D",
+        "latex": "$49:25$",
         "is_correct": false
       }
     ],
     "options": [
       {
         "key": "A",
-        "latex": "$1.13\\,\\text{V}$",
+        "latex": "$121:81$",
         "is_correct": true
       },
       {
         "key": "B",
-        "latex": "$1.07\\,\\text{V}$",
+        "latex": "$100:1$",
+        "is_correct": false
+      },
+      {
+        "key": "C",
+        "latex": "$10:1$",
+        "is_correct": false
+      },
+      {
+        "key": "D",
+        "latex": "$49:25$",
         "is_correct": false
       }
     ],
-    "correct_answer_latex": "$1.13\\,\\text{V}$",
+    "correct_answer_latex": "$121:81$",
     "correct_answer": "A",
-    "solution_latex": "$$E_{\\text{cell}} = E^\\circ_{\\text{cell}} - \\frac{0.059}{2}\\log\\left(\\frac{0.01}{0.1}\\right) = 1.10 - 0.0295(-1) = 1.1295\\,\\text{V}$$.",
+    "solution_latex": "",
     "socratic_hints": [],
     "step_rubric": [],
     "ncert_mapping": {
-      "chapter_name": "Electrochemistry",
+      "chapter_name": "Wave Optics",
       "ncert_section": "Core Section",
       "pyq_tag": "CBSE_PYQ",
+      "marks": 4
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T07:03:34.144Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-17T07:03:34.144Z",
+    "contentHash": "ddd0425c440f17aa0dd1b1b2f10647c691d0da2be94357596e2753a7909aa47e",
+    "status": "PENDING_REVIEW"
+  },
+  {
+    "id": "snr_p_inj_1794899882107_36",
+    "contentHash": "631a19dbcf43d39061ce66551878d36e9adbd6f7c06bfd01406064abb7e4755a",
+    "status": "APPROVED",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "COMPETITIVE"
+    ],
+    "board_targets": [],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Wave Optics",
+    "chapter": "Wave Optics",
+    "topic": "Wave Optics",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "JEE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 120,
+    "marks_weightage": null,
+    "marks": null,
+    "question_latex": "Two coherent sources have intensity ratio 100:1. The ratio between maximum and minimum intensities in interference pattern is:",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$121:81$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$100:1$",
+        "is_correct": false
+      },
+      {
+        "key": "C",
+        "latex": "$10:1$",
+        "is_correct": false
+      },
+      {
+        "key": "D",
+        "latex": "$49:25$",
+        "is_correct": false
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$121:81$",
+        "is_correct": true
+      },
+      {
+        "key": "B",
+        "latex": "$100:1$",
+        "is_correct": false
+      },
+      {
+        "key": "C",
+        "latex": "$10:1$",
+        "is_correct": false
+      },
+      {
+        "key": "D",
+        "latex": "$49:25$",
+        "is_correct": false
+      }
+    ],
+    "correct_answer_latex": "$121:81$",
+    "correct_answer": "A",
+    "solution_latex": "",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Wave Optics",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": null
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T07:18:02.107Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-17T07:18:02.107Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408453_179",
+    "contentHash": "c8b5d5b8a5bdba82ad771995626ab4053a84a58d63e9882f087dad8dfa72c7ff",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "CBSE\nADDITIONAL PRACTICE QUESTIONS\nPhysics-Theory\nClass XII | 2023–24\nThere are 33 questions in all. All questions are compulsory.\nAn electric dipole having a dipole moment of $4 \\times 10^{-9}$ C m is placed in a\nuniform electric field such that the dipole is in stable equilibrium. If the\nmagnitude of the electric field is 3 × 103 N/C, what is the work done in\nrotating the dipole to a position of unstable equilibrium?\nA. zero\nB. $1.2 \\times 10^{-5}$ J\nC. $2.4 \\times 10^{-5}$ J\nD. - $1.2 \\times 10^{-5}$ J\n-- 1 of 17 --\n-- 2 of 17 --\n-- 3 of 17 --\n-- 4 of 17 --\n-- 5 of 17 --\n-- 6 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electric Charges and Fields.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.453Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.453Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408453_547",
+    "contentHash": "9699a159fed12ffacf92e6c784c0a16ca9633f6eab47913c3dc2701359b7e722",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Current Electricity",
+    "chapter": "Current Electricity",
+    "topic": "Current Electricity",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "This question paper has five sections: Section A, Section B, Section C, Section D, and\nAn infinite line of charge has a linear charge density of $10^{-7}$ C/m.\nWhat will be the magnitude of the force acting on an alpha particle placed at a\ndistance of 4 cm from the line of charge?\nA. $14.4 \\times 10^{-15}$ N\nB. $7.2 \\times 10^{-15}$ N\nC. 4.5 × 104 N\nD. 9 × 104 N\n-- 7 of 17 --\n-- 8 of 17 --\nΩ resistors in the circuit shown below.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Current Electricity.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Current Electricity",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.453Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.453Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_377",
+    "contentHash": "1a63fa43fea35aa8b403ff2c1f07e0bc7d31eb0d2f427b850952655b14f630be",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Dual Nature of Radiation and Matter",
+    "chapter": "Dual Nature of Radiation and Matter",
+    "topic": "Dual Nature of Radiation and Matter",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "All the sections are compulsory.\nThe graph below shows the variation of the maximum kinetic energy of the\nemitted photoelectron with the frequency of the incident radiation for a given\nmetal.\nWhich of the following gives the work function of the metal?\nA. x-intercept\nB. y-intercept\nC. the slope of the graph\nD. the area under the graph\nIf the wire R, experiences a net force towards wire P, then which of the\nfollowing is definitely TRUE about the current 'I' in wire Q?\nA. Current I cannot be in the upward direction.\nB. Current I can have any magnitude greater than 0 A in the upward\ndirection.\nC. Current I cannot have a magnitude of more than 15 A in the upward\ndirection.\nD. Current I cannot have a magnitude of more than 10 A in the upward\ndirection.\n-- 9 of 17 --\n-- 10 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Dual Nature of Radiation and Matter.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Dual Nature of Radiation and Matter",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.453Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.453Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_614",
+    "contentHash": "0065a26cddceb35630ce9779211afa0be90b7c280ba793c23058a014dc994304",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Work, Energy and Power",
+    "chapter": "Work, Energy and Power",
+    "topic": "Work, Energy and Power",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "CASE_STUDY",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Section A contains sixteen questions, twelve MCQ and four Assertion Reasoning\nbased of 1 mark each, Section B contains five questions of two marks each, Section\nC contains seven questions of three marks each, Section D contains two case study\nbased questions of four marks each and Section E contains three long answer\nquestions of five marks each.\nWhen an electron in an atom moves from the ground state to a higher energy\nlevel what happens to its kinetic and potential energies?\nkinetic energy potential energy\nA increases Increases\nB increases Decreases\nC decreases Increases\nD decreases Decreases\n-- 12 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Work, Energy and Power.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Work, Energy and Power",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_738",
+    "contentHash": "a46c17c5206339d1198a804978edb5ea0ee7379923f1709e3dc01877465368dd",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Current Electricity",
+    "chapter": "Current Electricity",
+    "topic": "Current Electricity",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "There is no overall choice. However, an internal choice has been provided in one\nquestion in Section B, one question in Section C, one question in each CBQ in\nchoices in such questions.\nTwo long and straight current-carrying wires, P and Q are placed parallel to\neach other separated by a distance of 10 cm. A wire 'R' of length 8 cm and\ncarrying a current of 4 A is placed between the two wires P and Q as shown\nbelow.\nII: The current in the resistor leads the voltage by π/2.\nIII: The average power dissipated by the resistor is zero.\nA. only I\nB. only I and II\nC. only II and III\nD. all - I, II and III\n-- 14 of 17 --\n-- 15 of 17 --\n-- 16 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Current Electricity.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Current Electricity",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_725",
+    "contentHash": "041bf3b08cce505526bd6d6504ac0f10236d99ab5fa5a1d67e1ad672bb162888",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Moving Charges and Magnetism",
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Moving Charges and Magnetism",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "ASSERTION_REASON",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Use of calculators is not allowed.\nQ.No Questions Marks\nA rod when suspended in a uniform magnetic field aligns itself perpendicular\nto the magnetic field as shown below.\nWhich of the following statements is/are true for the rod?\nP) Every atom in the rod, has a zero magnetic moment.\nQ) The rod is attracted when taken near the poles of a strong magnet.\nR) The relative permeability of the material of the rod is slightly less than 1.\nS) The susceptibility of the material of the rod is directly proportional to\ntemperature.\nA. only Q\nB. only P and R\nC. only Q and S\nD. only R and S\nWhich of the following spectrums most closely corresponds to the above\ntransitions?\nFor Questions 13 to 16, two statements are given –one labelled Assertion\n(A) and other labelled Reason (R). Select the correct answer to these\nquestions from the options as given below.\nA. Assertion and Reason are true and Reason is the correct\nexplanation of Assertion.\nB. Assertion and Reason are true but Reason is NOT the correct\nexplanation of Assertion.\nC. Assertion is true but Reason is false.\nD. Both Assertion and Reason are false.",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Moving Charges and Magnetism.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Moving Charges and Magnetism",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_963",
+    "contentHash": "c4097d3695808378a3f959abc34e4463e0705e39e5831710c7a2878e7b5df4e1",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Dual Nature of Radiation and Matter",
+    "chapter": "Dual Nature of Radiation and Matter",
+    "topic": "Dual Nature of Radiation and Matter",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Three students construct a solenoid of length 35 cm. They are each given\ninsulated copper wire of the same length. The table below lists some details\nabout the solenoids made by them.\nMagnetic field\nproduced\nRadius of\nsolenoid\nCore of solenoid\nStudent 1 B1 3 cm air\nStudent 2 B2 3 cm iron\nStudent 3 B3 6 cm air\nCompare the magnetic field produced by the solenoids made by the three\nstudents.\nA. B1=B3<B2\nB. B3<B1<B2\nC. B1<B2<B3\nD. B1=B2>B3\nReason (R): As per Einstein's photoelectric equation hν = φ + KE, work\nfunction φ is directly proportional to the frequency ν of the incident radiation.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Dual Nature of Radiation and Matter.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Dual Nature of Radiation and Matter",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_740",
+    "contentHash": "ad5d47272df3d947775bfe86d8aa52d2c665f80bbefc1c905b3d48d4b7ddaad8",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Moving Charges and Magnetism",
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Moving Charges and Magnetism",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "A charged particle ‘+q’ having a mass ‘m’ moves in a uniform electric and\nmagnetic field. In which of the following scenarios will the path of the\ncharged particle be linear and described by the velocity time graph shown\nbelow?\nA. E ⊥ B ⊥ velocity of the particle\nB. E || B and the particle is initially at rest\nC. E || B and the particle has an initial velocity along the electric field\nD. E ⊥ B and the particle has an initial velocity along the electric field",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Moving Charges and Magnetism.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Moving Charges and Magnetism",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_683",
+    "contentHash": "b4d27f14dab54fb2e4d725988d746e9dcdf14a9b2f3c27dbaaa032a83c5eb2fc",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Ray Optics and Optical Instruments",
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Ray Optics and Optical Instruments",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "A pure resistor is connected to an AC power source as shown below.\nWhich of the following statement(s) is/are TRUE?\nI: The average current flowing through the circuit during one full cycle is zero.\nA plastic coin remains submerged in water at a depth of 5 cm from the top of\nthe beaker. An observer sees the coin in the water and its image in the mirror.\nIf the image formed by the curved mirror is seen by the observer at a distance\nof 15 cm from the surface of the water, what is the focal length of the curved\nsurface? (Assume the silvered curved surface acts as a spherical mirror.)",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Ray Optics and Optical Instruments.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Ray Optics and Optical Instruments",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_902",
+    "contentHash": "67fa1ec659c664619b68449c142472d19105a9649939584dcab61ff430e05fc3",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electrostatic Potential and Capacitance",
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Electrostatic Potential and Capacitance",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "At what rate does the electric field change between the plates of a square\ncapacitor of side 5 cm, if the plates are spaced 1.2 mm apart and the voltage\nacross them is changing at a rate of 60 V/s?\nA. $7.2 \\times 10^{-2}$ Vm-1s-1\nB. $30 \\times 10^{-1}$ Vm-1s-1\nC. 12 x 102 Vm-1s-1\nD. 5 x 104 Vm-1s-1",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electrostatic Potential and Capacitance.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electrostatic Potential and Capacitance",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_970",
+    "contentHash": "a42d3f66240918bcf37274fb500a469f0aab96a1d42c7a425a00a16b6e16ca24",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electromagnetic Induction (EMI)",
+    "chapter": "Electromagnetic Induction (EMI)",
+    "topic": "Electromagnetic Induction (EMI)",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Three loops as shown below move into the magnetic field with a velocity v.\nIn which loop(s) will the induced emf be the largest at the instant when the\nloops enter the magnetic field?\nA. only P\nB. only Q\nC. only P and Q\nD. only Q and R",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$\\text{only } P$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$\\text{only } Q$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "$\\text{only } P \\text{ and } Q$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "$\\text{only } Q \\text{ and } R$",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$\\text{only } P$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$\\text{only } Q$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "$\\text{only } P \\text{ and } Q$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "$\\text{only } Q \\text{ and } R$",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electromagnetic Induction (EMI).",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electromagnetic Induction (EMI)",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_884",
+    "contentHash": "7e5916a0deffb4e849d5d09cbd9477af9eca24e1a2a538eeb71fc0a1479ae482",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "chapter": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "topic": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "The emission spectrum of an element is the spectrum of frequencies of em\nradiations emitted due to electrons making a transition from a higher energy\nstate to a lower energy state.\nThe diagram below shows electrons transitioning from higher energy states to\nlower energy states.\nFor most mobile devices, the voltage to recharge the battery is typically\nvolts of direct current. In India, the current supplied to our homes is\nalternating current at 220V and at a frequency of 50 Hz. Fatima designed a\nsimplified version of a mobile phone charger. She made a circuit using a\ncentre tap transformer and two similar silicon diodes D1 and D2 as shown\nbelow. Study the diagram below and answer the questions that follow.\n(a) Can Fatima also charge the battery of a phone by connecting the battery\ndirectly to the ac power supply? Give reason.\n(b) The graph of the potential barrier (V) vs width of the depletion region (x),\nwhen D1 is unbiased at room temperature, is shown below.\nPlot a comparative graph of the potential barrier (V) vs width of the depletion\nregion (x) of D1 at room temperature when the voltage at A is negative with\nrespect to voltage at centre tap. Give reason.\nOR\nIf the battery of the phone is directly connected to the output terminals of the\nsecondary coil of the transformer, will it get charged? Justify your answer.\n(c) What will be the output frequency across the phone's battery when the\norientation of D2 is reversed in fig. 1 and the centre-tapped three-output\ntransformer is replaced by a two-output step-down transformer? Justify your\nanswer.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Semiconductor Electronics: Materials, Devices, and Simple Circuits.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_840",
+    "contentHash": "a432a1ea1d88e0423131b8fe7525a50c1d514e78c1fa62816dcd7eef003fcbca",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Wave Optics",
+    "chapter": "Wave Optics",
+    "topic": "Wave Optics",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "VERY_SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Assertion (A): The work function of a given material increases with an\nincrease in the frequency of the incident radiation.\nReflected light undergoes a $180^\\circ $ phase shift when it falls on a denser medium\nfrom a rarer medium and no phase shift when it falls on a rarer medium from a\ndenser medium. (Note: The thickness of coating is much less than the glass.)\nTo answer the questions below, consider a monochromatic light of wavelength\nλ incident on the coating of thickness t at a small angle of incidence and\nn1<n2<n3. Also Consider PQ ≈ t.\n(i) Which of the following occurs, if there is no coating on the glass?\nA. The object behind the case looks distorted.\nB. The colours of the object behind the glass case appear dull.\nC. A reflection of the objects in front of the glass case is seen on the case.\nD. Multiple reflections of the object behind the glass case are seen on the\ncase\n(ii) What is the path difference between rays 1 and 2? (Consider PQ ≈ t.)\nA. t\nB. 2t\nC. λ\nD. 2 λ\n(iii) For what minimum thickness of the coating, do the two rays 1 and\nundergo destructive interference? (Remember the wavelength of the light ray\nchanges as it moves from one media to another.)\nA. n2 λ/2\nB. n2 λ/4\nC. λ/(2n2)\nD. λ/(4n2)\n-- 13 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Wave Optics.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Wave Optics",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408452_421",
+    "contentHash": "915e96cac4e8d3d2c98bccbdbd7a1e1141d039c25795aab5699342d449674526",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "chapter": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "topic": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "ASSERTION_REASON",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Assertion (A): The conductivity of intrinsic semiconductors increases with an\nincrease in temperature.\nReason (R): Increase in temperature decreases the average time between\ncollisions of electrons.\nOR\nFor what minimum thickness of the coating, do the two rays 1 and 2 undergo\nconstructive interference? (Remember the wavelength of the light ray changes\nas it moves from one media to another.)\nA. n2 λ\nB. n2 λ/2\nC. λ/(n2)\nD. λ/(2n2)\n(iv) If the material of the coating is changed such that n2>n3, what will be the\nadditional path difference compared to the path difference identified in\nquestion (b)?\nA. t\nB. π\nC. λ/2\nD. (There will be NO additional path difference.)",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Semiconductor Electronics: Materials, Devices, and Simple Circuits.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.452Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.452Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_692",
+    "contentHash": "7838a0e3618a49627e6572b985e02bf76261bbefd6a30732a6014d3055320234",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Wave Optics",
+    "chapter": "Wave Optics",
+    "topic": "Wave Optics",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "ASSERTION_REASON",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Assertion (A): The direction of the electric field is always perpendicular to the\nequipotential surface.\nReason (R): Work is done by the electric force in moving a charge between\nany two points on an equipotential surface is zero.\n(c) A student wishes to study the diffraction of sound using the single slit\nsetup. He replaces the light source with a sound source. What other change\nshould he do to study the diffraction pattern?",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Wave Optics.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Wave Optics",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_766",
+    "contentHash": "3deeeb413285a5ce5ce379034cc81ba4325748e27f9095ff15459cc206958285",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Ray Optics and Optical Instruments",
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Ray Optics and Optical Instruments",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "EASY",
+    "question_format": "ASSERTION_REASON",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "Assertion (A): If the focal length of two convex lenses is the same, the lens\nwith the larger diameter will produce brighter images.\nReason (R): Convex lenses with larger diameters are able to focus light better.\n(b) Find the ratio of charges on capacitors C1 and C4, if the potential\ndifference between points P and Q is 10 V.",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).",
+        "is_correct": false,
+        "distractor_trap": "Failed to verify independent reasoning linkage"
+      },
+      {
+        "key": "C",
+        "latex": "Assertion (A) is true, but Reason (R) is false.",
+        "is_correct": false,
+        "distractor_trap": "Mismatched physical validity of premise"
+      },
+      {
+        "key": "D",
+        "latex": "Both Assertion (A) and Reason (R) are false.",
+        "is_correct": false,
+        "distractor_trap": "Overgeneralized incorrect physical law"
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Ray Optics and Optical Instruments.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Ray Optics and Optical Instruments",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_395",
+    "contentHash": "3b7a8de503fe4404803463a72d85acdcbfb7aa128b37f509504d00105918ca07",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "chapter": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "topic": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "The graph shows the variation in hole concentration with doping concentration\nin an extrinsic semiconductor doped with pentavalent impurities.\nWhy does the hole concentration reduce when pentavalent doping is\nincreased?\n-- 17 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Semiconductor Electronics: Materials, Devices, and Simple Circuits.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Semiconductor Electronics: Materials, Devices, and Simple Circuits",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_969",
+    "contentHash": "4cfaab17b2e3d347ed9170269757e241a6c34887f26c6ba30ecc99b3764b4767",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "λα and λp are the wavelengths associated with a moving alpha particle and a\nproton respectively.\nObtain the relation between velocities of the two particles for which,",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electric Charges and Fields.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_247",
+    "contentHash": "0e859abd7d4bc3b6952f9152d6762e668bdd0ee579aa8d734ef25f2d77316d18",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Ray Optics and Optical Instruments",
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Ray Optics and Optical Instruments",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "Compare the focal lengths of the two lenses shown below if the radius of\ncurvature of the curved surface is the same in both lenses.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Ray Optics and Optical Instruments.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Ray Optics and Optical Instruments",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_239",
+    "contentHash": "38e7289bef0a6f3e1266b66c4f4e60a640a3f2cb9d911913dab0672f7b563a12",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "(a) Two copper wires, P and Q of the same area of cross-section are joined in\nparallel. The combination of wires is connected across a battery of potential\ndifference V. If the length of the wires, P and Q are in the ratio 1:2, find the\nratio of drift velocities of electrons in wires P and Q.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electric Charges and Fields.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_75",
+    "contentHash": "241d0dbec9862e5dc47fdb5b12447686955394e5bb842869bdecd579d305b7e0",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Ray Optics and Optical Instruments",
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Ray Optics and Optical Instruments",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "The image below shows a setup of a device that is used to increase the\ndiameter of a light beam from a laser.\nShow how a combination of a convex and a concave lens can also be arranged\nto increase the diameter of a light beam. Your answer should include how the\ntwo lenses should be arranged and the distance between the two lenses. (Note\nthat the rays in both the incident and emergent beam are parallel.)\nOR\nA glass beaker of height 10 cm, completely filled with water (refractive index\n= 4/3), has a curved bottom which is silvered as shown below.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Ray Optics and Optical Instruments.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Ray Optics and Optical Instruments",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408451_176",
+    "contentHash": "63d83a2c5eb6ee969cd65987dd13290dbb6c443c46b36e092cb30813736691a2",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Nuclei",
+    "chapter": "Nuclei",
+    "topic": "Nuclei",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 135,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "Identify if the two nuclear reactions mentioned below are endothermic or\nexothermic. Show your calculations.\nUse the information below to answer the question:",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Nuclei.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Nuclei",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.451Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.451Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_676",
+    "contentHash": "5b70361231e9e3f4d160a88bc4d0b2267d35d985cf4f34150f8a9b69ca73cd6f",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electrostatic Potential and Capacitance",
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Electrostatic Potential and Capacitance",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "X and Y are two equipotential surfaces separated by a distance of 2 m in a\nuniform electric field of 10 V/m. Surface X has a potential of 10 V",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electrostatic Potential and Capacitance.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electrostatic Potential and Capacitance",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_564",
+    "contentHash": "d608256841a5efbe1849a7eb8b228ece5a1581b033dcfba12bc93a019cd4bfb7",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Dual Nature of Radiation and Matter",
+    "chapter": "Dual Nature of Radiation and Matter",
+    "topic": "Dual Nature of Radiation and Matter",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "(a) Compare the de Broglie wavelength associated with the electron in the\nthird orbit to the circumference of the orbit.\n(b) In which of the following will the electrons have the same de Broglie\nwavelength?\n(i) Third orbit of He atom\n(ii) Fourth orbit of He atom\n(iii) Third orbit of Li atom\n(iv) Sixth orbit of Be atom\nShow your calculations.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Dual Nature of Radiation and Matter.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Dual Nature of Radiation and Matter",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_773",
+    "contentHash": "3ea7f20527bf1ff30b26e2f40f8504a7714b7ba4528528dc8e99553e79b92af3",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Current Electricity",
+    "chapter": "Current Electricity",
+    "topic": "Current Electricity",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 135,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "Using Kirchhoff's laws, calculate the current flowing through 4 Ω, 1 Ω, and",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Current Electricity.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Current Electricity",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_339",
+    "contentHash": "b3c62119ee1bf2d7e46c9e394582102fa788afd7f3868b0b6aee9434c3a997d3",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Moving Charges and Magnetism",
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Moving Charges and Magnetism",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 135,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "Two charges A and B, each having a velocity of v, traverse circular paths in a\nuniform magnetic field as shown below.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Moving Charges and Magnetism.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Moving Charges and Magnetism",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_464",
+    "contentHash": "314a5b634b11d74d98fab3f2e66b3fbb1d398e0861033690ea1771168e1ad60b",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electromagnetic Waves",
+    "chapter": "Electromagnetic Waves",
+    "topic": "Electromagnetic Waves",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "(a) A radio wave and an infrasonic wave have the same wavelength when\ntravelling through air. Are their frequencies the same or different? Give a\nreason for your answer.\n(b) An electromagnetic wave traveling east has a magnetic field that oscillates\nvertically and has a frequency of 60 kHz and an rms strength of $8 \\times 10^{-9}$T.\nDetermine the frequency and the rms strength of the electric field. What is the\ndirection of the electric field?",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electromagnetic Waves.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electromagnetic Waves",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_799",
+    "contentHash": "45b876543d2c91169e07fb6c8d4bb53be0c4c17c9efb592d8e601a099a7d40ad",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Moving Charges and Magnetism",
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Moving Charges and Magnetism",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "A circular ring of diameter 0.2 m is placed in a uniform magnetic field of 0.4\nT. The ring is rotated about its diameter at a frequency of 60 Hz.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Moving Charges and Magnetism.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Moving Charges and Magnetism",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408450_922",
+    "contentHash": "6538553c699c564cdc91ed4a718dec17ab121f7c3bc3c48c8903c2b64d15e37f",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "CASE_STUDY",
+    "benchmark_time_seconds": 180,
+    "marks_weightage": 4,
+    "marks": 4,
+    "question_latex": "Read the following paragraph and answer the questions that follow.\n-- 11 of 17 --",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electric Charges and Fields.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 2
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 4
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.450Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_811",
+    "contentHash": "29fbc79a91329c6aa3f2740d7ebda40d1ff15ae72135aa2257b5d9de41e4c4ae",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Wave Optics",
+    "chapter": "Wave Optics",
+    "topic": "Wave Optics",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "CASE_STUDY",
+    "benchmark_time_seconds": 180,
+    "marks_weightage": 4,
+    "marks": 4,
+    "question_latex": "Read the following paragraph and answer the questions that follow.\nWhen light rays fall on glass, about 4% of the light gets reflected. To\neliminate this reflection, the glass display cases in museums usually have an\nanti-reflective coating.\nThis works on the principle of interference. When light falls on the coated\nglass, the light gets reflected from the top and bottom surfaces of the coating\nand these two reflected light rays can interfere. To reduce reflection, the\nthickness and refractive index of the coating are adjusted such that the light\nrays undergo destructive interference.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Wave Optics.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 2
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Wave Optics",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 4
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.450Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_547",
+    "contentHash": "a02f120d54834a7236feb58ccd8247910e8b0472e3c633e1b9e01cb6d15726b9",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Ray Optics and Optical Instruments",
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Ray Optics and Optical Instruments",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "HARD",
+    "question_format": "LONG_DERIVATION",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 5,
+    "marks": 5,
+    "question_latex": "(a) A ray of light is incident at angle θ on a right-angled prism at point X. At\npoint Y, it emerges along the prism surface. Calculate the refractive index of\nthe prism in terms of the incident angle.\n(b) Show that for an equilateral prism kept in air, minimum deviation occurs\nwhen the angle of incidence i = sin-1(n/2), where n is the refractive index of\nthe material of the prism.\nOR\n(a) A Young’s double slit setup is illuminated with monochromatic light. If\nthe intensity of light passing through one of the slits is reduced, explain the\nchanges that can be seen in the appearance of the bright and dark fringes?\n(b) (i) A single slit diffraction setup is illuminated with green light of\nwavelength 500 nm. If the width of the slit is 1 mm and the screen is 2 m\naway from the slits, calculate the width of the central maximum.\n(ii) What will happen to the width of the central maximum, if the green light is\nreplaced with the red light? Give a reason for your answer.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Ray Optics and Optical Instruments.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Ray Optics and Optical Instruments",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.449Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_343",
+    "contentHash": "b03312f5de39e5f03d7359ded08327283dc5a240f3b2d2c536dac162cc697434",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electrostatic Potential and Capacitance",
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Electrostatic Potential and Capacitance",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "HARD",
+    "question_format": "LONG_ANSWER",
+    "benchmark_time_seconds": 225,
+    "marks_weightage": 5,
+    "marks": 5,
+    "question_latex": "(a) A camera usually operates at 1.5 V and this potential difference is not\nsufficient to emit light energy using flash. For this purpose, the flash circuit of\nthe camera has a capacitor that is charged to 300 V-330 V using various\nelectrical components. If the voltage generated across the plates of the\ncapacitor is 300 V and the capacitance of the parallel plate capacitor used is",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electrostatic Potential and Capacitance.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 3
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electrostatic Potential and Capacitance",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
       "marks": 5
     },
     "injected_by": {
-      "faculty_id": "fac_chem_01",
-      "faculty_name": "Prof. Sunita Rao",
-      "faculty_phone": "",
-      "faculty_subject": "Chemistry",
-      "department": "CHEMISTRY",
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
       "role": "faculty",
-      "timestamp": "2026-11-04T14:15:47.344Z"
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.449Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_977",
+    "contentHash": "dcb0e71d168b68e3a6ca2dcc7aabd6889f52d8bc04f495eefe1a65320a4c604a",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Alternating Current (AC)",
+    "chapter": "Alternating Current (AC)",
+    "topic": "Alternating Current (AC)",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "HARD",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 5,
+    "marks": 5,
+    "question_latex": "An inductor of inductance 'L' is connected to an AC source, V = 100 sin ωt.\nThe graph below represents the variation of inductive reactance (XL) of the\ninductor with the frequency of an alternating source.",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "What is the self-inductance of the inductor?",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$If the ac source is replaced by a battery such that V = 100 V, then what is$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "When the frequency is 50 Hz, what is the average power dissipated by the",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "This inductor is connected in series with a resistance of 15 Ω and a",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "What is the self-inductance of the inductor?",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$If the ac source is replaced by a battery such that V = 100 V, then what is$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "When the frequency is 50 Hz, what is the average power dissipated by the",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "This inductor is connected in series with a resistance of 15 Ω and a",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Alternating Current (AC).",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Alternating Current (AC)",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.449Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_628",
+    "contentHash": "7ac8c8c49e43b1faf886fe6d65202a4feae2590a992d1fd697f135c9dfe34a33",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "CASE_BASED",
+    "benchmark_time_seconds": 45,
+    "marks_weightage": 1,
+    "marks": 1,
+    "question_latex": "μF, then find the energy released when the trigger button on the camera is\npressed.",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Electric Charges and Fields.",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 0.5
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 0.5
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 1
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.449Z"
+  },
+  {
+    "id": "snr_p_inj_1794902408449_457",
+    "contentHash": "7da96957e066a028d170ede6c22d21b5839e81d8c9e7acbe8c3c149f4c55753a",
+    "status": "DRAFT",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Alternating Current (AC)",
+    "chapter": "Alternating Current (AC)",
+    "topic": "Alternating Current (AC)",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 135,
+    "marks_weightage": 3,
+    "marks": 3,
+    "question_latex": "turns (primary) and 50 turns (secondary) respectively.\n(a) What is the voltage across the secondary coil, if the rms voltage across the\nprimary coil is 240 V?\n(b) What will be the individual currents in the two coils (primary and\nsecondary), if the secondary has a resistive load of 20 ohms?",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [
+      "Recall the fundamental governing principles of Alternating Current (AC).",
+      "Carefully check the units and dimensional consistency before substituting numerical values.",
+      "Apply standard New Cartesian sign conventions for directional vectors."
+    ],
+    "step_rubric": [
+      {
+        "step": 1,
+        "description": "Identification of governing physical law & formula formulation",
+        "marks": 1
+      },
+      {
+        "step": 2,
+        "description": "Algebraic substitution of given boundary parameters",
+        "marks": 1
+      },
+      {
+        "step": 3,
+        "description": "Final evaluated result with accurate standard SI units",
+        "marks": 1
+      }
+    ],
+    "ncert_mapping": {
+      "chapter_name": "Alternating Current (AC)",
+      "ncert_section": "Core Curriculum Concept",
+      "pyq_tag": "CBSE Board Examination (Authentic PYQ)",
+      "marks": 3
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "98160 10001",
+      "faculty_subject": "Physics",
+      "department": "PHYSICS",
+      "role": "faculty",
+      "timestamp": "2026-11-17T08:00:08.449Z"
+    },
+    "injection_mode": "pdf",
+    "imported_at": "2026-11-17T08:00:08.449Z"
+  },
+  {
+    "id": "snr_p_inj_1794909334013_325",
+    "contentHash": "e7a69ecf43bd21cea7090ec4b2a0b60be27a70c1ba119f066ed5bb9a7f4616e2",
+    "status": "APPROVED",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "BOARD"
+    ],
+    "board_targets": [
+      "CBSE"
+    ],
+    "competitive_targets": [],
+    "target_exam": "CBSE_BOARD",
+    "chapter_name": "Electric Charges and Fields",
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Charges and Fields",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "CBSE",
+    "source_category": "CBSE_PYQ",
+    "question_source": "CBSE_PYQ",
+    "pyq_appearance": "CBSE Board PYQ (year not tagged)",
+    "difficulty": "MEDIUM",
+    "question_format": "SHORT_ANSWER",
+    "benchmark_time_seconds": 90,
+    "marks_weightage": 2,
+    "marks": 2,
+    "question_latex": "What is Coulomb''s Law in vector form?",
+    "options_latex": [],
+    "options": [],
+    "correct_answer_latex": "",
+    "correct_answer": null,
+    "solution_latex": "",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Electric Charges and Fields",
+      "ncert_section": "Core Section",
+      "pyq_tag": "CBSE_PYQ",
+      "marks": 2
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "",
+      "faculty_subject": "Physics",
+      "department": "Physics",
+      "role": "faculty",
+      "timestamp": "2026-11-17T09:55:34.013Z"
     },
     "injection_mode": "text",
-    "imported_at": "2026-11-04T14:15:47.344Z"
+    "imported_at": "2026-11-17T09:55:34.013Z"
+  },
+  {
+    "id": "snr_p_inj_1794909340938_641",
+    "contentHash": "fb1bcd70fe81b06f236712bea4395c0efb7d442e73afd15653213f44fb0fef54",
+    "status": "APPROVED",
+    "grade": "12",
+    "subject": "Physics",
+    "subjectKey": "PHYSICS",
+    "stream": "COMMON_SENIOR",
+    "target_modes": [
+      "COMPETITIVE"
+    ],
+    "board_targets": [],
+    "competitive_targets": [
+      "JEE_MAIN"
+    ],
+    "target_exam": "JEE_MAIN",
+    "chapter_name": "Oscillations",
+    "chapter": "Oscillations",
+    "topic": "Oscillations",
+    "subtopic": "Core Derivation",
+    "curriculum_board": "JEE",
+    "source_category": "COMPETITIVE_OTHER",
+    "question_source": "COMPETITIVE_OTHER",
+    "pyq_appearance": "JEE Main Practice",
+    "difficulty": "MEDIUM",
+    "question_format": "MCQ_SINGLE",
+    "benchmark_time_seconds": 120,
+    "marks_weightage": null,
+    "marks": null,
+    "question_latex": "A particle executes SHM with amplitude A. At what displacement is kinetic energy equal to potential energy?",
+    "options_latex": [
+      {
+        "key": "A",
+        "latex": "$\\frac{A}{\\sqrt{2}}$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$\\frac{A}{2}$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "$\\frac{A}{\\sqrt{3}}$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "$$",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "options": [
+      {
+        "key": "A",
+        "latex": "$\\frac{A}{\\sqrt{2}}$",
+        "is_correct": true,
+        "distractor_trap": null
+      },
+      {
+        "key": "B",
+        "latex": "$\\frac{A}{2}$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "C",
+        "latex": "$\\frac{A}{\\sqrt{3}}$",
+        "is_correct": false,
+        "distractor_trap": null
+      },
+      {
+        "key": "D",
+        "latex": "$$",
+        "is_correct": false,
+        "distractor_trap": null
+      }
+    ],
+    "correct_answer_latex": "$A / sqrt{2}$",
+    "correct_answer": "A",
+    "solution_latex": "",
+    "socratic_hints": [],
+    "step_rubric": [],
+    "ncert_mapping": {
+      "chapter_name": "Oscillations",
+      "ncert_section": "Core Section",
+      "pyq_tag": "COMPETITIVE_OTHER",
+      "marks": null
+    },
+    "injected_by": {
+      "faculty_id": "fac_phy_01",
+      "faculty_name": "Dr. Vikram Sharma",
+      "faculty_phone": "",
+      "faculty_subject": "Physics",
+      "department": "Physics",
+      "role": "faculty",
+      "timestamp": "2026-11-17T09:55:40.938Z"
+    },
+    "injection_mode": "text",
+    "imported_at": "2026-11-17T09:55:40.938Z"
   }
 ]

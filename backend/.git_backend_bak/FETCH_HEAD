@@ -1,0 +1,6 @@
+df4a5c5eb69eddc25642aec3f8f7d2da3a319c19		branch 'main' of https://github.com/UnisoleSchool2026/school-student-system-backend
+b3eb929e983c5ca0fbf48f31eabbdcff94e4bf2c	not-for-merge	branch 'feat/multi-tenant-dual-mode' of https://github.com/UnisoleSchool2026/school-student-system-backend
+efeec075ba32d74cff97cf48f9efe517c76f43af	not-for-merge	branch 'feat/role-lock-principal-and-teacher-dpp' of https://github.com/UnisoleSchool2026/school-student-system-backend
+bbc1ba1528aa100cca250fbe21aacd460ce7ec6e	not-for-merge	branch 'feature/backend-smartboard-diagram-sync' of https://github.com/UnisoleSchool2026/school-student-system-backend
+b79a53c1d9dcf85103abb8c46426472764e148ca	not-for-merge	branch 'feature/mode-aware-question-ingestion-and-reconciliation' of https://github.com/UnisoleSchool2026/school-student-system-backend
+ddb1105586f48220790de1dc33151c503ffe13ac	not-for-merge	branch 'feature/ncert-reading-engine-integration' of https://github.com/UnisoleSchool2026/school-student-system-backend

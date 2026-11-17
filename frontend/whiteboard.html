@@ -7,6 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Unisole AI Scholar - Interactive Whiteboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Arial,sans-serif' font-weight='800' font-size='30' fill='%23ffffff'%3EH%3C/text%3E%3C/svg%3E">
   
   <!-- Local high-performance tldraw styling -->
   <link rel="stylesheet" href="/vendor/tldraw/tldraw.css">
@@ -21,8 +22,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0f172a;
-      color: #f8fafc;
+      background: #ffffff;
+      color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
     #root {
@@ -30,11 +31,12 @@
       height: 100%;
       position: absolute;
       inset: 0;
+      background: #ffffff;
     }
     .tl-container {
       width: 100% !important;
       height: 100% !important;
-      background: #0f172a !important;
+      background: #ffffff !important;
     }
     #whiteboard-loading {
       position: absolute;
@@ -43,7 +45,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #0f172a;
+      background: #ffffff;
+      color: #0f172a;
       z-index: 100;
       transition: opacity 0.25s ease;
       pointer-events: none;
@@ -51,8 +54,8 @@
     .spinner {
       width: 38px;
       height: 38px;
-      border: 3px solid rgba(56, 189, 248, 0.2);
-      border-top-color: #38bdf8;
+      border: 3px solid rgba(37, 99, 235, 0.18);
+      border-top-color: #2563eb;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin-bottom: 14px;
@@ -65,24 +68,24 @@
       top: 12px;
       left: 12px;
       z-index: 1000;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(56, 189, 248, 0.45);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #cbd5e1;
       backdrop-filter: blur(10px);
       padding: 5px 12px;
       border-radius: 20px;
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #38bdf8;
+      color: #0f172a;
       font-size: 0.8rem;
       font-weight: 700;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
       pointer-events: auto;
     }
     .wb-pacing-btn {
-      background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      color: #e2e8f0;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
       padding: 3px 8px;
       border-radius: 5px;
       font-size: 0.72rem;
@@ -94,16 +97,16 @@
       transition: all 0.15s ease;
     }
     .wb-pacing-btn:hover {
-      background: rgba(56, 189, 248, 0.25);
-      border-color: #38bdf8;
-      color: #38bdf8;
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1d4ed8;
     }
     .pulse-dot {
       width: 8px;
       height: 8px;
-      background: #34d399;
+      background: #16a34a;
       border-radius: 50%;
-      box-shadow: 0 0 8px #34d399;
+      box-shadow: 0 0 8px rgba(22, 163, 74, 0.6);
       animation: pulse 1.8s infinite;
     }
     @keyframes pulse {
@@ -120,10 +123,10 @@
       gap: 6px;
     }
     .wb-action-btn {
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #cbd5e1;
       backdrop-filter: blur(8px);
-      color: #e2e8f0;
+      color: #334155;
       padding: 5px 12px;
       border-radius: 6px;
       font-size: 0.75rem;
@@ -133,11 +136,12 @@
       align-items: center;
       gap: 5px;
       transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     .wb-action-btn:hover {
-      background: rgba(30, 41, 59, 0.98);
-      border-color: rgba(56, 189, 248, 0.5);
-      color: #38bdf8;
+      background: #f8fafc;
+      border-color: #3b82f6;
+      color: #1d4ed8;
     }
 
     /* Fallback Canvas (Instant fail-safe) */
@@ -147,7 +151,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #090d16;
+      background: #ffffff;
       z-index: 50;
     }
     #whiteboardFallbackCanvas {
@@ -155,6 +159,7 @@
       height: 100%;
       display: block;
       cursor: crosshair;
+      background: #ffffff;
     }
 
     /* Real-Time Live Diagnostics Panel */
@@ -210,21 +215,130 @@
       color: #94a3b8;
     }
 
+    @media (max-width: 768px) {
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+      }
+      #whiteboard-overlay-badge {
+        position: relative;
+        top: auto;
+        left: auto;
+        order: 1;
+        width: 100%;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 6px;
+        box-shadow: none;
+        flex-shrink: 0;
+      }
+      #whiteboard-quick-actions {
+        position: relative;
+        top: auto;
+        right: auto;
+        order: 2;
+        width: 100%;
+        padding: 6px 10px;
+        background: rgba(15, 23, 42, 0.96);
+        border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .wb-pacing-btn,
+      .wb-action-btn {
+        min-height: 36px;
+        padding: 6px 12px;
+        font-size: 0.76rem;
+      }
+      #root {
+        position: relative;
+        inset: auto;
+        order: 3;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        height: auto;
+      }
+      #root > div {
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      #whiteboard-diagnostic-panel {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        order: 4;
+        width: 100%;
+        max-height: 180px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        flex-shrink: 0;
+        box-shadow: none;
+      }
+      #diagnostic-header button {
+        min-height: 36px;
+        min-width: 36px;
+        padding: 6px 10px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    /* Embedded Portal Mode Optimizations */
+    .embedded-mode #whiteboard-quick-actions {
+      display: none !important;
+    }
+    .embedded-mode #whiteboard-overlay-badge {
+      top: 8px !important;
+      left: 10px !important;
+      max-width: calc(100% - 20px) !important;
+      padding: 4px 12px !important;
+      font-size: 0.74rem !important;
+      gap: 6px !important;
+      background: rgba(255, 255, 255, 0.96) !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+    .embedded-mode .wb-pacing-btn {
+      display: none !important;
+    }
+
   </style>
+  <script>
+    if (window.self !== window.top || window.location.search.includes('role=student')) {
+      document.documentElement.classList.add('embedded-mode');
+    }
+  </script>
 </head>
 <body>
 
   <!-- Instant Loading Overlay (Automatically fades out within 600ms) -->
   <div id="whiteboard-loading">
     <div class="spinner"></div>
-    <div style="font-size: 0.9rem; font-weight: 600; color: #94a3b8;">Loading AI Interactive Whiteboard...</div>
+    <div style="font-size: 0.9rem; font-weight: 600; color: #64748b;">Loading AI Interactive Whiteboard...</div>
   </div>
 
   <div id="whiteboard-overlay-badge">
     <div class="pulse-dot"></div>
-    <span id="wbStatusText">👨‍🏫 AI Faculty Teaching: Visual Concept Model</span>
-    <span id="wbPacingTimer" style="display:inline-block; font-size:0.7rem; background:rgba(56,189,248,0.22); border:1px solid rgba(56,189,248,0.5); padding:1px 6px; border-radius:10px; color:#38bdf8; font-weight:700;">10s</span>
-    <div style="display:inline-flex; align-items:center; gap:4px; margin-left:4px;">
+    <span id="wbStatusText">AI Faculty Teaching • Synchronizing Live Classroom...</span>
+    <span id="wbPacingTimer" style="display:none; font-size:0.7rem; background:#eff6ff; border:1px solid #bfdbfe; padding:1px 6px; border-radius:10px; color:#1d4ed8; font-weight:700;">10s</span>
+    <div style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px; margin-left:4px;">
       <button type="button" class="wb-pacing-btn" id="btnPacePrev" onclick="window.wbPrevConcept()" title="Previous concept">◀</button>
       <button type="button" class="wb-pacing-btn" id="btnPaceToggle" onclick="window.wbTogglePacing()" title="Pause or Resume paced explanation">⏸ Pause</button>
       <button type="button" class="wb-pacing-btn" id="btnPaceNext" onclick="window.wbNextConcept()" title="Next concept">Next ▶</button>
@@ -258,14 +372,21 @@
     <div id="diagnostic-header">
       <span>Real-Time Whiteboard Telemetry & Diagnostics</span>
       <div style="display: flex; gap: 8px;">
-        <button type="button" style="background:transparent; border:none; color:#38bdf8; cursor:pointer; font-size:0.75rem;" onclick="copyDiagnosticLogs()">Copy</button>
+        <button type="button" style="background:transparent; border:none; color:#38bdf8; cursor:pointer; font-size:0.75rem;" onclick="copyDiagnosticLogs(this)">Copy</button>
         <button type="button" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:0.85rem;" onclick="toggleDiagnosticPanel()">✕</button>
       </div>
     </div>
     <div id="diagnostic-content"></div>
   </div>
 
+  <script src="/js/config.js?v=1.0"></script>
   <script>
+    function getWhiteboardLogsUrl() {
+      const base = (typeof window !== 'undefined' && window.getHapsApiBaseUrl)
+        ? window.getHapsApiBaseUrl()
+        : '';
+      return base + '/api/voice-tutor/whiteboard-logs';
+    }
     const diagEntries = [];
     window.appendDiagnosticLog = function(event, data) {
       const time = new Date().toLocaleTimeString();
@@ -288,9 +409,15 @@
       panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     }
 
-    function copyDiagnosticLogs() {
-      navigator.clipboard.writeText(diagEntries.join('\n'));
-      alert('Whiteboard diagnostic logs copied to clipboard!');
+    function copyDiagnosticLogs(btn) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(diagEntries.join('\n')).catch(function() {});
+      }
+      if (btn) {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = prev; }, 1800);
+      }
     }
 
     document.getElementById('btnWbLogs')?.addEventListener('click', toggleDiagnosticPanel);
@@ -313,7 +440,7 @@
     window.addEventListener('error', function(e) {
       console.warn('[WHITEBOARD RESILIENCE] Caught error:', e.message);
       window.appendDiagnosticLog('WINDOW_ERROR', { message: e.message, filename: e.filename, lineno: e.lineno });
-      fetch('/api/voice-tutor/whiteboard-logs', {
+      fetch(getWhiteboardLogsUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -327,7 +454,7 @@
     window.addEventListener('unhandledrejection', function(e) {
       console.warn('[WHITEBOARD UNHANDLED REJECTION]:', e.reason);
       window.appendDiagnosticLog('UNHANDLED_REJECTION', String(e.reason));
-      fetch('/api/voice-tutor/whiteboard-logs', {
+      fetch(getWhiteboardLogsUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -356,20 +483,33 @@
 
     window.initFallbackCanvas = function() {
       if (!fallbackCanvas) return;
+      console.trace('[TRACE] initFallbackCanvas called from:');
       window.appendDiagnosticLog('INIT_FALLBACK_CANVAS', 'Engaging fallback 2D canvas');
       fallbackContainer.style.display = 'block';
-      fallbackCanvas.width = window.innerWidth;
-      fallbackCanvas.height = window.innerHeight;
+      fallbackCanvas.width = Math.max(window.innerWidth, 320);
+      fallbackCanvas.height = Math.max(window.innerHeight, 320);
       fbCtx = fallbackCanvas.getContext('2d');
       renderFallbackGrid();
       dismissSpinner();
     };
 
+    window.addEventListener('resize', function() {
+      if (fallbackContainer && fallbackContainer.style.display === 'block' && fallbackCanvas && window.innerWidth > 0 && window.innerHeight > 0) {
+        fallbackCanvas.width = window.innerWidth;
+        fallbackCanvas.height = window.innerHeight;
+        fbCtx = fallbackCanvas.getContext('2d');
+        renderFallbackGrid();
+        if (window.drawFallbackSmartboardSolution && cachedSmartboardPayload) {
+          window.drawFallbackSmartboardSolution(cachedSmartboardPayload, currentConceptIndex);
+        }
+      }
+    });
+
     function renderFallbackGrid() {
       if (!fbCtx) return;
-      fbCtx.fillStyle = '#0f172a';
+      fbCtx.fillStyle = '#ffffff';
       fbCtx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
-      fbCtx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      fbCtx.strokeStyle = 'rgba(15, 23, 42, 0.04)';
       fbCtx.lineWidth = 1;
       for (let x = 0; x < fallbackCanvas.width; x += 30) {
         fbCtx.beginPath();
@@ -547,6 +687,12 @@
     window.drawFallbackSmartboardSolution = function(payload, activeConcept = null) {
       if (!fbCtx) window.initFallbackCanvas();
       if (!fbCtx) return;
+
+      if (fallbackCanvas.width !== window.innerWidth || fallbackCanvas.height !== window.innerHeight) {
+        fallbackCanvas.width = Math.max(window.innerWidth, 320);
+        fallbackCanvas.height = Math.max(window.innerHeight, 320);
+        fbCtx = fallbackCanvas.getContext('2d');
+      }
       window.clearFallbackCanvas();
 
       const q = payload?.questionHeader || {};
@@ -556,20 +702,38 @@
       const s2 = sol.step2 || {};
       const s3 = sol.step3 || {};
 
+      // Dynamic responsive scaling to guarantee every single section and card fits 100%
+      const VIRTUAL_W = 1260;
+      const VIRTUAL_H = 580;
+      const isEmbedded = (window.self !== window.top) || window.location.search.includes('role=student');
+      const topReserve = isEmbedded ? 36 : 52;
+      const availW = Math.max(300, fallbackCanvas.width - 24);
+      const availH = Math.max(220, fallbackCanvas.height - topReserve - 14);
+
+      const scale = Math.min(availW / VIRTUAL_W, availH / VIRTUAL_H);
+      const drawW = VIRTUAL_W * scale;
+      const drawH = VIRTUAL_H * scale;
+      const offsetX = Math.max(8, (fallbackCanvas.width - drawW) / 2);
+      const offsetY = topReserve + Math.max(2, (availH - drawH) / 2);
+
+      fbCtx.save();
+      fbCtx.translate(offsetX, offsetY);
+      fbCtx.scale(scale, scale);
+
       // Left Column (x: 50, w: 560): Question Header, Diagram, Tip
       // 1. Header Box
-      fbCtx.fillStyle = 'rgba(30, 58, 138, 0.25)';
-      fbCtx.strokeStyle = '#38bdf8';
+      fbCtx.fillStyle = '#f0f7ff';
+      fbCtx.strokeStyle = '#2563eb';
       fbCtx.lineWidth = 2;
       fbCtx.roundRect ? fbCtx.roundRect(50, 40, 560, 110, 8) : fbCtx.rect(50, 40, 560, 110);
       fbCtx.fill();
       fbCtx.stroke();
 
-      fbCtx.fillStyle = '#38bdf8';
+      fbCtx.fillStyle = '#1d4ed8';
       fbCtx.font = 'bold 12px sans-serif';
       fbCtx.fillText(`QUESTION STATEMENT • ${q.marks || 3} MARKS | ${(q.chapter || 'SCIENCE').toUpperCase()}`, 65, 65);
 
-      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.fillStyle = '#0f172a';
       fbCtx.font = '13px sans-serif';
       const cleanQ = (q.title || '').replace(/\$+/g, '');
       const words = cleanQ.split(' ');
@@ -589,41 +753,54 @@
       if (y <= 135) fbCtx.fillText(line, 65, y);
 
       // 2. Diagram Box
-      fbCtx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-      fbCtx.strokeStyle = '#60a5fa';
+      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.strokeStyle = '#94a3b8';
       fbCtx.lineWidth = 1.5;
       fbCtx.roundRect ? fbCtx.roundRect(50, 165, 560, 310, 8) : fbCtx.rect(50, 165, 560, 310);
       fbCtx.fill();
       fbCtx.stroke();
 
-      fbCtx.fillStyle = '#60a5fa';
+      fbCtx.fillStyle = '#1e3a8a';
       fbCtx.font = 'bold 12px sans-serif';
       fbCtx.fillText(`VISUAL SYSTEM SCHEMATIC • ${(diag.title || 'SYSTEM MODEL').toUpperCase()}`, 65, 190);
 
       // Schematic Flow
-      fbCtx.strokeStyle = '#94a3b8';
-      fbCtx.lineWidth = 2;
+      fbCtx.fillStyle = '#ffffff';
+      fbCtx.strokeStyle = '#64748b';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.fillRect(90, 220, 200, 95);
       fbCtx.strokeRect(90, 220, 200, 95);
-      fbCtx.fillStyle = '#e2e8f0';
-      fbCtx.font = '12px monospace';
+      fbCtx.fillStyle = '#1e293b';
+      fbCtx.font = 'bold 11px monospace';
       fbCtx.fillText('GIVEN PARAMETERS', 110, 255);
+      fbCtx.font = '11px sans-serif';
+      fbCtx.fillStyle = '#64748b';
       fbCtx.fillText('SI Input Quantities', 110, 275);
 
-      fbCtx.strokeStyle = '#eab308';
+      fbCtx.strokeStyle = '#d97706';
+      fbCtx.lineWidth = 2;
       fbCtx.beginPath();
       fbCtx.moveTo(290, 268);
       fbCtx.lineTo(350, 268);
       fbCtx.stroke();
 
-      fbCtx.strokeStyle = '#34d399';
+      fbCtx.fillStyle = '#f0fdf4';
+      fbCtx.strokeStyle = '#16a34a';
+      fbCtx.lineWidth = 1.5;
+      fbCtx.fillRect(350, 220, 200, 95);
       fbCtx.strokeRect(350, 220, 200, 95);
-      fbCtx.fillStyle = '#34d399';
+      fbCtx.fillStyle = '#15803d';
+      fbCtx.font = 'bold 11px monospace';
       fbCtx.fillText('TARGET SOLUTION', 370, 255);
+      fbCtx.font = '11px sans-serif';
       fbCtx.fillText('Verified Result', 370, 275);
 
-      fbCtx.strokeStyle = '#a855f7';
+      fbCtx.fillStyle = '#f5f3ff';
+      fbCtx.strokeStyle = '#7c3aed';
+      fbCtx.fillRect(90, 335, 460, 80);
       fbCtx.strokeRect(90, 335, 460, 80);
-      fbCtx.fillStyle = '#c084fc';
+      fbCtx.fillStyle = '#6d28d9';
+      fbCtx.font = 'bold 11px monospace';
       fbCtx.fillText('CORE GOVERNING LAW & BOUNDARY CONDITIONS', 110, 370);
 
       // Helper to strip any numbered prefixes like "1. ", "Step 1: "
@@ -631,56 +808,56 @@
 
       // Right Column (x: 640, w: 600): Solution Sections (No artificial Step 1/2/3 labels)
       // Card 1: Governing Principles
-      fbCtx.fillStyle = 'rgba(234, 179, 8, 0.12)';
-      fbCtx.strokeStyle = '#eab308';
+      fbCtx.fillStyle = '#fefce8';
+      fbCtx.strokeStyle = '#ca8a04';
       fbCtx.lineWidth = 1.5;
       fbCtx.roundRect ? fbCtx.roundRect(640, 40, 600, 160, 8) : fbCtx.rect(640, 40, 600, 160);
       fbCtx.fill();
       fbCtx.stroke();
-      fbCtx.fillStyle = '#eab308';
+      fbCtx.fillStyle = '#854d0e';
       fbCtx.font = 'bold 13px sans-serif';
       fbCtx.fillText(cleanCardTitle(s1.title, 'Governing Principles & Physical Setup'), 655, 65);
-      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.fillStyle = '#0f172a';
       fbCtx.font = '12px monospace';
       const s1Lines = (s1.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
       s1Lines.slice(0, 3).forEach((l, i) => fbCtx.fillText(l.slice(0, 75), 655, 90 + i * 20));
-      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.fillStyle = '#475569';
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`• ${(s1.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 175);
 
       // Card 2: Mathematical Derivation & Algebraic Working
-      fbCtx.fillStyle = 'rgba(56, 189, 248, 0.12)';
-      fbCtx.strokeStyle = '#38bdf8';
+      fbCtx.fillStyle = '#eff6ff';
+      fbCtx.strokeStyle = '#2563eb';
       fbCtx.lineWidth = 1.5;
       fbCtx.roundRect ? fbCtx.roundRect(640, 215, 600, 180, 8) : fbCtx.rect(640, 215, 600, 180);
       fbCtx.fill();
       fbCtx.stroke();
-      fbCtx.fillStyle = '#38bdf8';
+      fbCtx.fillStyle = '#1d4ed8';
       fbCtx.font = 'bold 13px sans-serif';
       fbCtx.fillText(cleanCardTitle(s2.title, 'Mathematical Derivation & Substitution'), 655, 240);
-      fbCtx.fillStyle = '#f8fafc';
+      fbCtx.fillStyle = '#0f172a';
       fbCtx.font = '12px monospace';
       const s2Lines = (s2.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
       s2Lines.slice(0, 4).forEach((l, i) => fbCtx.fillText(l.slice(0, 75), 655, 265 + i * 20));
-      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.fillStyle = '#475569';
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`• ${(s2.explanation || '').replace(/\$+/g, '').slice(0, 80)}`, 655, 375);
 
       // Card 3: Evaluated Result & Key Insight
-      fbCtx.fillStyle = 'rgba(34, 197, 94, 0.14)';
-      fbCtx.strokeStyle = '#22c55e';
+      fbCtx.fillStyle = '#f0fdf4';
+      fbCtx.strokeStyle = '#16a34a';
       fbCtx.lineWidth = 1.5;
       fbCtx.roundRect ? fbCtx.roundRect(640, 410, 600, 155, 8) : fbCtx.rect(640, 410, 600, 155);
       fbCtx.fill();
       fbCtx.stroke();
-      fbCtx.fillStyle = '#22c55e';
+      fbCtx.fillStyle = '#15803d';
       fbCtx.font = 'bold 13px sans-serif';
       fbCtx.fillText(cleanCardTitle(s3.title, 'Evaluated Solution & Physical Takeaway'), 655, 435);
-      fbCtx.fillStyle = '#86efac';
+      fbCtx.fillStyle = '#14532d';
       fbCtx.font = 'bold 13px monospace';
       const s3Lines = (s3.formula || '').replace(/\$+/g, '').split('\n').filter(Boolean);
       s3Lines.slice(0, 2).forEach((l, i) => fbCtx.fillText(l.slice(0, 70), 655, 460 + i * 22));
-      fbCtx.fillStyle = '#cbd5e1';
+      fbCtx.fillStyle = '#475569';
       fbCtx.font = '11px sans-serif';
       fbCtx.fillText(`Key Takeaway: ${(s3.explanation || '').replace(/\$+/g, '').slice(0, 85)}`, 655, 545);
 
@@ -689,26 +866,28 @@
         fbCtx.lineWidth = 3;
         fbCtx.setLineDash([8, 6]);
         if (activeConcept === 0) {
-          fbCtx.strokeStyle = '#38bdf8';
+          fbCtx.strokeStyle = '#2563eb';
           fbCtx.strokeRect(46, 161, 568, 318);
         } else if (activeConcept === 1) {
-          fbCtx.strokeStyle = '#eab308';
+          fbCtx.strokeStyle = '#ca8a04';
           fbCtx.strokeRect(636, 36, 608, 168);
         } else if (activeConcept === 2) {
-          fbCtx.strokeStyle = '#38bdf8';
+          fbCtx.strokeStyle = '#2563eb';
           fbCtx.strokeRect(636, 211, 608, 188);
         } else if (activeConcept === 3) {
-          fbCtx.strokeStyle = '#22c55e';
+          fbCtx.strokeStyle = '#16a34a';
           fbCtx.strokeRect(636, 406, 608, 163);
         }
         fbCtx.setLineDash([]);
       }
+
+      fbCtx.restore();
     };
 
     window.clearFallbackRight = function() {
       if (!fbCtx) return;
       fbCtx.clearRect(400, 0, 480, 700);
-      fbCtx.fillStyle = '#090d16';
+      fbCtx.fillStyle = '#ffffff';
       fbCtx.fillRect(400, 0, 480, 700);
     };
 
@@ -718,7 +897,7 @@
       const plan = payload?.plan || payload || {};
       window.clearFallbackCanvas();
       window.drawFallbackHeader(plan.questionHeader?.title, plan.questionHeader?.chapter, plan.questionHeader?.marks);
-      window.drawFallbackDiagram('rolling_incline', plan.diagram);
+      window.drawFallbackDiagram(plan.diagram?.type || 'concept', plan.diagram);
     };
 
     // ============================================================================
@@ -731,11 +910,11 @@
     let isPacingPaused = false;
     let cachedSmartboardPayload = null;
 
-    window.startPacedConceptTeaching = function(payload = null) {
+    window.startPacedConceptTeaching = function(payload = null, autoStart = false) {
       if (payload) cachedSmartboardPayload = payload;
       clearInterval(pacingInterval);
       currentConceptIndex = 0;
-      isPacingPaused = false;
+      isPacingPaused = !autoStart;
       pacingSecondsLeft = CONCEPT_DURATIONS[0];
       updatePacingUI();
       triggerSpotlight(0);
@@ -778,11 +957,11 @@
       const statusEl = document.getElementById('wbStatusText');
       if (statusEl) {
         if (isPacingPaused) {
-          statusEl.textContent = `⏸ Paused: ${titles[currentConceptIndex] || 'Smartboard'}`;
+          statusEl.textContent = `Paused: ${titles[currentConceptIndex] || 'Smartboard'}`;
         } else if (currentConceptIndex <= 3) {
-          statusEl.textContent = `👨‍🏫 ${teacherName} Teaching: ${titles[currentConceptIndex]}`;
+          statusEl.textContent = `Faculty: ${teacherName} | ${titles[currentConceptIndex]}`;
         } else {
-          statusEl.textContent = '✅ Full Lesson Complete • Ask Any Doubt Live!';
+          statusEl.textContent = 'Full Lesson Complete | Ask Any Doubt Live!';
         }
       }
 
@@ -809,8 +988,7 @@
     function triggerSpotlight(index) {
       if (window.whiteboardController?.spotlightConcept) {
         window.whiteboardController.spotlightConcept(index);
-      }
-      if (window.drawFallbackSmartboardSolution && cachedSmartboardPayload) {
+      } else if (window.drawFallbackSmartboardSolution && cachedSmartboardPayload) {
         window.drawFallbackSmartboardSolution(cachedSmartboardPayload, index);
       }
       try {
@@ -860,7 +1038,7 @@
       const timerEl = document.getElementById('wbPacingTimer');
       if (timerEl) timerEl.style.display = 'none';
       const statusEl = document.getElementById('wbStatusText');
-      if (statusEl) statusEl.textContent = '👨‍🏫 Smartboard: Full Solution Displayed';
+      if (statusEl) statusEl.textContent = 'Smartboard: Full Solution Displayed';
       const toggleBtn = document.getElementById('btnPaceToggle');
       if (toggleBtn) toggleBtn.innerHTML = '↺ Replay';
     };
@@ -895,8 +1073,28 @@
       } else if (msg.type === 'RESUME_PACING') {
         isPacingPaused = false;
         updatePacingUI();
+      } else if (msg.type === 'TOGGLE_PACING') {
+        window.wbTogglePacing();
+      } else if (msg.type === 'NEXT_CONCEPT') {
+        window.wbNextConcept();
+      } else if (msg.type === 'PREV_CONCEPT') {
+        window.wbPrevConcept();
+      } else if (msg.type === 'SHOW_ALL_CONCEPTS') {
+        window.wbShowAllConcepts();
+      } else if (msg.type === 'CLEAR_BOARD') {
+        clearInterval(pacingInterval);
+        const timerEl = document.getElementById('wbPacingTimer');
+        if (timerEl) timerEl.style.display = 'none';
+        const statusEl = document.getElementById('wbStatusText');
+        if (statusEl) statusEl.textContent = 'Board Cleared - Select any Class & Topic to Teach';
       } else if (msg.type === 'SPOTLIGHT_CONCEPT') {
         triggerSpotlight(typeof msg.payload?.conceptIndex === 'number' ? msg.payload.conceptIndex : msg.payload);
+      } else if (msg.type === 'RENDER_SMARTBOARD_SOLUTION' && msg.payload) {
+        cachedSmartboardPayload = msg.payload;
+        window.cachedSmartboardPayload = msg.payload;
+        if (window.whiteboardController?.renderSmartboardSolution) {
+          window.whiteboardController.renderSmartboardSolution(msg.payload);
+        }
       }
     });
   </script>

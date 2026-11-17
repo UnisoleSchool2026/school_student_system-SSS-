@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Unisole brand logo placements (2026-11-16)
+   Assets: assets/brand/ (generated from the official Unisole logo).
+   - *-on-light.png : navy + brand blue, for the light theme
+   - *-on-dark.png  : white + light blue, for the dark theme and dark panels
+   ========================================================================== */
+.unisole-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.unisole-mark img {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+}
+.unisole-mark .logo-on-dark { display: none; }
+[data-theme="dark"] .unisole-mark .logo-on-light { display: none; }
+[data-theme="dark"] .unisole-mark .logo-on-dark { display: block; }
+
+.unisole-mark-drawer { height: 34px; width: 34px; }
+.unisole-mark-header { height: 28px; width: 24px; }
+.unisole-mark-card { height: 36px; width: 36px; }
+
+.unisole-gateway-logo {
+  display: block;
+  width: auto;
+  height: 112px;
+  margin: 0 auto 12px;
+}
+
+@media (max-width: 640px) {
+  .unisole-mark-header { display: none; }
+  .unisole-gateway-logo { height: 84px; }
+}
+
+@media print {
+  .unisole-mark .logo-on-dark { display: none !important; }
+  .unisole-mark .logo-on-light { display: block !important; }
+}

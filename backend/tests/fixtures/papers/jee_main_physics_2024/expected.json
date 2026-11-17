@@ -1,0 +1,14 @@
+{
+  "paperName": "JEE Main Physics 2024",
+  "mode": "COMPETITIVE",
+  "track": "JEE",
+  "subject": "Physics",
+  "grade": "12",
+  "expectedTotalQuestions": 30,
+  "expectedTotalMarks": 100,
+  "sections": [
+    { "label": "A", "count": 20, "marksPerQ": 4, "startQ": 1, "endQ": 20, "type": "MCQ" },
+    { "label": "B", "count": 10, "marksPerQ": 4, "startQ": 21, "endQ": 30, "type": "NUMERICAL_INTEGER", "attemptLimit": 5 }
+  ]
+}
+

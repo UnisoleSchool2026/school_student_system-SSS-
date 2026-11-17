@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 55f1b0c798dab10dd07b484d12e52f5b0bc39dbf Nitish-011 <nitishjoshi0554@gmail.com> 1794635140 +0530	commit (initial): feat(frontend): initialize standalone frontend with production CI/CD workflows
+55f1b0c798dab10dd07b484d12e52f5b0bc39dbf 6b604f17358efe79ceb124a1ba28217546aacdd9 Nitish-011 <nitishjoshi0554@gmail.com> 1794637359 +0530	commit: fix(ci): resolve gitleaks licensing and codeql permissions
+6b604f17358efe79ceb124a1ba28217546aacdd9 cf4d12bce4f137566f062f2ec348ab74be77b684 Nitish-011 <nitishjoshi0554@gmail.com> 1794639992 +0530	commit: fix(ci): make codeql non-blocking on private repositories without GHAS license
+cf4d12bce4f137566f062f2ec348ab74be77b684 af9bba78e029526c0cfb6d179bf275a8e7b54e98 Nitish-011 <nitishjoshi0554@gmail.com> 1794827402 +0530	pull origin main: Fast-forward
+af9bba78e029526c0cfb6d179bf275a8e7b54e98 af9bba78e029526c0cfb6d179bf275a8e7b54e98 Nitish-011 <nitishjoshi0554@gmail.com> 1794856597 +0530	checkout: moving from main to feat/sky-blue-redesign-and-dpp-ui
+af9bba78e029526c0cfb6d179bf275a8e7b54e98 3b8cc3d25da3c258e4a0b18dddebce3d5a0e4db4 Nitish-011 <nitishjoshi0554@gmail.com> 1794856607 +0530	commit: feat(frontend): apply sky-blue theme, responsive app shell, teacher DPP UI, and principal dashboard
+3b8cc3d25da3c258e4a0b18dddebce3d5a0e4db4 3b8cc3d25da3c258e4a0b18dddebce3d5a0e4db4 Nitish-011 <nitishjoshi0554@gmail.com> 1794856833 +0530	reset: moving to HEAD
+3b8cc3d25da3c258e4a0b18dddebce3d5a0e4db4 5181339e96bc6e9ed342fcbe3a99e9f7e6249975 Nitish-011 <nitishjoshi0554@gmail.com> 1794856843 +0530	merge origin/main: Merge made by the 'ort' strategy.
+5181339e96bc6e9ed342fcbe3a99e9f7e6249975 af9bba78e029526c0cfb6d179bf275a8e7b54e98 Nitish-011 <nitishjoshi0554@gmail.com> 1794885599 +0530	checkout: moving from feat/sky-blue-redesign-and-dpp-ui to main
+af9bba78e029526c0cfb6d179bf275a8e7b54e98 2d61782a651c0fcd9f57278c830aa35343ff6018 Nitish-011 <nitishjoshi0554@gmail.com> 1794885620 +0530	pull origin main: Fast-forward
+2d61782a651c0fcd9f57278c830aa35343ff6018 3111a551407091bb6ceb5329bce35337b749373b rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918282 +0000	reset: moving to origin/main
+3111a551407091bb6ceb5329bce35337b749373b 3111a551407091bb6ceb5329bce35337b749373b rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918381 +0000	reset: moving to HEAD
+3111a551407091bb6ceb5329bce35337b749373b 3111a551407091bb6ceb5329bce35337b749373b rcw-01bxrvvxrgpvshkpsjju7ouh <rcw-01bxrvvxrgpvshkpsjju7ouh@claude.(none)> 1794918509 +0000	reset: moving to HEAD

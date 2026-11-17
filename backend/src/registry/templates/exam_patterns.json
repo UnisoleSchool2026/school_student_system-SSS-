@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "description": "Exam Pattern Template Registry. Each pattern defines how a board or competitive exam is structured and scored. Scoring in POST /api/assessments/:id/submit resolves its negative marking from here. Detailed per-subject paper blueprints stay in services/boardPaperGeneratorService.js (BOARD_BLUEPRINTS) and services/examPatternAnalyzer.js (EXAM_BLUEPRINTS) and are referenced by id.",
+  "patterns": {
+    "CBSE_BOARD": {
+      "patternId": "CBSE_BOARD",
+      "mode": "BOARD",
+      "board": "CBSE",
+      "label": "CBSE Board (Sections A-E)",
+      "questionStyles": ["MCQ_SINGLE", "ASSERTION_REASON", "VERY_SHORT_ANSWER", "SHORT_ANSWER", "LONG_DERIVATION", "CASE_BASED"],
+      "sections": [
+        { "id": "A", "name": "Section A", "style": "MCQ / Assertion-Reason", "marksPerQuestion": 1 },
+        { "id": "B", "name": "Section B", "style": "Very Short Answer", "marksPerQuestion": 2 },
+        { "id": "C", "name": "Section C", "style": "Short Answer", "marksPerQuestion": 3 },
+        { "id": "D", "name": "Section D", "style": "Long Answer / Derivation", "marksPerQuestion": 5 },
+        { "id": "E", "name": "Section E", "style": "Case / Source Based", "marksPerQuestion": 4 }
+      ],
+      "sectionsNote": "Class 10 order shown. Class 12 papers swap D (Case Study, 4M) and E (Long Answer, 5M); exact counts per subject live in the referenced board-paper blueprints.",
+      "marking": { "correct": "QUESTION_MARKS", "incorrect": 0, "unattempted": 0, "stepMarking": true },
+      "blueprintRefs": {
+        "boardPaper": ["CBSE_CLASS_10_SCIENCE", "CBSE_CLASS_10_MATHS", "CBSE_CLASS_12_PHYSICS", "CBSE_CLASS_12_CHEMISTRY", "CBSE_CLASS_12_MATHS"],
+        "patternExam": ["CBSE_CLASS_10_MATHS", "CBSE_CLASS_10_SCIENCE"]
+      },
+      "contentStatus": "AVAILABLE"
+    },
+    "HP_BOARD": {
+      "patternId": "HP_BOARD",
+      "mode": "BOARD",
+      "board": "HP_BOARD",
+      "label": "HP Board / HPBOSE (Bilingual)",
+      "questionStyles": ["MCQ_SINGLE", "VERY_SHORT_ANSWER", "SHORT_ANSWER", "LONG_DERIVATION"],
+      "sections": [
+        { "id": "A", "name": "Section A", "style": "Objective / MCQ", "marksPerQuestion": 1 },
+        { "id": "B", "name": "Section B", "style": "Short Answer", "marksPerQuestion": 2 },
+        { "id": "C", "name": "Section C", "style": "Short Answer", "marksPerQuestion": 3 },
+        { "id": "D", "name": "Section D", "style": "Long Answer / Derivation", "marksPerQuestion": 5 }
+      ],
+      "marking": { "correct": "QUESTION_MARKS", "incorrect": 0, "unattempted": 0, "stepMarking": true },
+      "blueprintRefs": {
+        "boardPaper": ["HP_BOARD_CLASS_10_SCIENCE", "HP_BOARD_CLASS_10_MATHS", "HP_BOARD_CLASS_12_PHYSICS", "HP_BOARD_CLASS_12_CHEMISTRY", "HP_BOARD_CLASS_12_MATHS"],
+        "patternExam": ["HP_BOARD_CLASS_10"]
+      },
+      "contentStatus": "AVAILABLE"
+    },
+    "ICSE_BOARD": {
+      "patternId": "ICSE_BOARD",
+      "mode": "BOARD",
+      "board": "ICSE",
+      "label": "ICSE Board",
+      "questionStyles": [],
+      "sections": [],
+      "marking": { "correct": "QUESTION_MARKS", "incorrect": 0, "unattempted": 0, "stepMarking": true },
+      "blueprintRefs": { "boardPaper": [], "patternExam": [] },
+      "contentStatus": "NO_CONTENT",
+      "contentStatusNote": "Registered so schools can enable it. No ICSE questions, blueprints or rubrics have been loaded yet."
+    },
+    "JEE_MAIN": {
+      "patternId": "JEE_MAIN",
+      "mode": "COMPETITIVE",
+      "stream": "JEE",
+      "label": "JEE Main (NTA CBT)",
+      "questionStyles": ["MCQ_SINGLE", "NUMERICAL_INTEGER"],
+      "sections": [
+        { "id": "A", "name": "Section A", "style": "Single Correct MCQ", "marksPerQuestion": 4, "negative": -1 },
+        { "id": "B", "name": "Section B", "style": "Numerical Value", "marksPerQuestion": 4, "negative": -1 }
+      ],
+      "marking": { "correct": 4, "incorrect": -1, "unattempted": 0, "stepMarking": false },
+      "blueprintRefs": { "patternExam": ["JEE_MAIN_NON_MED"] },
+      "contentStatus": "AVAILABLE",
+      "rankModel": {
+        "indicativeOnly": true,
+        "note": "Rough practice curve mapping score percentage to an estimated percentile. It is not an NTA prediction. Tune these points each year from published results.",
+        "approxCandidatePool": 1400000,
+        "curve": [[0, 0], [10, 45], [20, 75], [30, 88], [40, 94], [50, 97], [60, 98.5], [70, 99.3], [80, 99.7], [90, 99.9], [100, 99.99]]
+      }
+    },
+    "NEET_UG": {
+      "patternId": "NEET_UG",
+      "mode": "COMPETITIVE",
+      "stream": "NEET",
+      "label": "NEET UG (NTA Pen-Paper OMR)",
+      "questionStyles": ["MCQ_SINGLE", "ASSERTION_REASON"],
+      "sections": [
+        { "id": "A", "name": "Section A", "style": "Single Correct MCQ", "marksPerQuestion": 4, "negative": -1 },
+        { "id": "B", "name": "Section B", "style": "Assertion-Reason / Statement MCQ", "marksPerQuestion": 4, "negative": -1 }
+      ],
+      "marking": { "correct": 4, "incorrect": -1, "unattempted": 0, "stepMarking": false },
+      "blueprintRefs": { "patternExam": ["NEET_UG_MED"] },
+      "contentStatus": "AVAILABLE",
+      "rankModel": {
+        "indicativeOnly": true,
+        "note": "Rough practice curve mapping score percentage to an estimated percentile. It is not an NTA prediction. Tune these points each year from published results.",
+        "approxCandidatePool": 2200000,
+        "curve": [[0, 0], [20, 40], [30, 60], [40, 72], [50, 82], [60, 90], [70, 95], [80, 98.5], [90, 99.7], [100, 99.99]]
+      }
+    }
+  },
+  "boardPatternMap": {
+    "CBSE": "CBSE_BOARD",
+    "HP_BOARD": "HP_BOARD",
+    "ICSE": "ICSE_BOARD"
+  },
+  "streamPatternMap": {
+    "JEE": "JEE_MAIN",
+    "NEET": "NEET_UG"
+  },
+  "assessmentBoardAliases": {
+    "CBSE": "CBSE_BOARD",
+    "CBSE_BOARD": "CBSE_BOARD",
+    "CBSE_CLASS_10": "CBSE_BOARD",
+    "CBSE_CLASS_11": "CBSE_BOARD",
+    "CBSE_CLASS_12": "CBSE_BOARD",
+    "HP_BOARD": "HP_BOARD",
+    "HPBOSE": "HP_BOARD",
+    "ICSE": "ICSE_BOARD",
+    "JEE": "JEE_MAIN",
+    "JEE_MAIN": "JEE_MAIN",
+    "JEE_ADVANCED": "JEE_MAIN",
+    "NEET": "NEET_UG",
+    "NEET_UG": "NEET_UG"
+  },
+  "boardContentAliases": {
+    "CBSE": ["CBSE", "HP_BOARD"]
+  },
+  "boardContentAliasesNote": "HP Board (HPBOSE) follows the NCERT syllabus, so CBSE-tagged NCERT-aligned content is also served to HP_BOARD. ICSE is never inferred."
+}

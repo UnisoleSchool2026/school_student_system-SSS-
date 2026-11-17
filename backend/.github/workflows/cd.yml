@@ -1,0 +1,215 @@
+name: Backend CD
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment for deployment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image to GHCR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+      image_ref: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata and tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging Environment
+    needs: build-and-push
+    if: github.event_name == 'push' || github.event.inputs.target_environment == 'staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_BACKEND_URL || 'https://staging-api.haps-scholar.internal' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies for verification script
+        run: npm ci
+
+      # ==============================================================================
+      # DEPLOYMENT TARGET PLACEHOLDER (STAGING)
+      # ------------------------------------------------------------------------------
+      # Replace this step with your actual cloud runtime CLI / API (e.g. Kubernetes,
+      # AWS ECS, Render, Railway, Google Cloud Run, or SSH docker-compose).
+      #
+      # REQUIRED INPUTS CONFIGURED IN GITHUB REPOSITORY / ENVIRONMENT:
+      # - IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+      # - PORT: 5050
+      # - DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # - CORS_ORIGIN: ${{ vars.CORS_ORIGIN || 'https://staging.haps-scholar.internal' }}
+      # - FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://staging.haps-scholar.internal' }}
+      # - JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      # - GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # - GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      # - DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+      # ==============================================================================
+      - name: Execute deployment to staging target
+        env:
+          IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CORS_ORIGIN: ${{ vars.CORS_ORIGIN || 'https://staging.haps-scholar.internal' }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://staging.haps-scholar.internal' }}
+          PORT: 5050
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "Deploying image ${IMAGE_REF} to Staging..."
+          echo "Target Environment: staging"
+          echo "Database Host Configured: Yes"
+          echo "CORS Origins: ${CORS_ORIGIN}"
+          echo "Deployment target placeholder execution finished."
+
+      - name: Post-deployment staging verification gate
+        env:
+          TARGET_URL: ${{ vars.STAGING_BACKEND_URL || 'http://localhost:5050' }}
+        run: |
+          echo "Executing post-deploy verification against ${TARGET_URL}..."
+          # If target is remote staging, verify_staging.js probes the live endpoint
+          if [ "${TARGET_URL}" != "http://localhost:5050" ]; then
+            node scripts/verify_staging.js "${TARGET_URL}"
+          else
+            echo "STAGING_BACKEND_URL variable not set; skipping live remote probe."
+          fi
+
+      # ==============================================================================
+      # ROLLBACK INSTRUCTIONS (STAGING)
+      # ------------------------------------------------------------------------------
+      # If the verification gate fails:
+      # 1. Roll back container tag to the previous stable release tag via your deployment CLI.
+      # 2. Inspect failure logs: GitHub Actions job logs -> Staging verification step.
+      # 3. Database migrations backwards compatibility: Ensure columns are nullable.
+      # ==============================================================================
+
+  deploy-production:
+    name: Deploy to Production Environment
+    needs: [build-and-push, deploy-staging]
+    if: github.event_name == 'push' || github.event.inputs.target_environment == 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_BACKEND_URL || 'https://api.haps-scholar.internal' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies for verification script
+        run: npm ci
+
+      # ==============================================================================
+      # DEPLOYMENT TARGET PLACEHOLDER (PRODUCTION)
+      # ------------------------------------------------------------------------------
+      # Manual approval gate is enforced by GitHub Environment: production.
+      # REQUIRED INPUTS:
+      # - IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+      # - DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # - CORS_ORIGIN: ${{ vars.CORS_ORIGIN }}
+      # - FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+      # - JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      # - GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # - GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      # ==============================================================================
+      - name: Execute deployment to production target
+        env:
+          IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CORS_ORIGIN: ${{ vars.CORS_ORIGIN || 'https://haps-scholar.internal' }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://haps-scholar.internal' }}
+          PORT: 5050
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "Deploying image ${IMAGE_REF} to Production..."
+          echo "Target Environment: production"
+          echo "Deployment target placeholder execution finished."
+
+      - name: Post-deployment production verification gate
+        env:
+          TARGET_URL: ${{ vars.PRODUCTION_BACKEND_URL || 'http://localhost:5050' }}
+        run: |
+          echo "Executing post-deploy verification against ${TARGET_URL}..."
+          if [ "${TARGET_URL}" != "http://localhost:5050" ]; then
+            node scripts/verify_staging.js "${TARGET_URL}"
+          else
+            echo "PRODUCTION_BACKEND_URL variable not set; skipping live remote probe."
+          fi
+
+      # ==============================================================================
+      # ROLLBACK INSTRUCTIONS (PRODUCTION)
+      # ------------------------------------------------------------------------------
+      # If production verification fails:
+      # 1. Immediately redeploy the prior known good tag (e.g. v1.0.0).
+      # 2. Check server logs on your container orchestrator.
+      # 3. Alert the on-call DevOps engineer via incident escalation channel.
+      # ==============================================================================
+

@@ -239,6 +239,71 @@ const BOARD_BLUEPRINTS = {
   },
 
   // --------------------------------------------------------------------------
+  // CBSE CLASS 12 MATHEMATICS (80 Marks, 38 Questions, 3 Hours)
+  // --------------------------------------------------------------------------
+  'CBSE_CLASS_12_MATHS': {
+    blueprintId: 'CBSE_CLASS_12_MATHS',
+    board: 'CBSE',
+    grade: '12',
+    subject: 'Mathematics',
+    title: 'CBSE Class XII Mathematics Board Examination',
+    totalMarks: 80,
+    timeAllowedHours: 3,
+    sections: [
+      {
+        id: 'sec_a',
+        name: 'SECTION A: MULTIPLE CHOICE & ASSERTION-REASON',
+        description: 'Questions 1 to 20 carry 1 mark each. Q1-Q18 are MCQs, Q19-Q20 are Assertion-Reason.',
+        questionCount: 20,
+        marksPerQuestion: 1,
+        questionType: 'MCQ_SINGLE'
+      },
+      {
+        id: 'sec_b',
+        name: 'SECTION B: VERY SHORT ANSWER QUESTIONS',
+        description: 'Questions 21 to 25 carry 2 marks each.',
+        questionCount: 5,
+        marksPerQuestion: 2,
+        questionType: 'SUBJECTIVE_SHORT'
+      },
+      {
+        id: 'sec_c',
+        name: 'SECTION C: SHORT ANSWER QUESTIONS',
+        description: 'Questions 26 to 31 carry 3 marks each.',
+        questionCount: 6,
+        marksPerQuestion: 3,
+        questionType: 'SUBJECTIVE_SHORT'
+      },
+      {
+        id: 'sec_d',
+        name: 'SECTION D: LONG ANSWER QUESTIONS (WITH INTERNAL CHOICE)',
+        description: 'Questions 32 to 35 carry 5 marks each with internal choice ("OR").',
+        questionCount: 4,
+        marksPerQuestion: 5,
+        questionType: 'SUBJECTIVE_LONG',
+        hasInternalChoice: true
+      },
+      {
+        id: 'sec_e',
+        name: 'SECTION E: CASE STUDY BASED QUESTIONS',
+        description: 'Questions 36 to 38 carry 4 marks each with sub-parts.',
+        questionCount: 3,
+        marksPerQuestion: 4,
+        questionType: 'CASE_BASED'
+      }
+    ],
+    instructions: [
+      'This question paper contains 38 questions divided into five sections A, B, C, D and E.',
+      'Section A: Q1 to Q20 (1 Mark each - 18 MCQs and 2 Assertion-Reason).',
+      'Section B: Q21 to Q25 (2 Marks each).',
+      'Section C: Q26 to Q31 (3 Marks each).',
+      'Section D: Q32 to Q35 (5 Marks each with internal choice).',
+      'Section E: Q36 to Q38 (4 Marks each case-based integrated questions).',
+      'Use of calculators is not permitted.'
+    ]
+  },
+
+  // --------------------------------------------------------------------------
   // HP BOARD (HPBOSE) CLASS 10 SCIENCE (70 Marks, 31 Questions, 3 Hours)
   // Bilingual: English & Hindi Headers
   // --------------------------------------------------------------------------
@@ -438,48 +503,106 @@ const BOARD_BLUEPRINTS = {
       'खण्ड-ग: 6 लघु उत्तरीय प्रश्न (3 अंक प्रत्येक)',
       'खण्ड-घ: 3 दीर्घ उत्तरीय प्रश्न (5 अंक प्रत्येक, आंतरिक विकल्प सहित)'
     ]
+  },
+
+  // --------------------------------------------------------------------------
+  // HP BOARD (HPBOSE) CLASS 12 MATHEMATICS (80 Marks Theory, 34 Questions, 3 Hours)
+  // --------------------------------------------------------------------------
+  'HP_BOARD_CLASS_12_MATHS': {
+    blueprintId: 'HP_BOARD_CLASS_12_MATHS',
+    board: 'HP_BOARD',
+    grade: '12',
+    subject: 'Mathematics',
+    title: 'HP Board (HPBOSE) Class XII Mathematics (गणित - सैद्धांतिक) Examination',
+    totalMarks: 80,
+    timeAllowedHours: 3,
+    boardOrgName: 'HIMACHAL PRADESH BOARD OF SCHOOL EDUCATION, DHARAMSHALA (HPBOSE)',
+    sections: [
+      { id: 'sec_a', name: 'खण्ड-क / SECTION A: बहुविकल्पीय प्रश्न (MCQs & OBJECTIVE)', description: 'Questions 1 to 16 carry 1 mark each.', questionCount: 16, marksPerQuestion: 1, questionType: 'MCQ_SINGLE' },
+      { id: 'sec_b', name: 'खण्ड-ख / SECTION B: लघु उत्तरीय प्रश्न-I (SHORT ANSWER TYPE-I)', description: 'Questions 17 to 24 carry 2 marks each.', questionCount: 8, marksPerQuestion: 2, questionType: 'SUBJECTIVE_SHORT' },
+      { id: 'sec_c', name: 'खण्ड-ग / SECTION C: लघु उत्तरीय प्रश्न-II (SHORT ANSWER TYPE-II)', description: 'Questions 25 to 30 carry 3 marks each.', questionCount: 6, marksPerQuestion: 3, questionType: 'SUBJECTIVE_SHORT' },
+      { id: 'sec_d', name: 'खण्ड-घ / SECTION D: दीर्घ उत्तरीय प्रश्न - अथवा सहित (LONG ANSWER WITH CHOICE)', description: 'Questions 31 to 34 carry 5 marks each with internal choice.', questionCount: 4, marksPerQuestion: 5, questionType: 'SUBJECTIVE_LONG', hasInternalChoice: true }
+    ],
+    instructions: [
+      'सभी प्रश्न अनिवार्य हैं। (All questions are compulsory.)',
+      'खण्ड-क: 16 वस्तुनिष्ठ प्रश्न (1 अंक प्रत्येक)',
+      'खण्ड-ख: 8 लघु उत्तरीय प्रश्न (2 अंक प्रत्येक)',
+      'खण्ड-ग: 6 लघु उत्तरीय प्रश्न (3 अंक प्रत्येक)',
+      'खण्ड-घ: 4 दीर्घ उत्तरीय प्रश्न (5 अंक प्रत्येक, आंतरिक विकल्प सहित)',
+      'कैलकुलेटर का उपयोग वर्जित है। (Use of calculators is prohibited.)'
+    ]
   }
 };
+
+/**
+ * Shared guard: enforces exact board-section marks matching so 5-mark derivations never
+ * leak into 1-mark MCQ slots or /alternatives?marks=1 results.
+ */
+function inferQuestionMarks(q) {
+  const explicit = Number(q.marks_weightage || q.marks);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const app = String(q.pyq_appearance || q.question_source || '');
+  if (/5\s*-?\s*mark/i.test(app) || q.question_format === 'SUBJECTIVE_LONG') return 5;
+  if (/4\s*-?\s*mark|case\s*-?\s*study/i.test(app) || q.question_format === 'CASE_STUDY') return 4;
+  if (/3\s*-?\s*mark/i.test(app)) return 3;
+  if (/2\s*-?\s*mark/i.test(app)) return 2;
+  if (q.question_format === 'MCQ_SINGLE' && Array.isArray(q.options_latex) && q.options_latex.length >= 2) return 1;
+  return 2;
+}
+
+function isMatchingBoardMarks(q, targetMarks) {
+  const qMarks = inferQuestionMarks(q);
+  const fmt = String(q.question_format || '').toUpperCase();
+  const app = String(q.pyq_appearance || '');
+  const isLongOrCase = fmt.includes('LONG') || fmt.includes('CASE') || /5\s*-?\s*mark|4\s*-?\s*mark|3\s*-?\s*mark|2\s*-?\s*mark/i.test(app);
+
+  if (targetMarks === 1) {
+    return qMarks === 1 && !isLongOrCase && Array.isArray(q.options_latex) && q.options_latex.length >= 2;
+  }
+  if (targetMarks === 5) {
+    return qMarks === 5 || fmt === 'SUBJECTIVE_LONG' || /5\s*-?\s*mark/i.test(app);
+  }
+  if (targetMarks === 4) {
+    return qMarks === 4 || fmt === 'CASE_STUDY' || /4\s*-?\s*mark|case\s*-?\s*study/i.test(app);
+  }
+  return qMarks === targetMarks || (!isLongOrCase && qMarks === targetMarks);
+}
 
 /**
  * 2. Collect questions pool for a given grade and subject
  */
 function getSubjectQuestionsPool(subject = 'Physics', grade = '12') {
   const normSub = (subject || '').toLowerCase().trim();
+  const normGrade = String(grade || '12').trim();
   const pool = [];
 
-  // Check inMemoryStore.subjectBanks
+  // Check inMemoryStore.subjectBanks strictly scoped by grade and subject
   if (inMemoryStore.subjectBanks) {
     if (normSub.includes('math')) {
-      if (inMemoryStore.subjectBanks.class10_maths) pool.push(...inMemoryStore.subjectBanks.class10_maths);
-      if (inMemoryStore.subjectBanks.senior_mathematics) pool.push(...inMemoryStore.subjectBanks.senior_mathematics);
+      if (normGrade === '10') {
+        if (inMemoryStore.subjectBanks.class10_maths) pool.push(...inMemoryStore.subjectBanks.class10_maths);
+      } else {
+        if (inMemoryStore.subjectBanks.senior_mathematics) pool.push(...inMemoryStore.subjectBanks.senior_mathematics);
+      }
     } else if (normSub.includes('sci')) {
       if (inMemoryStore.subjectBanks.class10_science) pool.push(...inMemoryStore.subjectBanks.class10_science);
-      if (inMemoryStore.subjectBanks.senior_physics) pool.push(...inMemoryStore.subjectBanks.senior_physics);
-      if (inMemoryStore.subjectBanks.senior_chemistry) pool.push(...inMemoryStore.subjectBanks.senior_chemistry);
     } else if (normSub.includes('phy')) {
       if (inMemoryStore.subjectBanks.senior_physics) pool.push(...inMemoryStore.subjectBanks.senior_physics);
-      if (inMemoryStore.subjectBanks.class10_science) {
-        pool.push(...inMemoryStore.subjectBanks.class10_science.filter(q => (q.discipline || '').toUpperCase() === 'PHYSICS' || (q.chapter_name || '').toLowerCase().includes('light') || (q.chapter_name || '').toLowerCase().includes('elec')));
-      }
     } else if (normSub.includes('chem')) {
       if (inMemoryStore.subjectBanks.senior_chemistry) pool.push(...inMemoryStore.subjectBanks.senior_chemistry);
-      if (inMemoryStore.subjectBanks.class10_science) {
-        pool.push(...inMemoryStore.subjectBanks.class10_science.filter(q => (q.discipline || '').toUpperCase() === 'CHEMISTRY'));
-      }
     } else if (normSub.includes('bio')) {
       if (inMemoryStore.subjectBanks.senior_biology) pool.push(...inMemoryStore.subjectBanks.senior_biology);
-      if (inMemoryStore.subjectBanks.class10_science) {
-        pool.push(...inMemoryStore.subjectBanks.class10_science.filter(q => (q.discipline || '').toUpperCase() === 'BIOLOGY'));
-      }
     }
   }
 
-  // Also check inMemoryStore.questions
+  // Also check inMemoryStore.questions matching BOTH subject and grade
   if (inMemoryStore.questions && inMemoryStore.questions.length > 0) {
     const matching = inMemoryStore.questions.filter(q => {
       const qSub = (q.subject || q.discipline || '').toLowerCase();
-      return qSub.includes(normSub) || normSub.includes(qSub);
+      const qGrade = String(q.grade || '').trim();
+      const subMatch = qSub && (qSub.includes(normSub) || normSub.includes(qSub));
+      const gradeMatch = !qGrade || qGrade === normGrade || (normGrade === '12' && qGrade === '11');
+      return subMatch && gradeMatch;
     });
     pool.push(...matching);
   }
@@ -929,35 +1052,112 @@ function createSyntheticBoardQuestion({
       chosen = physics5MLong[(questionNumber - 1) % physics5MLong.length];
     }
   } else if (normSub.includes('math')) {
+    const isClass12Math = String(grade || '12').trim() === '12';
+    const seniorMathsMCQs = [
+      {
+        topic: 'Matrices & Determinants',
+        q: 'If $A$ is a square matrix of order $3 \\times 3$ such that $|A| = 5$, then the value of $|\\text{adj}(A)|$ is:',
+        opts: [
+          { key: 'A', latex: '$25$', is_correct: true },
+          { key: 'B', latex: '$5$', is_correct: false },
+          { key: 'C', latex: '$125$', is_correct: false },
+          { key: 'D', latex: '$15$', is_correct: false }
+        ],
+        ans: 'A',
+        sol: 'For an invertible $n \\times n$ matrix $A$, $|\\text{adj}(A)| = |A|^{n-1} = 5^{3-1} = 25$.',
+        rubric: [{ step: 'Adjoint determinant identity $|\\text{adj}(A)| = |A|^{n-1}$', marks: 1 }]
+      },
+      {
+        topic: 'Continuity & Differentiability',
+        q: 'The derivative of $f(x) = \\sin(x^2)$ with respect to $x$ at $x = \\sqrt{\\pi}$ is:',
+        opts: [
+          { key: 'A', latex: '$-2\\sqrt{\\pi}$', is_correct: true },
+          { key: 'B', latex: '$2\\sqrt{\\pi}$', is_correct: false },
+          { key: 'C', latex: '$0$', is_correct: false },
+          { key: 'D', latex: '$-1$', is_correct: false }
+        ],
+        ans: 'A',
+        sol: '$f\'(x) = 2x \\cos(x^2)$. At $x = \\sqrt{\\pi}$, $f\'(\\sqrt{\\pi}) = 2\\sqrt{\\pi}\\cos(\\pi) = -2\\sqrt{\\pi}$.',
+        rubric: [{ step: 'Chain rule differentiation and evaluation', marks: 1 }]
+      },
+      {
+        topic: 'Definite Integrals',
+        q: 'The value of the definite integral $\\int_{-\\pi/2}^{\\pi/2} \\sin^7 x\\,dx$ is:',
+        opts: [
+          { key: 'A', latex: '$0$', is_correct: true },
+          { key: 'B', latex: '$1$', is_correct: false },
+          { key: 'C', latex: '$2/7$', is_correct: false },
+          { key: 'D', latex: '$\\pi$', is_correct: false }
+        ],
+        ans: 'A',
+        sol: 'Since $f(x) = \\sin^7 x$ satisfies $f(-x) = -f(x)$ (an odd function), its definite integral on the symmetric interval $[-a, a]$ is $0$.',
+        rubric: [{ step: 'Odd function symmetric integral property', marks: 1 }]
+      },
+      {
+        topic: 'Differential Equations',
+        q: 'The sum of the order and the degree of the differential equation $\\left(\\frac{d^2 y}{dx^2}\\right)^3 + \\frac{dy}{dx} + y = 0$ is:',
+        opts: [
+          { key: 'A', latex: '$5$', is_correct: true },
+          { key: 'B', latex: '$3$', is_correct: false },
+          { key: 'C', latex: '$2$', is_correct: false },
+          { key: 'D', latex: '$4$', is_correct: false }
+        ],
+        ans: 'A',
+        sol: 'Highest derivative order is $2$ ($d^2y/dx^2$), and its exponent degree is $3$. Sum $= 2 + 3 = 5$.',
+        rubric: [{ step: 'Order and degree identification', marks: 1 }]
+      }
+    ];
     if (marks === 1) {
-      chosen = mathsMCQs[(questionNumber - 1) % mathsMCQs.length];
+      chosen = isClass12Math
+        ? seniorMathsMCQs[(questionNumber - 1) % seniorMathsMCQs.length]
+        : mathsMCQs[(questionNumber - 1) % mathsMCQs.length];
     } else if (marks === 2) {
-      chosen = {
+      chosen = isClass12Math ? {
+        topic: 'Inverse Trigonometric Functions',
+        q: 'Find the principal value of $\\tan^{-1}(\\sqrt{3}) - \\sec^{-1}(-2)$.',
+        sol: '$\\tan^{-1}(\\sqrt{3}) = \\frac{\\pi}{3}$ and $\\sec^{-1}(-2) = \\pi - \\sec^{-1}(2) = \\pi - \\frac{\\pi}{3} = \\frac{2\\pi}{3}$.\nHence, difference $= \\frac{\\pi}{3} - \\frac{2\\pi}{3} = -\\frac{\\pi}{3}$.',
+        rubric: [{ step: 'Principal branch values', marks: 1 }, { step: 'Final simplified difference $-\\pi/3$', marks: 1 }]
+      } : {
         topic: 'Arithmetic Progressions',
         q: 'Find the $20^{\\text{th}}$ term from the last term of the AP: $3, 8, 13, \\dots, 253$.',
         sol: 'Reversing the AP: $a = 253, d = -5$. The $20^{\\text{th}}$ term is: $$a_{20} = a + 19d = 253 + 19(-5) = 253 - 95 = 158$$.',
         rubric: [{ step: 'Reversed AP identification and formula', marks: 1 }, { step: 'Calculation $a_{20} = 158$', marks: 1 }]
       };
     } else if (marks === 3) {
-      chosen = {
+      chosen = isClass12Math ? {
+        topic: 'Indefinite & Partial Integrals',
+        q: 'Evaluate: $$\\int \\frac{x}{(x-1)(x-2)}\\,dx$$',
+        sol: 'Using partial fractions: $\\frac{x}{(x-1)(x-2)} = \\frac{A}{x-1} + \\frac{B}{x-2} \\implies A = -1, B = 2$.\nIntegrating term-by-term: $$\\int \\left(\\frac{2}{x-2} - \\frac{1}{x-1}\\right)dx = 2\\ln|x-2| - \\ln|x-1| + C = \\ln\\left|\\frac{(x-2)^2}{x-1}\\right| + C$$.',
+        rubric: [{ step: 'Partial fraction decomposition', marks: 1.5 }, { step: 'Logarithmic integration with constant $C$', marks: 1.5 }]
+      } : {
         topic: 'Circles & Tangents',
         q: 'Prove that the lengths of tangents drawn from an external point to a circle are equal.',
         sol: 'Given circle with center $O$ and external point $P$ with tangents $PQ$ and $PR$.\nIn $\\triangle OQP$ and $\\triangle ORP$:\n1. $OQ = OR$ (radii of same circle)\n2. $\\angle OQP = \\angle ORP = 90^\\circ$ (radius is perpendicular to tangent at point of contact)\n3. $OP = OP$ (common hypotenuse)\nBy RHS Congruence criterion, $\\triangle OQP \\cong \\triangle ORP \\implies PQ = PR$ by CPCT.',
         rubric: [{ step: 'Neat diagram and given/to prove statement', marks: 1 }, { step: 'RHS Congruency proof', marks: 1.5 }, { step: 'CPCT conclusion $PQ = PR$', marks: 0.5 }]
       };
     } else if (marks === 4) {
-      chosen = {
+      chosen = isClass12Math ? {
+        topic: 'Case Study: Conditional Probability & Bayes Theorem',
+        q: `CASE STUDY: In a factory, machines $M_1$, $M_2$, and $M_3$ manufacture $25\\%$, $35\\%$, and $40\\%$ of the total bolts respectively. Of their outputs, $5\\%$, $4\\%$, and $2\\%$ respectively are defective.\n(i) Find the total probability that a randomly selected bolt is defective. [2M]\n(ii) If a bolt drawn at random is found defective, find the probability that it was manufactured by machine $M_2$. [2M]`,
+        sol: `(i) $P(D) = P(M_1)P(D|M_1) + P(M_2)P(D|M_2) + P(M_3)P(D|M_3) = (0.25)(0.05) + (0.35)(0.04) + (0.40)(0.02) = 0.0125 + 0.0140 + 0.0080 = 0.0345$.\n(ii) By Bayes Theorem: $$P(M_2|D) = \\frac{0.0140}{0.0345} = \\frac{28}{69}$$.`,
+        rubric: [{ step: 'Theorem of total probability calculation', marks: 2 }, { step: 'Bayes Theorem posterior probability $28/69$', marks: 2 }]
+      } : {
         topic: 'Case Study: Parabolic Bridge',
         q: `CASE STUDY: A suspension bridge arch follows the parabolic quadratic polynomial $y = -x^2 + 8x - 12$, where $x$ is horizontal distance in meters and $y$ is height above ground level in meters.\n(i) Find the zeroes of the polynomial representing points where the arch touches the ground. [1M]\n(ii) Find the maximum height reached by the arch bridge. [2M]\n(iii) What is the total horizontal span (width) of the bridge arch? [1M]`,
         sol: `(i) Factoring $-x^2 + 8x - 12 = -(x-2)(x-6) = 0 \\implies x = 2\\,\\text{m}, x = 6\\,\\text{m}$.\n(ii) Vertex occurs at $x = -b/(2a) = -8/(-2) = 4\\,\\text{m}$. Maximum height is $y(4) = -(4)^2 + 8(4) - 12 = -16 + 32 - 12 = 4\\,\\text{m}$.\n(iii) Span width: $6 - 2 = 4\\,\\text{m}$.`,
         rubric: [{ step: 'Zeroes calculation', marks: 1 }, { step: 'Max height vertex computation', marks: 2 }, { step: 'Span determination', marks: 1 }]
       };
     } else {
-      chosen = {
+      chosen = isClass12Math ? {
+        topic: 'Linear Algebra: Matrix Method & Shortest Skew Distance',
+        q: `(a) Using matrix inversion method, solve the system of linear equations:\n$$2x + 3y + 3z = 5$$\n$$x - 2y + z = -4$$\n$$3x - y - 2z = 3$$\n\nOR / अथवा\n\n(b) Find the shortest distance between the skew lines:\n$$\\vec{r} = (\\hat{i} + 2\\hat{j} + \\hat{k}) + \\lambda(\\hat{i} - \\hat{j} + \\hat{k})$$\n$$\\vec{r} = (2\\hat{i} - \\hat{j} - \\hat{k}) + \\mu(2\\hat{i} + \\hat{j} + 2\\hat{k})$$`,
+        sol: `(a) Coefficient matrix $A = \\begin{bmatrix} 2 & 3 & 3 \\\\ 1 & -2 & 1 \\\\ 3 & -1 & -2 \\end{bmatrix}$, $|A| = 2(5) - 3(-5) + 3(5) = 40 \\neq 0$. Computing $A^{-1} = \\frac{1}{40}\\text{adj}(A)$ yields $X = A^{-1}B = [1, 2, -1]^T \\implies x = 1, y = 2, z = -1$.\n\nOR Option:\n$$d = \\frac{|(\\vec{a}_2 - \\vec{a}_1) \\cdot (\\vec{b}_1 \\times \\vec{b}_2)|}{|\\vec{b}_1 \\times \\vec{b}_2|} = \\frac{3\\sqrt{2}}{2}\\,\\text{units}$$.`,
+        rubric: [{ step: 'Determinant check and cofactor matrix / cross-product vector', marks: 3 }, { step: 'Final solution $(1, 2, -1)$ or shortest distance', marks: 2 }]
+      } : {
         topic: 'Triangles: Basic Proportionality Theorem',
-        q: `(a) State and prove Basic Proportionality Theorem (Thales Theorem).\n(b) Using the theorem, in $\\triangle ABC$, if $DE \\parallel BC$ intersects $AB$ at $D$ and $AC$ at $E$ such that $AD = 2.4\\,\\text{cm}, DB = 3.6\\,\\text{cm}, AE = 2.0\\,\\text{cm}$, find $EC$.\n\nOR / अथवा\n\n(a) Solve the following system of linear equations using matrix method:\n$$x - y + 2z = 7$$\n$$3x + 4y - 5z = -5$$\n$$2x - y + 3z = 12$$`,
+        q: `(a) State and prove Basic Proportionality Theorem (Thales Theorem).\n(b) Using the theorem, in $\\triangle ABC$, if $DE \\parallel BC$ intersects $AB$ at $D$ and $AC$ at $E$ such that $AD = 2.4\\,\\text{cm}, DB = 3.6\\,\\text{cm}, AE = 2.0\\,\\text{cm}$, find $EC$.`,
         sol: `(a) Thales Theorem proof: Construction of altitudes and median connectors. Ratios of triangle areas give $\\frac{\\text{ar}(ADE)}{\\text{ar}(BDE)} = \\frac{AD}{DB}$ and $\\frac{\\text{ar}(ADE)}{\\text{ar}(CDE)} = \\frac{AE}{EC}$. Since $\\text{ar}(BDE) = \\text{ar}(CDE)$ on common base $DE$ between parallels, $\\frac{AD}{DB} = \\frac{AE}{EC}$.\n(b) $$\\frac{2.4}{3.6} = \\frac{2.0}{EC} \\implies EC = \\frac{3.6 \\times 2.0}{2.4} = 3.0\\,\\text{cm}$$.`,
-        rubric: [{ step: 'Thales theorem theorem proof with diagram', marks: 3.5 }, { step: 'Numerical substitution $EC = 3.0\\,\\text{cm}$', marks: 1.5 }]
+        rubric: [{ step: 'Thales theorem proof with diagram', marks: 3.5 }, { step: 'Numerical substitution $EC = 3.0\\,\\text{cm}$', marks: 1.5 }]
       };
     }
   } else {
@@ -1046,10 +1246,7 @@ function generateBoardQuestionPaper({
       if (secQuestions.length >= targetCount) break;
       if (usedIds.has(q.id)) continue;
 
-      const qMarks = Number(q.marks_weightage || q.marks || (marks === 1 ? 1 : (marks === 5 ? 5 : 2)));
-      const isFormatMatch = marks === 1 ? (q.question_format === 'MCQ_SINGLE' || (q.options_latex && q.options_latex.length > 0)) : (marks === 5 ? (q.marks_weightage === 5 || q.question_format === 'SUBJECTIVE_LONG') : true);
-
-      if (qMarks === marks || (marks > 1 && qMarks >= 2 && qMarks <= 4 && !isFormatMatch)) {
+      if (isMatchingBoardMarks(q, marks)) {
         usedIds.add(q.id);
         secQuestions.push({
           id: q.id,
@@ -1062,7 +1259,7 @@ function generateBoardQuestionPaper({
           topic: q.chapter_name || q.topic || q.chapter || 'Core Syllabus',
           pyq_appearance: q.pyq_appearance || (normBoard === 'HP_BOARD' ? 'HP Board Model Exam' : 'CBSE Board Examination'),
           question_latex: q.question_latex,
-          options_latex: q.options_latex || [],
+          options_latex: marks === 1 ? (q.options_latex || []) : [],
           correct_answer: q.correct_answer || q.correct_answer_latex || 'A',
           solution_latex: q.solution_latex || '',
           step_rubric: q.step_rubric || [{ step: 'Correct working according to board rubric', marks: marks }]
@@ -1214,23 +1411,38 @@ function swapPaperQuestion({ paper, questionId, replacementQuestionId = null, cu
 function getAlternativeQuestions({ subject = 'Physics', grade = '12', marks = 1, excludeIds = [], topic = null }) {
   const pool = getSubjectQuestionsPool(subject, grade);
   const excludeSet = new Set(excludeIds || []);
+  const targetMarks = Number(marks) || 1;
 
   const candidates = pool.filter(q => {
     if (excludeSet.has(q.id)) return false;
-    const qMarks = Number(q.marks_weightage || q.marks || 1);
-    return marks === 1 ? (qMarks === 1 || q.options_latex?.length > 0) : (qMarks === marks || (marks >= 2 && qMarks >= 2));
+    return isMatchingBoardMarks(q, targetMarks);
   });
 
-  return candidates.slice(0, 5).map((q, idx) => ({
+  // Top up with authentic synthetic alternatives if curated pool has fewer than 3 strictly-matching slots
+  const resultList = candidates.slice(0, 5).map((q) => ({
     id: q.id,
     question_latex: q.question_latex,
-    options_latex: q.options_latex || [],
+    options_latex: targetMarks === 1 ? (q.options_latex || []) : [],
     correct_answer: q.correct_answer || q.correct_answer_latex || 'A',
     solution_latex: q.solution_latex || '',
-    marks: marks,
+    marks: targetMarks,
     topic: q.chapter_name || q.topic || q.chapter || 'Curriculum Syllabus',
     pyq_appearance: q.pyq_appearance || 'Board Exam Pattern'
   }));
+
+  for (let i = resultList.length; i < 3; i++) {
+    resultList.push(createSyntheticBoardQuestion({
+      subject,
+      grade,
+      board: 'CBSE',
+      sectionId: targetMarks === 1 ? 'sec_a' : 'sec_c',
+      marks: targetMarks,
+      questionNumber: i + 101,
+      topicHint: topic
+    }));
+  }
+
+  return resultList;
 }
 
 /**
@@ -1248,8 +1460,10 @@ function addCustomQuestionToPaper({
 
   const marks = Number(questionData.marks || targetSection.marksPerQuestion || 2);
 
+  const hasMcqOptions = Array.isArray(questionData.options_latex) && questionData.options_latex.length > 0;
+  const customId = questionData.id || `q_custom_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
   const customQ = {
-    id: `q_custom_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    id: customId,
     section_id: targetSection.id,
     marks: marks,
     subject: paper.subject,
@@ -1258,14 +1472,20 @@ function addCustomQuestionToPaper({
     topic: questionData.topic || 'Teacher Custom Question',
     pyq_appearance: questionData.pyq_appearance || 'Teacher Formulated Question',
     question_latex: questionData.question_latex || 'Write question statement here...',
-    options_latex: questionData.options_latex || [],
-    correct_answer: questionData.correct_answer || 'A',
+    options_latex: hasMcqOptions ? questionData.options_latex : [],
+    correct_answer: hasMcqOptions ? (questionData.correct_answer || 'A') : null,
     solution_latex: questionData.solution_latex || '',
     step_rubric: questionData.step_rubric || [{ step: 'Complete solution and steps', marks: marks }],
     isCustomTeacherQuestion: true
   };
 
-  targetSection.questions.push(customQ);
+  // Replace or deduplicate if client snapshot already included customId
+  const existingIdx = targetSection.questions.findIndex(q => q.id === customId);
+  if (existingIdx !== -1) {
+    targetSection.questions[existingIdx] = { ...targetSection.questions[existingIdx], ...customQ };
+  } else {
+    targetSection.questions.push(customQ);
+  }
 
   // Re-sequence all question numbers across all sections
   resequencePaper(paper);

@@ -3,7 +3,7 @@
 // Consumes telemetry events, updates concept mastery matrix & feeds live WebSocket
 // ============================================================================
 
-const { Kafka } = require('kafkajs');
+const { Kafka, logLevel } = require('kafkajs');
 const { inMemoryStore } = require('../config/database');
 
 let consumer = null;
@@ -19,7 +19,9 @@ async function initKafkaConsumer() {
   try {
     const kafka = new Kafka({
       clientId: 'haps-diagnostic-worker',
-      brokers
+      brokers,
+      logLevel: logLevel.NOTHING,
+      retry: { initialRetryTime: 300, retries: 2 }
     });
 
     consumer = kafka.consumer({ groupId: 'haps-analytics-group' });

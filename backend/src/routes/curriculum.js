@@ -5,6 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
+const subjectScope = require('../services/subjectScope');
 const { inMemoryStore } = require('../config/database');
 const { CURRICULUM_TAXONOMY, getSubjectTaxonomy, listAvailableSubjects } = require('../services/curriculumTaxonomy');
 const { generateLlmQuestion } = require('../services/llmQuestionEngine');
@@ -715,16 +716,11 @@ router.get('/students', (req, res) => {
     }
 
     if (sKey) {
-      if (sKey === 'BIOLOGY') {
-        // Only students in Medical classes taking Biology
-        students = students.filter(s => (s.section || '').includes('Med') && !(s.section || '').includes('NonMed'));
-      } else if (sKey === 'MATHEMATICS') {
-        // Only students in Non-Medical or Foundation classes taking Mathematics
-        students = students.filter(s => (s.section || '').includes('NonMed') || (s.section || '').includes('Science-A'));
-      } else if (sKey === 'CLASS10_MATHEMATICS' || sKey === 'CLASS10_SCIENCE') {
-        // Strictly Class 10 Foundation students
-        students = students.filter(s => String(s.grade) === '10' || (s.section || '').includes('Science-A'));
-      }
+      // Subject isolation: only students enrolled in classes that teach this subject
+      // (Physics/Chemistry -> 11/12, Biology -> Medical, Maths -> Non-Medical, CLASS10_* -> Class 10).
+      students = subjectScope.isKnownSubject(sKey)
+        ? students.filter(s => subjectScope.studentInScope(sKey, s))
+        : [];
     }
 
     res.json({
@@ -819,8 +815,17 @@ router.post('/generate-test', async (req, res) => {
       questionCount = 5,
       difficulty = 'MEDIUM',
       title = null,
-      autoAttempt = false
+      autoAttempt = false,
+      teacherSubjectKey = null
     } = req.body;
+
+    // Subject isolation: a teacher can only create tests for their own subject and classes,
+    // and a class can only receive tests for subjects it actually studies.
+    const scopeError = subjectScope.checkTeacherWrite(teacherSubjectKey, { subjectKey, section: section || classKey, grade });
+    if (scopeError) return res.status(scopeError.status).json({ success: false, error: scopeError.error });
+    if (subjectKey && !subjectScope.classTeachesSubject(section || classKey, subjectKey)) {
+      return res.status(400).json({ success: false, error: `Class ${section || classKey} does not study ${subjectKey}.` });
+    }
 
     const count = Math.min(25, Math.max(1, Number(questionCount) || 5));
     const banks = inMemoryStore.subjectBanks || {};

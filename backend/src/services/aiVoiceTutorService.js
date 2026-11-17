@@ -4,7 +4,7 @@
 // voice interruptions in real-time for authentic question bank guidance.
 // ============================================================================
 
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) {}
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
 
 // Microsoft Azure Neural Voices with genuine human accent and inflection
@@ -300,11 +300,96 @@ Output STRICTLY as a JSON object:
 /**
  * Handle live student voice interruptions & doubts during question solving
  */
+/**
+ * Call configured LLM providers (Groq first for low latency, Gemini fallback) expecting JSON output.
+ */
+async function callVoiceTutorJsonModel({ systemPrompt, userPrompt, temperature = 0.25, maxTokens = 650, timeoutMs = 5500 }) {
+  const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
+  if (groqKey) {
+    const groqModels = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'llama-3.3-70b-versatile'];
+    for (const modelName of groqModels) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            response_format: { type: 'json_object' },
+            temperature,
+            max_tokens: maxTokens
+          }),
+          signal: controller.signal
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const content = data.choices?.[0]?.message?.content;
+          if (content) {
+            return { parsed: JSON.parse(content), source: `GROQ_${modelName.toUpperCase()}` };
+          }
+        }
+      } catch (err) {
+        // Fall through to next provider/model
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
+  if (geminiKey) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs + 2000);
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiKey)}`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+          generationConfig: {
+            temperature,
+            maxOutputTokens: maxTokens,
+            responseMimeType: 'application/json'
+          }
+        }),
+        signal: controller.signal
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (text) {
+          const cleaned = text.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+          return { parsed: JSON.parse(cleaned), source: 'GEMINI_2_5_FLASH' };
+        }
+      }
+    } catch (err) {
+      // Fall through to heuristic fallback
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  return null;
+}
+
 async function answerStudentInterruption({
   questionText,
   solutionText = '',
   studentDoubt,
-  conversationHistory = []
+  conversationHistory = [],
+  chapterName = '',
+  topic = '',
+  grade = '',
+  subject = ''
 }) {
   if (!studentDoubt || !studentDoubt.trim()) {
     return {
@@ -314,76 +399,54 @@ async function answerStudentInterruption({
   }
 
   const cleanQuestion = cleanLatexForSpeech(questionText);
-  const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
+  const cleanSol = cleanLatexForSpeech(solutionText).slice(0, 500);
+  const recentTurns = Array.isArray(conversationHistory)
+    ? conversationHistory.slice(-4).map(t => `${t.role || 'student'}: ${t.text || ''}`).join('\n')
+    : '';
 
-  if (groqKey) {
-    try {
-      const prompt = `A student studying for Indian CBSE/Board exams stopped audio playback and asked a doubt in Hindi/Hinglish/English.
-Question: "${cleanQuestion}"
-Student's Doubt: "${studentDoubt}"
+  const contextMeta = [
+    grade ? `Class ${grade}` : '',
+    subject ? `Subject: ${subject}` : '',
+    chapterName ? `Chapter: ${chapterName}` : '',
+    topic ? `Topic: ${topic}` : ''
+  ].filter(Boolean).join(' | ');
 
-Answer the student directly in 2 to 3 friendly, spoken Hinglish sentences like a great classroom teacher.
-Explain clearly why that step is taken and encourage them.
+  try {
+    const prompt = `A student studying for Indian CBSE/Board/Competitive exams asked a doubt in Hindi/Hinglish/English while using the interactive AI Whiteboard.
+${contextMeta ? `Academic Context: ${contextMeta}\n` : ''}Active Topic / Question: "${cleanQuestion || topic || chapterName}"
+${cleanSol ? `Current Solution Context: "${cleanSol}"\n` : ''}${recentTurns ? `Recent Conversation:\n${recentTurns}\n` : ''}Student's Doubt: "${studentDoubt}"
+
+Answer the student directly in 2 to 4 clear, encouraging spoken Hinglish sentences like an expert classroom teacher. Include exact LaTeX formulas wrapped in $...$ only where helpful for clarity, and directly address their specific question.
 
 Output strictly in JSON:
 {
   "answerHinglish": "Clear, friendly teacher reply in natural Hinglish",
-  "suggestedNextStep": "Brief one-line next action for student"
+  "suggestedNextStep": "Brief one-line next action or practice check for student"
 }`;
 
-      const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
-      for (const modelName of modelsToTry) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const llmResult = await callVoiceTutorJsonModel({
+      systemPrompt: 'You are an encouraging senior Indian STEM faculty responding instantly to student classroom doubts in clear Hinglish JSON.',
+      userPrompt: prompt,
+      temperature: 0.3,
+      maxTokens: 600,
+      timeoutMs: 5500
+    });
 
-          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${groqKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: modelName,
-              messages: [
-                { role: 'system', content: 'You are an encouraging Indian teacher responding instantly to student classroom doubts in Hinglish.' },
-                { role: 'user', content: prompt }
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.35,
-              max_tokens: 300
-            }),
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (res.ok) {
-            const data = await res.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              const parsed = JSON.parse(content);
-              if (parsed.answerHinglish) {
-                return {
-                  studentDoubt,
-                  answerHinglish: parsed.answerHinglish,
-                  suggestedNextStep: parsed.suggestedNextStep || "Formula apply karke next calculation step complete karo.",
-                  source: `GROQ_${modelName.toUpperCase()}`
-                };
-              }
-            }
-          }
-        } catch (e) {
-          // try next model
-        }
-      }
-    } catch (e) {
-      console.warn('[AI VOICE TUTOR] Interruption LLM fallback:', e.message);
+    if (llmResult?.parsed?.answerHinglish) {
+      return {
+        studentDoubt,
+        answerHinglish: llmResult.parsed.answerHinglish,
+        suggestedNextStep: llmResult.parsed.suggestedNextStep || "Formula apply karke next calculation step complete karo.",
+        source: llmResult.source
+      };
     }
+  } catch (e) {
+    console.warn('[AI VOICE TUTOR] Interruption LLM fallback:', e.message);
   }
 
   // Heuristic Hinglish doubt answer fallback
   const dLower = studentDoubt.toLowerCase();
+  const ctxLower = `${chapterName} ${topic} ${cleanQuestion} ${dLower}`.toLowerCase();
   let answerHinglish = "Bilkul sahi question hai! Is step mein pehle standard governing formula apply karo aur given quantities ko SI units mein convert karo.";
   let suggestedNextStep = "Pehle formula likho, phir numerical values substitute karo.";
 
@@ -391,8 +454,13 @@ Output strictly in JSON:
     answerHinglish = "Yahan hume core fundamental relation apply karna hai. Pehle given physical quantities note karo, phir unko connect karne wala standard governing formula lagao!";
     suggestedNextStep = "Formula copy mein note karo aur values substitute karo.";
   } else if (dLower.includes('minus') || dLower.includes('sign') || dLower.includes('negative')) {
-    answerHinglish = "Minus sign opposing nature ya direction ko indicate karta hai (jaise Lenz's law ya work done by friction mein). Isliye calculation mein sign convention dhyan se carry karna zaroori hai.";
-    suggestedNextStep = "Check karo ki displacement aur force ki direction same hai ya opposite.";
+    if (/mirror|lens|focal|optic|concave|convex/.test(ctxLower)) {
+      answerHinglish = "New Cartesian Sign Convention ke hisab se saari distances pole/optical center se measure hoti hain; incident light ke opposite (left side) aane par distance negative li jati hai (jaise concave mirror ki focal length $f < 0$).";
+      suggestedNextStep = "Mirror formula $\\frac{1}{f} = \\frac{1}{v} + \\frac{1}{u}$ mein $u$ aur $f$ sign ke sath substitute karo.";
+    } else {
+      answerHinglish = "Minus sign opposing nature ya direction ko indicate karta hai (jaise Lenz's law ya work done by friction mein). Isliye calculation mein sign convention dhyan se carry karna zaroori hai.";
+      suggestedNextStep = "Check karo ki displacement aur force ki direction same hai ya opposite.";
+    }
   } else if (dLower.includes('shortcut') || dLower.includes('trick') || dLower.includes('fast')) {
     answerHinglish = "Competitive exam ke liye aap direct formula ratio trick use kar sakte hain, lekin board exam mein steps dikhana zaroori hai taaki step marking ke pure marks milein.";
     suggestedNextStep = "Main steps ko skip mat karna, calculations mentally speed up kar sakte ho.";
@@ -515,7 +583,10 @@ async function generateSmartboardTeachingPlan({
       diagSpoken = 'Pehle left side board par pure solvent aur dilute solution ke phase equilibrium diagram ko note karo.';
       defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
     }
-  } else if (textCorpus.match(/roll|sphere|cylinder|incline|ramp|slip|angular|moment of inertia|torque/)) {
+  } else if (
+    !/dipole|electric|charge|gauss|flux|magnetic|capacit|lens|mirror|circuit/.test(textCorpus) &&
+    textCorpus.match(/\b(roll|sphere|cylinder|incline|ramp|moment of inertia|angular momentum|rotational dynamics)\b/)
+  ) {
     defaultDiagType = 'rolling_incline';
     defaultTitle = 'Free-Body Diagram • Solid Sphere on Incline (θ)';
     defaultTip = 'Static friction sustains pure rolling without dissipating total mechanical energy!';
@@ -554,6 +625,112 @@ async function generateSmartboardTeachingPlan({
     s3Exp = 'State complete nature, orientation, and size relative to object. Real images formed by convex lenses are always inverted.';
     s3Spoken = 'Aur final result mein image distance aur magnification ka sign dekhkar image real aur inverted confirm hoti hai.';
     diagSpoken = 'Pehle left board par principal axis aur convex lens ke ray diagram ko dhyan se dekho.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+  } else if (textCorpus.match(/alternating|ac circuit|capacitive reactance|inductive reactance|phasor|pure capacitor|peak current|rms current|lcr\b/)) {
+    defaultDiagType = 'ac_circuit';
+    defaultTitle = 'AC Circuit & Phasor Diagram • Pure Capacitive Load';
+    defaultTip = 'In a pure capacitor, current LEADS voltage by 90° (π/2 rad)! Average power consumed over a full cycle is strictly ZERO!';
+    s1Title = 'AC Voltage & Capacitive Reactance Definition';
+    s1Formula = '• Applied Voltage: V(t) = V₀ · sin(ωt) = 220√2 · sin(100π t)\n• Angular Frequency: ω = 2π f,  V₀ = 220√2 V\n• Capacitive Reactance: X_C = 1 / (ω · C)';
+    s1Exp = 'A pure capacitor opposes alternating current through frequency-dependent capacitive reactance.';
+    s1Spoken = 'Dekho beta, pehle AC voltage formula aur capacitive reactance X_C = 1 / (omega C) note karte hain.';
+
+    s2Title = 'Reactance & Peak Current Derivation';
+    s2Formula = cleanS || '1) Calculate Reactance: X_C = 1 / (ω·C) = 1 / [100π × (10 × 10⁻⁶)] = 1000 / π ≈ 318.3 Ω\n2) Peak Current: I₀ = V₀ / X_C = (220√2) / 318.3 ≈ 0.98 A\n3) Phase Relation: Current leads voltage by π/2 (90°)';
+    s2Exp = 'Ohm\'s Law analog in AC circuits yields peak current amplitude from peak voltage and capacitive reactance.';
+    s2Spoken = 'Ab angular frequency omega = 100 pi substitute karke reactance 318.3 ohm aur peak current I0 = 0.98 ampere evaluate karte hain.';
+
+    s3Title = 'Final Evaluated AC Parameters & Takeaway';
+    s3Formula = '• Capacitive Reactance: X_C = 1000/π Ω ≈ 318.3 Ω\n• Peak Current: I₀ ≈ 0.98 A (RMS Current I_rms = 0.69 A)\n• Phase Lead: Current leads voltage by 90° (φ = +π/2)\n• Average Power: P_avg = V_rms · I_rms · cos(90°) = 0 W';
+    s3Exp = 'Pure reactive circuit elements consume ZERO net active power over a full cycle (cos 90° = 0).';
+    s3Spoken = 'Aur pure capacitor mein current voltage se 90 degree aage lead karta hai aur net power loss zero hota hai!';
+    diagSpoken = 'Pehle left side board par AC capacitor circuit aur phasor diagram ko dhyan se observe karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+  } else if (textCorpus.match(/\b(gauss|gaussian surface|linear charge density|straight wire|infinite wire|cylinder|curved surface flux)\b/)) {
+    defaultDiagType = 'gauss';
+    defaultTitle = "Gauss's Law • Cylindrical Gaussian Surface & Wire (λ)";
+    defaultTip = 'By cylindrical symmetry, electric field E is strictly radial. End-cap flux is zero because E is parallel to cap faces!';
+    s1Title = 'Governing Electrostatic Relations & Symmetry';
+    s1Formula = '• Gauss Law: Φ = ∮ E · dA = q_enclosed / ε₀\n• Linear Charge Density: λ = q / L ⇒ q_enclosed = λ · L\n• Cylindrical Symmetry: E is radial and perpendicular to wire axis';
+    s1Exp = 'Choose a coaxial cylindrical Gaussian surface of radius r and length L centered on the infinitely long charged wire.';
+    s1Spoken = 'Dekho beta, pehle left board par infinitely long charged wire aur cylindrical Gaussian surface ka setup note karo.';
+
+    s2Title = 'Formula Substitution & Mathematical Working';
+    s2Formula = cleanS || '1) Curved Surface Area: A = 2π·r·L\n2) Total Flux: Φ = E · (2π·r·L) + 0 (end caps have zero flux)\n3) Apply Gauss\'s Law: E · (2π·r·L) = (λ · L) / ε₀ ⇒ E = λ / (2π · ε₀ · r)';
+    s2Exp = 'Flux passes exclusively through the curved cylindrical surface. Equating enclosed charge λL over ε₀ isolates the radial field.';
+    s2Spoken = 'Ab Gauss Law lagakar curved area 2 pi r L se divide karte hain aur electric field formula derive ho jata hai.';
+
+    s3Title = 'Verified Final Answer & Physical Invariant';
+    s3Formula = '• Electric Field: E = λ / (2π · ε₀ · r) = (1 / 4πε₀) · (2λ / r)\n• Inverse Distance Dependency: E ∝ 1 / r\n• Direction: Radially outward if λ > 0, radially inward if λ < 0';
+    s3Exp = 'The electric field falls off as 1/r (compared to 1/r² for a point charge). This is verified by CBSE standard derivation rubrics.';
+    s3Spoken = 'Aur final result mein electric field E = lambda / (2 pi epsilon_0 r) mil jata hai!';
+    diagSpoken = 'Pehle left board par cylindrical Gaussian surface aur radial field vectors E ko note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+  } else if (textCorpus.match(/\b(dipole|dipole moment|torque on dipole)\b/)) {
+    defaultDiagType = 'dipole';
+    defaultTitle = 'Electric Dipole • Torque & Potential Energy Model';
+    defaultTip = 'Torque aligns dipole parallel to field (stable equilibrium at θ = 0°). Work done W = pE(cos θ₁ - cos θ₂)!';
+    s1Title = 'Governing Dipole Relations';
+    s1Formula = '• Dipole Moment: p = q · 2a\n• Torque on Dipole: τ = p × E = pE · sin θ\n• Potential Energy: U(θ) = -p · E = -pE · cos θ\n• Work Rotating Dipole: W = pE(cos θ₁ - cos θ₂)';
+    s1Exp = 'Equal and opposite forces on charges produce a net couple torque τ = p × E without translational net force in uniform field.';
+    s1Spoken = 'Dekho beta, pehle uniform electric field mein dipole par lagne wale equal and opposite forces aur torque note karo.';
+
+    s2Title = 'Torque & Work Done Working';
+    s2Formula = cleanS || '1) Torque couple: τ = q·E · (2a·sin θ) = p·E·sin θ\n2) Work done: dW = τ · dθ = p·E·sin θ · dθ\n3) Integrate: W = ∫ p·E·sin θ dθ = -p·E·cos θ |[θ₁ to θ₂] = pE(cos θ₁ - cos θ₂)';
+    s2Exp = 'Integrating infinitesimal work done against the restoring electrostatic torque yields the change in potential energy.';
+    s2Spoken = 'Ab torque equation integrate karke initial aur final angles substitute karte hain.';
+
+    s3Title = 'Final Potential Energy & Stability Takeaway';
+    s3Formula = '• Stable Equilibrium (θ = 0°): τ = 0, U_min = -pE\n• Unstable Equilibrium (θ = 180°): τ = 0, U_max = +pE\n• Zero Energy Position (θ = 90°): U = 0';
+    s3Exp = 'Positive external work is required to rotate a dipole away from stable alignment with the electric field vector.';
+    s3Spoken = 'Aur final verified takeaway: dipole theta = 0 degree par minimum energy aur stable equilibrium mein hota hai!';
+    diagSpoken = 'Pehle left board par uniform electric field aur dipole charges -q, +q ki geometry note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+  } else if (textCorpus.match(/\b(capacitor|capacitance|dielectric|parallel plate|stored energy)\b/)) {
+    defaultDiagType = 'capacitor';
+    defaultTitle = 'Parallel Plate Capacitor • Dielectric & Stored Energy';
+    defaultTip = 'Inserting dielectric of constant K increases capacitance by factor K: C = K · C₀!';
+    s1Title = 'Capacitor Governing Principles';
+    s1Formula = '• Capacitance: C = (ε₀ · A) / d\n• With Dielectric: C = (K · ε₀ · A) / d\n• Stored Energy: U = ½ C·V² = Q² / (2C) = ½ Q·V';
+    s1Exp = 'Electric field inside uniform plates is E = σ / ε₀ = V / d. Surface charge Q = C · V.';
+    s1Spoken = 'Dekho beta, parallel plate capacitor aur dielectric constant K ke formula note karte hain.';
+
+    s2Title = 'Energy & Charge Working';
+    s2Formula = cleanS || '1) Electric Field: E = V / d\n2) Energy Density: u = ½ ε₀ · E²\n3) Total Stored Energy: U = u · (A · d) = ½ (ε₀·A / d) · V² = ½ C·V²';
+    s2Exp = 'Evaluate dielectric constant effect or energy change under constant voltage vs constant charge conditions.';
+    s2Spoken = 'Ab plates ke beech energy density integrate karke total electrostatic energy derive karte hain.';
+
+    s3Title = 'Final Evaluated Energy & Takeaway';
+    s3Formula = '• Total Stored Electrostatic Energy: U = ½ C·V²\n• Energy Density: u = ½ ε₀ · E² (J/m³)\n• Consistency: Verified under CBSE SI Units';
+    s3Exp = 'Energy is physically stored in the electrostatic field established between the conductor plates.';
+    s3Spoken = 'Aur final result confirm karta hai ki energy electric field mein store hoti hai!';
+    diagSpoken = 'Pehle left board par capacitor plates aur dielectric slab ko note karo.';
+    defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
+  } else if (textCorpus.match(/dipole|electrostatic|coulomb|gauss|electric flux|electric field|point charge|capacit/)) {
+    defaultDiagType = 'concept';
+    defaultTitle = 'Electrostatics & Field Geometry Model';
+    defaultTip = 'Always check vector directions, dipole alignment angle θ, and Gaussian surface symmetry before integrating!';
+    s1Title = 'Governing Electrostatic Relations';
+    s1Formula = textCorpus.includes('dipole')
+      ? '• Torque on Dipole: τ = p × E = pE sin θ\n• Potential Energy: U(θ) = -p · E = -pE cos θ\n• Work Done Rotating Dipole: W = U(θ₂) - U(θ₁) = pE(cos θ₁ - cos θ₂)'
+      : '• Electric Field: E = (1 / 4πε₀) · (q / r²)\n• Gauss Law: Φ = ∮ E · dA = q_enclosed / ε₀\n• Electrostatic Potential: V = U / q₀';
+    s1Exp = 'Identify the charge/dipole configuration, field vectors, and initial vs. final angular or spatial coordinates given in the problem.';
+    s1Spoken = 'Dekho beta, pehle left board par charge distribution aur electric field lines ka direction setup note karo.';
+
+    s2Title = 'Formula Substitution & Mathematical Working';
+    s2Formula = solutionText
+      ? solutionText
+      : (textCorpus.includes('dipole')
+          ? '1) Stable equilibrium angle: θ₁ = 0° (U₁ = -pE)\n2) Unstable equilibrium angle: θ₂ = 180° (U₂ = +pE) | 90° (U = 0)\n3) Evaluate W = pE(cos θ₁ - cos θ₂)'
+          : '1) Write symmetry equation for field E\n2) Substitute given SI magnitudes cleanly\n3) Simplify expression with units');
+    s2Exp = 'Substitute the initial and final state limits carefully into the electrostatic work/energy or field law while preserving sign conventions.';
+    s2Spoken = 'Ab boundary values substitute karke work done ya electric field magnitude step-by-step simplify karte hain.';
+
+    s3Title = 'Verified Final Answer & Units';
+    s3Formula = `Final Result: ${correctAnswer ? `[Option ${correctAnswer}]` : 'Verified in SI Units'}`;
+    s3Exp = 'Positive external work moves a dipole away from stable equilibrium (θ = 0°); verify both magnitude factor and dimensional units.';
+    s3Spoken = `Aur yeh raha verified final answer${correctAnswer ? `, Option ${correctAnswer} bilkul sahi hai` : ''}!`;
+    diagSpoken = 'Pehle left board par uniform electric field aur dipole alignment geometry note karo.';
     defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   } else if (textCorpus.match(/circuit|ohm|resistor|resistance|current|voltage|potential|battery|ampere|drift/)) {
     defaultDiagType = 'circuit';
@@ -597,17 +774,15 @@ async function generateSmartboardTeachingPlan({
     defaultHinglish = `${diagSpoken} ${s1Spoken} ${s2Spoken} ${s3Spoken}`;
   }
 
-  // 2. Query LLM for dynamic, high-fidelity question-specific plan
-  const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
-  if (groqKey) {
-    try {
-      const prompt = `You are ${teacher}, an elite Indian senior ${discipline} faculty mentor teaching a student live in front of an interactive classroom smartboard.
-Analyze the following question and produce a synchronized teaching plan with rich explanations:
-- Left board has the visual ${discipline} diagram/schematic and question statement.
-- Right board has the step-by-step solution with rich pedagogical explanations written directly on the board.
-- Spoken Hinglish explanation for the voice tutor exactly matching what is written on each card.
+  // 2. Query LLM for dynamic, high-fidelity question/topic-specific plan (Groq -> Gemini -> Heuristic)
+  try {
+    const prompt = `You are ${teacher}, an elite Indian senior ${discipline} faculty mentor teaching a student live in front of an interactive classroom smartboard.
+Analyze the following topic / question and produce a synchronized teaching plan with rich explanations:
+- Left board has the visual ${discipline} diagram/schematic and concept or question statement.
+- Right board has the step-by-step derivation and formulas written directly on the board.
+- Spoken Hinglish explanation for the voice tutor matching what is written on each card.
 
-Question: "${cleanQ}"
+Question or Concept: "${cleanQ || topic || chapterName}"
 Subject: "${discipline}"
 Chapter: "${chapterName || 'Curriculum STEM'}"
 Topic: "${topic || ''}"
@@ -626,116 +801,91 @@ Return STRICT JSON only:
     "title": "GIVEN SETUP & GOVERNING PRINCIPLE",
     "formula": "• Stated variables with units\\n• Primary governing formula",
     "explanation": "Detailed explanation of why this governing formula applies and how given variables connect (2-3 clear sentences for the board)",
-    "spokenScript": "Ab right side board par governing relation note karo... [what teacher speaks in Hinglish without saying Step 1]"
+    "spokenScript": "Ab right side board par governing relation note karo..."
   },
   "step2": {
     "title": "MATHEMATICAL DERIVATION & SUBSTITUTION",
     "formula": "1) Working 1...\\n2) Working 2...\\n3) Intermediate algebraic simplification",
-    "explanation": "Detailed algebraic explanation walking through each mathematical substitution step by step (2-3 clear sentences for the board)",
-    "spokenScript": "Ab mathematical derivation solve karte hain... [what teacher speaks in Hinglish without saying Step 2]"
+    "explanation": "Detailed algebraic explanation walking through each mathematical step cleanly (2-3 clear sentences for the board)",
+    "spokenScript": "Ab mathematical derivation solve karte hain..."
   },
   "step3": {
     "title": "FINAL ANSWER & VERIFIED RESULT",
-    "formula": "Final Answer: [value with SI units]  ${correctAnswer ? `[Option ${correctAnswer}]` : ''}",
-    "explanation": "Physical sanity check confirming why this calculated magnitude and unit makes physical sense (2-3 clear sentences for the board)",
-    "spokenScript": "Aur yeh raha hamara final answer... [what teacher speaks in Hinglish without saying Step 3]"
+    "formula": "Key Result / Formula Verified ${correctAnswer ? `[Option ${correctAnswer}]` : ''}",
+    "explanation": "Physical or conceptual check confirming why this result is accurate for CBSE/JEE/NEET (2-3 clear sentences for the board)",
+    "spokenScript": "Aur yeh raha hamara final key takeaway..."
   },
   "hinglishBrief": "Complete smooth natural spoken lecture (4-5 sentences) combining the spoken scripts smoothly."
 }`;
 
-      const modelsToTry = ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
-      const VALID_DIAGRAMS = ['rolling_incline', 'lens', 'circuit', 'projectile', 'fbd', 'oscillator', 'concept'];
+    const VALID_DIAGRAMS = [
+      'chemistry_cell', 'chemistry_solutions', 'chemistry_reaction', 'chemistry_organic',
+      'math_calculus', 'math_matrix', 'bio_genetics',
+      'rolling_incline', 'lens', 'circuit', 'projectile', 'fbd', 'oscillator', 'concept'
+    ];
 
-      for (const m of modelsToTry) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const llmResult = await callVoiceTutorJsonModel({
+      systemPrompt: 'You output valid strict JSON only for classroom smartboard tutoring.',
+      userPrompt: prompt,
+      temperature: 0.2,
+      maxTokens: 900,
+      timeoutMs: 6000
+    });
 
-          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${groqKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: m,
-              messages: [
-                { role: 'system', content: 'You output valid strict JSON only for classroom smartboard tutoring.' },
-                { role: 'user', content: prompt }
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.2,
-              max_tokens: 850
-            }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
+    const parsed = llmResult?.parsed;
+    if (parsed && parsed.step1 && parsed.step2 && parsed.step3) {
+      const rawDiag = (parsed.diagramType || '').toLowerCase().trim();
+      const cleanDiag = VALID_DIAGRAMS.includes(rawDiag) ? rawDiag : defaultDiagType;
 
-          if (res.ok) {
-            const data = await res.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              const parsed = JSON.parse(content);
-              if (parsed.step1 && parsed.step2 && parsed.step3) {
-                const rawDiag = (parsed.diagramType || '').toLowerCase().trim();
-                const cleanDiag = VALID_DIAGRAMS.includes(rawDiag) ? rawDiag : defaultDiagType;
+      const s1 = parsed.step1 || {};
+      const s2 = parsed.step2 || {};
+      const s3 = parsed.step3 || {};
 
-                const s1 = parsed.step1 || {};
-                const s2 = parsed.step2 || {};
-                const s3 = parsed.step3 || {};
+      const fullHinglish = parsed.hinglishBrief || [
+        parsed.diagramSpoken || diagSpoken,
+        s1.spokenScript || s1Spoken,
+        s2.spokenScript || s2Spoken,
+        s3.spokenScript || s3Spoken
+      ].filter(Boolean).join(' ');
 
-                const fullHinglish = parsed.hinglishBrief || [
-                  parsed.diagramSpoken || diagSpoken,
-                  s1.spokenScript || s1Spoken,
-                  s2.spokenScript || s2Spoken,
-                  s3.spokenScript || s3Spoken
-                ].filter(Boolean).join(' ');
-
-                return {
-                  questionId,
-                  diagram: {
-                    type: cleanDiag,
-                    title: parsed.diagramTitle || defaultTitle,
-                    explanation: parsed.diagramExplanation || 'Visual model representing the physical coordinate system.',
-                    spokenScript: parsed.diagramSpoken || diagSpoken
-                  },
-                  examTip: parsed.examTip || defaultTip,
-                  solution: {
-                    step1: {
-                      title: s1.title || s1Title,
-                      formula: s1.formula || s1Formula,
-                      explanation: s1.explanation || s1Exp,
-                      spokenScript: s1.spokenScript || s1Spoken,
-                      teacherNote: s1.spokenScript || s1Spoken
-                    },
-                    step2: {
-                      title: s2.title || s2Title,
-                      formula: s2.formula || s2Formula,
-                      explanation: s2.explanation || s2Exp,
-                      spokenScript: s2.spokenScript || s2Spoken,
-                      teacherNote: s2.spokenScript || s2Spoken
-                    },
-                    step3: {
-                      title: s3.title || s3Title,
-                      formula: s3.formula || s3Formula,
-                      explanation: s3.explanation || s3Exp,
-                      spokenScript: s3.spokenScript || s3Spoken,
-                      teacherNote: s3.spokenScript || s3Spoken
-                    }
-                  },
-                  hinglishBrief: fullHinglish,
-                  source: `GROQ_${m.toUpperCase()}`
-                };
-              }
-            }
+      return {
+        questionId,
+        diagram: {
+          type: cleanDiag,
+          title: parsed.diagramTitle || defaultTitle,
+          explanation: parsed.diagramExplanation || 'Visual model representing the physical coordinate system.',
+          spokenScript: parsed.diagramSpoken || diagSpoken
+        },
+        examTip: parsed.examTip || defaultTip,
+        solution: {
+          step1: {
+            title: s1.title || s1Title,
+            formula: s1.formula || s1Formula,
+            explanation: s1.explanation || s1Exp,
+            spokenScript: s1.spokenScript || s1Spoken,
+            teacherNote: s1.spokenScript || s1Spoken
+          },
+          step2: {
+            title: s2.title || s2Title,
+            formula: s2.formula || s2Formula,
+            explanation: s2.explanation || s2Exp,
+            spokenScript: s2.spokenScript || s2Spoken,
+            teacherNote: s2.spokenScript || s2Spoken
+          },
+          step3: {
+            title: s3.title || s3Title,
+            formula: s3.formula || s3Formula,
+            explanation: s3.explanation || s3Exp,
+            spokenScript: s3.spokenScript || s3Spoken,
+            teacherNote: s3.spokenScript || s3Spoken
           }
-        } catch (innerErr) {
-          // try next model
-        }
-      }
-    } catch (err) {
-      console.warn('[AI VOICE TUTOR] Groq smartboard generation fallback:', err.message);
+        },
+        hinglishBrief: fullHinglish,
+        source: llmResult.source
+      };
     }
+  } catch (err) {
+    console.warn('[AI VOICE TUTOR] Smartboard LLM fallback:', err.message);
   }
 
   // 3. Fallback Plan

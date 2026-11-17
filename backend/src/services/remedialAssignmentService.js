@@ -545,6 +545,102 @@ const FORMULA_REPOSITORY = {
       correctAnswer: 'A',
       solutionLatex: 'Torque $\\tau = F R$. Using $\\tau = I \\alpha \\implies F R = \\left(\\frac{1}{2} M R^2\\right) \\alpha \\implies \\alpha = \\frac{2F}{MR}$.'
     }
+  },
+
+  'Ampere Circuital Law & Solenoid Field': {
+    subject: 'Physics',
+    name: "Ampere's Circuital Law & Long Solenoid Magnetic Field",
+    latex: '\\oint \\vec{B} \\cdot d\\vec{l} = \\mu_0 I_{\\text{enc}}, \\quad B_{\\text{axis}} = \\mu_0 n I, \\quad B_{\\text{end}} = \\frac{1}{2}\\mu_0 n I',
+    prompt: 'Write the magnetic field formula inside a long solenoid and at its open ends in terms of turn density n and current I:',
+    canonicalPattern: /(B\s*=\s*mu_0\s*\*?\s*n\s*\*?\s*I)|(\\mu_0\s*n\s*I)/i,
+    signRules: 'Turn density $n = N/L$ (turns per unit length). At the exact end face of a long solenoid, symmetry cuts the contributing half-infinite section in half: $B_{\\text{end}} = \\frac{1}{2}\\mu_0 n I$.',
+    practiceQuestion: {
+      id: 'rem_q_solenoid_01',
+      subject: 'Physics',
+      topic: 'Moving Charges and Magnetism',
+      subtopic: 'Ampere Circuital Law & Solenoid Field',
+      questionLatex: 'A long solenoid with $n = 1000\\,\\text{turns/m}$ carries current $I = 2\\,\\text{A}$. What is the magnetic field right at one of its open circular ends? ($\\mu_0 = 4\\pi \\times 10^{-7}\\,\\text{T}\\cdot\\text{m/A}$)',
+      options: [
+        { key: 'A', latex: '$B_{\\text{end}} = 4\\pi \\times 10^{-4}\\,\\text{T}$', isCorrect: true },
+        { key: 'B', latex: '$B_{\\text{end}} = 8\\pi \\times 10^{-4}\\,\\text{T}$', isCorrect: false, trap: 'Used interior formula $B = \\mu_0 n I$ instead of $B_{\\text{end}} = \\frac{1}{2}\\mu_0 n I$' },
+        { key: 'C', latex: '$B_{\\text{end}} = 2\\pi \\times 10^{-4}\\,\\text{T}$', isCorrect: false, trap: 'Divided interior field by 4 instead of 2' },
+        { key: 'D', latex: '$B_{\\text{end}} = 0\\,\\text{T}$', isCorrect: false, trap: 'Incorrectly assumed Ampere loop encloses zero current' }
+      ],
+      correctAnswer: 'A',
+      solutionLatex: 'Interior field is $B = \\mu_0 n I = (4\\pi \\times 10^{-7})(1000)(2) = 8\\pi \\times 10^{-4}\\,\\text{T}$. At the open end: $$B_{\\text{end}} = \\frac{1}{2} B = 4\\pi \\times 10^{-4}\\,\\text{T}$$.'
+    }
+  },
+
+  'Kirchhoff Loop Rule & Internal Resistance': {
+    subject: 'Physics',
+    name: "Kirchhoff's Voltage Law (KVL) & Terminal Potential Difference",
+    latex: '\\sum \\Delta V = 0, \\quad V = \\mathcal{E} - I r \\quad \\text{(discharging)}',
+    prompt: "Write the terminal potential difference V of a cell of emf E and internal resistance r delivering current I:",
+    canonicalPattern: /(V\s*=\s*E\s*-\s*I\s*\*?\s*r)|(sum\s*delta\s*V\s*=\s*0)/i,
+    signRules: 'Crossing a resistor IN the direction of assumed current drops potential ($-IR$); crossing from $-$ to $+$ terminal of a cell adds emf ($+\\mathcal{E}$).',
+    practiceQuestion: {
+      id: 'rem_q_kvl_01',
+      subject: 'Physics',
+      topic: 'Current Electricity',
+      subtopic: 'Kirchhoff Loop Rule & Internal Resistance',
+      questionLatex: 'A battery of emf $\\mathcal{E} = 12\\,\\text{V}$ and internal resistance $r = 1\\,\\Omega$ supplies current $I = 2\\,\\text{A}$ to an external load. Find the terminal voltage $V$ across the battery.',
+      options: [
+        { key: 'A', latex: '$V = 10\\,\\text{V}$', isCorrect: true },
+        { key: 'B', latex: '$V = 14\\,\\text{V}$', isCorrect: false, trap: 'Used charging relation $V = \\mathcal{E} + Ir$ instead of discharging' },
+        { key: 'C', latex: '$V = 12\\,\\text{V}$', isCorrect: false, trap: 'Ignored potential drop $Ir$ across internal resistance' },
+        { key: 'D', latex: '$V = 6\\,\\text{V}$', isCorrect: false, trap: 'Halved emf incorrectly' }
+      ],
+      correctAnswer: 'A',
+      solutionLatex: 'During discharge, $V = \\mathcal{E} - I r = 12 - (2)(1) = 10\\,\\text{V}$.'
+    }
+  },
+
+  'Dielectric Slab & Energy Stored': {
+    subject: 'Physics',
+    name: 'Capacitor Energy with Dielectric Slab & Charge Conservation',
+    latex: 'U = \\frac{Q^2}{2C} = \\frac{1}{2}CV^2, \\quad C\' = K C_0 \\implies U\' = \\frac{U_0}{K}\\text{ (isolated)}',
+    prompt: 'Write the electrostatic energy U stored in an isolated charged capacitor in terms of frozen charge Q and capacitance C:',
+    canonicalPattern: /(U\s*=\s*Q\^?2\s*\/\s*\(?\s*2\s*\*?\s*C\s*\)?)|(U\s*=\s*0\.5\s*\*?\s*C\s*\*?\s*V\^?2)/i,
+    signRules: 'Battery DISCONNECTED: Charge $Q$ remains constant; use $U = \\frac{Q^2}{2C}$ ($U$ decreases by factor $K$). Battery CONNECTED: Potential $V$ stays constant; use $U = \\frac{1}{2}CV^2$ ($U$ increases by factor $K$).',
+    practiceQuestion: {
+      id: 'rem_q_cap_01',
+      subject: 'Physics',
+      topic: 'Electrostatic Potential and Capacitance',
+      subtopic: 'Dielectric Slab & Energy Stored',
+      questionLatex: 'An isolated parallel-plate capacitor stores energy $U_0 = 12\\,\\mu\\text{J}$. A dielectric slab ($K = 3$) is inserted while disconnected from the battery. Find the new energy $U\'$.',
+      options: [
+        { key: 'A', latex: '$U\' = 4\\,\\mu\\text{J}$', isCorrect: true },
+        { key: 'B', latex: '$U\' = 36\\,\\mu\\text{J}$', isCorrect: false, trap: 'Applied constant-voltage formula $\\frac{1}{2}CV^2$ while battery was disconnected' },
+        { key: 'C', latex: '$U\' = 12\\,\\mu\\text{J}$', isCorrect: false, trap: 'Assumed energy stays conserved despite slab pull' },
+        { key: 'D', latex: '$U\' = 1.33\\,\\mu\\text{J}$', isCorrect: false, trap: 'Divided by $K^2$ instead of $K$' }
+      ],
+      correctAnswer: 'A',
+      solutionLatex: 'Since the capacitor is isolated, $Q$ is constant and $C\' = 3C_0$: $$U\' = \\frac{Q^2}{2C\'} = \\frac{Q^2}{2(3C_0)} = \\frac{U_0}{3} = \\frac{12}{3} = 4\\,\\mu\\text{J}$$.'
+    }
+  },
+
+  'Damped Harmonic Oscillations & Quality Factor': {
+    subject: 'Physics',
+    name: 'Damped Angular Frequency & Quality Factor',
+    latex: '\\omega_d = \\sqrt{\\omega_0^2 - \\gamma^2}, \\quad \\gamma = \\frac{b}{2m}, \\quad Q = \\frac{\\omega_0}{2\\gamma}',
+    prompt: 'Write the damped angular frequency formula in terms of natural angular frequency omega_0 and damping factor gamma:',
+    canonicalPattern: /(omega_d|sqrt|omega_0|Q\s*=\s*omega_0)/i,
+    signRules: 'In underdamped motion ($\\gamma < \\omega_0$), amplitude decays exponentially as $A(t) = A_0 e^{-\\gamma t}$. Higher $Q$ implies sharper resonance.',
+    practiceQuestion: {
+      id: 'rem_q_damped_01',
+      subject: 'Physics',
+      topic: 'Oscillations',
+      subtopic: 'Damped Harmonic Oscillations & Quality Factor',
+      questionLatex: 'A damped oscillator has natural frequency $\\omega_0 = 20\\,\\text{rad/s}$ and damping factor $\\gamma = 0.1\\,\\text{s}^{-1}$. Calculate the quality factor $Q$.',
+      options: [
+        { key: 'A', latex: '$Q = 100$', isCorrect: true },
+        { key: 'B', latex: '$Q = 200$', isCorrect: false, trap: 'Forgot factor of 2 in $Q = \\omega_0/(2\\gamma)$' },
+        { key: 'C', latex: '$Q = 2$', isCorrect: false, trap: 'Multiplied $\\omega_0$ and $\\gamma$ instead of dividing' },
+        { key: 'D', latex: '$Q = 50$', isCorrect: false, trap: 'Used $\\gamma = b/m$ instead of $b/(2m)$' }
+      ],
+      correctAnswer: 'A',
+      solutionLatex: 'Quality factor is $Q = \\frac{\\omega_0}{2\\gamma} = \\frac{20}{2 \\times 0.1} = 100$.'
+    }
   }
 };
 
@@ -630,21 +726,36 @@ function generatePersonalizedRemedialAssignment({
     for (const wq of wrongQuestions) {
       const subtopic = wq.subtopic || wq.topic || chapterName || defaultEntry.practiceQuestion.subtopic;
       
-      // Look up exact match, or subject-bound fallback
+      // Look up exact match, or keyword + subject-bound fallback (never map Physics/Class 10 Science topics to Biology)
       let repoEntry = FORMULA_REPOSITORY[subtopic];
       const isAllowedSubject = (entry) => {
         if (!entry) return false;
-        if (canonicalSubject === 'Science') return true; // Class 10 Science covers Physics, Chemistry, Biology
+        if (canonicalSubject === 'Science') return entry.subject !== 'Mathematics';
         return entry.subject === canonicalSubject;
       };
 
       if (!isAllowedSubject(repoEntry)) {
-        // Find ANY repository entry belonging strictly to this subject
         const subjectEntries = Object.values(FORMULA_REPOSITORY).filter(e => isAllowedSubject(e));
-        repoEntry = subjectEntries.find(e => 
-          subtopic.toLowerCase().includes(e.practiceQuestion.subtopic.toLowerCase()) ||
-          e.practiceQuestion.subtopic.toLowerCase().includes(subtopic.toLowerCase())
-        ) || subjectEntries[0] || defaultEntry;
+        const kwText = `${subtopic} ${wq.topic || ''} ${chapterName || ''} ${assessmentTitle || ''} ${wq.mistakeClassification?.explanation || ''}`.toLowerCase();
+        repoEntry = subjectEntries.find(e =>
+          kwText.includes((e.practiceQuestion?.subtopic || '').toLowerCase()) ||
+          (e.practiceQuestion?.subtopic || '').toLowerCase().includes(subtopic.toLowerCase())
+        );
+        if (!repoEntry) {
+          if (kwText.includes('solenoid') || kwText.includes('ampere') || kwText.includes('magnet')) repoEntry = FORMULA_REPOSITORY['Ampere Circuital Law & Solenoid Field'];
+          else if (kwText.includes('kirchhoff') || kwText.includes('internal resistance') || kwText.includes('loop rule')) repoEntry = FORMULA_REPOSITORY['Kirchhoff Loop Rule & Internal Resistance'];
+          else if (kwText.includes('capacitor') || kwText.includes('dielectric')) repoEntry = FORMULA_REPOSITORY['Dielectric Slab & Energy Stored'];
+          else if (kwText.includes('damped') || kwText.includes('quality factor') || kwText.includes('oscillat')) repoEntry = FORMULA_REPOSITORY['Damped Harmonic Oscillations & Quality Factor'];
+          else if (kwText.includes('mirror') || kwText.includes('concave') || kwText.includes('convex') || kwText.includes('optic') || kwText.includes('light')) repoEntry = FORMULA_REPOSITORY['Spherical Mirrors'];
+          else if (kwText.includes('refract') || kwText.includes('snell') || kwText.includes('glass')) repoEntry = FORMULA_REPOSITORY['Refraction & Snell Law'];
+          else if (kwText.includes('joule') || kwText.includes('heater') || kwText.includes('ohm') || kwText.includes('elect') || kwText.includes('watt')) repoEntry = FORMULA_REPOSITORY['Joule Heating & Resistance'];
+          else if (kwText.includes('rotat') || kwText.includes('torque') || kwText.includes('inertia')) repoEntry = FORMULA_REPOSITORY['Rotational Motion'];
+          else if (kwText.includes('gibbs') || kwText.includes('electrochem') || kwText.includes('cell')) repoEntry = FORMULA_REPOSITORY['Standard Gibbs Free Energy & Cell Potential'];
+          else if (kwText.includes('kinetics') || kwText.includes('rate constant') || kwText.includes('half life')) repoEntry = FORMULA_REPOSITORY['First Order Reaction Kinetics'];
+        }
+        if (!isAllowedSubject(repoEntry)) {
+          repoEntry = defaultEntry || subjectEntries[0];
+        }
       }
 
       conceptGaps.push({

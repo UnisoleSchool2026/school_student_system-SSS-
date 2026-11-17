@@ -1,0 +1,176 @@
+CBSE SENIOR SCHOOL CERTIFICATE EXAMINATION 2024
+PHYSICS (THEORY)
+Maximum Marks: 70
+Time Allowed: 3 hours
+
+General Instructions:
+(1) There are 33 questions in all. All questions are compulsory.
+(2) This question paper has five sections: Section A, Section B, Section C, Section D and Section E.
+(3) All the sections are compulsory.
+(4) Section A contains sixteen questions, twelve MCQ and four Assertion Reasoning of 1 mark each.
+Section B contains five questions of 2 marks each.
+Section C contains seven questions of 3 marks each.
+Section D contains two case study based questions of 4 marks each.
+Section E contains three long answer questions of 5 marks each.
+(5) There is no overall choice. However, an internal choice has been provided in one question in Section B, one question in Section C, one question in each CBQ in Section D and all three questions in Section E.
+
+SECTION A
+Questions 1 to 16 are of 1 mark each.
+
+1. Which of the following is the correct unit of electric flux?
+(A) N/C
+(B) N m^2/C
+(C) V m^2
+(D) J/C
+
+2. An electric dipole placed in a non-uniform electric field experiences:
+(A) Only a net torque
+(B) Only a net force
+(C) Both a net force and a net torque
+(D) Neither force nor torque
+
+3. In a parallel plate capacitor, if the distance between plates is halved and dielectric constant is doubled, capacitance becomes:
+(A) 2 times
+(B) 4 times
+(C) 8 times
+(D) remains unchanged
+
+4. Kirchhoff's junction rule is a direct consequence of the law of conservation of:
+(A) Energy
+(B) Momentum
+(C) Charge
+(D) Angular momentum
+
+5. Two straight parallel long wires carrying equal currents in opposite directions will:
+(A) attract each other
+(B) repel each other
+(C) rotate perpendicular to each other
+(D) experience no force
+
+6. The magnetic susceptibility of a diamagnetic substance is:
+(A) small and positive
+(B) large and positive
+(C) small and negative
+(D) large and negative
+
+7. In an AC circuit containing only a pure inductor, the current:
+(A) leads the voltage by pi/2
+(B) lags the voltage by pi/2
+(C) is in phase with voltage
+(D) lags the voltage by pi
+
+8. Which electromagnetic wave has the shortest wavelength?
+(A) Radio waves
+(B) Infrared rays
+(C) Gamma rays
+(D) Microwaves
+
+9. A ray of light passes from a denser medium to a rarer medium. The angle of refraction is 90 degrees. The corresponding angle of incidence is called:
+(A) Angle of deviation
+(B) Angle of polarization
+(C) Critical angle
+(D) Glancing angle
+
+10. The de Broglie wavelength associated with an electron accelerated through a potential difference of V volts is approximately:
+(A) 1.227 / sqrt(V) nm
+(B) 12.27 / sqrt(V) nm
+(C) 0.1227 / sqrt(V) nm
+(D) 122.7 / sqrt(V) nm
+
+11. In hydrogen atom spectrum, the series of lines lying in the ultraviolet region is:
+(A) Balmer series
+(B) Lyman series
+(C) Paschen series
+(D) Pfund series
+
+12. In a nuclear reaction, the mass defect is converted into energy according to Einstein's mass-energy relation:
+(A) E = mc
+(B) E = mc^2
+(C) E = m^2 c
+(D) E = m / c^2
+
+13. Assertion (A): The electric field inside a cavity in a charged conductor is zero.
+Reason (R): Charges reside only on the outer surface of a conductor.
+(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).
+(B) Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).
+(C) Assertion (A) is true, but Reason (R) is false.
+(D) Both Assertion (A) and Reason (R) are false.
+
+14. Assertion (A): Resistivity of a metallic conductor increases with increase in temperature.
+Reason (R): With increase in temperature, relaxation time of free electrons decreases.
+(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).
+(B) Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).
+(C) Assertion (A) is true, but Reason (R) is false.
+(D) Both Assertion (A) and Reason (R) are false.
+
+15. Assertion (A): Core of a transformer is laminated to minimize eddy current losses.
+Reason (R): Lamination increases the resistance of the core and cuts down circular eddy paths.
+(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).
+(B) Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).
+(C) Assertion (A) is true, but Reason (R) is false.
+(D) Both Assertion (A) and Reason (R) are false.
+
+16. Assertion (A): Photoelectric current depends on the intensity of incident radiation.
+Reason (R): Kinetic energy of emitted photoelectrons depends on the frequency of incident radiation.
+(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).
+(B) Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).
+(C) Assertion (A) is true, but Reason (R) is false.
+(D) Both Assertion (A) and Reason (R) are false.
+
+SECTION B
+Questions 17 to 21 are of 2 marks each.
+
+17. State Gauss's Law in electrostatics. A point charge of 2 micro-Coulombs is at the center of a cubic Gaussian surface of edge 9 cm. What is the net electric flux through the surface?
+
+18. Define drift velocity of electrons. Establish the relation between electric current and drift velocity in a conductor.
+
+19. An electron is moving in a circular path of radius r in a perpendicular magnetic field B with speed v. Derive an expression for the radius of its circular orbit.
+
+20. What is meant by displacement current? Why did Maxwell introduce this concept to modify Ampere's circuital law?
+
+21. Draw a labeled ray diagram showing the formation of image by a refracting astronomical telescope at infinity.
+
+SECTION C
+Questions 22 to 28 are of 3 marks each.
+
+22. Derive an expression for the capacitance of a parallel plate capacitor with a dielectric slab of thickness t introduced between the plates (t < d).
+
+23. Using Biot-Savart Law, derive an expression for the magnetic field at an axial point due to a circular current carrying loop of radius R.
+
+24. Explain the phenomenon of mutual induction. Obtain an expression for the mutual inductance of two long coaxial solenoids.
+
+25. State Huygens' principle. Using Huygens' wave theory, prove the Snell's law of refraction for a plane wavefront incident on a plane refracting surface.
+
+26. Explain Einstein's photoelectric equation: h*nu = Phi + K_max. State three characteristic observations of photoelectric effect explained by this equation.
+
+27. Using Bohr's postulates of hydrogen atom, derive the expression for the radius of nth stationary orbit and total energy of an electron in that orbit.
+
+28. Distinguish between nuclear fission and nuclear fusion with one example of each. Why is fusion possible only at extremely high temperatures?
+
+SECTION D
+Questions 29 and 30 are case study based questions of 4 marks each.
+
+29. Case Study on Semiconductor Diodes:
+A p-n junction diode is formed when a p-type semiconductor is joined to an n-type semiconductor. During formation, holes diffuse from p to n and electrons diffuse from n to p, creating a space charge depletion region with a built-in potential barrier. Under forward bias, the barrier height decreases, while under reverse bias, barrier height increases.
+(a) What causes the formation of the depletion layer in a p-n junction? (1 mark)
+(b) How does forward biasing affect the width of the depletion layer? (1 mark)
+(c) Explain why reverse saturation current is practically independent of applied reverse voltage. (2 marks)
+
+30. Case Study on Total Internal Reflection and Optical Fibres:
+When light travels from an optically denser medium to a rarer medium at an angle of incidence greater than the critical angle, the entire light is reflected back into the denser medium. This phenomenon is known as total internal reflection (TIR). Optical fibres use TIR to transmit light signals over long distances with minimal loss of signal intensity. The core is surrounded by a cladding of slightly lower refractive index.
+(a) State the two necessary conditions for total internal reflection to occur. (1 mark)
+(b) Why is refractive index of core kept greater than that of cladding? (1 mark)
+(c) A glass prism has critical angle 42 degrees. Find the speed of light in this glass. (2 marks)
+
+SECTION E
+Questions 31 to 33 are of 5 marks each.
+
+31. (a) Derive an expression for the electric field intensity at an axial point and an equatorial point of an electric dipole.
+(b) Two point charges +q and -q are placed at distance 2a. Find the torque experienced when placed in a uniform electric field E at angle theta.
+
+32. (a) With the help of a labeled diagram, explain the principle and working of an AC generator.
+(b) A rectangular coil of N turns and area A is rotated with uniform angular velocity omega in a uniform magnetic field B. Show that the induced EMF is given by e = e_0 * sin(omega * t).
+
+33. (a) In Young's double slit experiment, derive the conditions for constructive and destructive interference, and show that fringe width is beta = lambda * D / d.
+(b) What happens to the interference fringes when the whole apparatus is immersed in water?
+

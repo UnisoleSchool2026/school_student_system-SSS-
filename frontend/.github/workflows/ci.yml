@@ -1,0 +1,224 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      backend_url:
+        description: 'Target backend staging URL for quiz modal integration tests (optional)'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build, Static Guards, LaTeX, and Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run button and solution card unit tests
+        run: npm test
+
+      - name: Run LaTeX parser and rendering tests
+        run: npm run test:latex
+
+      - name: Run headless screenshot verification
+        run: node scripts/test_screenshot_case.js
+
+      - name: Verify whiteboard bundle compilation integrity
+        run: |
+          npm run build:whiteboard
+          git diff --exit-code vendor/tldraw/tldraw-standalone.bundle.js
+
+      - name: Run static guards (bare API, sibling paths, diff emojis)
+        run: node scripts/test_static_guards.js
+
+  server-smoke-test:
+    name: Frontend Server Smoke and Route Availability
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Boot frontend static server and verify routes
+        run: |
+          node server.js > frontend_server.log 2>&1 &
+          FRONTEND_PID=$!
+          echo "Frontend server process started on port 3008 (PID: ${FRONTEND_PID})."
+          echo "Waiting for frontend server at http://localhost:3008..."
+          READY=0
+          for i in $(seq 1 25); do
+            if curl -sf http://localhost:3008/ > /dev/null 2>&1; then
+              echo "Root index.html responded with HTTP 200."
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Frontend server failed to boot."
+            cat frontend_server.log
+            exit 1
+          fi
+
+          # Verify whiteboard route
+          STATUS_WB=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3008/whiteboard)
+          echo "GET /whiteboard responded with status: ${STATUS_WB}"
+          if [ "${STATUS_WB}" != "200" ]; then
+            echo "Whiteboard route verification failed."
+            exit 1
+          fi
+          kill $FRONTEND_PID || true
+
+      - name: Upload server logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-server-log
+          path: frontend_server.log
+          if-no-files-found: ignore
+
+  playwright-overflow-check:
+    name: Responsive Viewport Overflow Check (Non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright and Chromium dependencies
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start frontend server
+        run: |
+          node server.js > playwright_server.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:3008/ > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run overflow detection at 360, 768, 1024, 1440 px
+        run: node scripts/test_overflow_viewports.js http://localhost:3008
+
+  live-backend-integration:
+    name: Staging Backend Integration (Quiz Modal Flow)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch' && inputs.backend_url != ''
+    steps:
+      - name: Checkout repository (standalone frontend without backend checkout)
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run quiz modal integration against remote staging backend
+        env:
+          BACKEND_URL: ${{ inputs.backend_url }}
+        run: node scripts/test_quiz_creation_and_modal_display.js
+
+  security-scan:
+    name: Security Vulnerability and Secret Audits
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository (full history for secret detection)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm security audit
+        run: npm audit --audit-level=high
+
+      - name: Install and run Gitleaks secret detection
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz | tar -xz gitleaks
+          chmod +x gitleaks
+          ./gitleaks detect --source=. --no-git --verbose --redact
+
+  codeql-analysis:
+    name: CodeQL Static Application Security Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        continue-on-error: true
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+        with:
+          upload: 'never'

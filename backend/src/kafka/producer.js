@@ -3,7 +3,7 @@
 // Publishes sub-second question timer ticks, attempt submissions, and OCR tasks
 // ============================================================================
 
-const { Kafka } = require('kafkajs');
+const { Kafka, logLevel } = require('kafkajs');
 
 let producer = null;
 let isKafkaActive = false;
@@ -16,9 +16,10 @@ async function initKafkaProducer() {
     const kafka = new Kafka({
       clientId: 'haps-api-producer',
       brokers,
+      logLevel: logLevel.NOTHING,
       retry: {
         initialRetryTime: 300,
-        retries: 3
+        retries: 2
       }
     });
 

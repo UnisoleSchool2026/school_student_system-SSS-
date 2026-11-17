@@ -25,7 +25,7 @@ router.all('/gemini-live-token', async (req, res) => {
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1alpha' } });
     const token = await ai.authTokens.create({
       config: {
         uses: 5,
@@ -36,7 +36,7 @@ router.all('/gemini-live-token', async (req, res) => {
 
     const rawModel = process.env.GEMINI_LIVE_MODEL || 'gemini-2.5-flash-native-audio-latest';
     const model = rawModel.startsWith('models/') ? rawModel : `models/${rawModel}`;
-    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=${encodeURIComponent(token.name)}`;
+    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained?access_token=${encodeURIComponent(token.name)}`;
 
     res.json({
       success: true,
@@ -224,7 +224,9 @@ router.post('/solve-and-sync', async (req, res) => {
             ch = match.chapter_name || match.chapter || '';
             top = match.topic || match.subtopic || '';
             opts = match.options_latex || opts;
-            ans = match.correct_answer_latex || match.correct_answer || ans;
+            const rawKey = String(match.correct_answer || '').trim();
+            const rawLatex = String(match.correct_answer_latex || '').trim();
+            ans = rawKey || rawLatex || ans;
             m = match.marks_weightage || m;
             if (!subj) subj = match.subject || match.subjectKey;
             break;
@@ -286,6 +288,10 @@ router.post('/interrupt', async (req, res) => {
       solutionText = '',
       studentDoubt = '',
       conversationHistory = [],
+      chapterName = '',
+      topic = '',
+      grade = '',
+      subject = '',
       voice = 'swara'
     } = req.body;
 
@@ -293,7 +299,11 @@ router.post('/interrupt', async (req, res) => {
       questionText,
       solutionText,
       studentDoubt,
-      conversationHistory
+      conversationHistory,
+      chapterName,
+      topic,
+      grade,
+      subject
     });
 
     const audioUrl = `/api/voice-tutor/audio?text=${encodeURIComponent(answer.answerHinglish)}&voice=${encodeURIComponent(voice)}`;

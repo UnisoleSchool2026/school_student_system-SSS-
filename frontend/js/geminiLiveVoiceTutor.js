@@ -93,6 +93,10 @@
 
       this.currentInputText = '';
       this.currentOutputText = '';
+      this.currentSpokenPhase = -1;
+      this.recentSpokenWindow = '';
+      this.voiceFramesCount = 0;
+      this.requestedVoice = null;
       this._setupResolve = null;
       this._setupReject = null;
     }
@@ -211,6 +215,7 @@
       const outputText = content.outputTranscription?.text;
       if (outputText) {
         this.currentOutputText += outputText;
+        this.detectAndSyncPedagogicalPhase(outputText);
         if (this.callbacks.onTranscript) {
           this.callbacks.onTranscript({
             role: 'tutor',
@@ -230,12 +235,52 @@
         }
         this.currentInputText = '';
         this.currentOutputText = '';
+        this.recentSpokenWindow = '';
       }
 
       // Play audio model turn
       for (const part of content.modelTurn?.parts || []) {
         if (part.inlineData?.data) {
           this.playAudioChunk(part.inlineData.data);
+        }
+      }
+    }
+
+    detectAndSyncPedagogicalPhase(newChunk) {
+      if (!newChunk) return;
+      this.recentSpokenWindow = ((this.recentSpokenWindow || '') + ' ' + newChunk).slice(-350);
+
+      const win = this.recentSpokenWindow.toLowerCase();
+      let detectedPhase = -1;
+
+      // Phase 3: Final evaluated answer, takeaway & exam tip
+      if (/(?:step\s*(?:3|three|teesra)|final\s*(?:answer|result|value|solution)|answer\s*note\s*karo|exam\s*tip|conclu(?:de|sion)|golden\s*tip|takeaway)/i.test(win)) {
+        detectedPhase = 3;
+      }
+      // Phase 2: Step 2, values substitution & step-by-step calculation
+      else if (/(?:step\s*(?:2|two|doosra)|substitut(?:e|ing|ion)|value\s*(?:put|substitute|rakh)|calculat(?:e|ing|ion)|derivation|simplif(?:y|ying)|solve\s*karte\s*hain)/i.test(win)) {
+        detectedPhase = 2;
+      }
+      // Phase 1: Step 1, governing law, formula, core principle
+      else if (/(?:step\s*(?:1|one|pehla)|governing\s*(?:law|formula|principle)|formula\s*apply|primary\s*law|pehla\s*step|basic\s*formula|equation\s*note)/i.test(win)) {
+        detectedPhase = 1;
+      }
+      // Phase 0: Visual diagram, schematic, given variables setup
+      else if (/(?:diagram|left\s*(?:side|board|panel)|figure|schematic|given\s*(?:values?|parameters?)|pehle\s*(?:diagram|visual|dekho)|observe\s*karo)/i.test(win)) {
+        detectedPhase = 0;
+      }
+
+      if (detectedPhase !== -1 && detectedPhase !== this.currentSpokenPhase) {
+        this.currentSpokenPhase = detectedPhase;
+        const phaseNames = [
+          'Visual Concept Model & Setup',
+          'Governing Principles & Primary Law',
+          'Derivation & Step-by-Step Working',
+          'Evaluated Solution & Takeaway'
+        ];
+        console.log(`[GEMINI LIVE SYNC] Smartboard phase synced to Concept ${detectedPhase} (${phaseNames[detectedPhase]})`);
+        if (this.callbacks.onPhaseChange) {
+          this.callbacks.onPhaseChange(detectedPhase, phaseNames[detectedPhase]);
         }
       }
     }
@@ -249,6 +294,7 @@
       teachingPlan = null,
       facultyName = '',
       subjectName = '',
+      voice = null,
       apiBaseUrl = '',
       callbacks = {}
     }) {
@@ -259,14 +305,16 @@
       this.activeQuestionId = questionId;
       this.facultyName = facultyName || teachingPlan?.teacherName || 'Faculty Mentor';
       this.subjectName = subjectName || teachingPlan?.subject || 'Senior Secondary STEM';
+      this.requestedVoice = voice || null;
       this.activeQuestionData = { questionId, questionText, solutionText, chapterName, topic, teachingPlan, facultyName: this.facultyName, subjectName: this.subjectName };
-      this.callbacks = callbacks;
+      this.callbacks = Object.assign({}, this.callbacks, callbacks);
       this.status = 'CONNECTING';
       if (this.callbacks.onStatusChange) this.callbacks.onStatusChange('CONNECTING');
 
       try {
+        const resolvedBase = (apiBaseUrl || (typeof window !== 'undefined' && typeof window.getHapsApiBaseUrl === 'function' ? window.getHapsApiBaseUrl() : '')).replace(/\/+$/, '');
         // 1. Fetch ephemeral auth token from backend
-        const tokenRes = await fetch(`${apiBaseUrl}/api/voice-tutor/gemini-live-token`, {
+        const tokenRes = await fetch(`${resolvedBase}/api/voice-tutor/gemini-live-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -310,8 +358,8 @@
         this.inputAnalyser.fftSize = 256;
         this.mediaStreamSource.connect(this.inputAnalyser);
 
-        // Setup Audio Processor
-        this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+        // Setup Audio Processor with low-latency 2048 buffer
+        this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
         this.mediaStreamSource.connect(this.processor);
 
         // Connect processor to zero-gain mute node to ensure continuous execution without feedback
@@ -322,6 +370,7 @@
 
         this.isStreamingVoice = false;
         this.lastVoiceAt = 0;
+        this.voiceFramesCount = 0;
         this.preAudioBuffer = [];
 
         this.processor.onaudioprocess = (event) => {
@@ -343,6 +392,13 @@
           const base64Chunk = bytesToBase64(pcmBytes);
 
           if (isVoice) {
+            this.voiceFramesCount = (this.voiceFramesCount || 0) + 1;
+            // Immediate local barge-in if student speaks while tutor is actively playing
+            if (this.voiceFramesCount >= 2 && this.sources.length > 0) {
+              console.log('[GEMINI LIVE] Local barge-in detected! Halting tutor audio immediately.');
+              this.stopPlayback();
+            }
+
             // Student started speaking or is actively speaking
             if (!this.isStreamingVoice) {
               this.isStreamingVoice = true;
@@ -371,8 +427,9 @@
               }
             }));
           } else if (this.isStreamingVoice) {
+            this.voiceFramesCount = 0;
             // Silence detected after active voice
-            if ((now - this.lastVoiceAt) <= 350) {
+            if ((now - this.lastVoiceAt) <= 450) {
               // Within conversational grace window (inter-word pause)
               this.socket.send(JSON.stringify({
                 realtimeInput: {
@@ -383,14 +440,15 @@
                 }
               }));
             } else {
-              // Pause has exceeded 350ms: speech turn is finished!
+              // Pause has exceeded 450ms: speech turn is finished!
               this.isStreamingVoice = false;
               this.socket.send(JSON.stringify({ realtimeInput: { audioStreamEnd: true } }));
             }
           } else {
-            // Continuous idle silence: retain last 2 chunks (~250ms) in ring buffer for natural onset padding
+            this.voiceFramesCount = 0;
+            // Continuous idle silence: retain last 3 chunks in ring buffer for natural onset padding
             this.preAudioBuffer.push(base64Chunk);
-            if (this.preAudioBuffer.length > 2) {
+            if (this.preAudioBuffer.length > 3) {
               this.preAudioBuffer.shift();
             }
           }
@@ -410,18 +468,35 @@
           const teacherName = this.facultyName || 'Faculty Mentor';
           const subjName = this.subjectName || 'STEM';
           const diagDesc = teachingPlan?.diagram?.title || 'System Visual Schematic';
+          const diagSpoken = teachingPlan?.diagram?.spokenScript || `Dekho beta, left side board par humne visual diagram draw kiya hai... ${diagDesc} observe karo.`;
 
-          const systemPrompt = `You are ${teacherName}, an elite Indian school senior faculty mentor (${subjName} Department) teaching a student live in front of an interactive classroom smartboard.
-Pedagogical Rules:
-1. Teach like an authentic senior faculty mentor standing in front of an interactive smartboard:
-   - Start naturally in conversational Hinglish: "Dekho beta, look at this question... Pehle question ko dhyan se samajhte hain."
-   - Refer directly to the smartboard visual elements: "Left side board par humne iska problem statement aur visual diagram draw kiya hai... ${diagDesc} observe karo."
-   - Guide the solution steps: "Ab right side board par Step 1 note karo... governing formula apply karte hain... Step 2 mein values substitute karke step-by-step solve karte hain... Aur yeh raha hamara final verified answer!"
-2. Subject-Discipline Accuracy: You are teaching ${subjName}. Always use exact ${subjName} concepts, formulas, equations, and terminology.
-3. Tone: Warm, energetic, encouraging, natural Hinglish (smooth mix of conversational Hindi and clear English, using natural phrases like 'Dekho bacho', 'Dhyan se samjho', 'Chalo board par note karte hain').
-4. Keep spoken explanation crisp, intuitive, and concise (around 4 to 5 spoken sentences) so the student absorbs each step without cognitive overload.
-5. Real-time full-duplex interruption: Whenever the student speaks or asks a doubt, pause immediately, say 'Haan beta, bilkul sahi doubt pucha...', explain the exact reason clearly, and encourage them!
-6. When the student switches to a new question, warmly transition and teach the new question with the whiteboard.`;
+          const femaleFacultyNames = ['Sunita', 'Ananya', 'Meenakshi', 'Pooja', 'Riya', 'Kavya', 'Simran', 'Tanvi', 'Suhani'];
+          const isFemaleFaculty = femaleFacultyNames.some(f => teacherName.includes(f));
+          const voiceName = this.requestedVoice || (isFemaleFaculty ? 'Aoede' : 'Puck');
+
+          const systemPrompt = `You are ${teacherName}, an elite senior Indian faculty mentor (${subjName} Department) teaching a student live in front of an interactive classroom smartboard.
+
+Pedagogical and Vocal Instructions:
+1. Spoken Language & Style:
+   - Speak in natural, warm, conversational Hinglish (Hindi-first Hinglish using Roman script phrases).
+   - Use genuine conversational markers: "Dekho beta", "Dhyan se note karo", "Haan bilkul", "Pehle question ko achhi tarah samajhte hain", "Chalo board par note karte hain".
+   - Keep answers voice-friendly, energetic, encouraging, and human.
+2. Spoken Math Pronunciation:
+   - NEVER read out raw LaTeX codes, symbols, or backslashes like \\frac, \\sqrt, ^, or _.
+   - Speak mathematical formulas phonetically and naturally:
+     - 1/f = 1/v + 1/u as "one over f equals one over v plus one over u"
+     - v = u + at as "v equals u plus a t"
+     - F = ma as "force equals mass into acceleration"
+     - cm as "centimeters", m/s as "meters per second"
+3. Classroom Smartboard Reference & Visual Diagram Grounding:
+   - Phase 1: Point to and explain the exact physical diagram on the Left Board (${diagDesc}): "${diagSpoken}"
+   - Phase 2: Guide Step 1 on the Right Board: "Ab right side board par Step 1 note karo... governing formula apply karte hain..."
+   - Phase 3: Walk through Step 2 calculation: "Step 2 mein values substitute karke step-by-step simplify karte hain..."
+   - Phase 4: Conclude with Step 3: "Aur Step 3 mein yeh raha hamara verified final answer aur golden exam tip!"
+4. Concise Spoken Delivery:
+   - Keep each spoken step crisp (around 3 to 4 spoken sentences) so the student absorbs each concept without cognitive overload.
+5. Real-Time Interruption Handling:
+   - When the student speaks or asks a doubt, pause immediately, say "Haan beta, bilkul sahi doubt pucha aapne...", explain the exact reason clearly and encouragingly in 2 to 3 sentences, and invite them back to continue!`;
 
           const setupMsg = {
             setup: {
@@ -431,7 +506,7 @@ Pedagogical Rules:
                 speechConfig: {
                   voiceConfig: {
                     prebuiltVoiceConfig: {
-                      voiceName: 'Puck'
+                      voiceName: voiceName
                     }
                   }
                 },
@@ -447,8 +522,8 @@ Pedagogical Rules:
               realtimeInputConfig: {
                 automaticActivityDetection: {
                   disabled: false,
-                  prefixPaddingMs: 100,
-                  silenceDurationMs: 350
+                  prefixPaddingMs: 150,
+                  silenceDurationMs: 650
                 },
                 activityHandling: 'START_OF_ACTIVITY_INTERRUPTS'
               }
@@ -468,12 +543,24 @@ Pedagogical Rules:
         };
 
         socket.onerror = (err) => {
-          console.error('[GEMINI LIVE] Socket error:', err);
+          console.warn('[GEMINI LIVE] Socket error:', err);
+          if (this._setupReject) {
+            const rej = this._setupReject;
+            this._setupReject = null;
+            this._setupResolve = null;
+            rej(err instanceof Error ? err : new Error('Gemini Live WebSocket connection failed'));
+          }
           if (this.callbacks.onError) this.callbacks.onError(err);
         };
 
         socket.onclose = (event) => {
           console.log(`[GEMINI LIVE] Socket closed (code ${event.code})`);
+          if (this._setupReject) {
+            const rej = this._setupReject;
+            this._setupReject = null;
+            this._setupResolve = null;
+            rej(new Error(`Gemini Live socket closed before setup (code ${event.code})`));
+          }
           if (this.status !== 'DISCONNECTED') {
             this.stopSession();
           }
@@ -635,9 +722,36 @@ Sir, please teach me this new question on the smartboard step-by-step in friendl
       return true;
     }
 
+    highlightAndExplainStep(stepIndex) {
+      if (!this.isSessionActive()) return false;
+      const stepLabels = [
+        'Visual Concept Diagram & Given Setup on the Left Board',
+        'Step 1: Governing Principles & Core Law on the Right Board',
+        'Step 2: Step-by-Step Substitution & Mathematical Derivation',
+        'Step 3: Final Evaluated Answer & Strategic Exam Tip'
+      ];
+      const targetLabel = stepLabels[stepIndex] || `Step ${stepIndex + 1}`;
+      this.currentSpokenPhase = stepIndex;
+
+      const prompt = `Student has clicked on "${targetLabel}" on the smartboard. Please immediately explain this specific part on the board clearly and encouragingly in natural conversational Hinglish in 2 to 3 sentences.`;
+      this.sendUserText(prompt, `Focusing on ${targetLabel}`);
+      return true;
+    }
+
+    toggleLiveSession(options = {}) {
+      if (this.isSessionActive()) {
+        this.stopSession();
+        return false;
+      } else {
+        this.startSession(options);
+        return true;
+      }
+    }
+
     sendUserText(text, displayText = null) {
       if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-        throw new Error('Gemini Live session is not active');
+        console.warn('[GEMINI LIVE] sendUserText skipped: socket not open');
+        return false;
       }
       this.stopPlayback();
       if (this.callbacks.onTranscript) {
@@ -705,6 +819,10 @@ Sir, please teach me this new question on the smartboard step-by-step in friendl
       }
 
       this.status = 'DISCONNECTED';
+      this.currentSpokenPhase = -1;
+      this.recentSpokenWindow = '';
+      this.voiceFramesCount = 0;
+      this.requestedVoice = null;
       const prevQId = this.activeQuestionId;
       this.activeQuestionId = null;
       this.activeQuestionData = null;

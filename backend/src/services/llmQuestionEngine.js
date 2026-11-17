@@ -4,7 +4,7 @@
 // Grounded in NCERT Curriculum and Class 10/11/12 Board Blueprints
 // ============================================================================
 
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) {}
 
 /**
  * Generate curriculum-compliant LaTeX question using Groq or Gemini LLM
@@ -342,13 +342,13 @@ async function callGroqApi({ apiKey, systemPrompt, userPrompt }) {
  */
 async function callGeminiApi({ apiKey, systemPrompt, userPrompt }) {
   const start = Date.now();
-  const geminiModels = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+  const geminiModels = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash'];
   let lastError = null;
 
   for (const model of geminiModels) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout guard
+      const timeoutId = setTimeout(() => controller.abort(), 8500); // 8.5s timeout guard
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -490,6 +490,11 @@ function sanitizeOptionFormula(opt) {
   s = s.replace(/(?<=[0-9\}\)]\s*)(kg|m\/s|m\s*s\^\{-?1\}|m|s|nm|\mu m|pm|mm|cm|km|J|kJ|eV|MeV|keV|V|mV|kV|Hz|kHz|MHz|GHz|T|mT|\mu T|W|kW|MW|N|kN|C|\mu C|nC|pC|A|mA|\mu A|\Omega|k\Omega|rad\/s|mol|K)\s*$/i, '\\text{ $1}');
 
   s = s.replace(/\s+/g, ' ').trim();
+  // Plain-word options ("Osmotic pressure") stay as text; wrapping them in $...$ renders them as
+  // italic math with the spaces removed.
+  const looksLikeProse = !/[\\^_={}]/.test(s)
+    && (/[A-Za-z]{3,}\s+[A-Za-z]{3,}/.test(s) || /^[A-Za-z][A-Za-z\s,'()\-]*[A-Za-z)]$/.test(s) && /[A-Za-z]{4,}/.test(s));
+  if (looksLikeProse) return s;
   // Wrap in $...$ if not already wrapped
   return s.startsWith('$') && s.endsWith('$') ? s : `$${s}$`;
 }

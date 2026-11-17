@@ -12,10 +12,22 @@ const {
   loadPersistedCustomQuestions,
   savePersistedCustomQuestions
 } = require('../services/questionInjectionService');
+const { classifyQuestion, matchesModeContext } = require('../services/canonicalContentService');
+const { validateIngestionPayload, authorizeIngestionContext } = require('../validators/questionIngestionValidator');
+const { resolveTenantFromRequest } = require('../services/tenantConfigService');
+const { extractDeclaredManifest, resolvePaperProfile } = require('../services/paperProfileRegistry');
+const { reconcileExtraction, normalizeQuestionWithManifest } = require('../services/extractionReconciler');
+
+// Dual-mode filter (?mode=BOARD&board=CBSE | ?mode=COMPETITIVE&stream=JEE). Only applied when `mode` is passed,
+// so existing callers keep their legacy `board` substring behaviour.
+function applyModeFilter(list, { mode, board, stream }, bankKeyHint) {
+  if (!mode || String(mode).toUpperCase() === 'ALL') return list;
+  return list.filter(q => matchesModeContext(classifyQuestion(q, bankKeyHint), { mode, board, stream }));
+}
 
 // GET all questions from bank (queries inMemoryStore.questions and all subjectBanks)
 router.get('/', (req, res) => {
-  const { subject, topic, board, grade, difficulty, search, limit, offset } = req.query;
+  const { subject, topic, board, grade, difficulty, search, limit, offset, mode, stream, status = 'APPROVED' } = req.query;
   const banks = inMemoryStore.subjectBanks || {};
   const bankQuestions = Object.values(banks).flat();
 
@@ -31,6 +43,11 @@ router.get('/', (req, res) => {
 
   let results = allPool;
 
+  // Filter by lifecycle status: only APPROVED questions visible by default
+  if (status && status !== 'ALL') {
+    results = results.filter(q => (q.status || 'APPROVED') === status);
+  }
+
   if (subject && subject !== 'ALL') {
     const sLower = subject.toLowerCase();
     results = results.filter(q => 
@@ -43,7 +60,8 @@ router.get('/', (req, res) => {
   if (grade && grade !== 'ALL') {
     results = results.filter(q => String(q.grade) === String(grade));
   }
-  if (board && board !== 'ALL') {
+  results = applyModeFilter(results, { mode, board, stream });
+  if (board && board !== 'ALL' && !mode) {
     const bLower = board.toLowerCase();
     results = results.filter(q => 
       (q.curriculum_board && q.curriculum_board.toLowerCase().includes(bLower)) ||
@@ -95,15 +113,15 @@ router.get('/providers', (req, res) => {
     providers: {
       groq: {
         configured: hasGroq,
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.8-27b',
         engine: 'Groq LPU Inference Engine',
         speed: '~350ms'
       },
       gemini: {
         configured: hasGemini,
-        model: 'gemini-1.5-flash',
-        engine: 'Google Gemini 1.5 Flash',
-        speed: '~1200ms'
+        model: 'gemini-flash-lite-latest',
+        engine: 'Google Gemini Flash',
+        speed: '~2400ms'
       },
       ncert_pyq: {
         configured: true,
@@ -230,84 +248,168 @@ router.post('/generate-llm', async (req, res) => {
 });
 
 // POST /api/questions/inject/preview - AI extraction & auto-categorization for review before committing
+// Figures cropped from uploaded photos (referenced in question text as [[figure:<id>]]).
+router.post('/figures', (req, res) => {
+  try {
+    const figureService = require('../services/questionFigureService');
+    const saved = figureService.save({ dataUrl: req.body && req.body.dataUrl, teacherSubjectKey: req.body && req.body.teacherSubjectKey, description: req.body && req.body.description });
+    return res.status(201).json({ success: true, ...saved });
+  } catch (err) {
+    return res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/figures/:id', (req, res) => {
+  const fig = require('../services/questionFigureService').get(req.params.id);
+  if (!fig) return res.status(404).json({ success: false, error: 'Figure not found.' });
+  res.setHeader('Content-Type', fig.mime);
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  return res.end(fig.bytes);
+});
+
 router.post('/inject/preview', async (req, res) => {
   try {
-    const {
-      teacher,
-      targetSubject,
-      targetSubjectKey,
-      mode = 'text',
-      rawText = '',
-      mediaData = '',
-      mimeType = 'image/jpeg',
-      grade = '12',
-      category = 'CBSE_PYQ'
-    } = req.body;
+    const validated = validateIngestionPayload(req.body);
+    const resolved = resolveTenantFromRequest(req);
+    if (resolved.error) {
+      return res.status(resolved.status || 400).json({ success: false, error: resolved.error });
+    }
+    const tenant = resolved.tenant;
+    const teacher = req.body.teacher || {};
+
+    authorizeIngestionContext({
+      tenant,
+      user: teacher,
+      mode: validated.mode,
+      track: validated.track
+    });
 
     // Strict Faculty Subject Lock verification
-    validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey });
+    validateFacultySubjectLock({
+      teacher,
+      targetSubject: validated.subject,
+      targetSubjectKey: req.body.targetSubjectKey
+    });
+
+    // Phase 3: Manifest Extraction from paper instructions or profile
+    const manifest = extractDeclaredManifest(validated.rawText || validated.payload || '', {
+      mode: validated.mode,
+      track: validated.track,
+      subject: validated.subject,
+      grade: validated.grade
+    });
+
+    const category = validated.category || (validated.mode === 'BOARD' ? `${validated.track}_PYQ` : 'COMPETITIVE_OTHER');
 
     const extracted = await processQuestionExtraction({
-      mode,
-      rawText,
-      mediaData,
-      mimeType,
-      targetSubject: targetSubject || teacher.subject || 'Physics',
-      grade,
+      mode: validated.sourceType,
+      rawText: validated.rawText || validated.payload || '',
+      mediaData: validated.mediaData || '',
+      mediaList: validated.mediaList || [],
+      mimeType: validated.mimeType || 'image/jpeg',
+      targetSubject: validated.subject,
+      grade: validated.grade,
       category
     });
 
-    const questionList = Array.isArray(extracted.questions) && extracted.questions.length > 0
+    const rawList = Array.isArray(extracted.questions) && extracted.questions.length > 0
       ? extracted.questions
       : [extracted];
 
+    // Phase 4: Normalization with manifest (assigning sections, marks from manifest, detecting choices)
+    const questionList = rawList.map((q, idx) => {
+      const normQ = normalizeQuestionWithManifest(q, manifest, idx);
+      normQ.mode = validated.mode;
+      normQ.track = validated.track;
+      normQ.target_modes = [validated.mode];
+      if (validated.mode === 'BOARD') {
+        normQ.board_targets = [validated.track];
+        normQ.competitive_targets = [];
+      } else {
+        normQ.competitive_targets = [validated.track.startsWith('JEE') ? 'JEE_MAIN' : validated.track];
+        normQ.board_targets = [];
+      }
+      return normQ;
+    });
+
+    // Phase 5: Manifest vs Extraction Count & Marks Reconciliation
+    const reconciliation = reconcileExtraction(manifest, questionList, {
+      mode: validated.mode,
+      track: validated.track
+    });
+
+    questionList.forEach(q => {
+      q.status = reconciliation.status;
+    });
+
     res.json({
       success: true,
-      message: `Extracted and auto-categorized ${questionList.length} question(s) successfully.`,
+      message: `Extracted and reconciled ${questionList.length} question(s) against manifest (${manifest.declaredTotalQuestions} expected). Status: ${reconciliation.status}.`,
       detectedCount: questionList.length,
+      manifest,
+      reconciliation,
       questions: questionList,
       previewQuestion: questionList[0],
-      subjectLockedTo: teacher.subject || teacher.subjectKey
+      subjectLockedTo: teacher.subject || teacher.subjectKey,
+      mode: validated.mode,
+      track: validated.track,
+      status: reconciliation.status
     });
   } catch (err) {
     console.error('[API INJECT PREVIEW ERROR]', err.message);
-    const statusCode = err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500;
-    res.status(statusCode).json({ success: false, error: err.message });
+    const statusCode = err.status || (err.code === 'EXTRACTION_UNREADABLE' ? 422 : (err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500));
+    res.status(statusCode).json({ success: false, error: err.message, code: err.code });
   }
 });
 
 // POST /api/questions/inject - Commit single or batch questions into backend Question Bank with audit trail
 router.post('/inject', async (req, res) => {
   try {
-    const {
-      teacher,
-      targetSubject,
-      targetSubjectKey,
-      mode = 'text',
-      rawText = '',
-      mediaData = '',
-      mimeType = 'image/jpeg',
-      grade = '12',
-      category = 'CBSE_PYQ',
-      structuredQuestion = null,
-      questions = null
-    } = req.body;
+    const validated = validateIngestionPayload(req.body);
+    const resolved = resolveTenantFromRequest(req);
+    if (resolved.error) {
+      return res.status(resolved.status || 400).json({ success: false, error: resolved.error });
+    }
+    const tenant = resolved.tenant;
+    const teacher = req.body.teacher || {};
+
+    authorizeIngestionContext({
+      tenant,
+      user: teacher,
+      mode: validated.mode,
+      track: validated.track
+    });
 
     // Strict Faculty Subject Lock verification
-    validateFacultySubjectLock({ teacher, targetSubject, targetSubjectKey });
+    validateFacultySubjectLock({
+      teacher,
+      targetSubject: validated.subject,
+      targetSubjectKey: req.body.targetSubjectKey
+    });
 
-    const questionsToCommit = Array.isArray(questions) && questions.length > 0
-      ? questions
-      : (structuredQuestion ? [structuredQuestion] : null);
+    const category = validated.category || (validated.mode === 'BOARD' ? `${validated.track}_PYQ` : 'COMPETITIVE_OTHER');
+
+    const questionsToCommit = Array.isArray(validated.questions) && validated.questions.length > 0
+      ? validated.questions
+      : (validated.structuredQuestion ? [validated.structuredQuestion] : null);
 
     if (questionsToCommit && questionsToCommit.length > 0) {
+      // Apply teacher action lifecycle status
+      const action = req.body.action || (req.body.saveAsDraft ? 'DRAFT' : 'APPROVE');
+      questionsToCommit.forEach(q => {
+        q.status = action === 'DRAFT' ? 'DRAFT' : 'APPROVED';
+      });
+
       const batchResult = commitBatchQuestionsToStore({
         questions: questionsToCommit,
         teacher,
-        targetSubject: targetSubject || teacher.subject || 'Physics',
-        grade,
+        targetSubject: validated.subject,
+        grade: validated.grade,
         category,
-        mode
+        mode: validated.sourceType,
+        examMode: validated.mode,
+        examTrack: validated.track
       });
 
       return res.status(201).json({
@@ -318,18 +420,21 @@ router.post('/inject', async (req, res) => {
         question: batchResult.questions[0],
         targetBank: batchResult.targetBank,
         totalBankCount: batchResult.totalBankCount,
-        audit: batchResult.questions[0]?.injected_by
+        audit: batchResult.questions[0]?.injected_by,
+        mode: validated.mode,
+        track: validated.track
       });
     }
 
     // Single extraction fallback
     const extracted = await processQuestionExtraction({
-      mode,
-      rawText,
-      mediaData,
-      mimeType,
-      targetSubject: targetSubject || teacher.subject || 'Physics',
-      grade,
+      mode: validated.sourceType,
+      rawText: validated.rawText || validated.payload || '',
+      mediaData: validated.mediaData || '',
+      mediaList: validated.mediaList || [],
+      mimeType: validated.mimeType || 'image/jpeg',
+      targetSubject: validated.subject,
+      grade: validated.grade,
       category
     });
 
@@ -337,10 +442,12 @@ router.post('/inject', async (req, res) => {
     const result = commitQuestionToStore({
       structuredQuestion: singleQ,
       teacher,
-      targetSubject: targetSubject || teacher.subject || 'Physics',
-      grade,
+      targetSubject: validated.subject,
+      grade: validated.grade,
       category,
-      mode
+      mode: validated.sourceType,
+      examMode: validated.mode,
+      examTrack: validated.track
     });
 
     res.status(201).json({
@@ -351,12 +458,14 @@ router.post('/inject', async (req, res) => {
       question: result.question,
       targetBank: result.targetBank,
       totalBankCount: result.totalBankCount,
-      audit: result.question.injected_by
+      audit: result.question.injected_by,
+      mode: validated.mode,
+      track: validated.track
     });
   } catch (err) {
     console.error('[API INJECT COMMIT ERROR]', err.message);
-    const statusCode = err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500;
-    res.status(statusCode).json({ success: false, error: err.message });
+    const statusCode = err.status || (err.code === 'EXTRACTION_UNREADABLE' ? 422 : (err.message.includes('Discipline Lock') || err.message.includes('Access Denied') ? 403 : 500));
+    res.status(statusCode).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -684,8 +793,8 @@ router.get('/subject-banks/:subjectKey', (req, res) => {
       });
     }
 
-    const { chapter, difficulty, targetExam, grade } = req.query;
-    let filtered = [...tableData];
+    const { chapter, difficulty, targetExam, grade, mode, board, stream } = req.query;
+    let filtered = applyModeFilter([...tableData], { mode, board, stream }, targetKey);
 
     if (grade && grade !== 'ALL') {
       filtered = filtered.filter(q => String(q.grade) === String(grade));

@@ -1,0 +1,46 @@
+JEE MAIN 2024 EXAMINATION
+PHYSICS SECTION
+Total Questions: 30
+Total Marks: 100
+
+Instructions:
+Section A contains 20 Multiple Choice Questions (Q1 to Q20). Each question has 4 options (A, B, C, D).
+Section B contains 10 Numerical Value Type Questions (Q21 to Q30). Candidates must attempt any 5 questions out of 10.
+Marking Scheme: +4 marks for correct answer, -1 mark for incorrect answer.
+
+SECTION A (MCQ)
+1. A particle starts from origin at t = 0 with velocity 5.0 i m/s and moves in x-y plane under action of a force with constant acceleration (3.0 i + 2.0 j) m/s^2. At the instant x-coordinate of the particle is 84 m, the y-coordinate is:
+(A) 36 m
+(B) 24 m
+(C) 18 m
+(D) 42 m
+
+2. A block of mass 10 kg is placed on a rough horizontal surface with coefficient of friction 0.4. A horizontal force of 30 N is applied on the block. The frictional force acting on the block is:
+(A) 40 N
+(B) 30 N
+(C) 20 N
+(D) 10 N
+
+3. A body of mass 2 kg moving with velocity 4 m/s collides with another body of mass 3 kg at rest. If the collision is perfectly inelastic, the loss of kinetic energy during collision is:
+(A) 9.6 J
+(B) 4.8 J
+(C) 14.4 J
+(D) 7.2 J
+
+4. Moment of inertia of a solid cylinder of mass M and radius R about its longitudinal axis is:
+(A) M R^2
+(B) 1/2 M R^2
+(C) 2/5 M R^2
+(D) 1/4 M R^2
+
+5. The acceleration due to gravity at a height h above the surface of the earth is g/4. Then h in terms of radius of earth R is:
+(A) R
+(B) 2 R
+(C) R/2
+(D) 4 R
+
+SECTION B (NUMERICAL)
+21. A projectile is fired from horizontal ground with speed 20 m/s at angle 30 degrees with horizontal. The maximum height reached by the projectile is [ ] meters. (Take g = 10 m/s^2).
+
+22. A capacitor of capacitance 10 micro-Farad is charged to 50 V. The electrostatic potential energy stored in the capacitor is [ ] milli-Joules.
+

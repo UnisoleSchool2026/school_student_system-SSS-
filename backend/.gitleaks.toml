@@ -1,0 +1,11 @@
+# Gitleaks Configuration for HAPS Backend
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore safe mock seed databases and lockfiles"
+paths = [
+  '''package-lock\.json''',
+  '''database/seed_data\.sql''',
+  '''\.env\.example'''
+]

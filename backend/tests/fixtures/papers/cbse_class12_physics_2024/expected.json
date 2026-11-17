@@ -1,0 +1,17 @@
+{
+  "paperName": "CBSE Class 12 Physics 2024",
+  "mode": "BOARD",
+  "track": "CBSE",
+  "subject": "Physics",
+  "grade": "12",
+  "expectedTotalQuestions": 33,
+  "expectedTotalMarks": 70,
+  "sections": [
+    { "label": "A", "count": 16, "marksPerQ": 1, "startQ": 1, "endQ": 16, "type": "MCQ_AND_AR" },
+    { "label": "B", "count": 5, "marksPerQ": 2, "startQ": 17, "endQ": 21, "type": "VSA" },
+    { "label": "C", "count": 7, "marksPerQ": 3, "startQ": 22, "endQ": 28, "type": "SA" },
+    { "label": "D", "count": 2, "marksPerQ": 4, "startQ": 29, "endQ": 30, "type": "CASE_STUDY" },
+    { "label": "E", "count": 3, "marksPerQ": 5, "startQ": 31, "endQ": 33, "type": "LA" }
+  ]
+}
+

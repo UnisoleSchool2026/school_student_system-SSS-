@@ -1,0 +1,196 @@
+name: Frontend CD
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment for deployment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  package-distribution:
+    name: Package Frontend Static Distribution and Build Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production whiteboard bundle
+        run: npm run build:whiteboard
+
+      - name: Create static release archive
+        run: |
+          tar -czf haps-frontend-${{ github.ref_name }}.tar.gz \
+            index.html \
+            whiteboard.html \
+            css \
+            js \
+            vendor \
+            assets
+          echo "Created static release package: haps-frontend-${{ github.ref_name }}.tar.gz"
+
+      - name: Upload static distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: haps-frontend-${{ github.ref_name }}
+          path: haps-frontend-${{ github.ref_name }}.tar.gz
+
+      - name: Conditionally build and push container if Dockerfile is present
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "Dockerfile found. Building and pushing container to GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            docker build -t "ghcr.io/${{ github.repository }}:${{ github.ref_name }}" .
+            docker push "ghcr.io/${{ github.repository }}:${{ github.ref_name }}"
+          else
+            echo "No Dockerfile found in frontend repository. Static release package published."
+          fi
+
+  deploy-staging:
+    name: Deploy Frontend to Staging Environment
+    needs: package-distribution
+    if: github.event_name == 'push' || github.event.inputs.target_environment == 'staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_FRONTEND_URL || 'https://staging.haps-scholar.internal' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ==============================================================================
+      # DEPLOYMENT TARGET PLACEHOLDER (STAGING)
+      # ------------------------------------------------------------------------------
+      # Replace this step with your actual web host (e.g. AWS S3 + CloudFront,
+      # Vercel, Cloudflare Pages, Netlify, or Nginx container).
+      #
+      # CRITICAL ARCHITECTURAL CONSTRAINT:
+      # The backend URL must NEVER be baked into the repository source.
+      # It is injected at deploy time via window.HAPS_API_BASE.
+      #
+      # REQUIRED INPUTS CONFIGURED IN GITHUB REPOSITORY / ENVIRONMENT:
+      # - STAGING_BACKEND_URL: ${{ vars.STAGING_BACKEND_URL }}
+      # - STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
+      # - DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+      # ==============================================================================
+      - name: Execute deployment and runtime API base injection (Staging)
+        env:
+          BACKEND_URL: ${{ vars.STAGING_BACKEND_URL || 'https://staging-api.haps-scholar.internal' }}
+          FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL || 'https://staging.haps-scholar.internal' }}
+        run: |
+          echo "Deploying frontend to Staging..."
+          echo "Injecting runtime backend configuration: window.HAPS_API_BASE = '${BACKEND_URL}'"
+          
+          # Demonstration of deploy-time injection into index.html and whiteboard.html:
+          sed -i "s|<head>|<head><script>window.HAPS_API_BASE='${BACKEND_URL}';</script>|g" index.html whiteboard.html
+          
+          echo "Deployment target placeholder execution finished."
+
+      - name: Post-deployment staging smoke test
+        env:
+          TARGET_URL: ${{ vars.STAGING_FRONTEND_URL || 'https://staging.haps-scholar.internal' }}
+        run: |
+          echo "Verifying deployed staging frontend at ${TARGET_URL}..."
+          if [ "${TARGET_URL}" != "https://staging.haps-scholar.internal" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET_URL}")
+            echo "Staging root responded with status: ${STATUS}"
+            if [ "${STATUS}" != "200" ]; then
+              echo "Smoke test verification failed: expected HTTP 200, got ${STATUS}"
+              exit 1
+            fi
+          else
+            echo "STAGING_FRONTEND_URL variable not set; skipping live remote probe."
+          fi
+
+      # ==============================================================================
+      # ROLLBACK INSTRUCTIONS (STAGING)
+      # ------------------------------------------------------------------------------
+      # If staging frontend verification fails:
+      # 1. Promote previous artifact or revert CDN distribution to prior commit.
+      # 2. Inspect browser console for CORS errors pointing to backend.
+      # ==============================================================================
+
+  deploy-production:
+    name: Deploy Frontend to Production Environment
+    needs: [package-distribution, deploy-staging]
+    if: github.event_name == 'push' || github.event.inputs.target_environment == 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_FRONTEND_URL || 'https://haps-scholar.internal' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ==============================================================================
+      # DEPLOYMENT TARGET PLACEHOLDER (PRODUCTION)
+      # ------------------------------------------------------------------------------
+      # Manual approval gate is enforced by GitHub Environment: production.
+      # REQUIRED INPUTS:
+      # - PRODUCTION_BACKEND_URL: ${{ vars.PRODUCTION_BACKEND_URL }}
+      # - PRODUCTION_FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
+      # ==============================================================================
+      - name: Execute deployment and runtime API base injection (Production)
+        env:
+          BACKEND_URL: ${{ vars.PRODUCTION_BACKEND_URL || 'https://api.haps-scholar.internal' }}
+          FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL || 'https://haps-scholar.internal' }}
+        run: |
+          echo "Deploying frontend to Production..."
+          echo "Injecting runtime backend configuration: window.HAPS_API_BASE = '${BACKEND_URL}'"
+          
+          sed -i "s|<head>|<head><script>window.HAPS_API_BASE='${BACKEND_URL}';</script>|g" index.html whiteboard.html
+          
+          echo "Production deployment target placeholder execution finished."
+
+      - name: Post-deployment production smoke test
+        env:
+          TARGET_URL: ${{ vars.PRODUCTION_FRONTEND_URL || 'https://haps-scholar.internal' }}
+        run: |
+          echo "Verifying deployed production frontend at ${TARGET_URL}..."
+          if [ "${TARGET_URL}" != "https://haps-scholar.internal" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET_URL}")
+            echo "Production root responded with status: ${STATUS}"
+            if [ "${STATUS}" != "200" ]; then
+              echo "Smoke test verification failed: expected HTTP 200, got ${STATUS}"
+              exit 1
+            fi
+          else
+            echo "PRODUCTION_FRONTEND_URL variable not set; skipping live remote probe."
+          fi
+
+      # ==============================================================================
+      # ROLLBACK INSTRUCTIONS (PRODUCTION)
+      # ------------------------------------------------------------------------------
+      # If production frontend verification fails:
+      # 1. Rollback static hosting / CDN distribution to previous release artifact.
+      # 2. Confirm that backend CORS_ORIGIN headers permit the production domain.
+      # ==============================================================================
+

@@ -19,7 +19,10 @@ function logTelemetry(event, data = {}) {
       window.appendDiagnosticLog(event, data);
     }
     console.log(`[WHITEBOARD TELEMETRY] ${event}:`, data);
-    fetch('/api/voice-tutor/whiteboard-logs', {
+    const apiBase = (typeof window !== 'undefined' && typeof window.getHapsApiBaseUrl === 'function')
+      ? window.getHapsApiBaseUrl()
+      : '';
+    fetch(`${apiBase}/api/voice-tutor/whiteboard-logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry)
@@ -71,9 +74,11 @@ function safeCreateShape(shapeData) {
     return null;
   }
   try {
-    const created = editorInstance.createShape(shapeData);
-    logTelemetry('SAFE_CREATE_SHAPE_SUCCESS', { type: shapeData?.type, geo: shapeData.props?.geo });
-    return created;
+    const id = shapeData.id || ('shape:' + Math.random().toString(36).slice(2, 11) + '_' + Date.now().toString(36));
+    const shapeWithId = { ...shapeData, id };
+    editorInstance.createShape(shapeWithId);
+    logTelemetry('SAFE_CREATE_SHAPE_SUCCESS', { type: shapeData?.type, geo: shapeData.props?.geo, id });
+    return editorInstance.getShape(id) || { id };
   } catch (err) {
     console.error('[TLDRAW CREATE SHAPE ERROR]:', err, shapeData);
     logTelemetry('SAFE_CREATE_SHAPE_ERROR', {
@@ -371,6 +376,10 @@ function applySpotlight(conceptIndex) {
 }
 
 const WhiteboardController = {
+  get editor() {
+    return editorInstance;
+  },
+
   isReady() {
     return !!editorInstance;
   },
@@ -424,7 +433,16 @@ const WhiteboardController = {
     logTelemetry('WHITEBOARD_ACTION_ZOOM_FIT');
     if (!editorInstance) return;
     try {
-      editorInstance.zoomToFit({ duration: 350, padding: 40 });
+      const shapes = Array.from(editorInstance.getCurrentPageShapes?.() || []);
+      if (!shapes || shapes.length === 0) {
+        editorInstance.setCamera({ x: 20, y: 20, z: 0.70 });
+        return;
+      }
+      editorInstance.zoomToFit({ duration: 0, padding: 40 });
+      const z = editorInstance.getZoomLevel();
+      if (z < 0.45 || z > 1.5) {
+        editorInstance.setCamera({ x: 20, y: 20, z: 0.70 });
+      }
     } catch (e) {
       logTelemetry('ZOOM_FIT_ERROR', { message: e?.message });
     }
@@ -682,7 +700,786 @@ const WhiteboardController = {
       }
     });
 
-    if (type === 'rolling_incline' || type === 'rotational' || type === 'rolling') {
+    if (type === 'electrostatics' || type === 'gauss' || type === 'charges' || type === 'electric_field') {
+      // 1. Diagram Title Header
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText("GAUSS'S LAW • CYLINDRICAL GAUSSIAN SURFACE & WIRE (λ)"),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      // 2. Infinitely Long Straight Wire (Central Axis)
+      safeCreateShape({
+        type: 'line',
+        x: lx + 260,
+        y: dy + 50,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 0, y: 285 }
+          },
+          color: 'red',
+          size: 'm'
+        }
+      });
+
+      // Linear charge markers + + + along wire
+      safeCreateShape({
+        type: 'text',
+        x: lx + 266,
+        y: dy + 60,
+        props: {
+          richText: toRichText('+\n+\n+\n+\n+\n+\n+\n+\n+'),
+          size: 's',
+          color: 'red'
+        }
+      });
+
+      // Wire descriptor label
+      safeCreateShape({
+        type: 'text',
+        x: lx + 285,
+        y: dy + 55,
+        props: {
+          richText: toRichText('Infinitely Long Wire (Linear Charge Density +λ)'),
+          size: 's',
+          color: 'red'
+        }
+      });
+
+      // 3. Coaxial Cylindrical Gaussian Surface
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 160,
+        y: dy + 95,
+        props: {
+          geo: 'ellipse',
+          w: 200,
+          h: 46,
+          color: 'blue',
+          fill: 'semi',
+          richText: toRichText('')
+        }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 160,
+        y: dy + 245,
+        props: {
+          geo: 'ellipse',
+          w: 200,
+          h: 46,
+          color: 'blue',
+          fill: 'semi',
+          richText: toRichText('')
+        }
+      });
+
+      safeCreateShape({
+        type: 'line',
+        x: lx + 160,
+        y: dy + 118,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 0, y: 150 }
+          },
+          color: 'blue',
+          size: 's',
+          dash: 'dashed'
+        }
+      });
+
+      safeCreateShape({
+        type: 'line',
+        x: lx + 360,
+        y: dy + 118,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 0, y: 150 }
+          },
+          color: 'blue',
+          size: 's',
+          dash: 'dashed'
+        }
+      });
+
+      // Radius r indicator
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 260,
+        y: dy + 118,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 100, y: 0 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 285,
+        y: dy + 124,
+        props: { richText: toRichText('r (Radius)'), size: 's', color: 'green' }
+      });
+
+      // Length L dimension
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 135,
+        y: dy + 118,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 0, y: 150 },
+          color: 'orange'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 65,
+        y: dy + 175,
+        props: { richText: toRichText('L (Length)'), size: 's', color: 'orange' }
+      });
+
+      // 4. Radial Electric Field Vectors (E⃗ ∥ dA⃗ along curved surface)
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 360,
+        y: dy + 190,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 75, y: 0 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 440,
+        y: dy + 180,
+        props: { richText: toRichText('E⃗ ∥ dA⃗ (Radial Field)'), size: 's', color: 'green' }
+      });
+
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 160,
+        y: dy + 190,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: -65, y: 0 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 45,
+        y: dy + 180,
+        props: { richText: toRichText('E⃗ ∥ dA⃗'), size: 's', color: 'green' }
+      });
+
+      // 5. Normal Vectors & Zero Flux on Circular End Caps
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 260,
+        y: dy + 95,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 0, y: -30 },
+          color: 'grey'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 90,
+        y: dy + 70,
+        props: { richText: toRichText('End Cap 1: n̂ ⊥ E⃗  ⇒  Φ₁ = 0'), size: 's', color: 'grey' }
+      });
+
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 260,
+        y: dy + 291,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 0, y: 30 },
+          color: 'grey'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 90,
+        y: dy + 310,
+        props: { richText: toRichText('End Cap 2: n̂ ⊥ E⃗  ⇒  Φ₂ = 0'), size: 's', color: 'grey' }
+      });
+
+      // 6. Bottom Mathematical Law Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText("Gauss's Law: ∮ E⃗ · dA⃗ = q_enc / ε₀  ⇒  E · (2π r L) = (λ · L) / ε₀  ⇒  E = λ / (2π ε₀ r)"),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'dipole' || type === 'electric_dipole') {
+      // 1. Diagram Title Header
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('ELECTRIC DIPOLE • CHARGE GEOMETRY & FIELD ALIGNMENT (θ)'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      // 2. Uniform External Electric Field Lines E⃗
+      for (let fi = 0; fi < 3; fi++) {
+        const fy = dy + 90 + fi * 90;
+        safeCreateShape({
+          type: 'arrow',
+          x: lx + 40,
+          y: fy,
+          props: {
+            start: { x: 0, y: 0 },
+            end: { x: 500, y: 0 },
+            color: 'green'
+          }
+        });
+      }
+      safeCreateShape({
+        type: 'text',
+        x: lx + 545,
+        y: dy + 80,
+        props: { richText: toRichText('E⃗ (Uniform Field)'), size: 's', color: 'green' }
+      });
+
+      // 3. Dipole Charges -q and +q
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 120,
+        y: dy + 190,
+        props: {
+          geo: 'ellipse',
+          w: 42,
+          h: 42,
+          color: 'blue',
+          fill: 'solid',
+          richText: toRichText('-q')
+        }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 360,
+        y: dy + 150,
+        props: {
+          geo: 'ellipse',
+          w: 42,
+          h: 42,
+          color: 'red',
+          fill: 'solid',
+          richText: toRichText('+q')
+        }
+      });
+
+      safeCreateShape({
+        type: 'line',
+        x: lx + 141,
+        y: dy + 211,
+        props: {
+          points: {
+            a1: { id: 'a1', index: 'a1', x: 0, y: 0 },
+            a2: { id: 'a2', index: 'a2', x: 240, y: -40 }
+          },
+          color: 'grey',
+          size: 's',
+          dash: 'dashed'
+        }
+      });
+
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 258,
+        y: dy + 188,
+        props: {
+          geo: 'ellipse',
+          w: 6,
+          h: 6,
+          color: 'grey',
+          fill: 'solid',
+          richText: toRichText('')
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 252,
+        y: dy + 198,
+        props: { richText: toRichText('O (Center)'), size: 's', color: 'grey' }
+      });
+
+      safeCreateShape({
+        type: 'text',
+        x: lx + 230,
+        y: dy + 225,
+        props: { richText: toRichText('Separation 2a'), size: 's', color: 'orange' }
+      });
+
+      // 4. Dipole Moment Vector p⃗ (pointing from -q to +q)
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 180,
+        y: dy + 160,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 160, y: -26 },
+          color: 'violet'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 210,
+        y: dy + 125,
+        props: { richText: toRichText('p⃗ = q · 2a⃗ (from -q to +q)'), size: 's', color: 'violet' }
+      });
+
+      // 5. Opposing Forces Forming Couple
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 402,
+        y: dy + 171,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 70, y: 0 },
+          color: 'red'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 475,
+        y: dy + 160,
+        props: { richText: toRichText('F₊ = +q·E⃗'), size: 's', color: 'red' }
+      });
+
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 120,
+        y: dy + 211,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: -70, y: 0 },
+          color: 'blue'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 200,
+        props: { richText: toRichText('F₋ = -q·E⃗'), size: 's', color: 'blue' }
+      });
+
+      safeCreateShape({
+        type: 'text',
+        x: lx + 365,
+        y: dy + 200,
+        props: { richText: toRichText('θ (Angle with Field)'), size: 's', color: 'orange' }
+      });
+
+      // 6. Bottom Mathematical Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Torque: τ⃗ = p⃗ × E⃗  ⇒  τ = p·E·sin θ  |  Potential Energy: U = -p⃗ · E⃗ = -p·E·cos θ  |  F_net = 0'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'capacitor' || type === 'capacitance') {
+      // 1. Diagram Title Header
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('PARALLEL PLATE CAPACITOR • DIELECTRIC (K) & UNIFORM FIELD'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      // 2. Positive Plate (+Q)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 100,
+        y: dy + 80,
+        props: {
+          geo: 'rectangle',
+          w: 36,
+          h: 230,
+          color: 'red',
+          fill: 'solid',
+          richText: toRichText('+Q\n\n+σ')
+        }
+      });
+
+      // 3. Negative Plate (-Q)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 440,
+        y: dy + 80,
+        props: {
+          geo: 'rectangle',
+          w: 36,
+          h: 230,
+          color: 'blue',
+          fill: 'solid',
+          richText: toRichText('-Q\n\n-σ')
+        }
+      });
+
+      // 4. Dielectric Slab (Constant K)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 220,
+        y: dy + 95,
+        props: {
+          geo: 'rectangle',
+          w: 140,
+          h: 200,
+          color: 'yellow',
+          fill: 'semi',
+          richText: toRichText('Dielectric Slab\nConstant K\n\nReduced Field:\nE = E₀ / K')
+        }
+      });
+
+      // 5. Electric Field Lines
+      for (let fld = 0; fld < 3; fld++) {
+        const fy = dy + 115 + fld * 65;
+        safeCreateShape({
+          type: 'arrow',
+          x: lx + 138,
+          y: fy,
+          props: {
+            start: { x: 0, y: 0 },
+            end: { x: 75, y: 0 },
+            color: 'orange'
+          }
+        });
+        safeCreateShape({
+          type: 'arrow',
+          x: lx + 363,
+          y: fy,
+          props: {
+            start: { x: 0, y: 0 },
+            end: { x: 73, y: 0 },
+            color: 'orange'
+          }
+        });
+      }
+
+      // Plate separation d
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 138,
+        y: dy + 322,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 300, y: 0 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 230,
+        y: dy + 324,
+        props: { richText: toRichText('Plate Separation d'), size: 's', color: 'green' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Capacitance: C = K·(ε₀·A / d)  |  Stored Energy: U = ½ C V² = Q² / (2C)  |  Energy Density: u = ½ ε₀ E²'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'magnetism' || type === 'solenoid' || type === 'biot_savart') {
+      // 1. Diagram Title Header
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText("ELECTROMAGNETISM • SOLENOID & AMPERE'S CIRCUITAL LAW"),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      // Solenoid Core
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 80,
+        y: dy + 120,
+        props: {
+          geo: 'rectangle',
+          w: 420,
+          h: 130,
+          color: 'grey',
+          fill: 'none',
+          dash: 'dashed',
+          richText: toRichText('')
+        }
+      });
+
+      // Solenoid Windings
+      for (let turn = 0; turn < 6; turn++) {
+        const tx = lx + 105 + turn * 65;
+        safeCreateShape({
+          type: 'geo',
+          x: tx,
+          y: dy + 105,
+          props: {
+            geo: 'ellipse',
+            w: 24,
+            h: 24,
+            color: 'red',
+            fill: 'solid',
+            richText: toRichText('⊙')
+          }
+        });
+        safeCreateShape({
+          type: 'geo',
+          x: tx,
+          y: dy + 240,
+          props: {
+            geo: 'ellipse',
+            w: 24,
+            h: 24,
+            color: 'blue',
+            fill: 'solid',
+            richText: toRichText('⊗')
+          }
+        });
+      }
+
+      // Axial Magnetic Field Arrows
+      for (let bf = 0; bf < 3; bf++) {
+        const by = dy + 150 + bf * 35;
+        safeCreateShape({
+          type: 'arrow',
+          x: lx + 100,
+          y: by,
+          props: {
+            start: { x: 0, y: 0 },
+            end: { x: 380, y: 0 },
+            color: 'green'
+          }
+        });
+      }
+      safeCreateShape({
+        type: 'text',
+        x: lx + 490,
+        y: dy + 175,
+        props: { richText: toRichText('B⃗ (Axial Field)'), size: 's', color: 'green' }
+      });
+
+      // Bottom Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText("Ampere's Law: ∮ B⃗ · dℓ⃗ = μ₀ · I_enc  ⇒  B = μ₀ · (N / L) · I = μ₀ · n · I  (Uniform axial field)"),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'ac_circuit' || type === 'alternating_current') {
+      // 1. Diagram Title Header
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 15,
+        props: {
+          richText: toRichText('AC CIRCUIT & PHASOR DIAGRAM • PURE CAPACITIVE LOAD'),
+          size: 's',
+          color: 'blue'
+        }
+      });
+
+      // 2. AC Loop Circuit
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 60,
+        y: dy + 90,
+        props: {
+          geo: 'rectangle',
+          w: 260,
+          h: 210,
+          color: 'grey',
+          fill: 'none',
+          richText: toRichText('')
+        }
+      });
+
+      // AC Source Symbol (Circle with ~)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 35,
+        y: dy + 170,
+        props: {
+          geo: 'ellipse',
+          w: 50,
+          h: 50,
+          color: 'blue',
+          fill: 'solid',
+          richText: toRichText('~')
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 15,
+        y: dy + 225,
+        props: { richText: toRichText('V(t) = V₀·sin(ωt)'), size: 's', color: 'blue' }
+      });
+
+      // Pure Capacitor C in circuit (Top arm)
+      safeCreateShape({
+        type: 'geo',
+        x: lx + 160,
+        y: dy + 75,
+        props: {
+          geo: 'rectangle',
+          w: 60,
+          h: 30,
+          color: 'orange',
+          fill: 'semi',
+          richText: toRichText('Capacitor C')
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 155,
+        y: dy + 52,
+        props: { richText: toRichText('X_C = 1 / (ω·C)'), size: 's', color: 'orange' }
+      });
+
+      // Current Flow Arrow i(t)
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 280,
+        y: dy + 90,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 0, y: 40 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 290,
+        y: dy + 105,
+        props: { richText: toRichText('i(t) Leads by 90°'), size: 's', color: 'green' }
+      });
+
+      // 3. Phasor Diagram (Right half of diagram box)
+      // Phasor Coordinate Axes
+      safeCreateShape({
+        type: 'line',
+        x: lx + 380,
+        y: dy + 200,
+        props: {
+          points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 250, y: 0 } },
+          color: 'grey',
+          size: 's'
+        }
+      });
+      safeCreateShape({
+        type: 'line',
+        x: lx + 440,
+        y: dy + 80,
+        props: {
+          points: { a1: { id: 'a1', index: 'a1', x: 0, y: 0 }, a2: { id: 'a2', index: 'a2', x: 0, y: 220 } },
+          color: 'grey',
+          size: 's'
+        }
+      });
+
+      // Voltage Phasor V_0
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 440,
+        y: dy + 200,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 130, y: 0 },
+          color: 'blue'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 575,
+        y: dy + 190,
+        props: { richText: toRichText('V₀ (Voltage)'), size: 's', color: 'blue' }
+      });
+
+      // Current Phasor I_0 (perpendicular leading by +90° upward)
+      safeCreateShape({
+        type: 'arrow',
+        x: lx + 440,
+        y: dy + 200,
+        props: {
+          start: { x: 0, y: 0 },
+          end: { x: 0, y: -90 },
+          color: 'green'
+        }
+      });
+      safeCreateShape({
+        type: 'text',
+        x: lx + 450,
+        y: dy + 100,
+        props: { richText: toRichText('I₀ (Current Leads by π/2)'), size: 's', color: 'green' }
+      });
+
+      // Phase angle arc label
+      safeCreateShape({
+        type: 'text',
+        x: lx + 448,
+        y: dy + 170,
+        props: { richText: toRichText('φ = +90° (+π/2 rad)'), size: 's', color: 'yellow' }
+      });
+
+      // 4. Bottom Mathematical Law Note
+      safeCreateShape({
+        type: 'text',
+        x: lx + 20,
+        y: dy + 348,
+        props: {
+          richText: toRichText('Pure Capacitor AC Rules: i(t) = I₀·sin(ωt + π/2)  |  X_C = 1/(ω C)  |  I₀ = V₀ / X_C  |  Average Power P_avg = 0'),
+          size: 's',
+          color: 'yellow'
+        }
+      });
+
+    } else if (type === 'rolling_incline' || type === 'rotational' || type === 'rolling') {
       // 1. Diagram Title Header
       safeCreateShape({
         type: 'text',
@@ -1898,6 +2695,7 @@ const WhiteboardController = {
           color: 'yellow'
         }
       });
+    } else {
       // General Visual Concept Framework (Universal for all subjects & concepts)
       safeCreateShape({
         type: 'text',
@@ -2150,6 +2948,10 @@ function WhiteboardApp() {
       processWhiteboardEvent(evt);
     }
 
+    if (window.cachedSmartboardPayload) {
+      WhiteboardController.renderSmartboardSolution(window.cachedSmartboardPayload);
+    }
+
     window.parent.postMessage({ type: 'WHITEBOARD_READY' }, '*');
   };
 
@@ -2163,7 +2965,7 @@ function WhiteboardApp() {
         licenseKey: TLDRAW_LICENSE_KEY,
         onMount: handleMount,
         autoFocus: false,
-        inferDarkMode: true,
+        inferDarkMode: false,
         components: {
           ErrorFallback: CustomErrorFallback
         }

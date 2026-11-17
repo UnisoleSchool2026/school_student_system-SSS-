@@ -1,0 +1,73 @@
+{
+  "schoolId": "sch_unisole_001",
+  "name": "Unisole AI School (HIM Academy Public School, Hamirpur)",
+  "shortName": "HAPS",
+  "subdomains": [
+    "haps",
+    "unisole",
+    "localhost"
+  ],
+  "activeModes": [
+    "BOARD",
+    "COMPETITIVE"
+  ],
+  "defaultMode": "BOARD",
+  "boardConfig": {
+    "label": "Board Exam",
+    "eligibleGrades": [
+      "10",
+      "11",
+      "12"
+    ],
+    "enabledBoards": [
+      "CBSE",
+      "HP_BOARD",
+      "ICSE"
+    ],
+    "defaultBoard": "CBSE",
+    "features": {
+      "scanPaperSheets": true,
+      "stepRubricEvaluation": true,
+      "ncertExemplar": true,
+      "chapterWisePYQ": true,
+      "topicRoadmap": false,
+      "cheatSheets": false,
+      "dailyPracticeProblems": false,
+      "rankAnalytics": false,
+      "ntaTimedMockEngine": false,
+      "studyBoard": true,
+      "classDesk": true
+    }
+  },
+  "competitiveConfig": {
+    "label": "Competitive Prep",
+    "eligibleGrades": [
+      "11",
+      "12"
+    ],
+    "enabledStreams": [
+      "JEE",
+      "NEET"
+    ],
+    "defaultStream": "JEE",
+    "features": {
+      "scanPaperSheets": false,
+      "stepRubricEvaluation": false,
+      "ncertExemplar": true,
+      "chapterWisePYQ": true,
+      "topicRoadmap": true,
+      "cheatSheets": true,
+      "dailyPracticeProblems": true,
+      "rankAnalytics": false,
+      "ntaTimedMockEngine": true,
+      "studyBoard": true,
+      "classDesk": true
+    },
+    "dpp": {
+      "questionsPerDay": 12,
+      "minQuestions": 10,
+      "maxQuestions": 15,
+      "timeLimitMinutes": 20
+    }
+  }
+}

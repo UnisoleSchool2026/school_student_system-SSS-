@@ -5,12 +5,15 @@
 // Grounded in NCERT, CBSE PYQs, Worked Examples & Exercises
 // ============================================================================
 
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) {}
+const dataPaths = require('../config/dataPaths');
 const fs = require('fs');
 const path = require('path');
 const { inMemoryStore } = require('../config/database');
 const { sanitizeLatexString, sanitizeOptionFormula, sanitizeQuestionPayload } = require('./llmQuestionEngine');
 const { CURRICULUM_TAXONOMY } = require('./curriculumTaxonomy');
+const examPatterns = require('./examPatternRegistry');
+const { computeContentHash, validateQuestionInvariants, STATUS_LIFECYCLE } = require('./questionCanonicalSchema');
 
 // Universal Web Standards Polyfills for Serverless Node (Vercel / AWS Lambda)
 if (typeof globalThis.DOMMatrix === 'undefined') {
@@ -36,7 +39,7 @@ if (typeof globalThis.DOMMatrix === 'undefined') {
   };
 }
 if (typeof globalThis.Path2D === 'undefined') {
-  globalThis.Path2D = class Path2D {};
+  globalThis.Path2D = class Path2D { };
 }
 if (typeof globalThis.ImageData === 'undefined') {
   globalThis.ImageData = class ImageData {
@@ -258,7 +261,7 @@ function detectChapterFromText({ text = '', targetSubject = 'Physics', grade = '
  */
 function detectMarksFromText(text = '') {
   const match = text.match(/(?:\[|\()(\d+)\s*(?:marks?|pts?|points?)(?:\]|\))/i) ||
-                text.match(/(\d+)\s*(?:marks?|mark)\b/i);
+    text.match(/(\d+)\s*(?:marks?|mark)\b/i);
   if (match) {
     const val = parseInt(match[1], 10);
     if (val >= 1 && val <= 5) return val;
@@ -277,6 +280,18 @@ function detectMarksFromText(text = '') {
 /**
  * Intelligent Difficulty Auto-Evaluation
  */
+// Picks up an exam + year written in the question, e.g. "[CBSE 2023]", "(JEE Main 2024)", "NEET-2022".
+function detectExamYearFromText(text = '') {
+  const t = String(text).toUpperCase();
+  const m = t.match(/(CBSE|HPBOSE|HP\s*BOARD|JEE\s*-?\s*ADVANCED|JEE\s*-?\s*MAIN|JEE|NEET|AIPMT)[^0-9\n]{0,15}((?:19|20)\d{2})/);
+  if (m) {
+    const exam = m[1].replace(/\s*-\s*|\s+/g, ' ').trim().replace('HPBOSE', 'HP BOARD').replace('JEE ADVANCED', 'JEE Advanced').replace('JEE MAIN', 'JEE Main').replace('HP BOARD', 'HP Board');
+    return { exam, year: m[2] };
+  }
+  const y = t.match(/[\[(]\s*((?:19|20)\d{2})\s*[\])]/);
+  return { exam: null, year: y ? y[1] : null };
+}
+
 function detectDifficultyFromMarks(marks, text = '') {
   const lower = text.toLowerCase();
   if (lower.includes('jee advanced') || lower.includes('olympiad') || lower.includes('aiims') || marks === 5) return 'HARD';
@@ -291,18 +306,32 @@ function cleanAndParseJson(raw) {
   if (!raw || typeof raw !== 'string') return null;
   let text = raw.trim();
 
+  // Strip Markdown code fences
   if (text.startsWith('```')) {
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   }
 
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return { questions: parsed };
+    }
+    return parsed;
   } catch (e) {
+    // Try matching JSON array: [ ... ]
+    const arrMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (arrMatch) {
+      try {
+        const arr = JSON.parse(arrMatch[0]);
+        if (Array.isArray(arr)) return { questions: arr };
+      } catch (eArr) { }
+    }
+    // Try matching JSON object: { ... }
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       try {
         return JSON.parse(match[0]);
-      } catch (e2) {}
+      } catch (e2) { }
     }
     throw new Error(`Failed to parse AI response as JSON: ${text.slice(0, 150)}...`);
   }
@@ -315,11 +344,13 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   let questionPrompt = '';
   const options = [];
-  let answerKey = 'A';
+  let answerKey = null; // only set when the teacher's text states it (never invented)
   let solutionText = '';
 
-  const answerRegex = /(?:answer|ans|correct|option)[:\s]*\(?([A-D])\)?/i;
-  const solutionRegex = /(?:solution|explanation|working|step)[:\s]*(.+)/i;
+  const answerRegex = /^(?:answer|ans|correct(?:\s+(?:answer|option))?|key)\s*[:.\-)]\s*(?:option\s*)?\(?([A-D])\)?(?:\s|$|[.)])/i;
+  // Anchored to the start of a line: the word "solution" inside a question ("molarity of a solution")
+  // must not swallow the question as if it were the worked solution.
+  const solutionRegex = /^(?:solution|sol|explanation|working|step\s*\d*)\s*[:.\-]\s*(.*)$/i;
 
   let inSolution = false;
   const nonSolutionLines = [];
@@ -352,7 +383,7 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
   const isAssertionReason = /Assertion\s*\([A-Za-z0-9]\)/i.test(promptBlock) && /Reason\s*\([A-Za-z0-9]\)/i.test(promptBlock);
 
   // Extract options (A), (B), (C), (D) across lines or inline
-  const optionRegex = /(?:\(([A-D])\)|(?:\b|^)([A-D])\))\s*([^(\n\r]+)/g;
+  const optionRegex = /(?:\(([A-Da-d])\)|(?:\b|^)([A-Da-d])\))\s*([^(\n\r]+?)(?=\s*(?:\([A-Da-d]\)|(?:\b)[A-Da-d]\))|[\n\r]|$)/g;
   let optMatch;
   while ((optMatch = optionRegex.exec(promptBlock)) !== null) {
     const key = (optMatch[1] || optMatch[2]).toUpperCase();
@@ -362,16 +393,21 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
         key,
         latex: sanitizeOptionFormula(val),
         is_correct: key === answerKey,
-        distractor_trap: key === 'B' ? 'Common sign convention slip' : key === 'C' ? 'Neglected boundary condition' : key === 'D' ? 'Formula inversion error' : null
+        distractor_trap: null
       });
     }
   }
+  // A real MCQ has exactly the options A-D (or A-B for true/false style); sub-parts such as
+  // "(a) define ... (b) derive ..." in a subjective question are not options.
+  const optionKeys = options.map(o => o.key).join('');
+  if (!isAssertionReason && options.length && !['AB', 'ABC', 'ABCD'].includes(optionKeys)) options.length = 0;
+  if (!isAssertionReason && options.length && options.some(o => o.latex.length > 160)) options.length = 0;
 
   // If Assertion-Reason question, populate official CBSE standard options
   if (isAssertionReason) {
     options.length = 0;
     options.push(
-      { key: 'A', latex: 'Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).', is_correct: true, distractor_trap: null },
+      { key: 'A', latex: 'Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).', is_correct: false, distractor_trap: null },
       { key: 'B', latex: 'Both Assertion (A) and Reason (R) are true, but Reason (R) is NOT the correct explanation of Assertion (A).', is_correct: false, distractor_trap: 'Failed to verify independent reasoning linkage' },
       { key: 'C', latex: 'Assertion (A) is true, but Reason (R) is false.', is_correct: false, distractor_trap: 'Mismatched physical validity of premise' },
       { key: 'D', latex: 'Both Assertion (A) and Reason (R) are false.', is_correct: false, distractor_trap: 'Overgeneralized incorrect physical law' }
@@ -380,7 +416,7 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
 
   // Isolate question prompt text before options
   if (options.length >= 2 && !isAssertionReason) {
-    const firstOptIdx = promptBlock.search(/(?:\([A-D]\)|(?:\b|^)[A-D]\))\s+/);
+    const firstOptIdx = promptBlock.search(/(?:\([A-Da-d]\)|(?:\b|^)[A-Da-d]\))\s*/);
     if (firstOptIdx !== -1) {
       questionPrompt = promptBlock.slice(0, firstOptIdx).trim();
     } else {
@@ -409,7 +445,14 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
   const detectedDifficulty = detectDifficultyFromMarks(detectedMarks, text);
 
   const hasOptions = options.length >= 2;
-  const questionFormat = hasOptions ? 'MCQ_SINGLE' : (detectedMarks >= 4 ? 'CASE_STUDY' : 'SUBJECTIVE_LONG');
+  if (hasOptions && !text.match(/marks?\b/i)) detectedMarks = 1;
+  const lowerText = text.toLowerCase();
+  const questionFormat = isAssertionReason ? 'ASSERTION_REASON'
+    : hasOptions ? 'MCQ_SINGLE'
+    : /case[\s-]*(?:study|based)|read the (?:following )?(?:passage|paragraph)/.test(lowerText) ? 'CASE_STUDY'
+    : detectedMarks <= 1 ? 'VERY_SHORT_ANSWER'
+    : detectedMarks <= 3 ? 'SHORT_ANSWER'
+    : 'LONG_ANSWER';
 
   if (hasOptions) {
     options.forEach(opt => {
@@ -418,16 +461,10 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
     });
   }
 
-  const correctOpt = hasOptions ? (options.find(o => o.is_correct) || options[0]) : null;
-  const correctAns = correctOpt ? correctOpt.latex : 'Verified Comprehensive Derivation & Marking Scheme';
-
-  if (!solutionText) {
-    if (hasOptions) {
-      solutionText = `By applying the fundamental governing equations for ${detectedChapter}:\n$$${correctOpt.latex.replace(/^\$|\$$/g, '')}$$\nSubstituting given parameters and evaluating algebraically yields the verified option.`;
-    } else {
-      solutionText = `Step 1: Governing Physical Law & Conceptual Setup:\nIdentify the relevant governing principle in ${detectedChapter}.\nStep 2: Mathematical Working & Boundary Substitution:\nApply Cartesian conventions and evaluate line-by-line equations.\nStep 3: Verified Final Conclusion with Standard SI Units.`;
-    }
-  }
+  // No answer key in the pasted text -> leave it empty; the teacher picks it in the preview.
+  const correctOpt = hasOptions ? options.find(o => o.is_correct) || null : null;
+  const correctAns = correctOpt ? correctOpt.latex : '';
+  const examYear = detectExamYearFromText(text);
 
   const categoryTag = category === 'CBSE_PYQ' ? 'CBSE Board Examination (Authentic PYQ)' : category === 'NCERT_EXAMPLE' ? 'NCERT Worked In-Text Example' : category === 'NCERT_EXERCISE' ? 'NCERT End-of-Chapter Exercise' : 'Competitive / Advanced Mock';
 
@@ -442,8 +479,11 @@ function parseSingleQuestionText({ text, targetSubject = 'Physics', grade = '12'
     question_latex: questionPrompt || text,
     options_latex: options,
     correct_answer_latex: correctAns,
-    correct_answer: hasOptions ? (correctOpt?.key || 'A') : 'Verified',
+    correct_answer: correctOpt ? correctOpt.key : null,
+    answer_key_missing: hasOptions && !correctOpt,
     solution_latex: solutionText,
+    exam_tag: examYear.exam,
+    pyq_year: examYear.year,
     socratic_hints: [
       `Recall the fundamental governing principles of ${detectedChapter}.`,
       'Carefully check the units and dimensional consistency before substituting numerical values.',
@@ -481,42 +521,49 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
   const lines = normalizedRaw.split('\n');
   const questionsMap = new Map();
   let currentQ = null;
-  let isEnglish = true;
   let hasNumberedStructure = false;
 
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i].trim();
     if (!rawLine) continue;
 
-    // Detect question header e.g. "1. A particle...", "Q1. ...", "Question 1: ..."
-    const qMatch = rawLine.match(/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+(.*)$/i);
+    // Filter out header/footer/section boilerplate
+    if (/^(?:SECTION\s+[A-E]|खण्ड\s+[क-ङ]|Questions?\s+\d+\s+to\s+\d+|General\s+Instructions|P\.?T\.?O\.?|Page\s+\d+|~\s*\d+[\/\d]*\s*~|नोट\s*NOTE|Time\s*Allowed|Maximum\s*Marks)/i.test(rawLine)) {
+      continue;
+    }
+
+    // Detect question header e.g. "1. A particle...", "Q1. ...", "Question 1: ...", "1)", "1.\n"
+    const qMatch = rawLine.match(/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})(?:[\.:\)]|\s+|$)\s*(.*)$/i);
     if (qMatch) {
       const qNum = parseInt(qMatch[1], 10);
-      const rest = qMatch[2].trim();
-      const isEngLine = /^[A-Za-z]/.test(rest) || /[a-zA-Z]{3,}/.test(rest);
+      const rest = (qMatch[2] || '').trim();
 
-      if (isEngLine && qNum >= 1 && qNum <= 1000) {
+      if (qNum >= 1 && qNum <= 1000) {
         currentQ = qNum;
-        isEnglish = true;
         hasNumberedStructure = true;
-        questionsMap.set(currentQ, [rawLine]);
-        continue;
-      } else if (!isEngLine) {
-        isEnglish = false;
+        if (!questionsMap.has(currentQ)) {
+          questionsMap.set(currentQ, []);
+        }
+
+        // Clean Devanagari Hindi text from header line if mixed
+        const cleanRest = rest.replace(/[\u0900-\u097F]+/g, '').trim();
+        if (cleanRest && (/[a-zA-Z]/.test(cleanRest) || /[\$\\\=\+\-\*\/\(\)]/.test(cleanRest))) {
+          questionsMap.get(currentQ).push(cleanRest);
+        }
         continue;
       }
     }
 
-    if (currentQ && isEnglish) {
-      // Filter out header/footer boilerplate
-      if (rawLine.includes('~55/3/1~') || rawLine.includes('P.T.O.') || rawLine.includes('•') || rawLine.includes('खण्ड') || rawLine.includes('नोट NOTE') || rawLine.includes('General Instructions')) {
-        continue;
+    if (currentQ) {
+      // Ignore lines containing only Devanagari Hindi characters without English words
+      const isDevanagariOnly = /[\u0900-\u097F]/.test(rawLine) && !/[a-zA-Z]{2,}/.test(rawLine);
+      if (isDevanagariOnly) continue;
+
+      // Filter out pure Devanagari prefixes in mixed lines, keeping English LaTeX, math & options
+      const cleanLine = rawLine.replace(/[\u0900-\u097F]+/g, '').trim();
+      if (cleanLine) {
+        questionsMap.get(currentQ).push(cleanLine);
       }
-      if (/^(?:Q(?:uestion)?\.?\s*)?([0-9]{1,4})[\.:\)]\s+[^\x00-\x7F]/.test(rawLine)) {
-        isEnglish = false;
-        continue;
-      }
-      questionsMap.get(currentQ).push(rawLine);
     }
   }
 
@@ -567,83 +614,35 @@ function parseRawTextLocally({ rawText = '', targetSubject = 'Physics', category
 }
 
 /**
- * Multimodal extraction using Google Gemini
+ * Multimodal extraction using Google Gemini (photos of question papers, scanned PDFs).
+ * Uses the best vision model this key can use (see services/geminiClient.js).
+ * mediaList: one or more data URLs (several photos of the same paper are read together).
  */
-async function callGeminiMultimodal({ apiKey, mediaData, mimeType, promptText }) {
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
-  let lastError = null;
-
-  let cleanData = mediaData;
-  if (cleanData.includes(';base64,')) {
-    cleanData = cleanData.split(';base64,')[1];
-  }
-
-  for (const model of models) {
-    try {
-      const cleanModel = model.replace(/^models\//, '');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout guard
-
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  inlineData: {
-                    mimeType: mimeType || 'image/jpeg',
-                    data: cleanData
-                  }
-                },
-                {
-                  text: promptText
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.2
-          }
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Gemini Multimodal ${model} HTTP ${response.status}: ${errorText}`);
-      }
-
-      const json = await response.json();
-      const rawText = json.candidates[0].content.parts[0].text;
-      return cleanAndParseJson(rawText);
-    } catch (err) {
-      lastError = err;
-      console.warn(`[INJECTION SERVICE] Gemini multimodal attempt with ${model} failed: ${err.message}. Trying next...`);
-    }
-  }
-
-  throw lastError || new Error('All Gemini multimodal model attempts failed.');
+async function callGeminiMultimodal({ apiKey, mediaData, mediaList, mimeType, promptText }) {
+  const { generateJson, inlinePart } = require('./geminiClient');
+  const list = (Array.isArray(mediaList) && mediaList.length ? mediaList : [mediaData]).filter(Boolean);
+  const parts = [];
+  list.forEach((m, i) => {
+    if (list.length > 1) parts.push({ text: `Photo ${i + 1} of ${list.length}:` });
+    parts.push(inlinePart(m, mimeType || 'image/jpeg'));
+  });
+  parts.push({ text: promptText });
+  const { data, model } = await generateJson({ parts, kind: 'vision', temperature: 0.1, timeoutMs: 90000, key: apiKey });
+  console.log(`[INJECTION SERVICE] Vision extraction answered by ${model}.`);
+  return data;
 }
 
 /**
  * Text extraction using Groq Cloud API with LPU acceleration
  */
 async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
-  const models = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'llama-3.3-70b-versatile'];
+  const models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
   let lastError = null;
 
   for (const model of models) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -659,7 +658,7 @@ async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.2,
-          max_tokens: 3000
+          max_tokens: 3500
         }),
         signal: controller.signal
       });
@@ -672,7 +671,7 @@ async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
       }
 
       const json = await response.json();
-      const content = json.choices[0].message.content;
+      const content = json.choices?.[0]?.message?.content;
       return cleanAndParseJson(content);
     } catch (err) {
       lastError = err;
@@ -681,6 +680,23 @@ async function callGroqTextExtraction({ apiKey, systemPrompt, userPrompt }) {
   }
 
   throw lastError || new Error('All Groq extraction models failed.');
+}
+
+// Extra rules for reading photos and scans: copy what is printed, never invent, and locate figures.
+function VISION_RULES(photoCount) {
+  return `Task: read the ${photoCount > 1 ? photoCount + ' attached photos (pages of the same paper, in order)' : 'attached photo'} of a question paper, worksheet or book page and extract EVERY question on it.
+PHOTO RULES (these override the general rules above where they differ):
+- Copy each question exactly as printed or handwritten, in the same order and with its printed number. Do not reword, shorten, summarise or "improve" it.
+- The photo may be tilted, curved, shadowed, low-light or partly handwritten. Read carefully; if a word or symbol cannot be read, write [unclear] in its place. Never guess numbers or units.
+- Write all mathematics, chemical formulae, units and symbols in KaTeX ($...$). Keep subscripts, superscripts, fractions, vectors, Greek letters and units exactly.
+- Options: only if the question shows options. Copy them verbatim with their original letters (a/b/c/d or A/B/C/D, written as A-D). Do NOT invent options or distractor traps for questions that have none; use "options_latex": [] for those.
+- Answers: mark is_correct / correct_answer_latex only if an answer key is printed on the page, or you have solved it and are certain. Otherwise leave is_correct false for every option and correct_answer_latex "".
+- Marks: use the marks printed next to the question (e.g. "[2]", "(3 marks)") when visible.
+- Sub-parts (a), (b), (i), (ii) belong to the same question unless they are numbered as separate questions.
+- Ignore page headers, footers, watermarks, roll-number boxes and instructions that are not questions.
+- FIGURES: if a question has a diagram, circuit, graph, table or figure, set "has_figure": true, describe it in one line in "figure_description", say which photo it is in with "figure_image_index" (1-based) and give its tight bounding box as "figure_box_2d": [ymin, xmin, ymax, xmax] on a 0-1000 scale of that photo. Do not include the question text in the box.
+- If the photo contains no readable questions, return {"detected_question_count": 0, "questions": []}.
+Return ONLY JSON matching the schema, with the extra keys has_figure, figure_description, figure_image_index, figure_box_2d where they apply.`;
 }
 
 /**
@@ -695,18 +711,23 @@ async function processQuestionExtraction({
   mode = 'text',
   rawText = '',
   mediaData = '',
+  mediaList = [],
   mimeType = 'image/jpeg',
   targetSubject = 'Physics',
   grade = '12',
   category = 'CBSE_PYQ'
 }) {
+  const images = (Array.isArray(mediaList) ? mediaList : []).filter(m => typeof m === 'string' && m.startsWith('data:image/')).slice(0, 6);
+  if (!images.length && mediaData && String(mediaData).startsWith('data:image/')) images.push(mediaData);
   const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
   const groqKey = (process.env.GROQ_API_KEY || '').trim();
 
   const categoryLabel = category === 'CBSE_PYQ' ? 'CBSE / Board PYQ (Previous Year Question)'
     : category === 'NCERT_EXAMPLE' ? 'NCERT Worked In-Text Example'
-    : category === 'NCERT_EXERCISE' ? 'NCERT End-of-Chapter Exercise Question'
-    : 'Competitive Examination / Advanced Practice Mock';
+      : category === 'NCERT_EXERCISE' ? 'NCERT End-of-Chapter Exercise Question'
+        : category === 'NCERT_EXEMPLAR' ? 'NCERT Exemplar Problem'
+          : category === 'CBSE_SAMPLE_PATTERN' ? 'CBSE Sample Paper Pattern Question'
+            : 'Competitive Examination (JEE / NEET) Practice';
 
   const systemInstructions = `You are the Lead Academic Assessment & KaTeX Math Specialist for Unisole AI School.
 The teacher has uploaded an assessment document (PDF, test paper photo, or pasted questions) from the discipline: ${targetSubject} (Class ${grade}).
@@ -762,8 +783,14 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
       try {
         const fs = require('fs');
         const path = require('path');
-        const cjsWorker = path.resolve(__dirname, '../../../node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs');
-        if (!fs.existsSync(cjsWorker)) {
+        let cjsWorker;
+        try {
+          const pdfParseRoot = path.dirname(require.resolve('pdf-parse/package.json'));
+          cjsWorker = path.join(pdfParseRoot, 'dist/pdf-parse/cjs/pdf.worker.mjs');
+        } catch (_) {
+          cjsWorker = path.resolve(__dirname, '../../node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs');
+        }
+        if (cjsWorker && !fs.existsSync(cjsWorker)) {
           const workerModule = require('pdf-parse/worker');
           const data = typeof workerModule.getData === 'function' ? workerModule.getData() : null;
           if (data) {
@@ -802,20 +829,29 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
   }
 
   // 2. Image Mode: Use Gemini Multimodal
-  if (mode === 'image' && mediaData && geminiKey) {
+  let lastMultimodalError = null;
+  if (mode === 'image' && images.length && geminiKey) {
     try {
       console.log(`[INJECTION SERVICE] Processing multimodal IMAGE via Gemini Flash...`);
-      const prompt = `${systemInstructions}\n\nTask: Extract all academic questions from the attached IMAGE document. Automatically categorize chapter, marks (1-5), and difficulty for each question. Return JSON strictly matching the requested schema.`;
+      const prompt = `${systemInstructions}\n\n${VISION_RULES(images.length)}`;
       const extracted = await callGeminiMultimodal({
         apiKey: geminiKey,
-        mediaData,
+        mediaList: images,
         mimeType: mimeType || 'image/jpeg',
         promptText: prompt
       });
-      if (extracted && ((Array.isArray(extracted.questions) && extracted.questions.length > 0) || extracted.question_latex)) {
+      if (extracted && (
+        Array.isArray(extracted) ||
+        (Array.isArray(extracted.questions) && extracted.questions.length > 0) ||
+        (Array.isArray(extracted.items) && extracted.items.length > 0) ||
+        extracted.question_latex ||
+        extracted.question ||
+        extracted.questionText
+      )) {
         return normalizeExtractedPayload(extracted, targetSubject, grade, category);
       }
     } catch (err) {
+      lastMultimodalError = err;
       console.warn(`[INJECTION SERVICE] Multimodal AI processing failed: ${err.message}. Falling back to text/local parsing.`);
     }
   }
@@ -831,7 +867,14 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
           systemPrompt: systemInstructions,
           userPrompt
         });
-        if (groqResult && (groqResult.questions || groqResult.question_latex)) {
+        if (groqResult && (
+          Array.isArray(groqResult) ||
+          (Array.isArray(groqResult.questions) && groqResult.questions.length > 0) ||
+          (Array.isArray(groqResult.items) && groqResult.items.length > 0) ||
+          groqResult.question_latex ||
+          groqResult.question ||
+          groqResult.questionText
+        )) {
           return normalizeExtractedPayload(groqResult, targetSubject, grade, category);
         }
       } catch (err) {
@@ -849,13 +892,34 @@ CRITICAL MULTI-QUESTION AUTO-CATEGORIZATION DIRECTIVES:
           systemPrompt: systemInstructions,
           userPrompt
         });
-        if (gemResult && gemResult.data && (gemResult.data.questions || gemResult.data.question_latex)) {
-          return normalizeExtractedPayload(gemResult.data, targetSubject, grade, category);
+        const gData = gemResult?.data;
+        if (gData && (
+          Array.isArray(gData) ||
+          (Array.isArray(gData.questions) && gData.questions.length > 0) ||
+          (Array.isArray(gData.items) && gData.items.length > 0) ||
+          gData.question_latex ||
+          gData.question ||
+          gData.questionText
+        )) {
+          return normalizeExtractedPayload(gData, targetSubject, grade, category);
         }
       } catch (err) {
         console.warn(`[INJECTION SERVICE] Gemini text processing failed: ${err.message}.`);
       }
     }
+  }
+
+  // Nothing readable: an image needs the vision model, and a scanned PDF has no text layer.
+  // Say so instead of inventing a placeholder question.
+  if (!rawText || !rawText.trim()) {
+    const why = mode === 'image'
+      ? (geminiKey ? `The AI vision service could not extract readable questions from this image${lastMultimodalError ? ` (${lastMultimodalError.message})` : ''}.` : 'Reading questions from an image needs the AI vision service (GEMINI_API_KEY), which is not configured on this server.')
+      : mode === 'pdf'
+        ? 'No text could be read from this PDF (it may be a scanned image).' + (geminiKey ? '' : ' Scanned PDFs need the AI vision service (GEMINI_API_KEY).')
+        : 'No question text was provided.';
+    const err = new Error(`${why} Please paste the question text in "Paste Text" mode instead.`);
+    err.code = 'EXTRACTION_UNREADABLE';
+    throw err;
   }
 
   // 3. Fallback: Intelligent Local Multi-Question Parser
@@ -880,9 +944,13 @@ function normalizeExtractedPayload(data, targetSubject = 'Physics', grade = '12'
   if (!data || typeof data !== 'object') return data;
 
   let rawList = [];
-  if (Array.isArray(data.questions) && data.questions.length > 0) {
+  if (Array.isArray(data)) {
+    rawList = data;
+  } else if (Array.isArray(data.questions) && data.questions.length > 0) {
     rawList = data.questions;
-  } else if (data.question_latex) {
+  } else if (Array.isArray(data.items) && data.items.length > 0) {
+    rawList = data.items;
+  } else if (data.question_latex || data.questionText || data.question) {
     rawList = [data];
   } else {
     rawList = [data];
@@ -902,8 +970,9 @@ function normalizeExtractedPayload(data, targetSubject = 'Physics', grade = '12'
     const finalLatex = qText || `Calculate the fundamental parameters for ${targetSubject} in ${autoChapter}.`;
     const opts = Array.isArray(sanitized.options_latex) ? sanitized.options_latex : [];
     const hasOpts = opts.length >= 2;
-    const correctAns = sanitized.correct_answer_latex || (hasOpts ? opts[0]?.latex : 'Verified Standard Derivation & Physical Law');
-    const solLatex = sanitized.solution_latex || `Step 1: Formula Setup.\nStep 2: Boundary Evaluation.\nStep 3: Verified Answer.`;
+    const keyedOpt = hasOpts ? opts.find(o => o.is_correct) : null;
+    const correctAns = sanitized.correct_answer_latex || (keyedOpt ? keyedOpt.latex : '');
+    const solLatex = sanitized.solution_latex || '';
 
     return {
       ...sanitized,
@@ -913,11 +982,12 @@ function normalizeExtractedPayload(data, targetSubject = 'Physics', grade = '12'
       topic: sanitized.topic || autoChapter,
       marks_weightage: autoMarks,
       difficulty: autoDifficulty,
-      question_format: sanitized.question_format || (hasOpts ? 'MCQ_SINGLE' : (autoMarks >= 4 ? 'CASE_STUDY' : 'SUBJECTIVE_LONG')),
+      question_format: sanitized.question_format || (hasOpts ? 'MCQ_SINGLE' : (autoMarks >= 4 ? 'LONG_ANSWER' : 'SHORT_ANSWER')),
       question_latex: finalLatex,
       options_latex: opts,
       correct_answer_latex: correctAns,
-      correct_answer: sanitized.correct_answer || (hasOpts ? (opts.find(o => o.is_correct)?.key || 'A') : 'Verified'),
+      correct_answer: sanitized.correct_answer || (keyedOpt ? keyedOpt.key : null),
+      answer_key_missing: hasOpts && !(sanitized.correct_answer || keyedOpt),
       solution_latex: solLatex,
       source_category: category,
       ncert_mapping: sanitized.ncert_mapping || {
@@ -941,9 +1011,63 @@ function normalizeExtractedPayload(data, targetSubject = 'Physics', grade = '12'
 /**
  * Commits a single validated, structured question into the HAPS-AI repositories
  */
-function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text', persistImmediately = true }) {
+// Source label stored with an injected question. A year is written only when the teacher's
+// text or the preview supplied one, so the "Exam & Year" filter never shows an invented year.
+function buildInjectedAppearance(category, q = {}, subjectUpper = '') {
+  const year = q.pyq_year ? String(q.pyq_year) : '';
+  const exam = q.exam_tag ? String(q.exam_tag) : '';
+  switch (category) {
+    case 'CBSE_PYQ': {
+      const board = /HP/i.test(exam) ? 'HP Board' : 'CBSE Board';
+      return year ? `${board} ${year} PYQ` : `${board} PYQ (year not tagged)`;
+    }
+    case 'NCERT_EXAMPLE': return 'NCERT Solved Example';
+    case 'NCERT_EXERCISE': return 'NCERT Textbook Exercise';
+    case 'NCERT_EXEMPLAR': return 'NCERT Exemplar';
+    case 'CBSE_SAMPLE_PATTERN': return 'CBSE Sample Paper Pattern';
+    case 'COMPETITIVE_OTHER': {
+      const e = exam && /JEE|NEET|AIPMT/i.test(exam) ? exam : (subjectUpper.includes('BIO') ? 'NEET' : 'JEE Main');
+      return year ? `${e} ${year}` : `${e} Practice`;
+    }
+    default: return 'Teacher Added';
+  }
+}
+
+function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text', examMode, examTrack, persistImmediately = true }) {
   const sUpper = (targetSubject || '').toUpperCase();
   const isC10 = String(grade) === '10';
+
+  const normMode = String(examMode || structuredQuestion.mode || structuredQuestion.target_modes?.[0] || '').trim().toUpperCase();
+  const normTrack = examPatterns.normalizeKey(examTrack || structuredQuestion.track || structuredQuestion.curriculum_board || structuredQuestion.board || structuredQuestion.stream || '');
+
+  // Non-negotiable: Mode and track are strictly required. Never default silently.
+  if (!normMode || !['BOARD', 'COMPETITIVE'].includes(normMode)) {
+    const err = new Error('Ingestion Error: Mode ("BOARD" or "COMPETITIVE") is strictly required to commit question.');
+    err.status = 400;
+    err.code = 'MODE_REQUIRED';
+    throw err;
+  }
+  if (!normTrack) {
+    const err = new Error(`Ingestion Error: Track (board or stream) is strictly required for ${normMode} mode.`);
+    err.status = 400;
+    err.code = 'TRACK_REQUIRED';
+    throw err;
+  }
+
+  let targetModes = [normMode];
+  let boardTargets = [];
+  let competitiveTargets = [];
+  let targetExam = '';
+  let curriculumBoard = normTrack;
+
+  if (normMode === 'BOARD') {
+    boardTargets = [normTrack];
+    targetExam = isC10 ? `${normTrack}_CLASS_10` : `${normTrack}_BOARD`;
+  } else if (normMode === 'COMPETITIVE') {
+    const compTrack = normTrack.startsWith('JEE') ? 'JEE_MAIN' : (normTrack === 'NEET' ? 'NEET' : normTrack);
+    competitiveTargets = [compTrack];
+    targetExam = compTrack === 'NEET' ? 'NEET_UG' : 'JEE_MAIN';
+  }
 
   let bankKey = 'senior_physics';
   if (isC10) {
@@ -963,8 +1087,28 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
   const uniqueId = `${prefix}${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
   const chapterName = structuredQuestion.chapter_name || structuredQuestion.chapter || 'Core Chapter';
-  const marks = Number(structuredQuestion.marks_weightage || 3);
+  const marks = normMode === 'BOARD' ? Number(structuredQuestion.marks_weightage || structuredQuestion.marks || 3) : null;
   const difficulty = structuredQuestion.difficulty || 'MEDIUM';
+
+  // Compute deterministic content hash for idempotency and duplicate prevention
+  const contentHash = computeContentHash({
+    question_latex: structuredQuestion.question_latex,
+    options_latex: structuredQuestion.options_latex || structuredQuestion.options,
+    marks: marks || 0
+  });
+
+  // Deduplication check: Do not re-insert identical questions
+  const existingQuestions = inMemoryStore.subjectBanks?.[bankKey] || [];
+  const existingDup = existingQuestions.find(q => q && (q.contentHash === contentHash || q.content_hash === contentHash));
+  if (existingDup) {
+    console.log(`[INJECTION SERVICE] Duplicate question detected (hash: ${contentHash.slice(0, 12)}..., id: ${existingDup.id}). Skipping insertion.`);
+    return {
+      question: existingDup,
+      duplicate: true,
+      targetBank: bankKey,
+      totalBankCount: existingQuestions.length
+    };
+  }
 
   const auditInfo = {
     faculty_id: teacher.id || 'fac_unknown',
@@ -976,30 +1120,62 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
     timestamp: new Date().toISOString()
   };
 
+  const isSubjectiveFormat = ['SHORT_ANSWER', 'LONG_DERIVATION', 'CASE_BASED', 'NUMERICAL', 'SUBJECTIVE_DERIVATION']
+    .some(f => (structuredQuestion.question_format || '').toUpperCase().includes(f));
+
+  let finalOptions = Array.isArray(structuredQuestion.options_latex) && structuredQuestion.options_latex.length > 0
+    ? structuredQuestion.options_latex.map(o => ({ ...o }))
+    : [];
+
+  if (isSubjectiveFormat) {
+    finalOptions = [];
+  } else if (finalOptions.length > 0 && finalOptions.length < 4) {
+    const keys = ['A', 'B', 'C', 'D'];
+    const usedKeys = new Set(finalOptions.map(o => (o.key || '').toUpperCase()));
+    for (const k of keys) {
+      if (finalOptions.length >= 4) break;
+      if (!usedKeys.has(k)) {
+        finalOptions.push({
+          key: k,
+          latex: `$\\text{None of the above}$`,
+          is_correct: false,
+          distractor_trap: null
+        });
+        usedKeys.add(k);
+      }
+    }
+  }
+
   const rawQuestion = {
     id: uniqueId,
+    contentHash: contentHash,
+    status: structuredQuestion.status || STATUS_LIFECYCLE.APPROVED,
     grade: String(grade),
     subject: targetSubject,
     subjectKey: sUpper,
     stream: isC10 ? 'FOUNDATION' : (sUpper.includes('BIO') ? 'MEDICAL' : 'COMMON_SENIOR'),
-    target_exam: isC10 ? 'CBSE_CLASS_10' : (sUpper.includes('BIO') ? 'NEET_UG' : 'JEE_MAIN'),
+    target_modes: targetModes,
+    board_targets: boardTargets,
+    competitive_targets: competitiveTargets,
+    target_exam: targetExam,
     chapter_name: chapterName,
     chapter: chapterName,
     topic: structuredQuestion.topic || chapterName,
     subtopic: structuredQuestion.subtopic || 'Core Derivation',
-    curriculum_board: isC10 ? 'CBSE_CLASS_10' : 'CBSE',
+    curriculum_board: curriculumBoard,
     source_category: category,
     question_source: category,
-    pyq_appearance: category === 'CBSE_PYQ' ? `CBSE Board Exam (${new Date().getFullYear() - 1} PYQ)` : category === 'NCERT_EXAMPLE' ? 'NCERT Worked In-Text Example' : category === 'NCERT_EXERCISE' ? 'NCERT Textbook Exercise' : 'Competitive Mock',
+    pyq_appearance: buildInjectedAppearance(category, structuredQuestion, sUpper),
     difficulty: difficulty,
-    question_format: structuredQuestion.question_format || 'MCQ_SINGLE',
-    benchmark_time_seconds: Number(structuredQuestion.benchmark_time_seconds) || marks * 45,
+    question_format: isSubjectiveFormat ? (structuredQuestion.question_format || 'SHORT_ANSWER') : (finalOptions.length >= 2 ? 'MCQ_SINGLE' : 'SHORT_ANSWER'),
+    benchmark_time_seconds: Number(structuredQuestion.benchmark_time_seconds) || (marks ? marks * 45 : 120),
     marks_weightage: marks,
+    marks: marks,
     question_latex: structuredQuestion.question_latex,
-    options_latex: structuredQuestion.options_latex || [],
-    options: structuredQuestion.options_latex || [],
-    correct_answer_latex: structuredQuestion.correct_answer_latex || 'Option A',
-    correct_answer: (structuredQuestion.options_latex?.find(o => o.is_correct)?.key) || 'A',
+    options_latex: finalOptions,
+    options: finalOptions,
+    correct_answer_latex: structuredQuestion.correct_answer_latex || (finalOptions.find(o => o.is_correct)?.latex) || '',
+    correct_answer: (finalOptions.find(o => o.is_correct)?.key) || structuredQuestion.correct_answer || null,
     solution_latex: structuredQuestion.solution_latex || '',
     socratic_hints: structuredQuestion.socratic_hints || [],
     step_rubric: structuredQuestion.step_rubric || [],
@@ -1013,6 +1189,9 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
     injection_mode: mode,
     imported_at: new Date().toISOString()
   };
+
+  // Enforce canonical invariant validation
+  validateQuestionInvariants(rawQuestion);
 
   const finalQuestion = sanitizeQuestionPayload(rawQuestion);
 
@@ -1047,11 +1226,17 @@ function commitQuestionToStore({ structuredQuestion, teacher, targetSubject, gra
 /**
  * Storage paths for permanent question persistence across restarts and serverless lambdas
  */
+// Read order: runtime copy (backend/data), committed starting data, /tmp fallback.
+// Writes go to the runtime copy only (/tmp if the data folder is read-only); the committed file is never changed.
 function getCustomQuestionsStoragePaths() {
   return [
+    dataPaths.runtimePath('custom_injected_questions.json'),
     path.join(__dirname, '..', 'database', 'custom_injected_questions.json'),
     '/tmp/custom_injected_questions.json'
   ];
+}
+function getCustomQuestionsWritePaths() {
+  return [dataPaths.runtimePath('custom_injected_questions.json'), '/tmp/custom_injected_questions.json'];
 }
 
 /**
@@ -1088,17 +1273,25 @@ function savePersistedCustomQuestions(newQuestions = []) {
   newQuestions.forEach(q => { if (q && q.id) map.set(q.id, sanitizeQuestionPayload(q)); });
 
   const allQuestions = Array.from(map.values());
-  const paths = getCustomQuestionsStoragePaths();
+  // Store collection (saved to PostgreSQL by services/persistence.js when a database is configured).
+  if (!Array.isArray(inMemoryStore.injectedQuestions)) inMemoryStore.injectedQuestions = [];
+  newQuestions.forEach(q => {
+    if (!q || !q.id) return;
+    const clean = sanitizeQuestionPayload(q);
+    const at = inMemoryStore.injectedQuestions.findIndex(x => x.id === clean.id);
+    if (at === -1) inMemoryStore.injectedQuestions.push(clean); else inMemoryStore.injectedQuestions[at] = clean;
+  });
   let saved = false;
 
-  for (const p of paths) {
+  for (const p of getCustomQuestionsWritePaths()) {
     try {
       const dir = path.dirname(p);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(p, JSON.stringify(allQuestions, null, 2), 'utf8');
       saved = true;
+      break;
     } catch (e) {
-      // Continue to next path if filesystem is read-only
+      // Try the next path if the filesystem is read-only
     }
   }
 
@@ -1108,7 +1301,7 @@ function savePersistedCustomQuestions(newQuestions = []) {
 /**
  * Commits a batch of auto-categorized questions into the repository
  */
-function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text' }) {
+function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, grade = '12', category = 'CBSE_PYQ', mode = 'text', examMode, examTrack }) {
   if (!Array.isArray(questions) || questions.length === 0) {
     throw new Error('Expected a non-empty array of questions to commit.');
   }
@@ -1127,6 +1320,8 @@ function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, g
       grade,
       category,
       mode,
+      examMode,
+      examTrack,
       persistImmediately: false
     });
     committedQuestions[i] = res.question;
@@ -1136,7 +1331,7 @@ function commitBatchQuestionsToStore({ questions = [], teacher, targetSubject, g
   // Explicitly ensure the whole batch is written to disk in a single atomic pass
   try {
     savePersistedCustomQuestions(committedQuestions);
-  } catch (e) {}
+  } catch (e) { }
 
   return {
     count: committedQuestions.length,

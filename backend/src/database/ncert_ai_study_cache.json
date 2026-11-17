@@ -1,0 +1,822 @@
+{
+  "topic_study_top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_3_1": {
+    "topic_id": "top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_3_1",
+    "topic_title": "Introduction",
+    "topic_code": "3.1",
+    "cached": false,
+    "cached_at": "2026-11-17T04:47:10.480Z",
+    "cache_hits": 1,
+    "llm_provider": "Groq (qwen/qwen3.8-27b)",
+    "token_usage": {
+      "queue_time": 0.050482279,
+      "prompt_tokens": 699,
+      "prompt_time": 0.047994921,
+      "completion_tokens": 739,
+      "completion_time": 1.479913622,
+      "total_tokens": 1438,
+      "total_time": 1.5279085430000001
+    },
+    "summary_notes": {
+      "overview": "This section introduces the fundamental concepts of the chapter. It sets the stage for understanding the core principles and definitions that will be explored in detail later.",
+      "core_concepts": [
+        {
+          "title": "Foundational Context",
+          "detail": "Understanding the basic background and why this topic matters in the broader scope of science."
+        },
+        {
+          "title": "Key Terminology",
+          "detail": "Familiarizing yourself with the specific words and phrases used in this chapter to ensure clear communication of ideas."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Introduction",
+          "definition": "The opening part of a chapter that provides an overview and context for the subject matter."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "Read the introduction carefully to grasp the main theme of the chapter.",
+        "Identify any new terms or symbols introduced at the start.",
+        "Connect the introduction to previous topics you have already studied."
+      ],
+      "governing_formulas": [
+        {
+          "name": "No Specific Formula",
+          "latex": "$N/A$",
+          "note": "Introductory sections typically focus on concepts rather than specific equations."
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Skipping the introduction and jumping straight to complex problems.",
+          "remedy": "Always read the intro first to understand the scope and key definitions."
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q1",
+        "question": "What is the primary purpose of the 'Introduction' section in a textbook chapter?",
+        "options": [
+          {
+            "key": "A",
+            "text": "To provide detailed mathematical derivations"
+          },
+          {
+            "key": "B",
+            "text": "To give an overview and context for the upcoming topics"
+          },
+          {
+            "key": "C",
+            "text": "To list all the solved examples"
+          },
+          {
+            "key": "D",
+            "text": "To summarize the previous chapter"
+          }
+        ],
+        "correct_answer": "B",
+        "explanation": "The introduction sets the stage by explaining what the chapter is about and why it is important, helping you understand the context before diving into details."
+      },
+      {
+        "id": "q2",
+        "question": "Why is it important to note down new terms defined in the introduction?",
+        "options": [
+          {
+            "key": "A",
+            "text": "They are usually the most difficult words in the book"
+          },
+          {
+            "key": "B",
+            "text": "They form the vocabulary needed to understand the rest of the chapter"
+          },
+          {
+            "key": "C",
+            "text": "They are only used in the final exam"
+          },
+          {
+            "key": "D",
+            "text": "They are not important for understanding the concepts"
+          }
+        ],
+        "correct_answer": "B",
+        "explanation": "New terms introduced in the introduction are the building blocks for the rest of the chapter. Knowing them helps you follow the explanations and solve problems more easily."
+      }
+    ]
+  },
+  "topic_study_top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_3_2": {
+    "topic_id": "top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_3_2",
+    "topic_title": "Matrix",
+    "topic_code": "3.2",
+    "cached": false,
+    "cached_at": "2026-11-17T04:48:47.774Z",
+    "cache_hits": 2,
+    "llm_provider": "Groq (qwen/qwen3.8-27b)",
+    "token_usage": {
+      "queue_time": 0.053656429,
+      "prompt_tokens": 1213,
+      "prompt_time": 0.090906761,
+      "completion_tokens": 1486,
+      "completion_time": 2.990412353,
+      "total_tokens": 2699,
+      "total_time": 3.081319114
+    },
+    "summary_notes": {
+      "overview": "A matrix is simply a neat, rectangular grid of numbers or functions arranged in rows and columns. It helps us organize data, like tracking how many notebooks and pens different people have, in a structured way.",
+      "core_concepts": [
+        {
+          "title": "What is a Matrix?",
+          "detail": "A matrix is an ordered rectangular array of numbers or functions. Think of it as a table where the data is neatly lined up in rows (horizontal) and columns (vertical)."
+        },
+        {
+          "title": "Elements (Entries)",
+          "detail": "The individual numbers or functions inside the matrix are called elements or entries. For example, in the matrix $\\begin{bmatrix} 15 & 6 \\\\ 10 & 2 \\end{bmatrix}$, the numbers $15, 6, 10,$ and $2$ are the elements."
+        },
+        {
+          "title": "Rows and Columns",
+          "detail": "Rows are the horizontal lines of elements, and columns are the vertical lines of elements. The size of a matrix is described by the number of rows followed by the number of columns (e.g., a $2 \\times 3$ matrix has 2 rows and 3 columns)."
+        },
+        {
+          "title": "Notation",
+          "detail": "Matrices are usually denoted by capital letters like $A, B, C$. The elements are often written with square brackets $[\\ ]$ or parentheses $(\\ )$."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Matrix",
+          "definition": "An ordered rectangular array of numbers or functions."
+        },
+        {
+          "term": "Element (or Entry)",
+          "definition": "Each individual number or function in a matrix."
+        },
+        {
+          "term": "Row",
+          "definition": "A horizontal line of elements in a matrix."
+        },
+        {
+          "term": "Column",
+          "definition": "A vertical line of elements in a matrix."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "A matrix is just a structured table of numbers or functions.",
+        "The order of elements matters, so it is called an 'ordered' array.",
+        "Matrices can contain numbers, variables, or even functions like $\\sin x$ or $\\cos x$.",
+        "The size of a matrix is always written as (rows) $\\times$ (columns).",
+        "Square brackets $[\\ ]$ are the most common way to write matrices."
+      ],
+      "governing_formulas": [
+        {
+          "name": "Matrix Size Notation",
+          "latex": "$m \\times n$",
+          "note": "$m$ is the number of rows, and $n$ is the number of columns."
+        },
+        {
+          "name": "General Matrix Form",
+          "latex": "$A = [a_{ij}]_{m \\times n}$",
+          "note": "$a_{ij}$ represents the element in the $i$-th row and $j$-th column."
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Confusing rows and columns when stating the size of a matrix.",
+          "remedy": "Always remember: Size = (Rows) $\\times$ (Columns). Count the horizontal lines first, then the vertical lines."
+        },
+        {
+          "trap": "Thinking matrices can only contain numbers.",
+          "remedy": "Matrices can also contain variables, functions, or even other matrices. Just keep the rectangular shape!"
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q1",
+        "question": "What is a matrix?",
+        "options": [
+          {
+            "key": "A",
+            "text": "A random list of numbers"
+          },
+          {
+            "key": "B",
+            "text": "An ordered rectangular array of numbers or functions"
+          },
+          {
+            "key": "C",
+            "text": "A single number in brackets"
+          },
+          {
+            "key": "D",
+            "text": "A graph of a function"
+          }
+        ],
+        "correct_answer": "B",
+        "explanation": "A matrix is specifically an ordered rectangular array of numbers or functions. The order and rectangular shape are key."
+      },
+      {
+        "id": "q2",
+        "question": "In a matrix, what are the horizontal lines of elements called?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Columns"
+          },
+          {
+            "key": "B",
+            "text": "Rows"
+          },
+          {
+            "key": "C",
+            "text": "Entries"
+          },
+          {
+            "key": "D",
+            "text": "Elements"
+          }
+        ],
+        "correct_answer": "B",
+        "explanation": "Horizontal lines of elements are called rows. Vertical lines are called columns."
+      },
+      {
+        "id": "q3",
+        "question": "If a matrix has 3 rows and 2 columns, what is its size?",
+        "options": [
+          {
+            "key": "A",
+            "text": "$2 \\times 3$"
+          },
+          {
+            "key": "B",
+            "text": "$3 \\times 2$"
+          },
+          {
+            "key": "C",
+            "text": "$5 \\times 1$"
+          },
+          {
+            "key": "D",
+            "text": "$1 \\times 5$"
+          }
+        ],
+        "correct_answer": "B",
+        "explanation": "The size of a matrix is always written as (number of rows) $\\times$ (number of columns). So, 3 rows and 2 columns means $3 \\times 2$."
+      },
+      {
+        "id": "q4",
+        "question": "What are the individual numbers or functions inside a matrix called?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Rows"
+          },
+          {
+            "key": "B",
+            "text": "Columns"
+          },
+          {
+            "key": "C",
+            "text": "Elements or Entries"
+          },
+          {
+            "key": "D",
+            "text": "Arrays"
+          }
+        ],
+        "correct_answer": "C",
+        "explanation": "The individual numbers or functions in a matrix are called elements or entries."
+      }
+    ]
+  },
+  "topic_study_top_chap_book_c10_sci_2026_1_1": {
+    "topic_id": "top_chap_book_c10_sci_2026_1_1",
+    "topic_title": "Chemical Reactions and Chemical Equations",
+    "topic_code": "1.1",
+    "cached": false,
+    "cached_at": "2026-11-17T04:47:53.396Z",
+    "cache_hits": 7,
+    "llm_provider": "NCERT Curriculum Engine (Deterministic High-Yield)",
+    "token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "summary_notes": {
+      "overview": "A complete chemical equation represents the reactants, products and their physical states symbolically. A chemical reaction has occurred if there is a change in state, change in colour, evolution of a gas, or change in temperature.",
+      "core_concepts": [
+        {
+          "title": "Core Concept",
+          "detail": "A complete chemical equation represents the reactants, products and their physical states symbolically."
+        },
+        {
+          "title": "Governing Formulation",
+          "detail": "A chemical reaction has occurred if there is a change in state, change in colour, evolution of a gas, or change in temperature."
+        },
+        {
+          "title": "Key Takeaway",
+          "detail": "Mastering the definition and step-by-step rules of Chemical Reactions and Chemical Equations ensures accurate problem solving."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Chemical Reactions and Chemical Equations",
+          "definition": "A complete chemical equation represents the reactants, products and their physical states symbolically."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "Identify the given conditions and variables in $\\text{Zn (s)} + \\text{H}_2\\text{SO}_4\\text{ (aq)} \\longrightarrow \\text{ZnSO}_4\\text{ (aq)} + \\text{H}_2\\text{ (g)} \\uparrow$.",
+        "Check algebraic signs, domain restrictions, and notation conventions before proceeding.",
+        "In board examinations, explicitly stating the initial definition or formula earns full step credit."
+      ],
+      "governing_formulas": [
+        {
+          "name": "Relation 1",
+          "latex": "$\\text{Zn (s)} + \\text{H}_2\\text{SO}_4\\text{ (aq)} \\longrightarrow \\text{ZnSO}_4\\text{ (aq)} + \\text{H}_2\\text{ (g)} \\uparrow$",
+          "note": "Standard formulation in Chemical Reactions and Chemical Equations"
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Misapplying properties or skipping initial conditions in \"Chemical Reactions and Chemical Equations\"",
+          "remedy": "Carefully verify the scope of the definition and apply simplification rules step-by-step."
+        },
+        {
+          "trap": "Computational slips during intermediate algebraic steps",
+          "remedy": "Re-check intermediate substitution and maintain consistent bracket notation throughout."
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q_1.1_1",
+        "question": "Which of the following statements about \"Chemical Reactions and Chemical Equations\" is correct?",
+        "options": [
+          {
+            "key": "A",
+            "text": "A complete chemical equation represents the reactants, products and their physical states symbolically."
+          },
+          {
+            "key": "B",
+            "text": "It completely violates the foundational definitions of the subject."
+          },
+          {
+            "key": "C",
+            "text": "The result is universally zero under all possible mathematical conditions."
+          },
+          {
+            "key": "D",
+            "text": "It cannot be evaluated or applied to any valid problem instances."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Option A is correct: \"A complete chemical equation represents the reactants, products and their physical states symbolically.\"."
+      },
+      {
+        "id": "q_1.1_2",
+        "question": "What is the most common error to avoid when working with \"Chemical Reactions and Chemical Equations\"?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Overlooking boundary conditions, domain constraints, or sign conventions."
+          },
+          {
+            "key": "B",
+            "text": "Writing down the governing definition and checking each step carefully."
+          },
+          {
+            "key": "C",
+            "text": "Verifying intermediate calculations before arriving at the final result."
+          },
+          {
+            "key": "D",
+            "text": "Labeling variables clearly and stating the final conclusion."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Failing to check initial constraints, domain limits, or sign conventions is the most frequent student mistake."
+      },
+      {
+        "id": "q_1.1_3",
+        "question": "Which fundamental representation or formula is associated with \"Chemical Reactions and Chemical Equations\"?",
+        "options": [
+          {
+            "key": "A",
+            "text": "$\\text{Zn (s)} + \\text{H}_2\\text{SO}_4\\text{ (aq)} \\longrightarrow \\text{ZnSO}_4\\text{ (aq)} + \\text{H}_2\\text{ (g)} \\uparrow$"
+          },
+          {
+            "key": "B",
+            "text": "$0 = 1$"
+          },
+          {
+            "key": "C",
+            "text": "$\\infty - \\infty = 0$"
+          },
+          {
+            "key": "D",
+            "text": "$\\frac{0}{0} = 1$"
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Option A ($\\text{Zn (s)} + \\text{H}_2\\text{SO}_4\\text{ (aq)} \\longrightarrow \\text{ZnSO}_4\\text{ (aq)} + \\text{H}_2\\text{ (g)} \\uparrow$) represents the valid formulation for this section."
+      }
+    ]
+  },
+  "topic_study_top_chap_book_c10_math_2026_1_1": {
+    "topic_id": "top_chap_book_c10_math_2026_1_1",
+    "topic_title": "Introduction",
+    "topic_code": "1.1",
+    "cached": false,
+    "cached_at": "2026-11-17T07:04:19.466Z",
+    "cache_hits": 1,
+    "llm_provider": "NCERT Curriculum Engine (Deterministic High-Yield)",
+    "token_usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    "summary_notes": {
+      "overview": "The Fundamental Theorem of Arithmetic states that every composite number can be expressed (factorised) as a product of primes, and this factorisation is unique, apart from the order in which the prime factors occur. For any two positive integers $a$ and $b$, $\\text{HCF}(a, b) \\times \\text{LCM}(a, b) = a \\times b$.",
+      "core_concepts": [
+        {
+          "title": "Core Concept",
+          "detail": "The Fundamental Theorem of Arithmetic states that every composite number can be expressed (factorised) as a product of primes, and this factorisation is unique, apart from the order in which the prime factors occur."
+        },
+        {
+          "title": "Governing Formulation",
+          "detail": "For any two positive integers $a$ and $b$, $\\text{HCF}(a, b) \\times \\text{LCM}(a, b) = a \\times b$."
+        },
+        {
+          "title": "Key Takeaway",
+          "detail": "Mastering the definition and step-by-step rules of Introduction ensures accurate problem solving."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Introduction",
+          "definition": "The Fundamental Theorem of Arithmetic states that every composite number can be expressed (factorised) as a product of primes, and this factorisation is unique, apart from the order in which the prime factors occur."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "Identify the given conditions and variables in $a$.",
+        "Check algebraic signs, domain restrictions, and notation conventions before proceeding.",
+        "In board examinations, explicitly stating the initial definition or formula earns full step credit."
+      ],
+      "governing_formulas": [
+        {
+          "name": "Relation 1",
+          "latex": "$a$",
+          "note": "Standard formulation in Introduction"
+        },
+        {
+          "name": "Relation 2",
+          "latex": "$b$",
+          "note": "Standard formulation in Introduction"
+        },
+        {
+          "name": "Relation 3",
+          "latex": "$\\text{HCF}(a, b) \\times \\text{LCM}(a, b) = a \\times b$",
+          "note": "Standard formulation in Introduction"
+        },
+        {
+          "name": "Relation 4",
+          "latex": "$\\sqrt{2}$",
+          "note": "Standard formulation in Introduction"
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Misapplying properties or skipping initial conditions in \"Introduction\"",
+          "remedy": "Carefully verify the scope of the definition and apply simplification rules step-by-step."
+        },
+        {
+          "trap": "Computational slips during intermediate algebraic steps",
+          "remedy": "Re-check intermediate substitution and maintain consistent bracket notation throughout."
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q_1.1_1",
+        "question": "Which of the following statements about \"Introduction\" is correct?",
+        "options": [
+          {
+            "key": "A",
+            "text": "The Fundamental Theorem of Arithmetic states that every composite number can be expressed (factorised) as a product of primes, and this factorisation is unique, apart from the order in which the prime factors occur."
+          },
+          {
+            "key": "B",
+            "text": "It completely violates the foundational definitions of the subject."
+          },
+          {
+            "key": "C",
+            "text": "The result is universally zero under all possible mathematical conditions."
+          },
+          {
+            "key": "D",
+            "text": "It cannot be evaluated or applied to any valid problem instances."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Option A is correct: \"The Fundamental Theorem of Arithmetic states that every composite number can be expressed (factorised) as a product of primes, and this factorisation is unique, apart from the order in which the prime factors occur.\"."
+      },
+      {
+        "id": "q_1.1_2",
+        "question": "What is the most common error to avoid when working with \"Introduction\"?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Overlooking boundary conditions, domain constraints, or sign conventions."
+          },
+          {
+            "key": "B",
+            "text": "Writing down the governing definition and checking each step carefully."
+          },
+          {
+            "key": "C",
+            "text": "Verifying intermediate calculations before arriving at the final result."
+          },
+          {
+            "key": "D",
+            "text": "Labeling variables clearly and stating the final conclusion."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Failing to check initial constraints, domain limits, or sign conventions is the most frequent student mistake."
+      },
+      {
+        "id": "q_1.1_3",
+        "question": "Which fundamental representation or formula is associated with \"Introduction\"?",
+        "options": [
+          {
+            "key": "A",
+            "text": "$a$"
+          },
+          {
+            "key": "B",
+            "text": "$0 = 1$"
+          },
+          {
+            "key": "C",
+            "text": "$\\infty - \\infty = 0$"
+          },
+          {
+            "key": "D",
+            "text": "$\\frac{0}{0} = 1$"
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "Option A ($a$) represents the valid formulation for this section."
+      }
+    ]
+  },
+  "topic_study_top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_1_1": {
+    "topic_id": "top_chap_book_efde2383-b9f2-44dc-b33c-5529f634332b_1_1",
+    "topic_title": "Introduction",
+    "topic_code": "1.1",
+    "cached": false,
+    "cached_at": "2026-11-17T04:50:03.700Z",
+    "cache_hits": 1,
+    "llm_provider": "Groq (openai/gpt-oss-120b)",
+    "token_usage": {
+      "queue_time": 0.3698654,
+      "prompt_tokens": 1153,
+      "prompt_time": 0.056176976,
+      "completion_tokens": 1397,
+      "completion_time": 2.923711943,
+      "total_tokens": 2550,
+      "total_time": 2.979888919,
+      "completion_tokens_details": {
+        "reasoning_tokens": 310
+      }
+    },
+    "summary_notes": {
+      "overview": "A relation between two sets $A$ and $B$ is any collection of ordered pairs from $A\\times B$. A function is a special relation where each element of $A$ appears exactly once as the first entry.",
+      "core_concepts": [
+        {
+          "title": "Relation",
+          "detail": "A relation $R$ from $A$ to $B$ is a subset $R\\subseteq A\\times B$. If $(a,b)\\in R$, we write $a\\,R\\,b$."
+        },
+        {
+          "title": "Function",
+          "detail": "A function $f\\colon A\\to B$ is a relation where every $a\\in A$ is paired with exactly one $b\\in B$."
+        },
+        {
+          "title": "Domain, Codomain, Range",
+          "detail": "Domain is the set of all first elements, codomain is the set $B$ we map into, and range (image) is the set of all second elements actually used."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Cartesian Product",
+          "definition": "$A\\times B$ is the set of all ordered pairs $(a,b)$ with $a\\in A$ and $b\\in B$."
+        },
+        {
+          "term": "Ordered Pair",
+          "definition": "An ordered pair $(a,b)$ keeps the order; $(a,b)\\neq(b,a)$ unless $a=b$."
+        },
+        {
+          "term": "Invertible Function",
+          "definition": "A function that has a reverse mapping $f^{-1}$, possible only when each $b$ in the range comes from exactly one $a$."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "A relation is just any set of ordered pairs from $A\\times B$.",
+        "Every function is a relation, but not every relation is a function.",
+        "For a function, each element of the domain appears once on the left side."
+      ],
+      "governing_formulas": [
+        {
+          "name": "Relation definition",
+          "latex": "$R\\subseteq A\\times B$",
+          "note": "$R$ contains the pairs that satisfy the given rule."
+        },
+        {
+          "name": "Function definition",
+          "latex": "$f\\colon A\\to B\\;\\text{with}\\;\\forall a\\in A,\\;\\exists!\\,b\\in B:\\;(a,b)\\in f$",
+          "note": "$\\exists!$ means ‘exists exactly one’."
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Mixing up relation and function.",
+          "remedy": "Check if every element of the domain has exactly one partner; if not, it’s only a relation."
+        },
+        {
+          "trap": "Ignoring the order of the pair.",
+          "remedy": "Remember $(a,b)$ is different from $(b,a)$; always write the first element from the domain set."
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q1",
+        "question": "Which of the following statements correctly describes a function?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Each element of the domain is paired with exactly one element of the codomain."
+          },
+          {
+            "key": "B",
+            "text": "A function can pair one domain element with many codomain elements."
+          },
+          {
+            "key": "C",
+            "text": "A function is any subset of $A\\times B$."
+          },
+          {
+            "key": "D",
+            "text": "The order of elements in a pair does not matter for a function."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "A function must assign one and only one output to each input; options B, C, D describe relations or incorrect ideas."
+      },
+      {
+        "id": "q2",
+        "question": "If $R\\subseteq A\\times B$ contains the pair $(a,b)$, what can we say?",
+        "options": [
+          {
+            "key": "A",
+            "text": "$a$ is related to $b$ under $R$."
+          },
+          {
+            "key": "B",
+            "text": "$b$ is related to $a$ under $R$."
+          },
+          {
+            "key": "C",
+            "text": "Both $a$ and $b$ belong to the same set."
+          },
+          {
+            "key": "D",
+            "text": "The pair $(b,a)$ must also be in $R$."
+          }
+        ],
+        "correct_answer": "A",
+        "explanation": "By definition, $(a,b)\\in R$ means $a\\,R\\,b$. The relation does not automatically include $(b,a)$."
+      }
+    ]
+  },
+  "topic_study_top_chap_book_c12_phy_2026_1_1": {
+    "topic_id": "top_chap_book_c12_phy_2026_1_1",
+    "topic_title": "Fundamentals of Electric Charge & Coulomb's Law",
+    "topic_code": "1.1",
+    "cached": false,
+    "cached_at": "2026-11-17T06:05:00.315Z",
+    "cache_hits": 1,
+    "llm_provider": "Groq (openai/gpt-oss-20b)",
+    "token_usage": {
+      "queue_time": 1.200068943,
+      "prompt_tokens": 837,
+      "prompt_time": 0.059884152,
+      "completion_tokens": 965,
+      "completion_time": 1.375695324,
+      "total_tokens": 1802,
+      "total_time": 1.435579476,
+      "completion_tokens_details": {
+        "reasoning_tokens": 304
+      }
+    },
+    "summary_notes": {
+      "overview": "Electric charge is a tiny, quantised property of particles that can be positive or negative. Like charges push each other away, while opposite charges pull together.",
+      "core_concepts": [
+        {
+          "title": "Electric Charge",
+          "detail": "Charge is a scalar quantity that can be positive (protons) or negative (electrons). It is always a multiple of the elementary charge $e = 1.602\times10^{-19},\text{C}$, written as $q = ne$ where $n$ is an integer."
+        },
+        {
+          "title": "Coulomb’s Law",
+          "detail": "The force between two point charges is proportional to the product of their charges and inversely proportional to the square of the distance between them: $F = k,dfrac{|q_1q_2|}{r^2}$, where $k = 8.99\times10^9,\text{N m}^2\text{/C}^2$."
+        }
+      ],
+      "key_definitions": [
+        {
+          "term": "Elementary charge",
+          "definition": "The smallest unit of electric charge, carried by an electron or a proton."
+        },
+        {
+          "term": "Like charges",
+          "definition": "Two charges of the same sign that repel each other."
+        },
+        {
+          "term": "Unlike charges",
+          "definition": "Two charges of opposite sign that attract each other."
+        },
+        {
+          "term": "Quantised",
+          "definition": "Charge can only exist in whole multiples of the elementary charge."
+        },
+        {
+          "term": "Conserved",
+          "definition": "The total charge in an isolated system never changes."
+        }
+      ]
+    },
+    "bullet_points": {
+      "high_yield_takeaways": [
+        "Charge is always an integer multiple of $e$.",
+        "Like charges repel, unlike charges attract.",
+        "Charge is conserved in any closed system."
+      ],
+      "governing_formulas": [
+        {
+          "name": "Charge quantisation",
+          "latex": "$q = ne$",
+          "note": "$n$ is an integer, $e$ is the elementary charge."
+        },
+        {
+          "name": "Coulomb’s law",
+          "latex": "$F = k\\dfrac{|q_1q_2|}{r^2}$",
+          "note": "$k = 8.99\\times10^9\\,\\text{N m}^2\\text{/C}^2$, $r$ is the separation."
+        }
+      ],
+      "exam_traps": [
+        {
+          "trap": "Mixing up the sign of charge with its magnitude",
+          "remedy": "Always write the sign separately from the magnitude, e.g., $q = +3e$ or $q = -2e$."
+        },
+        {
+          "trap": "Forgetting the $r^2$ term in Coulomb’s law",
+          "remedy": "Remember the force falls off with the square of the distance."
+        }
+      ]
+    },
+    "quick_quiz": [
+      {
+        "id": "q1",
+        "question": "Which of the following is true about electric charge?",
+        "options": [
+          {
+            "key": "A",
+            "text": "Like charges attract each other."
+          },
+          {
+            "key": "B",
+            "text": "Unlike charges repel each other."
+          },
+          {
+            "key": "C",
+            "text": "Charge is a vector quantity."
+          },
+          {
+            "key": "D",
+            "text": "Charge is always conserved in an isolated system."
+          }
+        ],
+        "correct_answer": "D",
+        "explanation": "Charge is a scalar that is conserved in any closed system, so option D is correct."
+      }
+    ]
+  }
+}
